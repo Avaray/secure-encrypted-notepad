@@ -80,7 +80,8 @@ impl Default for EditorApp {
 
 impl EditorApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let mut app = Self::default();
+        // FIX: 'mut' nie jest potrzebny, apply_theme bierze &self
+        let app = Self::default();
         app.apply_theme(&cc.egui_ctx);
         app
     }
@@ -145,10 +146,14 @@ impl EditorApp {
             return;
         }
         
-        if let (Some(path), Some(keyfile)) = (&self.pending_open_path, &self.keyfile_path) {
+        // FIX: Sklonuj ścieżki, aby uniknąć borrowowania self w 'if let'
+        let pending_path = self.pending_open_path.clone();
+        let keyfile_path_clone = self.keyfile_path.clone();
+
+        if let (Some(path), Some(keyfile)) = (pending_path, keyfile_path_clone) {
             let password = Zeroizing::new(self.password.clone());
             
-            match decrypt_file(&password, keyfile, path) {
+            match decrypt_file(&password, &keyfile, &path) {
                 Ok(content) => {
                     self.text_content = content;
                     self.current_file_path = Some(path.clone());
@@ -217,18 +222,24 @@ impl EditorApp {
     }
     
     fn perform_save(&mut self, path: PathBuf) {
-        let keyfile = self.keyfile_path.as_ref().unwrap();
+        // FIX: Klonujemy keyfile na starcie, aby nie trzymać referencji do self
+        let keyfile = if let Some(k) = &self.keyfile_path {
+            k.clone()
+        } else {
+            return; // Should happen checked before
+        };
+
         let password = Zeroizing::new(self.password.clone());
         
         // 1. Zapisz główny plik
-        match encrypt_file(&self.text_content, &password, keyfile, &path) {
+        match encrypt_file(&self.text_content, &password, &keyfile, &path) {
             Ok(_) => {
                 self.current_file_path = Some(path.clone());
                 self.is_modified = false;
                 
                 // 2. Utwórz snapshot jeśli auto_snapshot włączone
                 if self.settings.auto_snapshot_on_save {
-                    match create_snapshot(&self.text_content, &password, keyfile, &path, None) {
+                    match create_snapshot(&self.text_content, &password, &keyfile, &path, None) {
                         Ok(_) => {
                             self.refresh_versions();
                             self.status_message = format!(
@@ -390,6 +401,9 @@ impl EditorApp {
     }
     
     fn render_password_dialog(&mut self, ctx: &egui::Context) {
+        let mut open_confirmed = false;
+        let mut open_cancelled = false;
+
         egui::Window::new("🔐 Enter Password")
             .collapsible(false)
             .resizable(false)
@@ -411,7 +425,7 @@ impl EditorApp {
                     }
                     
                     if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                        self.open_file_with_password();
+                        open_confirmed = true;
                     }
                 });
                 
@@ -433,17 +447,25 @@ impl EditorApp {
                 
                 ui.horizontal(|ui| {
                     if ui.button("✓ Open").clicked() {
-                        self.open_file_with_password();
+                        open_confirmed = true;
                     }
                     
                     if ui.button("✗ Cancel").clicked() {
-                        self.show_password_dialog = false;
-                        self.pending_open_path = None;
-                        self.password.clear();
-                        self.status_message = "Open cancelled".to_string();
+                        open_cancelled = true;
                     }
                 });
             });
+            
+        if open_confirmed {
+            self.open_file_with_password();
+        }
+        
+        if open_cancelled {
+            self.show_password_dialog = false;
+            self.pending_open_path = None;
+            self.password.clear();
+            self.status_message = "Open cancelled".to_string();
+        }
     }
     
     fn render_settings_panel(&mut self, ctx: &egui::Context) {
@@ -574,7 +596,9 @@ impl EditorApp {
                 if self.versions.is_empty() {
                     ui.label("No versions yet. Save to create first snapshot.");
                 } else {
-                    for version in &self.versions {
+                    // FIX: Klonujemy listę wersji, aby móc wywoływać metody self w pętli
+                    let versions = self.versions.clone();
+                    for version in &versions {
                         ui.group(|ui| {
                             ui.horizontal(|ui| {
                                 ui.label("📅");
@@ -616,7 +640,13 @@ impl EditorApp {
     }
     
     fn render_preview_window(&mut self, ctx: &egui::Context) {
-        if let Some((version, content)) = &self.preview_version {
+        // FIX: Klonujemy dane preview lokalnie, aby uwolnić 'self'
+        let preview_data = self.preview_version.clone();
+        let mut close_clicked = false;
+        
+        if let Some((version, content)) = preview_data {
+            let mut content_clone = content.clone();
+            
             egui::Window::new(format!("📄 Preview: {}", version.display_timestamp()))
                 .resizable(true)
                 .default_width(800.0)
@@ -627,21 +657,30 @@ impl EditorApp {
                     
                     egui::ScrollArea::vertical().show(ui, |ui| {
                         ui.add(
-                            egui::TextEdit::multiline(&mut content.as_str())
+                            egui::TextEdit::multiline(&mut content_clone)
                                 .desired_width(f32::INFINITY)
                                 .interactive(false)
                         );
                     });
                     
                     if ui.button("Close").clicked() {
-                        self.preview_version = None;
+                        close_clicked = true;
                     }
                 });
+        }
+        
+        if close_clicked {
+            self.preview_version = None;
         }
     }
     
     fn render_restore_confirm(&mut self, ctx: &egui::Context) {
-        if let Some(version) = &self.show_restore_confirm {
+        // FIX: Klonujemy informację o wersji lokalnie
+        let restore_data = self.show_restore_confirm.clone();
+        let mut do_restore = false;
+        let mut do_cancel = false;
+        
+        if let Some(version) = restore_data {
             let version_clone = version.clone();
             
             egui::Window::new("⚠️ Confirm Restore")
@@ -657,19 +696,32 @@ impl EditorApp {
                     
                     ui.horizontal(|ui| {
                         if ui.button("✓ Restore").clicked() {
-                            self.restore_version_confirmed(&version_clone);
+                            do_restore = true;
                         }
                         
                         if ui.button("✗ Cancel").clicked() {
-                            self.show_restore_confirm = None;
+                            do_cancel = true;
                         }
                     });
                 });
+            
+            if do_restore {
+                self.restore_version_confirmed(&version_clone);
+            }
+        }
+        
+        if do_cancel {
+            self.show_restore_confirm = None;
         }
     }
     
     fn render_delete_confirm(&mut self, ctx: &egui::Context) {
-        if let Some(version) = &self.show_delete_confirm {
+        // FIX: Klonujemy informację o wersji lokalnie
+        let delete_data = self.show_delete_confirm.clone();
+        let mut do_delete = false;
+        let mut do_cancel = false;
+        
+        if let Some(version) = delete_data {
             let version_clone = version.clone();
             
             egui::Window::new("⚠️ Confirm Delete")
@@ -685,14 +737,22 @@ impl EditorApp {
                     
                     ui.horizontal(|ui| {
                         if ui.button("🗑️ Delete").clicked() {
-                            self.delete_version_confirmed(&version_clone);
+                            do_delete = true;
                         }
                         
                         if ui.button("✗ Cancel").clicked() {
-                            self.show_delete_confirm = None;
+                            do_cancel = true;
                         }
                     });
                 });
+            
+            if do_delete {
+                self.delete_version_confirmed(&version_clone);
+            }
+        }
+        
+        if do_cancel {
+            self.show_delete_confirm = None;
         }
     }
 }

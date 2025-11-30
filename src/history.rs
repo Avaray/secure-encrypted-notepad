@@ -23,6 +23,8 @@ pub struct VersionInfo {
 
 impl VersionInfo {
     /// Format timestamp as string (for filename)
+    // FIX: Dodano #[allow(dead_code)] - metoda jest publiczna, przeznaczona do użytku zewnętrznego.
+    #[allow(dead_code)]
     pub fn format_timestamp(&self) -> String {
         self.timestamp.format("%Y-%m-%d_%H-%M-%S").to_string()
     }
@@ -50,7 +52,7 @@ impl VersionInfo {
 pub enum HistoryError {
     IoError(std::io::Error),
     CryptoError(CryptoError),
-    InvalidHistoryFolder,
+    // FIX: Usunięto InvalidHistoryFolder - wariant nigdy nie był używany
     VersionNotFound,
 }
 
@@ -71,7 +73,7 @@ impl std::fmt::Display for HistoryError {
         match self {
             HistoryError::IoError(e) => write!(f, "IO Error: {}", e),
             HistoryError::CryptoError(e) => write!(f, "Crypto Error: {}", e),
-            HistoryError::InvalidHistoryFolder => write!(f, "Invalid history folder"),
+            // FIX: Usunięto obsługę InvalidHistoryFolder
             HistoryError::VersionNotFound => write!(f, "Version not found"),
         }
     }
@@ -298,7 +300,11 @@ pub fn cleanup_old_versions(
 pub struct HistoryStats {
     pub total_versions: usize,
     pub total_size_bytes: u64,
+    // FIX: Dodano #[allow(dead_code)] - pola są publiczne, przeznaczone do użytku zewnętrznego.
+    #[allow(dead_code)]
     pub oldest_version: Option<DateTime<Local>>,
+    // FIX: Dodano #[allow(dead_code)] - pola są publiczne, przeznaczone do użytku zewnętrznego.
+    #[allow(dead_code)]
     pub newest_version: Option<DateTime<Local>>,
 }
 

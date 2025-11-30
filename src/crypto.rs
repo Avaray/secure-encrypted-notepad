@@ -3,7 +3,8 @@ use orion::kdf;
 use sha2::{Sha256, Digest};
 use std::fs;
 use std::path::Path;
-use zeroize::{Zeroize, Zeroizing, ZeroizeOnDrop};
+// FIX: Usunięto 'Zeroize' z importów (nieużywany), zostawiono Zeroizing i ZeroizeOnDrop
+use zeroize::{Zeroizing, ZeroizeOnDrop};
 use rand::RngCore;
 
 /// Magic number for file format verification: "SED1"
