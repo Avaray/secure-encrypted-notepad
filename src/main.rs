@@ -29,7 +29,7 @@ fn main() -> eframe::Result<()> {
     };
 
     eframe::run_native(
-        "SED v3.0 - Secure Encrypted Document Editor with Version Control",
+        "SED - Secure Notepad",
         options,
         Box::new(|cc| {
             cc.egui_ctx.style_mut(|style| {
