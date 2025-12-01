@@ -37,14 +37,14 @@ pub struct EditorApp {
     show_history_panel: bool,
     /// Document has been modified
     is_modified: bool,
-    /// Currently previewed version (if any)
-    preview_version: Option<(VersionInfo, String)>,
     /// Show restore confirmation dialog
     show_restore_confirm: Option<VersionInfo>,
     /// Show delete confirmation dialog
     show_delete_confirm: Option<VersionInfo>,
     /// Show alert when trying to save without auth
     show_missing_auth_alert: bool,
+    /// Show save changes confirmation when previewing with unsaved changes
+    show_save_changes_dialog: Option<VersionInfo>,
 }
 
 impl Default for EditorApp {
@@ -85,10 +85,10 @@ impl Default for EditorApp {
             show_settings_panel: false,
             show_history_panel: false,
             is_modified: false,
-            preview_version: None,
             show_restore_confirm: None,
             show_delete_confirm: None,
             show_missing_auth_alert: false,
+            show_save_changes_dialog: None,
         }
     }
 }
@@ -134,7 +134,6 @@ impl EditorApp {
         self.current_file_path = None;
         self.versions.clear();
         self.is_modified = false;
-        self.preview_version = None;
         self.status_message = "New document created".to_string();
     }
 
@@ -345,19 +344,32 @@ impl EditorApp {
     }
 
     fn preview_version(&mut self, version: &VersionInfo) {
+        // Jeśli są niezapisane zmiany, pokaż dialog
+        if self.is_modified {
+            self.show_save_changes_dialog = Some(version.clone());
+        } else {
+            // Bezpośrednio załaduj do głównego edytora
+            self.load_version_to_editor(version);
+        }
+    }
+
+    fn load_version_to_editor(&mut self, version: &VersionInfo) {
         if let Some(keyfile) = &self.keyfile_path {
             let password = Zeroizing::new(self.password.clone());
 
-            match load_version(version, &password, keyfile) {
+            match load_version(version, &*password, keyfile) {
                 Ok(content) => {
-                    self.preview_version = Some((version.clone(), content));
+                    self.text_content = content;
+                    self.is_modified = false; // Załadowana wersja nie jest zmodyfikowana
                     self.status_message =
-                        format!("📄 Viewing version: {}", version.display_timestamp());
+                        format!("📄 Loaded version: {}", version.display_timestamp());
                 }
                 Err(e) => {
                     self.status_message = format!("✗ Error loading version: {}", e);
                 }
             }
+        } else {
+            self.status_message = "✗ No keyfile selected".to_string();
         }
     }
 
@@ -686,7 +698,8 @@ impl EditorApp {
                                 ui.label(format!("📅 {}", version.display_timestamp()));
 
                                 ui.horizontal(|ui| {
-                                    if ui.button("👁").clicked() {
+                                    if ui.button("👁").on_hover_text("Load this version").clicked()
+                                    {
                                         self.preview_version(version);
                                     }
 
@@ -707,34 +720,57 @@ impl EditorApp {
         });
     }
 
-    fn render_preview_window(&mut self, ctx: &egui::Context) {
-        let preview_data = self.preview_version.clone();
-        let mut close_clicked = false;
+    fn render_save_changes_dialog(&mut self, ctx: &egui::Context) {
+        let version_data = self.show_save_changes_dialog.clone();
+        let mut do_save = false;
+        let mut do_discard = false;
+        let mut do_cancel = false;
 
-        if let Some((version, content)) = preview_data {
-            let mut content_clone = content.clone();
+        if let Some(version) = version_data {
+            let version_clone = version.clone();
 
-            egui::Window::new(format!("Preview: {}", version.display_timestamp()))
-                .resizable(true)
-                .default_width(600.0)
-                .default_height(400.0)
+            egui::Window::new("⚠️ Unsaved Changes")
+                .collapsible(false)
+                .resizable(false)
+                .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
                 .show(ctx, |ui| {
-                    egui::ScrollArea::vertical().show(ui, |ui| {
-                        ui.add(
-                            egui::TextEdit::multiline(&mut content_clone)
-                                .desired_width(f32::INFINITY)
-                                .interactive(false),
-                        );
-                    });
+                    ui.label("You have unsaved changes in the current document.");
+                    ui.add_space(5.0);
+                    ui.label("Do you want to save them before loading a version?");
+                    ui.add_space(10.0);
 
-                    if ui.button("Close").clicked() {
-                        close_clicked = true;
-                    }
+                    ui.horizontal(|ui| {
+                        if ui.button("💾 Save").clicked() {
+                            do_save = true;
+                        }
+
+                        if ui.button("🗑️ Discard").clicked() {
+                            do_discard = true;
+                        }
+
+                        if ui.button("✗ Cancel").clicked() {
+                            do_cancel = true;
+                        }
+                    });
                 });
+
+            if do_save {
+                // Zapisz aktualny plik
+                self.save_file();
+                // Następnie załaduj wersję
+                self.load_version_to_editor(&version_clone);
+                self.show_save_changes_dialog = None;
+            }
+
+            if do_discard {
+                // Porzuć zmiany i załaduj wersję
+                self.load_version_to_editor(&version_clone);
+                self.show_save_changes_dialog = None;
+            }
         }
 
-        if close_clicked {
-            self.preview_version = None;
+        if do_cancel {
+            self.show_save_changes_dialog = None;
         }
     }
 
@@ -850,8 +886,8 @@ impl eframe::App for EditorApp {
             self.render_settings_panel(ctx);
         }
 
-        if self.preview_version.is_some() {
-            self.render_preview_window(ctx);
+        if self.show_save_changes_dialog.is_some() {
+            self.render_save_changes_dialog(ctx);
         }
 
         if self.show_restore_confirm.is_some() {
