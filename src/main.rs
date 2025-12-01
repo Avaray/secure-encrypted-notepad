@@ -1,7 +1,7 @@
-mod crypto;
-mod settings;
-mod history;
 mod app;
+mod crypto;
+mod history;
+mod settings;
 
 use app::EditorApp;
 
@@ -18,7 +18,7 @@ fn main() -> eframe::Result<()> {
             ),
         ..Default::default()
     };
-    
+
     eframe::run_native(
         "SED v3.0 - Secure Encrypted Document Editor with Version Control",
         options,
