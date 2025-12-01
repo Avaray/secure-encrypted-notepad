@@ -12,7 +12,7 @@ fn main() -> eframe::Result<()> {
             .with_min_inner_size([1000.0, 700.0])
             .with_icon(
                 // Jeśli masz ikonę w formacie PNG, użyj:
-                eframe::icon_data::from_png_bytes(include_bytes!("../LogosAurora.png"))
+                eframe::icon_data::from_png_bytes(include_bytes!("../LogosCockpit.png"))
                     .unwrap_or_default(), // Jeśli nie masz ikony, użyj domyślnej dla Windows:
                                           // eframe::icon_data::from_png_bytes(&[]).unwrap_or_default()
             ),
