@@ -15,6 +15,8 @@ pub struct EditorApp {
     text_content: String,
     /// Password for encryption/decryption
     password: String,
+    /// Temporary password for open dialog
+    dialog_password: String,
     /// Path to keyfile
     keyfile_path: Option<PathBuf>,
     /// Path to currently open file
@@ -72,6 +74,7 @@ impl Default for EditorApp {
         Self {
             text_content: String::new(),
             password: String::new(),
+            dialog_password: String::new(),
             keyfile_path: initial_keyfile,
             current_file_path: None,
             versions: Vec::new(),
@@ -142,6 +145,7 @@ impl EditorApp {
             .pick_file()
         {
             self.pending_open_path = Some(path);
+            self.dialog_password.clear(); // DODAJ TO! Wyczyść stare hasło
             self.show_password_dialog = true;
             self.status_message = "Enter password to decrypt".to_string();
         }
@@ -153,7 +157,8 @@ impl EditorApp {
             return;
         }
 
-        if self.password.is_empty() {
+        if self.dialog_password.is_empty() {
+            // ZMIANA!
             self.status_message = "Error: Password required".to_string();
             return;
         }
@@ -162,16 +167,30 @@ impl EditorApp {
         let keyfile_path_clone = self.keyfile_path.clone();
 
         if let (Some(path), Some(keyfile)) = (pending_path, keyfile_path_clone) {
-            let password = Zeroizing::new(self.password.clone());
+            if let Ok(metadata) = std::fs::metadata(&path) {
+                eprintln!("DEBUG: Opening file, size: {} bytes", metadata.len());
+            } else {
+                self.status_message = "✗ Error: File not found".to_string();
+                return;
+            }
 
-            // FIX: Używamy &*password zamiast &password aby uzyskać &str
+            let password = Zeroizing::new(self.dialog_password.clone()); // ZMIANA!
+
+            eprintln!("DEBUG: Password length: {}", password.len());
+            eprintln!("DEBUG: Keyfile: {:?}", keyfile);
+
             match decrypt_file(&*password, &keyfile, &path) {
                 Ok(content) => {
+                    eprintln!(
+                        "DEBUG: File decrypted successfully, {} bytes",
+                        content.len()
+                    );
                     self.text_content = content;
                     self.current_file_path = Some(path.clone());
                     self.is_modified = false;
                     self.show_password_dialog = false;
                     self.pending_open_path = None;
+                    self.dialog_password.clear(); // ZMIANA! Wyczyść po użyciu
                     self.refresh_versions();
 
                     let version_count = self.versions.len();
@@ -181,13 +200,13 @@ impl EditorApp {
                         version_count
                     );
 
-                    // Zapamiętaj jako "Last Used", jeśli włączone w opcjach
                     if self.settings.remember_keyfile_path {
                         self.settings.last_keyfile_path = Some(keyfile.clone());
                         let _ = self.settings.save();
                     }
                 }
                 Err(e) => {
+                    eprintln!("DEBUG: Decryption failed: {:?}", e);
                     self.status_message = format!("✗ Error: {}", e);
                 }
             }
@@ -227,18 +246,36 @@ impl EditorApp {
         let keyfile = if let Some(k) = &self.keyfile_path {
             k.clone()
         } else {
+            self.status_message = "✗ No keyfile selected".to_string();
             return;
         };
 
         let password = Zeroizing::new(self.password.clone());
 
+        // DEBUG: Sprawdź długość contentu
+        eprintln!(
+            "DEBUG: Saving file with {} bytes of content",
+            self.text_content.len()
+        );
+        eprintln!("DEBUG: Password length: {}", password.len());
+        eprintln!("DEBUG: Keyfile: {:?}", keyfile);
+        eprintln!("DEBUG: Output path: {:?}", path);
+
         match encrypt_file(&self.text_content, &*password, &keyfile, &path) {
             Ok(_) => {
+                // Sprawdź czy plik faktycznie istnieje i jaka jest jego wielkość
+                if let Ok(metadata) = std::fs::metadata(&path) {
+                    eprintln!(
+                        "DEBUG: File saved successfully, size: {} bytes",
+                        metadata.len()
+                    );
+                }
+
                 self.current_file_path = Some(path.clone());
                 self.is_modified = false;
 
                 if self.settings.auto_snapshot_on_save {
-                    match create_snapshot(&self.text_content, &password, &keyfile, &path, None) {
+                    match create_snapshot(&self.text_content, &*password, &keyfile, &path, None) {
                         Ok(_) => {
                             self.refresh_versions();
                             self.status_message = format!(
@@ -262,6 +299,7 @@ impl EditorApp {
                 }
             }
             Err(e) => {
+                eprintln!("DEBUG: Encryption failed: {:?}", e);
                 self.status_message = format!("✗ Error saving: {}", e);
             }
         }
@@ -396,7 +434,7 @@ impl EditorApp {
                 ui.horizontal(|ui| {
                     ui.label("Password:");
                     let response = ui.add(
-                        egui::TextEdit::singleline(&mut self.password)
+                        egui::TextEdit::singleline(&mut self.dialog_password)
                             .password(true)
                             .desired_width(250.0),
                     );
