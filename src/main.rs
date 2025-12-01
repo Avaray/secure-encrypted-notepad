@@ -8,14 +8,20 @@ use app::EditorApp;
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([1400.0, 900.0])
+            // ZAWSZE OTWIERAJ ZMAKSYMALIZOWANE NA WSZYSTKICH PLATFORMACH
+            .with_maximized(true)
+            // Zachowujemy minimalny rozmiar dla użyteczności
             .with_min_inner_size([1000.0, 700.0])
-            .with_icon(
-                // Jeśli masz ikonę w formacie PNG, użyj:
-                eframe::icon_data::from_png_bytes(include_bytes!("../LogosCockpit.png"))
-                    .unwrap_or_default(), // Jeśli nie masz ikony, użyj domyślnej dla Windows:
-                                          // eframe::icon_data::from_png_bytes(&[]).unwrap_or_default()
-            ),
+            // Poprawiona obsługa ikony - bezpieczne ładowanie
+            .with_icon({
+                // Bezpieczne ładowanie ikony - jeśli plik nie istnieje, użyj domyślnej
+                match eframe::icon_data::from_png_bytes(include_bytes!("../LogosCockpit.png")) {
+                    Ok(icon) => icon,
+                    Err(_) => eframe::icon_data::from_png_bytes(&[]).unwrap_or_default(),
+                }
+            }),
+        // Usuwamy linię z renderer::Auto - jest niepotrzebna i niekompatybilna
+        hardware_acceleration: eframe::HardwareAcceleration::Preferred,
         ..Default::default()
     };
 
