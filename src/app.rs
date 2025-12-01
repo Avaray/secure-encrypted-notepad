@@ -13,49 +13,34 @@ use crate::settings::Settings;
 pub struct EditorApp {
     /// Text editor content
     text_content: String,
-
     /// Password for encryption/decryption
     password: String,
-
     /// Path to keyfile
     keyfile_path: Option<PathBuf>,
-
     /// Path to currently open file
     current_file_path: Option<PathBuf>,
-
     /// List of available versions in history
     versions: Vec<VersionInfo>,
-
     /// Status message
     status_message: String,
-
     /// User preferences
     settings: Settings,
-
     /// Show password dialog (for Open)
     show_password_dialog: bool,
-
     /// Pending path for file to open
     pending_open_path: Option<PathBuf>,
-
     /// Show Settings panel
     show_settings_panel: bool,
-
     /// Show History panel
     show_history_panel: bool,
-
     /// Document has been modified
     is_modified: bool,
-
     /// Currently previewed version (if any)
     preview_version: Option<(VersionInfo, String)>,
-
     /// Show restore confirmation dialog
     show_restore_confirm: Option<VersionInfo>,
-
     /// Show delete confirmation dialog
     show_delete_confirm: Option<VersionInfo>,
-
     /// Show alert when trying to save without auth
     show_missing_auth_alert: bool,
 }
@@ -63,7 +48,6 @@ pub struct EditorApp {
 impl Default for EditorApp {
     fn default() -> Self {
         let settings = Settings::load();
-
         // --- NOWA LOGIKA: Ładowanie klucza początkowego ---
         // Priorytet 1: Globalny domyślny klucz (jeśli opcja włączona i ścieżka istnieje)
         // Priorytet 2: Ostatnio używany klucz (jeśli opcja "Remember" włączona)
@@ -141,11 +125,9 @@ impl EditorApp {
         }
 
         self.text_content.clear();
-
         // Nie czyścimy klucza (keyfile_path), bo użytkownik może chcieć użyć tego samego (zwłaszcza domyślnego).
         // Ale czyścimy hasło dla bezpieczeństwa przy nowym dokumencie.
         self.password.clear();
-
         self.current_file_path = None;
         self.versions.clear();
         self.is_modified = false;
@@ -189,7 +171,6 @@ impl EditorApp {
                     self.is_modified = false;
                     self.show_password_dialog = false;
                     self.pending_open_path = None;
-
                     self.refresh_versions();
 
                     let version_count = self.versions.len();
@@ -362,8 +343,9 @@ impl EditorApp {
                     self.status_message = format!("✗ Error restoring: {}", e);
                 }
             }
+
+            self.show_restore_confirm = None;
         }
-        self.show_restore_confirm = None;
     }
 
     fn delete_version_confirmed(&mut self, version: &VersionInfo) {
@@ -376,12 +358,14 @@ impl EditorApp {
                 self.status_message = format!("✗ Error deleting: {}", e);
             }
         }
+
         self.show_delete_confirm = None;
     }
 
     fn cleanup_old_versions(&mut self) {
         if let Some(path) = &self.current_file_path {
             let retention_days = self.settings.snapshot_retention_days;
+
             match cleanup_old_versions(path, retention_days) {
                 Ok(count) => {
                     self.refresh_versions();
@@ -407,6 +391,7 @@ impl EditorApp {
             .show(ctx, |ui| {
                 ui.label("Enter password and keyfile to decrypt:");
                 ui.add_space(10.0);
+
                 ui.horizontal(|ui| {
                     ui.label("Password:");
                     let response = ui.add(
@@ -414,13 +399,16 @@ impl EditorApp {
                             .password(true)
                             .desired_width(250.0),
                     );
+
                     if self.show_password_dialog {
                         response.request_focus();
                     }
+
                     if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                         open_confirmed = true;
                     }
                 });
+
                 ui.horizontal(|ui| {
                     ui.label("Keyfile:");
                     if let Some(path) = &self.keyfile_path {
@@ -433,16 +421,20 @@ impl EditorApp {
                     } else {
                         ui.label("❌ Not selected");
                     }
+
                     if ui.button("Select").clicked() {
                         self.select_keyfile();
                     }
                 });
+
                 ui.add_space(10.0);
                 ui.separator();
+
                 ui.horizontal(|ui| {
                     if ui.button("✓ Open").clicked() {
                         open_confirmed = true;
                     }
+
                     if ui.button("✗ Cancel").clicked() {
                         open_cancelled = true;
                     }
@@ -452,6 +444,7 @@ impl EditorApp {
         if open_confirmed {
             self.open_file_with_password();
         }
+
         if open_cancelled {
             self.show_password_dialog = false;
             self.pending_open_path = None;
@@ -490,6 +483,7 @@ impl EditorApp {
             .show(ctx, |ui| {
                 // SEKCJA WYGLĄDU
                 ui.heading("Appearance");
+
                 ui.horizontal(|ui| {
                     ui.label("Theme:");
                     let changed = ui
@@ -498,6 +492,7 @@ impl EditorApp {
                         || ui
                             .selectable_value(&mut self.settings.dark_theme, false, "☀️ Light")
                             .clicked();
+
                     if changed {
                         self.apply_theme(ctx);
                         let _ = self.settings.save();
@@ -580,6 +575,7 @@ impl EditorApp {
 
                 // SEKCJA HISTORII
                 ui.heading("Version Control");
+
                 if ui
                     .checkbox(
                         &mut self.settings.auto_snapshot_on_save,
@@ -589,6 +585,7 @@ impl EditorApp {
                 {
                     let _ = self.settings.save();
                 }
+
                 ui.horizontal(|ui| {
                     ui.label("Retention:");
                     if ui
@@ -604,6 +601,7 @@ impl EditorApp {
                 });
 
                 ui.add_space(20.0);
+
                 if ui.button("Close").clicked() {
                     self.show_settings_panel = false;
                 }
@@ -614,6 +612,7 @@ impl EditorApp {
         ui.vertical(|ui| {
             ui.heading("📜 Version History");
             ui.add_space(5.0);
+
             if let Some(path) = &self.current_file_path {
                 if let Ok(stats) = get_history_stats(path) {
                     ui.horizontal(|ui| {
@@ -623,49 +622,59 @@ impl EditorApp {
                         ui.label(format!("{:.1} MB", size_mb));
                     });
                 }
-            }
-            ui.separator();
-            ui.horizontal(|ui| {
-                if ui.button("🗑️ Clean").clicked() {
-                    self.cleanup_old_versions();
-                }
-                if ui.button("🔄 Refresh").clicked() {
-                    self.refresh_versions();
-                }
-            });
-            ui.separator();
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                if self.versions.is_empty() {
-                    ui.label("No versions.");
-                } else {
-                    let versions = self.versions.clone();
-                    for version in &versions {
-                        ui.group(|ui| {
-                            ui.label(format!("📅 {}", version.display_timestamp()));
-                            ui.horizontal(|ui| {
-                                if ui.button("👁").clicked() {
-                                    self.preview_version(version);
-                                }
-                                if ui.button("↩️").clicked() {
-                                    self.show_restore_confirm = Some(version.clone());
-                                }
-                                if ui.button("🗑️").clicked() {
-                                    self.show_delete_confirm = Some(version.clone());
-                                }
-                            });
-                        });
-                        ui.add_space(2.0);
+
+                ui.separator();
+
+                ui.horizontal(|ui| {
+                    if ui.button("🗑️ Clean").clicked() {
+                        self.cleanup_old_versions();
                     }
-                }
-            });
+
+                    if ui.button("🔄 Refresh").clicked() {
+                        self.refresh_versions();
+                    }
+                });
+
+                ui.separator();
+
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    if self.versions.is_empty() {
+                        ui.label("No versions.");
+                    } else {
+                        let versions = self.versions.clone();
+                        for version in &versions {
+                            ui.group(|ui| {
+                                ui.label(format!("📅 {}", version.display_timestamp()));
+
+                                ui.horizontal(|ui| {
+                                    if ui.button("👁").clicked() {
+                                        self.preview_version(version);
+                                    }
+
+                                    if ui.button("↩️").clicked() {
+                                        self.show_restore_confirm = Some(version.clone());
+                                    }
+
+                                    if ui.button("🗑️").clicked() {
+                                        self.show_delete_confirm = Some(version.clone());
+                                    }
+                                });
+                            });
+                            ui.add_space(2.0);
+                        }
+                    }
+                });
+            }
         });
     }
 
     fn render_preview_window(&mut self, ctx: &egui::Context) {
         let preview_data = self.preview_version.clone();
         let mut close_clicked = false;
+
         if let Some((version, content)) = preview_data {
             let mut content_clone = content.clone();
+
             egui::Window::new(format!("Preview: {}", version.display_timestamp()))
                 .resizable(true)
                 .default_width(600.0)
@@ -678,11 +687,13 @@ impl EditorApp {
                                 .interactive(false),
                         );
                     });
+
                     if ui.button("Close").clicked() {
                         close_clicked = true;
                     }
                 });
         }
+
         if close_clicked {
             self.preview_version = None;
         }
@@ -692,27 +703,33 @@ impl EditorApp {
         let restore_data = self.show_restore_confirm.clone();
         let mut do_restore = false;
         let mut do_cancel = false;
+
         if let Some(version) = restore_data {
             let version_clone = version.clone();
+
             egui::Window::new("Confirm Restore")
                 .collapsible(false)
                 .resizable(false)
                 .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
                 .show(ctx, |ui| {
                     ui.label("Restore this version?");
+
                     ui.horizontal(|ui| {
                         if ui.button("Yes").clicked() {
                             do_restore = true;
                         }
+
                         if ui.button("No").clicked() {
                             do_cancel = true;
                         }
                     });
                 });
+
             if do_restore {
                 self.restore_version_confirmed(&version_clone);
             }
         }
+
         if do_cancel {
             self.show_restore_confirm = None;
         }
@@ -722,27 +739,33 @@ impl EditorApp {
         let delete_data = self.show_delete_confirm.clone();
         let mut do_delete = false;
         let mut do_cancel = false;
+
         if let Some(version) = delete_data {
             let version_clone = version.clone();
+
             egui::Window::new("Confirm Delete")
                 .collapsible(false)
                 .resizable(false)
                 .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
                 .show(ctx, |ui| {
                     ui.label("Delete this version?");
+
                     ui.horizontal(|ui| {
                         if ui.button("Yes").clicked() {
                             do_delete = true;
                         }
+
                         if ui.button("No").clicked() {
                             do_cancel = true;
                         }
                     });
                 });
+
             if do_delete {
                 self.delete_version_confirmed(&version_clone);
             }
         }
+
         if do_cancel {
             self.show_delete_confirm = None;
         }
@@ -751,19 +774,51 @@ impl EditorApp {
 
 impl eframe::App for EditorApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // ========== SKRÓTY KLAWISZOWE ==========
+        ctx.input_mut(|i| {
+            // CTRL+S - Zapisz plik
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL,
+                egui::Key::S,
+            )) {
+                self.save_file();
+            }
+
+            // CTRL+O - Otwórz plik
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL,
+                egui::Key::O,
+            )) {
+                self.open_file_dialog();
+            }
+
+            // CTRL+N - Nowy dokument
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL,
+                egui::Key::N,
+            )) {
+                self.new_document();
+            }
+        });
+        // ========================================
+
         // Renderuj dialogi
         if self.show_password_dialog {
             self.render_password_dialog(ctx);
         }
+
         if self.show_settings_panel {
             self.render_settings_panel(ctx);
         }
+
         if self.preview_version.is_some() {
             self.render_preview_window(ctx);
         }
+
         if self.show_restore_confirm.is_some() {
             self.render_restore_confirm(ctx);
         }
+
         if self.show_delete_confirm.is_some() {
             self.render_delete_confirm(ctx);
         }
@@ -779,39 +834,48 @@ impl eframe::App for EditorApp {
                         self.new_document();
                         ui.close_menu();
                     }
+
                     if ui.button("📂 Open").clicked() {
                         self.open_file_dialog();
                         ui.close_menu();
                     }
+
                     if ui.button("💾 Save").clicked() {
                         self.save_file();
                         ui.close_menu();
                     }
+
                     if ui.button("💾 Save As").clicked() {
                         self.save_file_as();
                         ui.close_menu();
                     }
+
                     ui.separator();
+
                     if ui.button("❌ Exit").clicked() {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                 });
+
                 ui.menu_button("Security", |ui| {
                     if ui.button("🔑 Select Keyfile").clicked() {
                         self.select_keyfile();
                         ui.close_menu();
                     }
+
                     if ui.button("✨ Generate Keyfile").clicked() {
                         self.generate_new_keyfile();
                         ui.close_menu();
                     }
                 });
+
                 ui.menu_button("History", |ui| {
                     if ui.button("📜 Toggle Panel").clicked() {
                         self.show_history_panel = !self.show_history_panel;
                         ui.close_menu();
                     }
                 });
+
                 ui.menu_button("Settings", |ui| {
                     if ui.button("⚙️ Preferences").clicked() {
                         self.show_settings_panel = true;
@@ -826,22 +890,27 @@ impl eframe::App for EditorApp {
             ui.horizontal(|ui| {
                 ui.heading("🔒 Auth");
                 ui.separator();
+
                 ui.label("Pass:");
                 ui.add(
                     egui::TextEdit::singleline(&mut self.password)
                         .password(true)
                         .desired_width(120.0),
                 );
+
                 ui.separator();
+
                 ui.label("Key:");
                 if let Some(path) = &self.keyfile_path {
                     ui.label(path.file_name().unwrap_or_default().to_string_lossy());
                 } else {
                     ui.colored_label(egui::Color32::YELLOW, "None");
                 }
+
                 if ui.button("Select").clicked() {
                     self.select_keyfile();
                 }
+
                 if ui.button("Gen").clicked() {
                     self.generate_new_keyfile();
                 }
@@ -852,6 +921,7 @@ impl eframe::App for EditorApp {
         egui::TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.label(&self.status_message);
+
                 if self.is_modified {
                     ui.colored_label(egui::Color32::YELLOW, "* Modified");
                 }
@@ -882,10 +952,12 @@ impl eframe::App for EditorApp {
             updated_style
                 .text_styles
                 .insert(egui::TextStyle::Monospace, font_id);
+
             ctx.set_style(updated_style);
 
             // FIX: Naprawa layoutu edytora - wypełnia dostępną przestrzeń
             let available_height = ui.available_height();
+
             egui::ScrollArea::vertical().show(ui, |ui| {
                 let text_edit = egui::TextEdit::multiline(&mut self.text_content)
                     .desired_width(f32::INFINITY)
