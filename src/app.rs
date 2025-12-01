@@ -144,7 +144,7 @@ impl EditorApp {
             .pick_file()
         {
             self.pending_open_path = Some(path);
-            self.dialog_password.clear(); // DODAJ TO! Wyczyść stare hasło
+            self.dialog_password.clear();
             self.show_password_dialog = true;
             self.status_message = "Enter password to decrypt".to_string();
         }
@@ -157,7 +157,6 @@ impl EditorApp {
         }
 
         if self.dialog_password.is_empty() {
-            // ZMIANA!
             self.status_message = "Error: Password required".to_string();
             return;
         }
@@ -173,7 +172,7 @@ impl EditorApp {
                 return;
             }
 
-            let password = Zeroizing::new(self.dialog_password.clone()); // ZMIANA!
+            let password = Zeroizing::new(self.dialog_password.clone());
 
             eprintln!("DEBUG: Password length: {}", password.len());
             eprintln!("DEBUG: Keyfile: {:?}", keyfile);
@@ -189,7 +188,7 @@ impl EditorApp {
                     self.is_modified = false;
                     self.show_password_dialog = false;
                     self.pending_open_path = None;
-                    self.dialog_password.clear(); // ZMIANA! Wyczyść po użyciu
+                    self.dialog_password.clear();
                     self.refresh_versions();
 
                     let version_count = self.versions.len();
@@ -849,25 +848,19 @@ impl EditorApp {
 
 impl eframe::App for EditorApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // ========== SKRÓTY KLAWISZOWE ==========
         ctx.input_mut(|i| {
-            // CTRL+S - Zapisz plik
             if i.consume_shortcut(&egui::KeyboardShortcut::new(
                 egui::Modifiers::CTRL,
                 egui::Key::S,
             )) {
                 self.save_file();
             }
-
-            // CTRL+O - Otwórz plik
             if i.consume_shortcut(&egui::KeyboardShortcut::new(
                 egui::Modifiers::CTRL,
                 egui::Key::O,
             )) {
                 self.open_file_dialog();
             }
-
-            // CTRL+N - Nowy dokument
             if i.consume_shortcut(&egui::KeyboardShortcut::new(
                 egui::Modifiers::CTRL,
                 egui::Key::N,
@@ -875,7 +868,6 @@ impl eframe::App for EditorApp {
                 self.new_document();
             }
         });
-        // ========================================
 
         // Renderuj dialogi
         if self.show_password_dialog {
@@ -1030,7 +1022,7 @@ impl eframe::App for EditorApp {
 
             ctx.set_style(updated_style);
 
-            // FIX: Naprawa layoutu edytora - wypełnia dostępną przestrzeń
+            // Wypełnia dostępną przestrzeń
             let available_height = ui.available_height();
 
             egui::ScrollArea::vertical().show(ui, |ui| {
