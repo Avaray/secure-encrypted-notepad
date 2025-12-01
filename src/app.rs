@@ -164,7 +164,8 @@ impl EditorApp {
         if let (Some(path), Some(keyfile)) = (pending_path, keyfile_path_clone) {
             let password = Zeroizing::new(self.password.clone());
 
-            match decrypt_file(&password, &keyfile, &path) {
+            // FIX: Używamy &*password zamiast &password aby uzyskać &str
+            match decrypt_file(&*password, &keyfile, &path) {
                 Ok(content) => {
                     self.text_content = content;
                     self.current_file_path = Some(path.clone());
@@ -231,7 +232,7 @@ impl EditorApp {
 
         let password = Zeroizing::new(self.password.clone());
 
-        match encrypt_file(&self.text_content, &password, &keyfile, &path) {
+        match encrypt_file(&self.text_content, &*password, &keyfile, &path) {
             Ok(_) => {
                 self.current_file_path = Some(path.clone());
                 self.is_modified = false;
