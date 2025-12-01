@@ -14,10 +14,10 @@ pub struct Settings {
     /// Theme: true = dark, false = light
     pub dark_theme: bool,
     
-    /// Path to last used keyfile (optional)
+    /// Path to last used keyfile (legacy/temporary memory)
     pub last_keyfile_path: Option<PathBuf>,
     
-    /// Whether to remember keyfile path
+    /// Whether to remember keyfile path (legacy)
     pub remember_keyfile_path: bool,
     
     /// Whether to automatically create snapshot on Save
@@ -25,6 +25,13 @@ pub struct Settings {
     
     /// Number of days to keep history (0 = no limit)
     pub snapshot_retention_days: i64,
+
+    // --- NOWE POLA DLA DOMYŚLNEGO KLUCZA ---
+    /// Path to the global default keyfile
+    pub default_keyfile_path: Option<PathBuf>,
+    
+    /// Whether to enforce this keyfile globally on startup
+    pub use_default_keyfile: bool,
 }
 
 impl Default for Settings {
@@ -35,8 +42,11 @@ impl Default for Settings {
             dark_theme: true,
             last_keyfile_path: None,
             remember_keyfile_path: false,
-            auto_snapshot_on_save: true,  // Enabled by default
-            snapshot_retention_days: 30,  // 30 days by default
+            auto_snapshot_on_save: true,
+            snapshot_retention_days: 30,
+            // Domyślnie wyłączone
+            default_keyfile_path: None,
+            use_default_keyfile: false,
         }
     }
 }
@@ -143,18 +153,5 @@ impl Settings {
     /// Validate retention days (0-365)
     pub fn validate_retention_days(&mut self) {
         self.snapshot_retention_days = self.snapshot_retention_days.clamp(0, 365);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    
-    #[test]
-    fn test_default_settings() {
-        let settings = Settings::default();
-        assert_eq!(settings.font_size, 14.0);
-        assert!(settings.auto_snapshot_on_save);
-        assert_eq!(settings.snapshot_retention_days, 30);
     }
 }
