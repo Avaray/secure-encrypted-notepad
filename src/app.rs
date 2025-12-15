@@ -6,7 +6,7 @@ use crate::history::DocumentWithHistory;
 use crate::settings::Settings;
 use crate::theme::{load_themes, Theme};
 
-/// Debug log entry
+/// Debug log entry :D
 #[derive(Debug, Clone)]
 struct LogEntry {
     timestamp: chrono::DateTime<chrono::Local>,
@@ -90,6 +90,8 @@ pub struct EditorApp {
     show_theme_editor: bool,
     /// Theme being edited (clone of current_theme for live editing)
     editing_theme: Option<Theme>,
+    /// Currently highlighted line (1-indexed)
+    highlighted_line: Option<usize>,
 }
 
 impl Default for EditorApp {
@@ -136,6 +138,7 @@ impl Default for EditorApp {
             icons: crate::icons::Icons::load(&egui::Context::default()),
             show_theme_editor: false,
             editing_theme: None,
+            highlighted_line: None,
         }
     }
 }
@@ -770,6 +773,10 @@ impl EditorApp {
                             }
                         });
 
+                        ui.add_space(8.0);
+                        ui.separator();
+                        ui.label(egui::RichText::new("Editor Colors").strong());
+
                         // Selection Background
                         ui.horizontal(|ui| {
                             ui.label("Selection Background:");
@@ -785,9 +792,9 @@ impl EditorApp {
                             }
                         });
 
-                        // Cursor
+                        // ✅ NOWY: Kursor
                         ui.horizontal(|ui| {
-                            ui.label("Cursor:");
+                            ui.label("Cursor Color:");
                             let mut color = egui::Color32::from_rgb(
                                 theme.colors.cursor[0],
                                 theme.colors.cursor[1],
@@ -812,6 +819,10 @@ impl EditorApp {
                                 theme.apply(ctx);
                             }
                         });
+
+                        ui.add_space(8.0);
+                        ui.separator();
+                        ui.label(egui::RichText::new("Syntax Colors").strong());
 
                         // Comment
                         ui.horizontal(|ui| {
@@ -1140,77 +1151,140 @@ impl EditorApp {
         let text = &mut self.document.current_content;
         let line_count = text.lines().count().max(1);
 
-        // Clone style properly to allow modification
-        let style = (*ui.style()).clone();
-        ui.set_style(style);
+        // ✅ Sklonuj wartości PRZED closure, aby uniknąć multiple borrow
+        let editor_font_size = self.settings.editor_font_size;
+        let show_line_numbers = self.settings.show_line_numbers;
+        let line_number_color = self.current_theme.colors.line_number_color();
+        let selection_bg_color = self.current_theme.colors.selection_color();
+        let highlighted_line = self.highlighted_line;
 
         egui::ScrollArea::vertical()
             .id_salt("editor")
             .auto_shrink([false; 2])
             .show(ui, |ui| {
                 ui.horizontal_top(|ui| {
-                    let font_id = egui::FontId::monospace(self.settings.editor_font_size);
-                    let row_height = ui.fonts(|f| f.row_height(&font_id));
+                    // Użyj DOKŁADNIE tego samego fontu dla numerów i edytora
+                    let font_id = egui::FontId::monospace(editor_font_size);
+
+                    // Pobierz dokładną wysokość linii i metryki czcionki
+                    let (row_height, galley_pos) = ui.fonts(|f| {
+                        let row_height = f.row_height(&font_id);
+                        // Pobierz pozycję bazową dla galley (baseline offset)
+                        let galley = f.layout_no_wrap(
+                            "A".to_string(),
+                            font_id.clone(),
+                            egui::Color32::WHITE,
+                        );
+                        let galley_offset = galley.rect.top();
+                        (row_height, galley_offset)
+                    });
 
                     // Line numbers
-                    if self.settings.show_line_numbers {
+                    if show_line_numbers {
                         let line_number_width =
-                            (line_count.to_string().len() as f32 * 8.0).max(30.0);
+                            (line_count.to_string().len() as f32 * editor_font_size * 0.6)
+                                .max(40.0);
 
                         ui.allocate_ui_with_layout(
                             egui::vec2(line_number_width, ui.available_height()),
                             egui::Layout::top_down(egui::Align::RIGHT),
                             |ui| {
                                 ui.spacing_mut().item_spacing.y = 0.0;
+                                ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Extend);
 
                                 for i in 1..=line_count {
-                                    let (rect, _) = ui.allocate_exact_size(
+                                    let (rect, response) = ui.allocate_exact_size(
                                         egui::vec2(line_number_width, row_height),
-                                        egui::Sense::hover(),
+                                        egui::Sense::click(),
                                     );
 
+                                    // ✅ Zwróć klikniętą linię zamiast bezpośrednio modyfikować self
+                                    if response.clicked() {
+                                        // Zapisz to w response data
+                                        response.ctx.data_mut(|d| {
+                                            d.insert_temp(egui::Id::new("clicked_line"), i);
+                                        });
+                                    }
+
+                                    // Podświetl tło jeśli to wybrana linia
+                                    if highlighted_line == Some(i) {
+                                        ui.painter().rect_filled(
+                                            rect,
+                                            0.0,
+                                            selection_bg_color.linear_multiply(0.5), // Półprzezroczyste
+                                        );
+                                    }
+
+                                    // Rysuj numer linii z DOKŁADNIE tym samym offsetem co tekst
+                                    let text_pos = rect.right_top() + egui::vec2(-8.0, galley_pos);
+
                                     ui.painter().text(
-                                        rect.right_top() + egui::vec2(-4.0, 0.0),
+                                        text_pos,
                                         egui::Align2::RIGHT_TOP,
                                         i.to_string(),
                                         font_id.clone(),
-                                        self.current_theme.colors.line_number_color(),
+                                        line_number_color,
                                     );
                                 }
                             },
                         );
 
-                        // Separator
+                        // Separator - pionowa linia
                         let (rect, _) = ui.allocate_exact_size(
-                            egui::vec2(1.0, ui.available_height()),
+                            egui::vec2(2.0, ui.available_height()),
                             egui::Sense::hover(),
                         );
                         ui.painter().line_segment(
                             [rect.center_top(), rect.center_bottom()],
-                            ui.visuals().widgets.noninteractive.bg_stroke,
+                            egui::Stroke::new(
+                                1.0,
+                                ui.visuals().widgets.noninteractive.bg_stroke.color,
+                            ),
                         );
+
+                        ui.add_space(4.0); // Mały odstęp
                     }
 
                     // Text editor
                     ui.vertical(|ui| {
                         ui.spacing_mut().item_spacing.y = 0.0;
+                        ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Extend);
 
                         let available_height = ui.available_height();
+
                         let text_edit = egui::TextEdit::multiline(text)
                             .desired_width(f32::INFINITY)
                             .min_size(egui::vec2(0.0, available_height))
-                            .font(font_id)
+                            .font(font_id.clone())
                             .code_editor()
                             .frame(false)
                             .lock_focus(true)
-                            .desired_rows(line_count);
+                            .desired_rows(line_count)
+                            .margin(egui::Margin::same(0.0));
 
                         if ui.add(text_edit).changed() {
-                            self.is_modified = true;
+                            // Zwróć info że coś się zmieniło
+                            ui.ctx().data_mut(|d| {
+                                d.insert_temp(egui::Id::new("text_changed"), true);
+                            });
                         }
                     });
                 });
             });
+
+        // ✅ PO closure - obsłuż kliknięcie i zmiany
+        ui.ctx().data_mut(|d| {
+            if let Some(clicked_line) = d.get_temp::<usize>(egui::Id::new("clicked_line")) {
+                self.highlighted_line = Some(clicked_line);
+                self.log_info(format!("Line {} selected", clicked_line));
+            }
+
+            if d.get_temp::<bool>(egui::Id::new("text_changed"))
+                .unwrap_or(false)
+            {
+                self.is_modified = true;
+            }
+        });
     }
 }
 

@@ -66,6 +66,18 @@ impl ThemeColors {
             self.line_number[2],
         )
     }
+
+    pub fn cursor_color(&self) -> egui::Color32 {
+        egui::Color32::from_rgb(self.cursor[0], self.cursor[1], self.cursor[2])
+    }
+
+    pub fn selection_color(&self) -> egui::Color32 {
+        egui::Color32::from_rgb(
+            self.selection_background[0],
+            self.selection_background[1],
+            self.selection_background[2],
+        )
+    }
 }
 
 impl Theme {
@@ -94,6 +106,10 @@ impl Theme {
         visuals.window_fill = self.colors.to_egui_color32(self.colors.background);
         visuals.panel_fill = self.colors.to_egui_color32(self.colors.panel_background);
         visuals.extreme_bg_color = self.colors.to_egui_color32(self.colors.panel_background);
+
+        // ✅ Użyj helper functions
+        visuals.selection.bg_fill = self.colors.selection_color();
+        visuals.selection.stroke.color = self.colors.cursor_color();
 
         ctx.set_visuals(visuals);
     }

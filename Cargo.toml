@@ -1,6 +1,6 @@
 [package]
 name = "sed"
-version = "0.2.0"
+version = "0.3.0"  # Zaktualizuj wersję
 edition = "2021"
 authors = ["Dawid Wasowski"]
 description = "Secure Encrypted Document editor with keyfile-only auth"
@@ -43,9 +43,40 @@ chrono = { version = "0.4", features = ["serde"] }
 # Base64 encoding for embedded history
 base64 = "0.22"
 
+# ============================================================================
+# BUILD PROFILES - Zoptymalizowane dla szybkości kompilacji
+# ============================================================================
+
+[profile.dev]
+opt-level = 1              # Lekka optymalizacja (szybsza kompilacja + lepsza wydajność)
+debug = true               # Debug symbols
+split-debuginfo = "unpacked"  # Windows - przyspiesza linking
+incremental = true         # Kompilacja inkrementalna
+
+# Optymalizuj zależności raz (nie przebudowują się)
+[profile.dev.package."*"]
+opt-level = 3              # Pełna optymalizacja dla bibliotek
+debug = false              # Bez debug symbols dla zależności
+
+# ============================================================================
+# RELEASE - Zbalansowany (szybki build + dobra wydajność)
+# ============================================================================
 [profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
+opt-level = 3              # Pełna optymalizacja
+lto = "thin"               # ✅ Thin LTO zamiast full (3-5x szybciej!)
+codegen-units = 16         # ✅ Równoległość (16 zamiast 1!)
+strip = true               # Usuń debug info
+panic = "abort"            # Mniejszy binary
+incremental = true         # ✅ NOWE: Incremental dla release
+
+# ============================================================================
+# RELEASE FINAL - Tylko dla publikacji (najwolniejszy, ale najmniejszy binary)
+# Użyj: cargo build --profile release-final
+# ============================================================================
+[profile.release-final]
+inherits = "release"
+opt-level = "z"            # Optymalizacja pod rozmiar
+lto = true                 # Full LTO (wolne, ale mały plik)
+codegen-units = 1          # Bez równoległości (wolne)
 strip = true
 panic = "abort"

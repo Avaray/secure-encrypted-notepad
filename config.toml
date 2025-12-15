@@ -1,0 +1,11 @@
+[build]
+jobs = 12                  # Użyj wszystkich rdzeni
+rustflags = []             # Może być puste
+
+[target.x86_64-pc-windows-msvc]
+linker = "rust-lld.exe"    # Szybszy linker
+rustflags = ["-Clink-arg=/INCREMENTAL"]  # Incremental linking
+
+# Opcjonalnie: Cache kompilacji (wymaga: cargo install sccache)
+# [build]
+# rustc-wrapper = "sccache"
