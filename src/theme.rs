@@ -13,7 +13,11 @@ pub struct ThemeColors {
     pub cursor: [u8; 3],
     pub line_number: [u8; 3],
     pub comment: [u8; 3],
-    pub icon_hover: [u8; 3], // ✅ NEW: Icon hover color
+    pub icon_hover: [u8; 3],
+    pub success: [u8; 3],
+    pub info: [u8; 3],
+    pub warning: [u8; 3],
+    pub error: [u8; 3],
 }
 
 impl Default for ThemeColors {
@@ -32,7 +36,11 @@ impl ThemeColors {
             cursor: [255, 255, 255],
             line_number: [128, 128, 128],
             comment: [106, 153, 85],
-            icon_hover: [100, 150, 255], // ✅ Blue tint on hover
+            icon_hover: [100, 150, 255],
+            success: [76, 175, 80], // Green
+            info: [33, 150, 243],   // Blue
+            warning: [255, 152, 0], // Orange
+            error: [244, 67, 54],   // Red
         }
     }
 
@@ -45,7 +53,11 @@ impl ThemeColors {
             cursor: [0, 0, 0],
             line_number: [128, 128, 128],
             comment: [0, 128, 0],
-            icon_hover: [0, 100, 255], // ✅ Blue tint on hover
+            icon_hover: [0, 100, 255],
+            success: [46, 125, 50], // Dark green
+            info: [13, 71, 161],    // Dark blue
+            warning: [230, 81, 0],  // Dark orange
+            error: [198, 40, 40],   // Dark red
         }
     }
 
@@ -76,6 +88,22 @@ impl ThemeColors {
     // ✅ NEW: Icon hover color helper
     pub fn icon_hover_color(&self) -> egui::Color32 {
         egui::Color32::from_rgb(self.icon_hover[0], self.icon_hover[1], self.icon_hover[2])
+    }
+
+    pub fn success_color(&self) -> egui::Color32 {
+        egui::Color32::from_rgb(self.success[0], self.success[1], self.success[2])
+    }
+
+    pub fn info_color(&self) -> egui::Color32 {
+        egui::Color32::from_rgb(self.info[0], self.info[1], self.info[2])
+    }
+
+    pub fn warning_color(&self) -> egui::Color32 {
+        egui::Color32::from_rgb(self.warning[0], self.warning[1], self.warning[2])
+    }
+
+    pub fn error_color(&self) -> egui::Color32 {
+        egui::Color32::from_rgb(self.error[0], self.error[1], self.error[2])
     }
 }
 

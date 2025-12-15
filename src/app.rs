@@ -876,6 +876,62 @@ impl EditorApp {
                             }
                         });
 
+                        // Success Color
+                        ui.horizontal(|ui| {
+                            ui.label("Success:");
+                            let mut color = egui::Color32::from_rgb(
+                                theme.colors.success[0],
+                                theme.colors.success[1],
+                                theme.colors.success[2],
+                            );
+                            if ui.color_edit_button_srgba(&mut color).changed() {
+                                theme.colors.success = [color.r(), color.g(), color.b()];
+                                theme.apply(ctx);
+                            }
+                        });
+
+                        // Info Color
+                        ui.horizontal(|ui| {
+                            ui.label("Info:");
+                            let mut color = egui::Color32::from_rgb(
+                                theme.colors.info[0],
+                                theme.colors.info[1],
+                                theme.colors.info[2],
+                            );
+                            if ui.color_edit_button_srgba(&mut color).changed() {
+                                theme.colors.info = [color.r(), color.g(), color.b()];
+                                theme.apply(ctx);
+                            }
+                        });
+
+                        // Warning Color
+                        ui.horizontal(|ui| {
+                            ui.label("Warning:");
+                            let mut color = egui::Color32::from_rgb(
+                                theme.colors.warning[0],
+                                theme.colors.warning[1],
+                                theme.colors.warning[2],
+                            );
+                            if ui.color_edit_button_srgba(&mut color).changed() {
+                                theme.colors.warning = [color.r(), color.g(), color.b()];
+                                theme.apply(ctx);
+                            }
+                        });
+
+                        // Error Color
+                        ui.horizontal(|ui| {
+                            ui.label("Error:");
+                            let mut color = egui::Color32::from_rgb(
+                                theme.colors.error[0],
+                                theme.colors.error[1],
+                                theme.colors.error[2],
+                            );
+                            if ui.color_edit_button_srgba(&mut color).changed() {
+                                theme.colors.error = [color.r(), color.g(), color.b()];
+                                theme.apply(ctx);
+                            }
+                        });
+
                         ui.add_space(8.0);
                         ui.separator();
                         ui.label(egui::RichText::new("Syntax Colors").strong());
@@ -1621,84 +1677,115 @@ impl eframe::App for EditorApp {
         self.render_goto_line_dialog(ctx);
 
         // Toolbar
-        egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {
-            self.render_toolbar(ui);
-        });
+        egui::TopBottomPanel::top("toolbar")
+            .min_height(50.0)
+            .show(ctx, |ui| {
+                ui.add_space(4.0);
+                self.render_toolbar(ui);
+            });
 
         // Status bar
-        egui::TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                ui.label(&self.status_message);
-                if self.is_modified {
-                    ui.label(egui::RichText::new("*").color(egui::Color32::YELLOW));
-                }
+        egui::TopBottomPanel::bottom("status_bar")
+            .min_height(32.0)
+            .show(ctx, |ui| {
+                ui.add_space(3.0);
+                ui.horizontal(|ui| {
+                    ui.label(&self.status_message);
+                    if self.is_modified {
+                        ui.label(egui::RichText::new("*").color(egui::Color32::YELLOW));
+                    }
 
-                // Keyfile controls in bottom right
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    let small_btn_size = egui::vec2(20.0, 20.0); // Smaller buttons
-                    let small_icon_size = egui::vec2(16.0, 16.0); // Smaller icons
-                    let hover_tint = self.current_theme.colors.icon_hover_color();
+                    // Keyfile controls in bottom right
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        let small_btn_size = egui::vec2(20.0, 20.0); // Smaller buttons
+                        let small_icon_size = egui::vec2(16.0, 16.0); // Smaller icons
+                        let hover_tint = self.current_theme.colors.icon_hover_color();
 
-                    // Helper for small icon button
-                    let small_icon_btn = |ui: &mut egui::Ui,
-                                          icon: &egui::TextureHandle,
-                                          tooltip: &str|
-                     -> egui::Response {
-                        let (rect, mut response) =
-                            ui.allocate_exact_size(small_btn_size, egui::Sense::click());
-                        if response.clicked() {
-                            response.mark_changed();
-                        }
-                        if response.hovered() {
-                            ui.painter().rect_filled(
-                                rect,
-                                3.0,
-                                ui.visuals().widgets.hovered.bg_fill,
+                        // Helper for small icon button
+                        let small_icon_btn = |ui: &mut egui::Ui,
+                                              icon: &egui::TextureHandle,
+                                              tooltip: &str|
+                         -> egui::Response {
+                            let (rect, mut response) =
+                                ui.allocate_exact_size(small_btn_size, egui::Sense::click());
+                            if response.clicked() {
+                                response.mark_changed();
+                            }
+                            if response.hovered() {
+                                ui.painter().rect_filled(
+                                    rect,
+                                    3.0,
+                                    ui.visuals().widgets.hovered.bg_fill,
+                                );
+                            }
+
+                            let icon_rect =
+                                egui::Rect::from_center_size(rect.center(), small_icon_size);
+                            let tint = if response.hovered() {
+                                hover_tint
+                            } else {
+                                egui::Color32::GRAY
+                            }; // Gray when not hovered for status bar subtlety
+
+                            ui.painter().image(
+                                icon.id(),
+                                icon_rect,
+                                egui::Rect::from_min_max(
+                                    egui::pos2(0.0, 0.0),
+                                    egui::pos2(1.0, 1.0),
+                                ),
+                                tint,
                             );
+                            response.on_hover_text(tooltip)
+                        };
+
+                        if small_icon_btn(ui, &self.icons.generate, "Generate Keyfile").clicked() {
+                            self.generate_new_keyfile();
                         }
 
-                        let icon_rect =
-                            egui::Rect::from_center_size(rect.center(), small_icon_size);
-                        let tint = if response.hovered() {
-                            hover_tint
+                        if small_icon_btn(ui, &self.icons.key, "Load Keyfile").clicked() {
+                            self.load_keyfile();
+                        }
+
+                        ui.separator();
+
+                        // Keyfile indicator with icon
+                        if let Some(path) = &self.keyfile_path {
+                            let icon_tint = self.current_theme.colors.success_color();
+                            let icon_rect = ui.allocate_space(small_icon_size).1;
+                            ui.painter().image(
+                                self.icons.secured.id(),
+                                icon_rect,
+                                egui::Rect::from_min_max(
+                                    egui::pos2(0.0, 0.0),
+                                    egui::pos2(1.0, 1.0),
+                                ),
+                                icon_tint,
+                            );
+                            ui.label(
+                                egui::RichText::new(format!(
+                                    "{}",
+                                    path.file_name().unwrap_or_default().to_string_lossy()
+                                ))
+                                .color(icon_tint),
+                            );
                         } else {
-                            egui::Color32::GRAY
-                        }; // Gray when not hovered for status bar subtlety
-
-                        ui.painter().image(
-                            icon.id(),
-                            icon_rect,
-                            egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
-                            tint,
-                        );
-                        response.on_hover_text(tooltip)
-                    };
-
-                    if small_icon_btn(ui, &self.icons.generate, "Generate Keyfile").clicked() {
-                        self.generate_new_keyfile();
-                    }
-
-                    if small_icon_btn(ui, &self.icons.key, "Load Keyfile").clicked() {
-                        self.load_keyfile();
-                    }
-
-                    ui.separator();
-
-                    // Keyfile indicator
-                    if let Some(path) = &self.keyfile_path {
-                        ui.label(
-                            egui::RichText::new(format!(
-                                "🔑 {}",
-                                path.file_name().unwrap_or_default().to_string_lossy()
-                            ))
-                            .color(egui::Color32::GREEN),
-                        );
-                    } else {
-                        ui.label(egui::RichText::new("⚠ No keyfile").color(egui::Color32::RED));
-                    }
+                            let icon_tint = self.current_theme.colors.warning_color();
+                            let icon_rect = ui.allocate_space(small_icon_size).1;
+                            ui.painter().image(
+                                self.icons.unsecured.id(),
+                                icon_rect,
+                                egui::Rect::from_min_max(
+                                    egui::pos2(0.0, 0.0),
+                                    egui::pos2(1.0, 1.0),
+                                ),
+                                icon_tint,
+                            );
+                            ui.label(egui::RichText::new("No keyfile").color(icon_tint));
+                        }
+                    });
                 });
             });
-        });
 
         // File tree (left)
         if self.show_file_tree {
