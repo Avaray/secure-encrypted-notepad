@@ -56,55 +56,38 @@ impl LogEntry {
 pub struct EditorApp {
     /// Current document with embedded history
     document: DocumentWithHistory,
-
     /// Path to keyfile
     keyfile_path: Option<PathBuf>,
-
     /// Path to currently open file
     current_file_path: Option<PathBuf>,
-
     /// Status message
     status_message: String,
-
     /// User preferences
     settings: Settings,
-
     /// Available themes
     themes: Vec<Theme>,
-
     /// Current theme
     current_theme: Theme,
-
     /// Show Settings panel
     show_settings_panel: bool,
-
     /// Show History panel
     show_history_panel: bool,
-
     /// Show Debug panel
     show_debug_panel: bool,
-
     /// Show file tree panel
     show_file_tree: bool,
-
     /// Document has been modified
     is_modified: bool,
-
     /// Debug log entries
     debug_log: Vec<LogEntry>,
-
     /// File tree current directory
     file_tree_dir: Option<PathBuf>,
-
     /// File tree entries
     file_tree_entries: Vec<PathBuf>,
-
     /// Icons
     icons: crate::icons::Icons,
-
     /// Show Theme Editor panel
     show_theme_editor: bool,
-
     /// Theme being edited (clone of current_theme for live editing)
     editing_theme: Option<Theme>,
 }
@@ -257,7 +240,6 @@ impl EditorApp {
         }
 
         let keyfile = self.keyfile_path.clone().unwrap();
-
         self.log_info(format!("Opening file: {}", path.display()));
         self.log_info(format!("Using keyfile: {}", keyfile.display()));
 
@@ -266,7 +248,6 @@ impl EditorApp {
                 self.document = DocumentWithHistory::from_file_content(&content);
                 self.current_file_path = Some(path.clone());
                 self.is_modified = false;
-
                 let history_count = self.document.get_history().len();
                 self.status_message = format!(
                     "Opened: {} ({} history entries)",
@@ -302,17 +283,13 @@ impl EditorApp {
 
         // Fix: Clone to release borrow on self
         let dir_opt = self.file_tree_dir.clone();
-
         if let Some(dir) = dir_opt {
             self.log_info(format!("Refreshing file tree for: {}", dir.display()));
-
             match std::fs::read_dir(dir) {
                 Ok(entries) => {
                     let mut count = 0;
                     for entry in entries.flatten() {
                         let path = entry.path();
-                        // self.log_info(format!("Found: {}", path.display()));
-
                         if path.is_file() {
                             if let Some(ext) = path.extension() {
                                 if ext == "sed" {
@@ -377,7 +354,6 @@ impl EditorApp {
     /// Perform actual save
     fn perform_save(&mut self, path: PathBuf) {
         let keyfile = self.keyfile_path.clone().unwrap();
-
         self.log_info(format!("Saving file: {}", path.display()));
 
         // Add snapshot if auto-snapshot enabled and content changed
@@ -393,7 +369,6 @@ impl EditorApp {
             Ok(_) => {
                 self.current_file_path = Some(path.clone());
                 self.is_modified = false;
-
                 let history_count = self.document.get_history().len();
                 self.status_message = format!(
                     "Saved: {} ({} history entries)",
@@ -422,7 +397,6 @@ impl EditorApp {
                 Ok(metadata) => {
                     let size = metadata.len();
                     self.log_info(format!("Keyfile size: {} bytes", size));
-
                     if size != 256 {
                         self.status_message =
                             format!("Error: Invalid keyfile (must be 256 bytes, got {})", size);
@@ -468,7 +442,6 @@ impl EditorApp {
     fn generate_new_keyfile(&mut self) {
         if let Some(path) = rfd::FileDialog::new().set_file_name("keyfile").save_file() {
             self.log_info(format!("Generating new keyfile: {}", path.display()));
-
             match generate_keyfile(&path) {
                 Ok(_) => {
                     self.keyfile_path = Some(path.clone());
@@ -502,9 +475,7 @@ impl EditorApp {
             self.log_info(format!("Deleted history entry #{}", index));
         }
     }
-}
 
-impl EditorApp {
     /// Clear all history
     fn clear_all_history(&mut self) {
         let count = self.document.get_history().len();
@@ -521,7 +492,7 @@ impl EditorApp {
 
             // Stały rozmiar przycisków (kwadratowe)
             let button_size = egui::vec2(32.0, 32.0);
-            let icon_size = egui::vec2(24.0, 24.0); // Rozmiar ikony w przycisku
+            let icon_size = egui::vec2(24.0, 24.0);
 
             // --- LEFT SIDE: Main Actions ---
 
@@ -736,7 +707,6 @@ impl EditorApp {
 
     /// Render theme editor panel
     fn render_theme_editor_panel(&mut self, ctx: &egui::Context) {
-        // Używamy zmiennych lokalnych aby uniknąć conflictu borrowów
         let mut close_editor = false;
         let mut action: Option<ThemeEditorAction> = None;
 
@@ -956,8 +926,8 @@ impl EditorApp {
     fn render_history_panel(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
             ui.heading("History");
-            let history_len = self.document.get_history().len();
 
+            let history_len = self.document.get_history().len();
             ui.horizontal(|ui| {
                 ui.label(format!("Entries: {}/100", history_len));
 
@@ -982,15 +952,18 @@ impl EditorApp {
                         ui.group(|ui| {
                             ui.label(format!("📅 {}", entry.display_timestamp()));
                             ui.label(format!("💾 {}", entry.display_size()));
+
                             ui.horizontal(|ui| {
                                 if ui.button("Load").clicked() {
                                     self.load_history_version(index);
                                 }
+
                                 if ui.button("Delete").clicked() {
                                     self.delete_history_entry(index);
                                 }
                             });
                         });
+
                         ui.add_space(4.0);
                     }
                 }
@@ -1022,7 +995,6 @@ impl EditorApp {
                             LogLevel::Warning => egui::Color32::from_rgb(255, 200, 0),
                             LogLevel::Error => egui::Color32::from_rgb(255, 80, 80),
                         };
-
                         ui.colored_label(color, entry.display());
                     }
                 });
@@ -1121,11 +1093,9 @@ impl EditorApp {
                     if ui.button("Set Global Keyfile").clicked() {
                         if let Some(path) = rfd::FileDialog::new().pick_file() {
                             self.settings.global_keyfile_path = Some(path.clone());
-
                             if self.settings.use_global_keyfile {
                                 self.keyfile_path = Some(path);
                             }
-
                             let _ = self.settings.save();
                             self.log_info("Global keyfile set");
                         }
@@ -1170,60 +1140,83 @@ impl EditorApp {
         let text = &mut self.document.current_content;
         let line_count = text.lines().count().max(1);
 
-        ui.horizontal_top(|ui| {
-            // Line numbers
-            if self.settings.show_line_numbers {
-                let line_number_width = (line_count.to_string().len() as f32 * 8.0).max(30.0);
+        // Clone style properly to allow modification
+        let style = (*ui.style()).clone();
+        ui.set_style(style);
 
-                ui.allocate_ui_with_layout(
-                    egui::vec2(line_number_width, ui.available_height()),
-                    egui::Layout::top_down(egui::Align::RIGHT),
-                    |ui| {
-                        ui.set_min_height(ui.available_height());
+        egui::ScrollArea::vertical()
+            .id_salt("editor")
+            .auto_shrink([false; 2])
+            .show(ui, |ui| {
+                ui.horizontal_top(|ui| {
+                    let font_id = egui::FontId::monospace(self.settings.editor_font_size);
+                    let row_height = ui.fonts(|f| f.row_height(&font_id));
 
-                        egui::ScrollArea::vertical()
-                            .id_salt("line_numbers")
-                            .show(ui, |ui| {
-                                ui.style_mut().spacing.item_spacing.y = 0.0;
+                    // Line numbers
+                    if self.settings.show_line_numbers {
+                        let line_number_width =
+                            (line_count.to_string().len() as f32 * 8.0).max(30.0);
+
+                        ui.allocate_ui_with_layout(
+                            egui::vec2(line_number_width, ui.available_height()),
+                            egui::Layout::top_down(egui::Align::RIGHT),
+                            |ui| {
+                                ui.spacing_mut().item_spacing.y = 0.0;
 
                                 for i in 1..=line_count {
-                                    ui.label(
-                                        egui::RichText::new(i.to_string())
-                                            .color(egui::Color32::GRAY)
-                                            .monospace(),
+                                    let (rect, _) = ui.allocate_exact_size(
+                                        egui::vec2(line_number_width, row_height),
+                                        egui::Sense::hover(),
+                                    );
+
+                                    ui.painter().text(
+                                        rect.right_top() + egui::vec2(-4.0, 0.0),
+                                        egui::Align2::RIGHT_TOP,
+                                        i.to_string(),
+                                        font_id.clone(),
+                                        self.current_theme.colors.line_number_color(),
                                     );
                                 }
-                            });
-                    },
-                );
+                            },
+                        );
 
-                ui.separator();
-            }
-
-            // Text editor
-            egui::ScrollArea::vertical()
-                .id_salt("editor")
-                .show(ui, |ui| {
-                    let available_height = ui.available_height();
-
-                    let text_edit = egui::TextEdit::multiline(text)
-                        .desired_width(f32::INFINITY)
-                        .min_size(egui::vec2(0.0, available_height))
-                        .font(egui::FontId::monospace(self.settings.editor_font_size))
-                        .code_editor()
-                        .frame(false); // Remove focus border
-
-                    if ui.add(text_edit).changed() {
-                        self.is_modified = true;
+                        // Separator
+                        let (rect, _) = ui.allocate_exact_size(
+                            egui::vec2(1.0, ui.available_height()),
+                            egui::Sense::hover(),
+                        );
+                        ui.painter().line_segment(
+                            [rect.center_top(), rect.center_bottom()],
+                            ui.visuals().widgets.noninteractive.bg_stroke,
+                        );
                     }
+
+                    // Text editor
+                    ui.vertical(|ui| {
+                        ui.spacing_mut().item_spacing.y = 0.0;
+
+                        let available_height = ui.available_height();
+                        let text_edit = egui::TextEdit::multiline(text)
+                            .desired_width(f32::INFINITY)
+                            .min_size(egui::vec2(0.0, available_height))
+                            .font(font_id)
+                            .code_editor()
+                            .frame(false)
+                            .lock_focus(true)
+                            .desired_rows(line_count);
+
+                        if ui.add(text_edit).changed() {
+                            self.is_modified = true;
+                        }
+                    });
                 });
-        });
+            });
     }
 }
 
 impl eframe::App for EditorApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Fix: Apply styles (font sizes) every frame/update
+        // Apply styles (font sizes) every frame/update
         self.apply_style(ctx);
 
         // Keyboard shortcuts
@@ -1234,12 +1227,14 @@ impl eframe::App for EditorApp {
             )) {
                 self.save_file();
             }
+
             if i.consume_shortcut(&egui::KeyboardShortcut::new(
                 egui::Modifiers::CTRL,
                 egui::Key::O,
             )) {
                 self.open_file_dialog();
             }
+
             if i.consume_shortcut(&egui::KeyboardShortcut::new(
                 egui::Modifiers::CTRL,
                 egui::Key::N,
@@ -1267,7 +1262,6 @@ impl eframe::App for EditorApp {
         egui::TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.label(&self.status_message);
-
                 if self.is_modified {
                     ui.label(egui::RichText::new("*").color(egui::Color32::YELLOW));
                 }

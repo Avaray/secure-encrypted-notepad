@@ -58,6 +58,16 @@ pub struct Theme {
     pub colors: ThemeColors,
 }
 
+impl ThemeColors {
+    pub fn line_number_color(&self) -> egui::Color32 {
+        egui::Color32::from_rgb(
+            self.line_number[0],
+            self.line_number[1],
+            self.line_number[2],
+        )
+    }
+}
+
 impl Theme {
     pub fn dark() -> Self {
         Self {
