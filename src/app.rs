@@ -345,7 +345,7 @@ impl EditorApp {
                     });
 
                     // Add parent directory entry if not root
-                    if dir.parent().is_some() {
+                    if dir.parent().is_some() && self.settings.show_subfolders {
                         self.file_tree_entries.push(FileTreeEntry::Directory(
                             dir.parent().unwrap().to_path_buf(),
                         ));
@@ -1424,6 +1424,20 @@ impl EditorApp {
                                     if relative_y > editor_content_height {
                                         // Clicked below content - select last line
                                         clicked_below_content = true;
+                                        output.request_focus();
+
+                                        // Move caret to end
+                                        if let Some(mut state) =
+                                            egui::text_edit::TextEditState::load(
+                                                ui.ctx(),
+                                                output.id,
+                                            )
+                                        {
+                                            let ccursor = egui::text::CCursor::new(text.len());
+                                            let range = egui::text::CCursorRange::one(ccursor);
+                                            state.cursor.set_char_range(Some(range));
+                                            state.store(ui.ctx(), output.id);
+                                        }
                                     }
                                 }
                             }
