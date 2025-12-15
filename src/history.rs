@@ -5,17 +5,15 @@ use serde::{Deserialize, Serialize};
 const MAX_HISTORY_ENTRIES: usize = 100;
 
 /// Separator between content and history in file
-const HISTORY_SEPARATOR: &str = "\n<<<SED_HISTORY_START>>>\n";
+const HISTORY_SEPARATOR: &str = "\n<<HISTORY>>\n";
 
 /// Single history entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HistoryEntry {
     /// Timestamp when this version was created
     pub timestamp: DateTime<Local>,
-
     /// Content snapshot
     pub content: String,
-
     /// Optional user comment
     pub comment: Option<String>,
 }
@@ -42,7 +40,6 @@ impl HistoryEntry {
 pub struct DocumentWithHistory {
     /// Current document content
     pub current_content: String,
-
     /// History entries (max 100)
     pub history: Vec<HistoryEntry>,
 }
@@ -57,22 +54,12 @@ impl Default for DocumentWithHistory {
 }
 
 impl DocumentWithHistory {
-    /// Create new document with initial content
-    pub fn new(content: String) -> Self {
-        Self {
-            current_content: content,
-            history: Vec::new(),
-        }
-    }
-
     /// Parse file content (current + history)
     pub fn from_file_content(file_content: &str) -> Self {
         if let Some(pos) = file_content.find(HISTORY_SEPARATOR) {
             let current_content = file_content[..pos].to_string();
             let history_json = &file_content[pos + HISTORY_SEPARATOR.len()..];
-
             let history: Vec<HistoryEntry> = serde_json::from_str(history_json).unwrap_or_default();
-
             Self {
                 current_content,
                 history,
@@ -106,7 +93,6 @@ impl DocumentWithHistory {
             content: self.current_content.clone(),
             comment,
         };
-
         self.history.insert(0, entry); // Insert at beginning (newest first)
 
         // Keep only last 100 entries
@@ -152,8 +138,8 @@ mod tests {
 
     #[test]
     fn test_history_embedded() {
-        let mut doc = DocumentWithHistory::new("Initial content".to_string());
-
+        let mut doc = DocumentWithHistory::default();
+        doc.current_content = "Initial content".to_string();
         doc.add_snapshot(Some("First save".to_string()));
         doc.current_content = "Modified content".to_string();
         doc.add_snapshot(Some("Second save".to_string()));

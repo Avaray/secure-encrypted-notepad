@@ -39,7 +39,7 @@ impl Icons {
             ),
             save_as: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/MdiContentSaveSettings (1).svg"),
+                include_bytes!("../assets/MdiContentSaveSettings.svg"),
                 "icon_save_as",
             ),
             key: Self::load_svg(
