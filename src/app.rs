@@ -692,27 +692,6 @@ impl EditorApp {
 
             ui.separator();
 
-            if icon_button(ui, &self.icons.key, "Load Keyfile", false).clicked() {
-                self.load_keyfile();
-            }
-
-            if icon_button(ui, &self.icons.generate, "Generate Keyfile", false).clicked() {
-                self.generate_new_keyfile();
-            }
-
-            // Keyfile indicator
-            if let Some(path) = &self.keyfile_path {
-                ui.label(
-                    egui::RichText::new(format!(
-                        "🔑 {}",
-                        path.file_name().unwrap_or_default().to_string_lossy()
-                    ))
-                    .color(egui::Color32::GREEN),
-                );
-            } else {
-                ui.label(egui::RichText::new("⚠ No keyfile").color(egui::Color32::RED));
-            }
-
             ui.add_space(20.0);
 
             // --- RIGHT SIDE: Toggles ---
@@ -1649,6 +1628,76 @@ impl eframe::App for EditorApp {
                 if self.is_modified {
                     ui.label(egui::RichText::new("*").color(egui::Color32::YELLOW));
                 }
+
+                // Keyfile controls in bottom right
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let small_btn_size = egui::vec2(20.0, 20.0); // Smaller buttons
+                    let small_icon_size = egui::vec2(16.0, 16.0); // Smaller icons
+                    let hover_tint = self.current_theme.colors.icon_hover_color();
+
+                    // Helper for small icon button
+                    let small_icon_btn = |ui: &mut egui::Ui,
+                                          icon: &egui::TextureHandle,
+                                          tooltip: &str|
+                     -> egui::Response {
+                        let (rect, mut response) =
+                            ui.allocate_exact_size(small_btn_size, egui::Sense::click());
+                        if response.clicked() {
+                            response.mark_changed();
+                        }
+                        if response.hovered() {
+                            ui.painter().rect_filled(
+                                rect,
+                                3.0,
+                                ui.visuals().widgets.hovered.bg_fill,
+                            );
+                        }
+
+                        let icon_rect =
+                            egui::Rect::from_center_size(rect.center(), small_icon_size);
+                        let tint = if response.hovered() {
+                            hover_tint
+                        } else {
+                            egui::Color32::GRAY
+                        }; // Gray when not hovered for status bar subtlety
+
+                        ui.painter().image(
+                            icon.id(),
+                            icon_rect,
+                            egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
+                            tint,
+                        );
+                        response.on_hover_text(tooltip)
+                    };
+
+                    if small_icon_btn(ui, &self.icons.generate, "Generate Keyfile").clicked() {
+                        self.generate_new_keyfile();
+                    }
+
+                    if small_icon_btn(ui, &self.icons.key, "Load Keyfile").clicked() {
+                        self.load_keyfile();
+                    }
+
+                    ui.separator();
+
+                    // Keyfile indicator
+                    if let Some(path) = &self.keyfile_path {
+                        ui.label(
+                            egui::RichText::new(format!(
+                                "🔑 {}",
+                                path.file_name().unwrap_or_default().to_string_lossy()
+                            ))
+                            .color(egui::Color32::GREEN)
+                            .size(12.0), // Smaller font
+                        );
+                    } else {
+                        ui.label(
+                            egui::RichText::new("⚠ No keyfile")
+                                .color(egui::Color32::RED)
+                                .size(12.0),
+                        );
+                    }
+                });
             });
         });
 
