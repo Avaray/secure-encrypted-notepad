@@ -9,3 +9,6 @@ rustflags = ["-Clink-arg=/INCREMENTAL"]  # Incremental linking
 # Opcjonalnie: Cache kompilacji (wymaga: cargo install sccache)
 # [build]
 # rustc-wrapper = "sccache"
+
+[alias]
+dev = "watch -i '*.md' -i 'docs/*' -x run"
