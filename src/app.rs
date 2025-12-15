@@ -118,6 +118,8 @@ pub struct EditorApp {
     show_close_confirmation: bool,
     /// Pending action to execute after confirmation
     pending_action: PendingAction,
+    /// Text cursor range for comment toggling (char indices)
+    text_cursor_range: Option<std::ops::Range<usize>>,
 }
 
 impl Default for EditorApp {
@@ -169,6 +171,7 @@ impl Default for EditorApp {
             goto_line_input: String::new(),
             show_close_confirmation: false,
             pending_action: PendingAction::None,
+            text_cursor_range: None,
         }
     }
 }
@@ -626,60 +629,61 @@ impl EditorApp {
 
     /// Toggle comment on selected lines or current line
     fn toggle_comment_lines(&mut self) {
+        // Get lines to comment BEFORE borrowing text as mutable
+        let lines_to_toggle = self.get_lines_in_selection();
+
+        if lines_to_toggle.is_empty() {
+            return;
+        }
+
         let text = &mut self.document.current_content;
+
+        if text.is_empty() {
+            return;
+        }
+
+        // Split into lines
         let lines: Vec<&str> = text.lines().collect();
 
-        if lines.is_empty() {
-            return;
-        }
-
-        // Get cursor position or selection range
-        // For now, we'll work with the entire text and detect which line to comment
-        // based on highlighted_line or comment all if no highlight
-
-        let line_to_comment = if let Some(line_num) = self.highlighted_line {
-            if line_num > 0 && line_num <= lines.len() {
-                Some(line_num - 1) // Convert to 0-indexed
+        // Check if all selected lines are commented
+        let all_commented = lines_to_toggle.iter().all(|&line_idx| {
+            if line_idx < lines.len() {
+                let trimmed = lines[line_idx].trim_start();
+                trimmed.starts_with("//")
             } else {
-                None
+                false
             }
-        } else {
-            // If no line is highlighted, comment the first line or do nothing
-            None
-        };
-
-        if line_to_comment.is_none() && lines.is_empty() {
-            return;
-        }
+        });
 
         // Process all lines
         let mut new_lines: Vec<String> = Vec::new();
 
         for (idx, line) in lines.iter().enumerate() {
-            // Check if we should process this line
-            let should_process = if let Some(target_idx) = line_to_comment {
-                idx == target_idx
-            } else {
-                // If no specific line, comment all non-empty lines
-                !line.trim().is_empty()
-            };
-
-            if should_process {
+            if lines_to_toggle.contains(&idx) {
                 let trimmed = line.trim_start();
-                if trimmed.starts_with("//") {
+
+                if all_commented {
                     // Uncomment: remove "//" and following space if present
-                    let uncommented = if trimmed.starts_with("// ") {
-                        trimmed.strip_prefix("// ").unwrap()
+                    if trimmed.starts_with("//") {
+                        let uncommented = if trimmed.starts_with("// ") {
+                            trimmed.strip_prefix("// ").unwrap()
+                        } else {
+                            trimmed.strip_prefix("//").unwrap()
+                        };
+                        // Preserve original indentation
+                        let indent = line.len() - trimmed.len();
+                        new_lines.push(format!("{}{}", " ".repeat(indent), uncommented));
                     } else {
-                        trimmed.strip_prefix("//").unwrap()
-                    };
-                    // Preserve original indentation
-                    let indent = line.len() - trimmed.len();
-                    new_lines.push(format!("{}{}", " ".repeat(indent), uncommented));
+                        new_lines.push(line.to_string());
+                    }
                 } else {
                     // Comment: add "//" at start (preserving indentation)
-                    let indent_count = line.len() - trimmed.len();
-                    new_lines.push(format!("{}// {}", " ".repeat(indent_count), trimmed));
+                    if !trimmed.starts_with("//") {
+                        let indent_count = line.len() - trimmed.len();
+                        new_lines.push(format!("{}// {}", " ".repeat(indent_count), trimmed));
+                    } else {
+                        new_lines.push(line.to_string());
+                    }
                 }
             } else {
                 new_lines.push(line.to_string());
@@ -691,10 +695,54 @@ impl EditorApp {
         self.is_modified = true;
 
         // Log action
-        if let Some(line_num) = line_to_comment {
-            self.log_info(format!("Toggled comment on line {}", line_num + 1));
+        if lines_to_toggle.len() == 1 {
+            self.log_info(format!(
+                "Toggled comment on line {}",
+                lines_to_toggle[0] + 1
+            ));
         } else {
-            self.log_info("Toggled comments");
+            self.log_info(format!(
+                "Toggled comments on {} lines",
+                lines_to_toggle.len()
+            ));
+        }
+    }
+
+    /// Get line indices that should be toggled (0-indexed)
+    fn get_lines_in_selection(&self) -> Vec<usize> {
+        let text = &self.document.current_content;
+
+        if let Some(ref range) = self.text_cursor_range {
+            // Get lines within cursor range
+            let mut current_pos = 0;
+            let mut line_indices = std::collections::HashSet::new();
+
+            for (line_idx, line) in text.lines().enumerate() {
+                let line_end = current_pos + line.len();
+
+                // Check if this line intersects with selection
+                if current_pos <= range.end && line_end >= range.start {
+                    line_indices.insert(line_idx);
+                }
+
+                current_pos = line_end + 1; // +1 for newline
+            }
+
+            let mut result: Vec<usize> = line_indices.into_iter().collect();
+            result.sort();
+            result
+        } else {
+            // No selection - use current line (from highlighted_line or line 0)
+            if let Some(line_num) = self.highlighted_line {
+                if line_num > 0 {
+                    vec![line_num - 1] // Convert to 0-indexed
+                } else {
+                    vec![0]
+                }
+            } else {
+                // Default to first line
+                vec![0]
+            }
         }
     }
 
@@ -1677,6 +1725,17 @@ impl EditorApp {
                                 .frame(false)
                                 .lock_focus(true),
                         );
+
+                        // Save cursor range for comment toggling
+                        if let Some(state) = egui::TextEdit::load_state(ui.ctx(), output.id) {
+                            if let Some(cursor_range) = state.cursor.char_range() {
+                                let start =
+                                    cursor_range.primary.index.min(cursor_range.secondary.index);
+                                let end =
+                                    cursor_range.primary.index.max(cursor_range.secondary.index);
+                                self.text_cursor_range = Some(start..end);
+                            }
+                        }
 
                         // Track changes
                         if output.changed() {
