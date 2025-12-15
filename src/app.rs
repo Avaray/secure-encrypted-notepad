@@ -747,28 +747,32 @@ impl EditorApp {
     }
 
     /// Render theme editor panel with icon hover color
-    fn render_theme_editor_panel(&mut self, ctx: &egui::Context) {
-        let mut close_editor = false;
-        let mut action: Option<ThemeEditorAction> = None;
+    fn render_theme_editor_panel(&mut self, ui: &mut egui::Ui) {
+        // Local variables to track actions (avoid borrowing issues)
+        let mut action_to_perform: Option<String> = None;
+        let mut theme_to_save: Option<crate::theme::Theme> = None;
+        let mut should_close = false;
+        let mut should_apply = false;
+        let mut should_reset = false;
 
-        if let Some(ref mut theme) = self.editing_theme {
-            egui::Window::new("🎨 Theme Editor")
-                .collapsible(false)
-                .resizable(true)
-                .default_width(600.0)
-                .show(ctx, |ui| {
-                    ui.heading("Theme Editor");
+        ui.vertical(|ui| {
+            ui.heading("🎨 Theme Editor");
 
-                    // Theme name
-                    ui.horizontal(|ui| {
-                        ui.label("Theme Name:");
-                        ui.text_edit_singleline(&mut theme.name);
-                    });
+            // Clone theme to work with it without long-lived mutable borrow
+            if let Some(ref mut theme) = self.editing_theme {
+                // Theme name
+                ui.horizontal(|ui| {
+                    ui.label("Theme Name:");
+                    ui.text_edit_singleline(&mut theme.name);
+                });
 
-                    ui.separator();
-                    ui.heading("Colors");
+                ui.separator();
 
-                    egui::ScrollArea::vertical().show(ui, |ui| {
+                egui::ScrollArea::vertical()
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
+                        ui.heading("Colors");
+
                         // Background
                         ui.horizontal(|ui| {
                             ui.label("Background:");
@@ -779,7 +783,7 @@ impl EditorApp {
                             );
                             if ui.color_edit_button_srgba(&mut color).changed() {
                                 theme.colors.background = [color.r(), color.g(), color.b()];
-                                theme.apply(ctx);
+                                theme.apply(ui.ctx());
                             }
                         });
 
@@ -793,7 +797,7 @@ impl EditorApp {
                             );
                             if ui.color_edit_button_srgba(&mut color).changed() {
                                 theme.colors.foreground = [color.r(), color.g(), color.b()];
-                                theme.apply(ctx);
+                                theme.apply(ui.ctx());
                             }
                         });
 
@@ -807,7 +811,7 @@ impl EditorApp {
                             );
                             if ui.color_edit_button_srgba(&mut color).changed() {
                                 theme.colors.panel_background = [color.r(), color.g(), color.b()];
-                                theme.apply(ctx);
+                                theme.apply(ui.ctx());
                             }
                         });
 
@@ -826,7 +830,7 @@ impl EditorApp {
                             if ui.color_edit_button_srgba(&mut color).changed() {
                                 theme.colors.selection_background =
                                     [color.r(), color.g(), color.b()];
-                                theme.apply(ctx);
+                                theme.apply(ui.ctx());
                             }
                         });
 
@@ -840,7 +844,7 @@ impl EditorApp {
                             );
                             if ui.color_edit_button_srgba(&mut color).changed() {
                                 theme.colors.cursor = [color.r(), color.g(), color.b()];
-                                theme.apply(ctx);
+                                theme.apply(ui.ctx());
                             }
                         });
 
@@ -854,7 +858,7 @@ impl EditorApp {
                             );
                             if ui.color_edit_button_srgba(&mut color).changed() {
                                 theme.colors.line_number = [color.r(), color.g(), color.b()];
-                                theme.apply(ctx);
+                                theme.apply(ui.ctx());
                             }
                         });
 
@@ -872,7 +876,7 @@ impl EditorApp {
                             );
                             if ui.color_edit_button_srgba(&mut color).changed() {
                                 theme.colors.icon_hover = [color.r(), color.g(), color.b()];
-                                theme.apply(ctx);
+                                theme.apply(ui.ctx());
                             }
                         });
 
@@ -886,7 +890,7 @@ impl EditorApp {
                             );
                             if ui.color_edit_button_srgba(&mut color).changed() {
                                 theme.colors.success = [color.r(), color.g(), color.b()];
-                                theme.apply(ctx);
+                                theme.apply(ui.ctx());
                             }
                         });
 
@@ -900,7 +904,7 @@ impl EditorApp {
                             );
                             if ui.color_edit_button_srgba(&mut color).changed() {
                                 theme.colors.info = [color.r(), color.g(), color.b()];
-                                theme.apply(ctx);
+                                theme.apply(ui.ctx());
                             }
                         });
 
@@ -914,7 +918,7 @@ impl EditorApp {
                             );
                             if ui.color_edit_button_srgba(&mut color).changed() {
                                 theme.colors.warning = [color.r(), color.g(), color.b()];
-                                theme.apply(ctx);
+                                theme.apply(ui.ctx());
                             }
                         });
 
@@ -928,7 +932,7 @@ impl EditorApp {
                             );
                             if ui.color_edit_button_srgba(&mut color).changed() {
                                 theme.colors.error = [color.r(), color.g(), color.b()];
-                                theme.apply(ctx);
+                                theme.apply(ui.ctx());
                             }
                         });
 
@@ -946,72 +950,77 @@ impl EditorApp {
                             );
                             if ui.color_edit_button_srgba(&mut color).changed() {
                                 theme.colors.comment = [color.r(), color.g(), color.b()];
-                                theme.apply(ctx);
+                                theme.apply(ui.ctx());
                             }
                         });
                     });
 
-                    ui.separator();
+                ui.separator();
 
-                    // Buttons
-                    ui.horizontal(|ui| {
-                        if ui.button("💾 Save Theme").clicked() {
-                            action = Some(ThemeEditorAction::Save(theme.clone()));
-                            close_editor = true;
-                        }
+                // Buttons - just set flags, don't mutate self
+                ui.horizontal(|ui| {
+                    if ui.button("💾 Save Theme").clicked() {
+                        theme_to_save = Some(theme.clone());
+                        action_to_perform = Some("save".to_string());
+                    }
 
-                        if ui.button("✓ Apply").clicked() {
-                            action = Some(ThemeEditorAction::Apply(theme.clone()));
-                            close_editor = true;
-                        }
+                    if ui.button("✓ Apply").clicked() {
+                        should_apply = true;
+                    }
 
-                        if ui.button("✖ Cancel").clicked() {
-                            action = Some(ThemeEditorAction::Cancel);
-                            close_editor = true;
-                        }
+                    if ui.button("🔄 Reset to Dark").clicked() {
+                        should_reset = true;
+                    }
 
-                        if ui.button("🔄 Reset to Dark").clicked() {
-                            *theme = crate::theme::Theme::dark();
-                            theme.apply(ctx);
-                        }
-                    });
+                    if ui.button("✖ Close").clicked() {
+                        should_close = true;
+                    }
                 });
+            } else {
+                ui.label("No theme being edited");
+            }
+        });
+
+        // Now execute actions with full access to self (no borrow conflicts)
+        if should_reset {
+            if let Some(ref mut theme) = self.editing_theme {
+                *theme = crate::theme::Theme::dark();
+                theme.apply(ui.ctx());
+            }
         }
 
-        // Handle actions outside the closure to avoid borrow conflicts
-        if let Some(act) = action {
-            match act {
-                ThemeEditorAction::Save(theme) => match crate::theme::save_theme(&theme) {
-                    Ok(_) => {
-                        self.current_theme = theme.clone();
-                        self.settings.theme_name = theme.name.clone();
-                        let _ = self.settings.save();
-                        self.themes = crate::theme::load_themes();
-                        self.status_message = format!("✓ Theme '{}' saved", theme.name);
-                        self.log_info(format!("Theme '{}' saved successfully", theme.name));
-                    }
-                    Err(e) => {
-                        self.status_message = format!("Error saving theme: {}", e);
-                        self.log_error(format!("Failed to save theme: {}", e));
-                    }
-                },
-                ThemeEditorAction::Apply(theme) => {
+        if should_apply {
+            if let Some(theme) = &self.editing_theme {
+                self.current_theme = theme.clone();
+                self.settings.theme_name = theme.name.clone();
+                self.current_theme.apply(ui.ctx());
+                let _ = self.settings.save();
+                self.status_message = "Theme applied".to_string();
+                self.log_info("Theme applied (not saved to file)");
+            }
+        }
+
+        if let Some(theme) = theme_to_save {
+            match crate::theme::save_theme(&theme) {
+                Ok(_) => {
                     self.current_theme = theme.clone();
                     self.settings.theme_name = theme.name.clone();
                     let _ = self.settings.save();
-                    self.status_message = "Theme applied".to_string();
-                    self.log_info("Theme applied (not saved to file)");
+                    self.themes = crate::theme::load_themes();
+                    self.status_message = format!("✓ Theme '{}' saved", theme.name);
+                    self.log_info(format!("Theme '{}' saved successfully", theme.name));
                 }
-                ThemeEditorAction::Cancel => {
-                    self.current_theme.apply(ctx);
-                    self.log_info("Theme editing cancelled");
+                Err(e) => {
+                    self.status_message = format!("Error saving theme: {}", e);
+                    self.log_error(format!("Failed to save theme: {}", e));
                 }
             }
         }
 
-        if close_editor {
+        if should_close {
             self.show_theme_editor = false;
             self.editing_theme = None;
+            self.current_theme.apply(ui.ctx());
         }
     }
 
@@ -1668,11 +1677,6 @@ impl eframe::App for EditorApp {
             self.render_settings_panel(ctx);
         }
 
-        // Theme Editor
-        if self.show_theme_editor {
-            self.render_theme_editor_panel(ctx);
-        }
-
         // Go to Line Dialog
         self.render_goto_line_dialog(ctx);
 
@@ -1802,6 +1806,16 @@ impl eframe::App for EditorApp {
                         self.settings.file_tree_width = current_width;
                         let _ = self.settings.save();
                     }
+                });
+        }
+
+        // Theme Editor panel (right)
+        if self.show_theme_editor {
+            egui::SidePanel::right("theme_editor")
+                .resizable(true)
+                .default_width(350.0)
+                .show(ctx, |ui| {
+                    self.render_theme_editor_panel(ui);
                 });
         }
 
