@@ -45,8 +45,8 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            ui_font_size: 14.0,
-            editor_font_size: 14.0,
+            ui_font_size: 20.0,
+            editor_font_size: 20.0,
             theme_name: "Dark".to_string(),
             global_keyfile_path: None,
             use_global_keyfile: false,

@@ -116,6 +116,13 @@ impl Theme {
         visuals.selection.bg_fill = self.colors.selection_color();
         visuals.selection.stroke.color = self.colors.cursor_color();
 
+        // Apply foreground (text) color
+        let foreground = self.colors.to_egui_color32(self.colors.foreground);
+        visuals.widgets.noninteractive.fg_stroke.color = foreground;
+        visuals.widgets.inactive.fg_stroke.color = foreground;
+        visuals.widgets.active.fg_stroke.color = foreground;
+        visuals.override_text_color = Some(foreground);
+
         ctx.set_visuals(visuals);
     }
 }
