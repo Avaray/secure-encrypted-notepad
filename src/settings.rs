@@ -37,6 +37,9 @@ pub struct Settings {
 
     /// File tree panel width
     pub file_tree_width: f32,
+
+    /// Show subfolders in file tree
+    pub show_subfolders: bool,
 }
 
 impl Default for Settings {
@@ -53,6 +56,7 @@ impl Default for Settings {
             show_debug_panel: false,
             last_directory: None,
             file_tree_width: 200.0,
+            show_subfolders: true,
         }
     }
 }

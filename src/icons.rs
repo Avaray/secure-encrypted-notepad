@@ -12,6 +12,7 @@ pub struct Icons {
     pub history: TextureHandle,
     pub debug: TextureHandle,
     pub file_tree: TextureHandle,
+    pub theme: TextureHandle,
 }
 
 impl Icons {
@@ -71,6 +72,11 @@ impl Icons {
                 ctx,
                 include_bytes!("../assets/FluentTreeEvergreen20Filled.svg"),
                 "icon_tree",
+            ),
+            theme: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/StreamlineUltimateColorColorPalette.svg"),
+                "icon_theme",
             ),
         }
     }

@@ -52,6 +52,13 @@ impl LogEntry {
     }
 }
 
+/// File tree entry type
+#[derive(Debug, Clone)]
+enum FileTreeEntry {
+    File(PathBuf),
+    Directory(PathBuf),
+}
+
 /// Application state
 pub struct EditorApp {
     /// Current document with embedded history
@@ -83,7 +90,7 @@ pub struct EditorApp {
     /// File tree current directory
     file_tree_dir: Option<PathBuf>,
     /// File tree entries
-    file_tree_entries: Vec<PathBuf>,
+    file_tree_entries: Vec<FileTreeEntry>,
     /// Icons
     icons: crate::icons::Icons,
     /// Show Theme Editor panel
@@ -286,30 +293,81 @@ impl EditorApp {
         }
     }
 
+    /// Change to subdirectory
+    fn change_directory(&mut self, path: PathBuf) {
+        self.log_info(format!("Changing to directory: {}", path.display()));
+        self.file_tree_dir = Some(path.clone());
+        self.settings.last_directory = Some(path);
+        let _ = self.settings.save();
+        self.refresh_file_tree();
+    }
+
     /// Refresh file tree entries
     fn refresh_file_tree(&mut self) {
         self.file_tree_entries.clear();
 
-        // Fix: Clone to release borrow on self
         let dir_opt = self.file_tree_dir.clone();
         if let Some(dir) = dir_opt {
             self.log_info(format!("Refreshing file tree for: {}", dir.display()));
-            match std::fs::read_dir(dir) {
+            match std::fs::read_dir(&dir) {
                 Ok(entries) => {
-                    let mut count = 0;
+                    let mut folders = Vec::new();
+                    let mut files = Vec::new();
+
                     for entry in entries.flatten() {
                         let path = entry.path();
-                        if path.is_file() {
+                        if path.is_dir() && self.settings.show_subfolders {
+                            folders.push(FileTreeEntry::Directory(path));
+                        } else if path.is_file() {
                             if let Some(ext) = path.extension() {
                                 if ext == "sed" {
-                                    self.file_tree_entries.push(path.clone());
-                                    count += 1;
-                                    self.log_info(format!("Added .sed file: {}", path.display()));
+                                    files.push(FileTreeEntry::File(path));
                                 }
                             }
                         }
                     }
-                    self.log_info(format!("Found {} .sed files", count));
+
+                    // Sort folders and files separately
+                    folders.sort_by(|a, b| {
+                        if let (FileTreeEntry::Directory(a), FileTreeEntry::Directory(b)) = (a, b) {
+                            a.file_name().cmp(&b.file_name())
+                        } else {
+                            std::cmp::Ordering::Equal
+                        }
+                    });
+
+                    files.sort_by(|a, b| {
+                        if let (FileTreeEntry::File(a), FileTreeEntry::File(b)) = (a, b) {
+                            a.file_name().cmp(&b.file_name())
+                        } else {
+                            std::cmp::Ordering::Equal
+                        }
+                    });
+
+                    // Add parent directory entry if not root
+                    if dir.parent().is_some() {
+                        self.file_tree_entries.push(FileTreeEntry::Directory(
+                            dir.parent().unwrap().to_path_buf(),
+                        ));
+                    }
+
+                    self.file_tree_entries.extend(folders);
+                    self.file_tree_entries.extend(files);
+
+                    let folder_count = self
+                        .file_tree_entries
+                        .iter()
+                        .filter(|e| matches!(e, FileTreeEntry::Directory(_)))
+                        .count();
+                    let file_count = self
+                        .file_tree_entries
+                        .iter()
+                        .filter(|e| matches!(e, FileTreeEntry::File(_)))
+                        .count();
+                    self.log_info(format!(
+                        "Found {} folders and {} .sed files",
+                        folder_count, file_count
+                    ));
                 }
                 Err(e) => {
                     self.log_error(format!("Failed to read directory: {}", e));
@@ -318,8 +376,6 @@ impl EditorApp {
         } else {
             self.log_warning("No directory selected for file tree");
         }
-
-        self.file_tree_entries.sort();
     }
 
     /// Save file
@@ -330,7 +386,6 @@ impl EditorApp {
             return;
         }
 
-        // Fix: Clone path to release borrow on self
         if let Some(path) = self.current_file_path.clone() {
             self.log_info("Saving to existing file path");
             self.perform_save(path);
@@ -504,10 +559,10 @@ impl EditorApp {
             let hover_tint = self.current_theme.colors.icon_hover_color();
 
             // Helper closure to render icon button with hover effect
-            let mut icon_button = |ui: &mut egui::Ui,
-                                   icon: &egui::TextureHandle,
-                                   tooltip: &str,
-                                   selected: bool|
+            let icon_button = |ui: &mut egui::Ui,
+                               icon: &egui::TextureHandle,
+                               tooltip: &str,
+                               selected: bool|
              -> egui::Response {
                 let (rect, mut response) =
                     ui.allocate_exact_size(button_size, egui::Sense::click());
@@ -592,7 +647,7 @@ impl EditorApp {
 
             // --- RIGHT SIDE: Toggles ---
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if icon_button(ui, &self.icons.settings, "Theme Editor", false).clicked() {
+                if icon_button(ui, &self.icons.theme, "Theme Editor", false).clicked() {
                     self.show_theme_editor = true;
                     self.editing_theme = Some(self.current_theme.clone());
                 }
@@ -638,7 +693,6 @@ impl EditorApp {
         });
     }
 
-    /// Render theme editor panel
     /// Render theme editor panel with icon hover color
     fn render_theme_editor_panel(&mut self, ctx: &egui::Context) {
         let mut close_editor = false;
@@ -755,7 +809,7 @@ impl EditorApp {
                         ui.separator();
                         ui.label(egui::RichText::new("UI Colors").strong());
 
-                        // ✅ NEW: Icon Hover Color
+                        // Icon Hover Color
                         ui.horizontal(|ui| {
                             ui.label("Icon Hover Tint:");
                             let mut color = egui::Color32::from_rgb(
@@ -853,6 +907,7 @@ impl EditorApp {
     }
 
     /// Render file tree panel
+    /// Render file tree panel
     fn render_file_tree(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
             ui.heading("Files");
@@ -861,14 +916,48 @@ impl EditorApp {
                 ui.label(egui::RichText::new(dir.display().to_string()).small());
                 ui.separator();
 
-                egui::ScrollArea::vertical().show(ui, |ui| {
-                    for path in &self.file_tree_entries.clone() {
-                        let filename = path.file_name().unwrap_or_default().to_string_lossy();
-                        if ui.button(filename.as_ref()).clicked() {
-                            self.open_file(path.clone());
+                // Get available width before creating ScrollArea
+                let available_width = ui.available_width();
+
+                egui::ScrollArea::vertical()
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
+                        // Set max width to prevent horizontal expansion
+                        ui.set_max_width(available_width);
+
+                        for entry in &self.file_tree_entries.clone() {
+                            match entry {
+                                FileTreeEntry::Directory(path) => {
+                                    let is_parent = self
+                                        .file_tree_dir
+                                        .as_ref()
+                                        .and_then(|d| d.parent())
+                                        .map(|p| p == path)
+                                        .unwrap_or(false);
+
+                                    let display_name = if is_parent {
+                                        "📁 ..".to_string()
+                                    } else {
+                                        format!(
+                                            "📁 {}",
+                                            path.file_name().unwrap_or_default().to_string_lossy()
+                                        )
+                                    };
+
+                                    if ui.button(display_name).clicked() {
+                                        self.change_directory(path.clone());
+                                    }
+                                }
+                                FileTreeEntry::File(path) => {
+                                    let filename =
+                                        path.file_name().unwrap_or_default().to_string_lossy();
+                                    if ui.button(format!("📄 {}", filename)).clicked() {
+                                        self.open_file(path.clone());
+                                    }
+                                }
+                            }
                         }
-                    }
-                });
+                    });
             } else {
                 ui.label("No directory opened");
                 if ui.button("Open Directory").clicked() {
@@ -997,10 +1086,11 @@ impl EditorApp {
                 ui.horizontal(|ui| {
                     ui.label("UI Font Size:");
                     if ui
-                        .add(egui::Slider::new(
-                            &mut self.settings.ui_font_size,
-                            8.0..=32.0,
-                        ))
+                        .add(
+                            egui::DragValue::new(&mut self.settings.ui_font_size)
+                                .speed(0.5)
+                                .range(8.0..=32.0),
+                        )
                         .changed()
                     {
                         self.settings.validate_font_sizes();
@@ -1012,10 +1102,11 @@ impl EditorApp {
                 ui.horizontal(|ui| {
                     ui.label("Editor Font Size:");
                     if ui
-                        .add(egui::Slider::new(
-                            &mut self.settings.editor_font_size,
-                            8.0..=32.0,
-                        ))
+                        .add(
+                            egui::DragValue::new(&mut self.settings.editor_font_size)
+                                .speed(0.5)
+                                .range(8.0..=32.0),
+                        )
                         .changed()
                     {
                         self.settings.validate_font_sizes();
@@ -1083,6 +1174,17 @@ impl EditorApp {
                     let _ = self.settings.save();
                 }
 
+                ui.separator();
+                ui.heading("File Tree");
+
+                if ui
+                    .checkbox(&mut self.settings.show_subfolders, "Show subfolders")
+                    .changed()
+                {
+                    let _ = self.settings.save();
+                    self.refresh_file_tree();
+                }
+
                 ui.add_space(20.0);
 
                 if ui.button("Close").clicked() {
@@ -1098,8 +1200,9 @@ impl EditorApp {
         }
 
         let mut close = false;
+        let mut jump_to_line: Option<usize> = None;
 
-        egui::Window::new("📍 Go to Line")
+        egui::Window::new("🔍 Go to Line")
             .collapsible(false)
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
@@ -1111,26 +1214,12 @@ impl EditorApp {
                     );
 
                     // Auto-focus on open
-                    if self.show_goto_line {
-                        response.request_focus();
-                    }
+                    response.request_focus();
 
-                    // Enter key to jump
-                    if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                    // Check for Enter key
+                    if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
                         if let Ok(line_num) = self.goto_line_input.parse::<usize>() {
-                            let max_line = self.document.current_content.lines().count().max(1);
-                            if line_num > 0 && line_num <= max_line {
-                                self.highlighted_line = Some(line_num);
-                                self.log_info(format!("Jumped to line {}", line_num));
-                                close = true;
-                            } else {
-                                self.status_message =
-                                    format!("Line {} out of range (1-{})", line_num, max_line);
-                                self.log_warning(format!(
-                                    "Line {} out of range (1-{})",
-                                    line_num, max_line
-                                ));
-                            }
+                            jump_to_line = Some(line_num);
                         }
                     }
                 });
@@ -1138,15 +1227,7 @@ impl EditorApp {
                 ui.horizontal(|ui| {
                     if ui.button("Go").clicked() {
                         if let Ok(line_num) = self.goto_line_input.parse::<usize>() {
-                            let max_line = self.document.current_content.lines().count().max(1);
-                            if line_num > 0 && line_num <= max_line {
-                                self.highlighted_line = Some(line_num);
-                                self.log_info(format!("Jumped to line {}", line_num));
-                                close = true;
-                            } else {
-                                self.status_message =
-                                    format!("Line {} out of range (1-{})", line_num, max_line);
-                            }
+                            jump_to_line = Some(line_num);
                         } else {
                             self.status_message = "Invalid line number".to_string();
                         }
@@ -1157,6 +1238,19 @@ impl EditorApp {
                     }
                 });
             });
+
+        // Handle jump outside the window closure
+        if let Some(line_num) = jump_to_line {
+            let max_line = self.document.current_content.lines().count().max(1);
+            if line_num > 0 && line_num <= max_line {
+                self.highlighted_line = Some(line_num);
+                self.log_info(format!("Jumped to line {}", line_num));
+                close = true;
+            } else {
+                self.status_message = format!("Line {} out of range (1-{})", line_num, max_line);
+                self.log_warning(format!("Line {} out of range (1-{})", line_num, max_line));
+            }
+        }
 
         if close {
             self.show_goto_line = false;
@@ -1186,6 +1280,7 @@ impl EditorApp {
         };
 
         let mut clicked_line: Option<usize> = None;
+        let mut clicked_below_content = false;
 
         egui::ScrollArea::both()
             .id_salt("editor_main")
@@ -1310,6 +1405,29 @@ impl EditorApp {
                         if output.changed() {
                             self.is_modified = true;
                         }
+
+                        // Detect clicks below the last line of content
+                        let editor_content_height = line_count as f32 * row_height;
+                        let editor_rect = egui::Rect::from_min_size(
+                            editor_start,
+                            egui::vec2(
+                                ui.available_width(),
+                                ui.available_height().max(editor_content_height),
+                            ),
+                        );
+
+                        // Check if clicked in the editor area below content
+                        if ui.rect_contains_pointer(editor_rect) {
+                            if ui.input(|i| i.pointer.primary_clicked()) {
+                                if let Some(pos) = ui.input(|i| i.pointer.interact_pos()) {
+                                    let relative_y = pos.y - editor_start.y;
+                                    if relative_y > editor_content_height {
+                                        // Clicked below content - select last line
+                                        clicked_below_content = true;
+                                    }
+                                }
+                            }
+                        }
                     });
                 });
             });
@@ -1318,6 +1436,9 @@ impl EditorApp {
         if let Some(line) = clicked_line {
             self.highlighted_line = Some(line);
             self.log_info(format!("Line {} selected", line));
+        } else if clicked_below_content {
+            self.highlighted_line = Some(line_count);
+            self.log_info(format!("Line {} selected (last line)", line_count));
         }
     }
 }
@@ -1353,7 +1474,7 @@ impl eframe::App for EditorApp {
                 self.new_document();
             }
 
-            // ✅ NEW: Ctrl+G: Go to Line
+            // Ctrl+G: Go to Line
             if i.consume_shortcut(&egui::KeyboardShortcut::new(
                 egui::Modifiers::CTRL,
                 egui::Key::G,
@@ -1372,7 +1493,7 @@ impl eframe::App for EditorApp {
             self.render_theme_editor_panel(ctx);
         }
 
-        // ✅ NEW: Go to Line Dialog
+        // Go to Line Dialog
         self.render_goto_line_dialog(ctx);
 
         // Toolbar
