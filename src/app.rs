@@ -59,6 +59,17 @@ enum FileTreeEntry {
     Directory(PathBuf),
 }
 
+#[derive(Debug, Clone)]
+enum PendingAction {
+    None,
+    NewDocument,
+    OpenFile,
+    OpenDirectory,
+    Exit,
+    OpenFileFromTree(PathBuf),
+    ChangeDirectory(PathBuf),
+}
+
 /// Application state
 pub struct EditorApp {
     /// Current document with embedded history
@@ -103,6 +114,10 @@ pub struct EditorApp {
     show_goto_line: bool,
     /// Goto line input
     goto_line_input: String,
+    /// Show close confirmation dialog
+    show_close_confirmation: bool,
+    /// Pending action to execute after confirmation
+    pending_action: PendingAction,
 }
 
 impl Default for EditorApp {
@@ -152,6 +167,8 @@ impl Default for EditorApp {
             highlighted_line: None,
             show_goto_line: false,
             goto_line_input: String::new(),
+            show_close_confirmation: false,
+            pending_action: PendingAction::None,
         }
     }
 }
@@ -220,12 +237,65 @@ impl EditorApp {
         self.current_theme.apply(ctx);
     }
 
-    /// New document
+    /// New document wrapper
     fn new_document(&mut self) {
-        if self.is_modified {
-            // TODO: Save changes dialog
-        }
+        self.check_changes_before_action(PendingAction::NewDocument);
+    }
 
+    /// Open file dialog wrapper
+    fn open_file_dialog(&mut self) {
+        self.check_changes_before_action(PendingAction::OpenFile);
+    }
+
+    /// Open file wrapper
+    fn open_file(&mut self, path: PathBuf) {
+        self.check_changes_before_action(PendingAction::OpenFileFromTree(path));
+    }
+
+    /// Open directory wrapper
+    fn open_directory(&mut self) {
+        self.check_changes_before_action(PendingAction::OpenDirectory);
+    }
+
+    /// Change directory wrapper
+    fn change_directory(&mut self, path: PathBuf) {
+        self.check_changes_before_action(PendingAction::ChangeDirectory(path));
+    }
+
+    // ========================================================================
+    // BRAKUJĄCE FUNKCJE POMOCNICZE I LOGIKA WYKONAWCZA
+    // Wklej to wewnątrz impl EditorApp
+    // ========================================================================
+
+    /// Check for unsaved changes before action
+    fn check_changes_before_action(&mut self, action: PendingAction) {
+        if self.is_modified {
+            self.pending_action = action;
+            self.show_close_confirmation = true;
+        } else {
+            self.execute_pending_action(action);
+        }
+    }
+
+    /// Execute pending action
+    fn execute_pending_action(&mut self, action: PendingAction) {
+        match action {
+            PendingAction::None => {}
+            PendingAction::NewDocument => self.perform_new_document(),
+            PendingAction::OpenFile => self.perform_open_file_dialog(),
+            PendingAction::OpenDirectory => self.perform_open_directory(),
+            PendingAction::Exit => {
+                // Exit is handled in update loop
+            }
+            PendingAction::OpenFileFromTree(path) => self.perform_open_file(path),
+            PendingAction::ChangeDirectory(path) => self.perform_change_directory(path),
+        }
+    }
+
+    // --- PRZYWRÓCONA LOGIKA (ZMIENIONE NAZWY NA perform_...) ---
+
+    /// New document implementation
+    fn perform_new_document(&mut self) {
         self.document = DocumentWithHistory::default();
         self.current_file_path = None;
         self.is_modified = false;
@@ -233,22 +303,22 @@ impl EditorApp {
         self.log_info("New document created");
     }
 
-    /// Open file dialog
-    fn open_file_dialog(&mut self) {
+    /// Open file dialog implementation
+    fn perform_open_file_dialog(&mut self) {
         self.log_info("Opening file dialog");
         if let Some(path) = rfd::FileDialog::new()
             .add_filter("SED Files", &["sed"])
             .add_filter("All Files", &["*"])
             .pick_file()
         {
-            self.open_file(path);
+            self.perform_open_file(path);
         } else {
             self.log_info("File dialog cancelled");
         }
     }
 
-    /// Open file
-    fn open_file(&mut self, path: PathBuf) {
+    /// Open file implementation
+    fn perform_open_file(&mut self, path: PathBuf) {
         if self.keyfile_path.is_none() {
             self.status_message = "Error: No keyfile loaded".to_string();
             self.log_error("Attempted to open file without keyfile");
@@ -282,8 +352,8 @@ impl EditorApp {
         }
     }
 
-    /// Open directory for file tree
-    fn open_directory(&mut self) {
+    /// Open directory implementation
+    fn perform_open_directory(&mut self) {
         if let Some(path) = rfd::FileDialog::new().pick_folder() {
             self.log_info(format!("Opening directory: {}", path.display()));
             self.file_tree_dir = Some(path.clone());
@@ -293,8 +363,8 @@ impl EditorApp {
         }
     }
 
-    /// Change to subdirectory
-    fn change_directory(&mut self, path: PathBuf) {
+    /// Change directory implementation
+    fn perform_change_directory(&mut self, path: PathBuf) {
         self.log_info(format!("Changing to directory: {}", path.display()));
         self.file_tree_dir = Some(path.clone());
         self.settings.last_directory = Some(path);
@@ -1046,6 +1116,55 @@ impl EditorApp {
         });
     }
 
+    /// Render confirmation dialog
+    fn render_confirmation_dialog(&mut self, ctx: &egui::Context) {
+        if self.show_close_confirmation {
+            egui::Modal::new(egui::Id::new("close_confirmation")).show(ctx, |ui| {
+                ui.set_max_width(300.0);
+                ui.heading("Unsaved Changes");
+                ui.label("You have unsaved changes. Do you want to save them?");
+                ui.separator();
+
+                ui.horizontal(|ui| {
+                    if ui.button("Save").clicked() {
+                        self.save_file();
+
+                        // If save was successful (is_modified == false), execute pending action
+                        if !self.is_modified {
+                            self.show_close_confirmation = false;
+                            let action = self.pending_action.clone();
+                            self.pending_action = PendingAction::None;
+
+                            if let PendingAction::Exit = action {
+                                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                            } else {
+                                self.execute_pending_action(action);
+                            }
+                        }
+                    }
+
+                    if ui.button("Don't Save").clicked() {
+                        self.is_modified = false; // Force discard
+                        self.show_close_confirmation = false;
+                        let action = self.pending_action.clone();
+                        self.pending_action = PendingAction::None;
+
+                        if let PendingAction::Exit = action {
+                            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                        } else {
+                            self.execute_pending_action(action);
+                        }
+                    }
+
+                    if ui.button("Cancel").clicked() {
+                        self.show_close_confirmation = false;
+                        self.pending_action = PendingAction::None;
+                    }
+                });
+            });
+        }
+    }
+
     /// Render settings panel
     fn render_settings_panel(&mut self, ctx: &egui::Context) {
         egui::Window::new("⚙ Settings")
@@ -1459,6 +1578,14 @@ impl EditorApp {
 
 impl eframe::App for EditorApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Handle close request
+        if ctx.input(|i| i.viewport().close_requested()) {
+            if self.is_modified {
+                ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+                self.check_changes_before_action(PendingAction::Exit);
+            }
+        }
+
         // Apply styles (font sizes) every frame/update
         self.apply_style(ctx);
 
@@ -1556,6 +1683,8 @@ impl eframe::App for EditorApp {
             .show_animated(ctx, self.show_debug_panel, |ui| {
                 self.render_debug_panel(ui);
             });
+
+        self.render_confirmation_dialog(ctx);
 
         // Central editor
         egui::CentralPanel::default().show(ctx, |ui| {
