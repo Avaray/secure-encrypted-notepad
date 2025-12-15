@@ -13,6 +13,8 @@ pub struct Icons {
     pub debug: TextureHandle,
     pub file_tree: TextureHandle,
     pub theme: TextureHandle,
+    pub secured: TextureHandle,
+    pub unsecured: TextureHandle,
 }
 
 impl Icons {
@@ -77,6 +79,16 @@ impl Icons {
                 ctx,
                 include_bytes!("../assets/StreamlineUltimateColorColorPalette.svg"),
                 "icon_theme",
+            ),
+            secured: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/MdiShieldCheck.svg"),
+                "icon_secured",
+            ),
+            unsecured: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/MdiShield.svg"),
+                "icon_unsecured",
             ),
         }
     }

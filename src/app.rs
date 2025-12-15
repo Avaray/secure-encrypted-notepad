@@ -1691,15 +1691,10 @@ impl eframe::App for EditorApp {
                                 "🔑 {}",
                                 path.file_name().unwrap_or_default().to_string_lossy()
                             ))
-                            .color(egui::Color32::GREEN)
-                            .size(12.0), // Smaller font
+                            .color(egui::Color32::GREEN),
                         );
                     } else {
-                        ui.label(
-                            egui::RichText::new("⚠ No keyfile")
-                                .color(egui::Color32::RED)
-                                .size(12.0),
-                        );
+                        ui.label(egui::RichText::new("⚠ No keyfile").color(egui::Color32::RED));
                     }
                 });
             });
