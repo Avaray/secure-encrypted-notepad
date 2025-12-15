@@ -1,9 +1,8 @@
-// #![windows_subsystem = "windows"]
-
 mod app;
 mod crypto;
 mod history;
 mod settings;
+mod theme;
 
 use app::EditorApp;
 
@@ -12,13 +11,8 @@ fn main() -> eframe::Result<()> {
         viewport: egui::ViewportBuilder::default()
             .with_maximized(true)
             .with_min_inner_size([1000.0, 700.0])
-            .with_icon(
-                eframe::icon_data::from_png_bytes(include_bytes!("../LogosCockpit.png"))
-                    .unwrap_or_else(|_| {
-                        eprintln!("Failed to load icon");
-                        egui::IconData::default()
-                    }),
-            )
+            .with_inner_size([1400.0, 900.0])
+            .with_icon(eframe::icon_data::from_png_bytes(&[]).unwrap_or_default())
             .with_fullscreen(false)
             .with_resizable(true)
             .with_decorations(true),
@@ -29,9 +23,10 @@ fn main() -> eframe::Result<()> {
     };
 
     eframe::run_native(
-        "SED - Secure Notepad",
+        "SED - Secure Encrypted Document Editor",
         options,
         Box::new(|cc| {
+            // Configure UI font (system font or default proportional)
             cc.egui_ctx.style_mut(|style| {
                 use egui::{FontFamily, FontId, TextStyle};
                 style.text_styles = [
@@ -55,6 +50,7 @@ fn main() -> eframe::Result<()> {
                 ]
                 .into();
             });
+
             Ok(Box::new(EditorApp::new(cc)))
         }),
     )

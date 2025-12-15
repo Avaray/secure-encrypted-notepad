@@ -1,630 +1,353 @@
-# 🔐 SED v3.0 - Secure Encrypted Document Editor with Version Control
+# 🔐 SED v0.2 - Secure Encrypted Document Editor
 
-**Production-ready** cross-platform edytor tekstu z:
-
-- **Dual-factor authentication** (hasło + keyfile)
-- **Built-in version control** (jak git dla zaszyfrowanych plików)
-- **End-to-end encryption** dla wszystkich danych i historii
-
-Dla Windows, Linux i macOS.
+**Keyfile-only** secure document editor with **embedded version control**,
+**file tree**, and **debug console**.
 
 ---
 
-## ✨ Nowe w v3.0: Version Control System
+## ✨ Features
 
-### 🎯 Co to oznacza?
+### 🔒 Security
 
-- **Każdy Save tworzy snapshot** - nigdy nie stracisz poprzednich wersji
-- **Historia jest zaszyfrowana** - tak samo bezpieczna jak główny plik
-- **Przeglądaj stare wersje** - zobacz co zmieniłeś tydzień temu
-- **Przywróć dowolną wersję** - cofnij błędne zmiany
-- **Cleanup automatyczny** - usuń wersje starsze niż X dni
+- **Keyfile-only authentication** (no passwords)
+- **XChaCha20-Poly1305 AEAD** encryption
+- **Argon2id KDF** for key derivation
+- **SHA-256 keyfile hashing**
+- **Zero memory leaks** with automatic zeroing
 
-### 📂 Struktura plików
+### 📝 Editor
 
-```
-document.sed                          # Główny plik (najnowsza wersja)
-document.sed.history/                 # Folder z historią
-├── version_2025-11-30_09-58-23.sed  # Snapshot z 9:58
-├── version_2025-11-30_10-15-42.sed  # Snapshot z 10:15
-└── version_2025-11-30_11-30-00.sed  # Snapshot z 11:30
-```
+- **Line numbers** (like VS Code/Zed)
+- **Monospace font** for editor
+- **Configurable font sizes** (UI and Editor separately)
+- **No focus border** on text field (only caret)
 
-**BEZPIECZEŃSTWO**: Wszystkie snapshoty są zaszyfrowane tym samym hasłem +
-keyfile!
+### 📜 Version Control
+
+- **Embedded history** (inside encrypted file)
+- **Max 100 entries** per file
+- **Auto-snapshot** on save (when content changes)
+- **Load/Delete** any version
+
+### 🎨 Themes
+
+- **Built-in**: Dark & Light
+- **Custom themes** (create your own TOML files)
+- **Auto-refresh** when new themes added
+- **Color emoji support** (if available)
+
+### 🌲 Interface
+
+- **File tree panel** (left) - browse and open .sed files
+- **History panel** (right) - view and manage versions
+- **Debug console** (right) - view app logs
+- **Icon toolbar** (no text labels)
 
 ---
 
 ## 🚀 Quick Start
 
-### 1️⃣ Build application
+### 1. Build
 
 ```bash
-cargo new sed --bin
-cd sed
-
-# Copy files:
-# - Cargo.toml
-# - src/main.rs
-# - src/app.rs
-# - src/crypto.rs
-# - src/history.rs
-# - src/settings.rs
-
 cargo build --release
 ```
 
-### 2️⃣ First start
+### 2. Run
 
 ```bash
 ./target/release/sed
 ```
 
-### 3️⃣ Setup authentication
+### 3. First Time Setup
 
-1. **Security → Generate New Keyfile** → Zapisz jako `my.key`
-2. Wpisz hasło w polu "Password"
-3. Status zmieni się na "🔐 Ready"
+1. **Generate keyfile**: Click ✨ icon → Save as `my.key`
+2. **Create document**: Click 📄 icon (New)
+3. **Type content**
+4. **Save**: Click 💾 icon
 
-### 4️⃣ Pracuj z dokumentem
+### 4. Open Existing File
 
-1. **Pisz tekst** w edytorze
-2. **File → Save** → Wybierz lokalizację (np. `notes.sed`)
-3. **✓ Saved** - główny plik + pierwszy snapshot utworzony!
-
-### 5️⃣ Zobacz historię
-
-1. **History → Toggle Panel** → Panel boczny się otworzy
-2. Zobaczysz wszystkie wersje z timestampami
-3. Kliknij **👁 View** aby zobaczyć starą wersję
-4. Kliknij **↩️ Restore** aby przywrócić
-5. Kliknij **🗑️ Delete** aby usunąć snapshot
+1. **Load keyfile**: Click 🔑 icon → Select your `.key` file
+2. **Open file**: Click 📂 icon → Select `.sed` file
 
 ---
 
-## 📖 Version Control - Szczegółowy Guide
-
-### Jak działa auto-snapshot?
-
-**Domyślnie** (jeśli `auto_snapshot_on_save = true`):
+## 🎯 Interface Overview
 
 ```
-Edit document → Save → Główny plik zapisany + Snapshot utworzony
+┌─────────────────────────────────────────────────────────┐
+│ 📄 📂 📁 💾 📝 | 📜 ⚙ | 🔑 ✨ | 🔐 keyfile   [🌲] [🐛] │ ← Toolbar
+├────┬────────────────────────────────────────────┬────┬──┤
+│🌲  │ 1  fn main() {                            │📜  │🐛│
+│    │ 2      let x = 5;                          │    │  │
+│Files│ 3      println!("{}", x);                 │Hist│Log
+│    │ 4  }                                       │    │  │
+│    │                                            │    │  │
+└────┴────────────────────────────────────────────┴────┴──┘
 ```
 
-**Wyłącz w Settings** jeśli chcesz manualne snapshoty.
+### Toolbar Icons (left to right):
 
-### Przykładowy workflow
+- **📄** New (Ctrl+N)
+- **📂** Open (Ctrl+O)
+- **📁** Open Directory
+- **💾** Save (Ctrl+S)
+- **📝** Save As
+- **---**
+- **📜** Toggle History
+- **⚙** Settings
+- **---**
+- **🔑** Load Keyfile
+- **✨** Generate Keyfile
+- **---**
+- **🔐 filename** Current keyfile indicator
+- **[🌲]** Toggle File Tree (right side)
+- **[🐛]** Toggle Debug Log (right side)
 
-```bash
-# Dzień 1 - 9:00 AM
-Piszesz: "TODO: Implement feature X"
-Save → version_2025-11-30_09-00-00.sed
+---
 
-# Dzień 1 - 2:00 PM  
-Dodajesz: "Feature X implemented successfully"
-Save → version_2025-11-30_14-00-00.sed
+## 📂 File Format
 
-# Dzień 2 - 10:00 AM
-Zmieniasz: "Refactored feature X..."
-Save → version_2025-12-01_10-00-00.sed
-
-# O nie! Refactoring zepsuł coś!
-History → Version z 2:00 PM → Restore
-Boom! Wszystko działa znowu 🎉
-```
-
-### View (Read-Only Preview)
-
-```
-Click: 👁 View
-↓
-Nowe okno z zawartością wersji (read-only)
-↓
-Możesz przeczytać ale nie edytować
-```
-
-**Use case**: "Co dokładnie zmieniłem między wczoraj a dziś?"
-
-### Restore (Przywróć wersję)
+### Encrypted .sed file contains:
 
 ```
-Click: ↩️ Restore
-↓
-Confirmation dialog: "Restore this version?"
-↓
-Obecna wersja → Backup snapshot (automatically)
-↓
-Wybrana wersja → Główny plik
-↓
-Editor reloaded z przywróconą treścią
+[Current Document Content]
+<<<SED_HISTORY_START>>>
+[JSON array of history entries - max 100]
 ```
 
-**BEZPIECZEŃSTWO**: Obecna wersja jest automatycznie backupowana przed restore!
+Everything is encrypted together with one keyfile!
 
-### Delete (Usuń snapshot)
+### Example internal structure:
 
-```
-Click: 🗑️ Delete
-↓
-Confirmation: "Delete permanently?"
-↓
-Snapshot usunięty z dysku
-```
-
-**⚠️ UWAGA**: To jest trwałe! Nie da się cofnąć!
-
-### Cleanup Old Versions
-
-**Manual**:
-
-```
-History → Cleanup Old
-↓
-Usuwa wersje starsze niż {snapshot_retention_days}
-```
-
-**Automatic**: TODO w przyszłej wersji
-
-**Settings**:
-
-```
-snapshot_retention_days = 30  # Usuń wersje >30 dni
-snapshot_retention_days = 0   # Zachowaj wszystko
+```json
+[
+  {
+    "timestamp": "2025-12-15T14:30:00+01:00",
+    "content": "Version 3 content here...",
+    "comment": null
+  },
+  {
+    "timestamp": "2025-12-15T14:20:00+01:00",
+    "content": "Version 2 content here...",
+    "comment": "Before refactoring"
+  }
+]
 ```
 
 ---
 
-## 🔐 Bezpieczeństwo Version Control
+## ⚙️ Settings
 
-### Czy historia jest zaszyfrowana?
+Access via **⚙** icon in toolbar.
 
-**TAK!** Każdy snapshot używa:
+### Appearance
 
-- ✅ Tego samego hasła co główny plik
-- ✅ Tego samego keyfile
-- ✅ Unikalnego salt per snapshot
-- ✅ Unikalnego nonce per snapshot
-- ✅ XChaCha20-Poly1305 AEAD
+- **Theme** - Select from built-in or custom themes
+- **UI Font Size** - 8-32px (for interface)
+- **Editor Font Size** - 8-32px (for text editor)
 
-### Co jeśli ktoś ukradnie folder .history/?
+### Global Keyfile
 
-**Bezpieczne!** Bez hasła + keyfile:
+- **Set global keyfile** - Automatically loaded on startup
+- **Enable/Disable** - Use global keyfile checkbox
 
-- ❌ Nie może odszyfrować żadnego snapshotu
-- ❌ Nie może zobaczyć treści
-- ❌ Nie wie nawet co jest w środku
+### Editor
 
-### Czy mogę mieć różne hasła dla snapshotów?
-
-**NIE.** Wszystkie snapshoty używają tego samego hasła + keyfile co główny plik.
-
-**Dlaczego?**
-
-- Uproszczenie UX (jeden password do wszystkiego)
-- Backup/restore działa seamlessly
-- Jeśli zmienisz hasło, musisz re-encrypt wszystko
-
-### Czy snapshoty mają separate authentication tags?
-
-**TAK!** Każdy snapshot ma własny 16-byte Poly1305 MAC.
-
-Jeśli snapshot zostanie skorumpowany:
-
-- ✅ Inne snapshoty nadal działają
-- ✅ Authentication failuje tylko dla skorumpowanego
-- ✅ Nie ma risk cascade corruption
+- **Show line numbers** - Toggle line numbers on/off
+- **Auto-snapshot on save** - Create history entry when saving
 
 ---
 
-## 🎨 Funkcje GUI
+## 🎨 Custom Themes
 
-### Menu Bar
+### Location
 
-**File**:
+Themes are stored in:
 
-- 📄 New - Nowy dokument
-- 📂 Open - Otwórz zaszyfrowany plik
-- 💾 Save - Zapisz (+ auto-snapshot jeśli enabled)
-- 💾 Save As - Zapisz jako nowy plik
-- ❌ Exit - Wyjdź
+- **Linux**: `~/.config/sed/themes/`
+- **Windows**: `%APPDATA%\sed\themes\`
+- **macOS**: `~/Library/Application Support/sed/themes/`
 
-**Security**:
+### Create Custom Theme
 
-- 🔑 Select Keyfile - Wybierz istniejący keyfile
-- ✨ Generate Keyfile - Wygeneruj nowy (256 random bytes)
+1. Create file: `my_theme.toml`
 
-**History**:
+```toml
+name = "My Custom Theme"
 
-- 📜 Toggle Panel - Pokaż/ukryj history panel
-- 🗑️ Cleanup Old - Usuń stare wersje
-
-**Settings**:
-
-- ⚙️ Preferences - Font, theme, version control options
-
-**Help**:
-
-- ℹ️ About - Info o aplikacji
-
-### History Panel (Togglowany)
-
-**Stats** (góra):
-
-```
-Versions: 15    Total: 2.3 MB
+[colors]
+background = [40, 44, 52]
+foreground = [171, 178, 191]
+panel_background = [33, 37, 43]
+selection_background = [61, 66, 77]
+cursor = [255, 255, 255]
+line_number = [128, 128, 128]
+comment = [92, 99, 112]
 ```
 
-**Actions**:
-
-- 🗑️ Cleanup Old - Usuń według retention policy
-- 🔄 Refresh - Odśwież listę wersji
-
-**Version List** (scrollable):
-
-```
-┌─────────────────────────────┐
-│ 📅 2025-11-30 14:23:15     │
-│ 💾 125.3 KB                 │
-│ 💬 "Refactored chapter 3"   │ (optional comment)
-│ [👁 View] [↩️ Restore] [🗑️ Delete] │
-└─────────────────────────────┘
-
-┌─────────────────────────────┐
-│ 📅 2025-11-30 09:15:42     │
-│ 💾 118.7 KB                 │
-│ [👁 View] [↩️ Restore] [🗑️ Delete] │
-└─────────────────────────────┘
-
-... (more versions)
-```
-
-### Settings Panel
-
-**Appearance**:
-
-- Theme: 🌙 Dark / ☀️ Light
-- Font Size: 8-32 px (slider)
-- Font Family: Monospace / Proportional
-
-**Version Control**:
-
-- ✅ Auto-snapshot on save (checkbox)
-- Retention: 0-365 days (slider)
-
-**Security**:
-
-- ✅ Remember keyfile path (checkbox)
+2. Save to themes directory
+3. Click **Refresh** in Settings
+4. Select your theme from dropdown
 
 ---
 
-## 🧪 Testing Version Control
+## 🔑 Keyfile Management
 
-### Test 1: Basic Snapshot Creation
+### Best Practices
 
-```bash
-1. Open app
-2. Type "Version 1"
-3. Save → notes.sed
-4. History panel → Should show 1 version
-5. Type "Version 2"
-6. Save
-7. History panel → Should show 2 versions
-```
+- ✅ **Generate unique keyfiles** per project
+- ✅ **Backup keyfiles** to secure location
+- ✅ **Never email keyfiles**
+- ⚠️ **Losing keyfile = losing data**
 
-### Test 2: View Old Version
+### Keyfile can be:
 
-```bash
-1. Create 3 versions (content: "V1", "V2", "V3")
-2. History → Click "View" on first version
-3. Preview window → Should show "V1"
-4. Main editor → Still shows "V3"
-```
-
-### Test 3: Restore Old Version
-
-```bash
-1. Current: "Latest content"
-2. History → Select old version with "Original content"
-3. Click "Restore" → Confirm
-4. Main editor → Should show "Original content"
-5. History → Should have NEW snapshot "Backup before restore"
-```
-
-### Test 4: Delete Version
-
-```bash
-1. History → Select middle version
-2. Click "Delete" → Confirm
-3. Version removed from list
-4. File removed from .history/ folder
-```
-
-### Test 5: Cleanup Old Versions
-
-```bash
-1. Settings → Retention: 7 days
-2. Create versions over multiple days (manual timestamp edit in filenames)
-3. History → Cleanup Old
-4. Only versions <7 days remain
-```
-
-### Test 6: Wrong Password/Keyfile
-
-```bash
-1. Create snapshot with password "A" + keyfile "1.key"
-2. Try to view with password "B" → Error
-3. Try to view with keyfile "2.key" → Error
-4. Use correct password + keyfile → Success
-```
+- Binary file (generated by SED)
+- Text file
+- Image file
+- **Any file** - content is hashed
 
 ---
 
-## 📊 Performance & Storage
+## 📜 Version History
 
-### Snapshot Size
+### How It Works
 
-Każdy snapshot = (Content size) + 108 bytes overhead:
+1. Edit document
+2. Click Save (💾)
+3. If **Auto-snapshot** enabled → New version created
+4. History stored **inside** encrypted file
 
-```
-4 bytes  - Magic number
-24 bytes - Nonce
-32 bytes - Salt
-N bytes  - Encrypted content
-16 bytes - Auth tag
-32 bytes - Keyfile hash
-```
+### View History
 
-### Example:
+1. Click **📜** icon (Toggle History panel)
+2. See all versions (newest first)
+3. Click **Load** to view old version
+4. Click **Delete** to remove entry
 
-```
-Document: 10 KB plain text
-↓
-Snapshot: ~10.1 KB encrypted
-↓
-10 versions: ~101 KB total
-```
+### Limits
 
-### Storage Optimization Ideas (Future):
-
-- **Compression**: zstd przed szyfrowaniem → 50-70% mniejsze
-- **Delta encoding**: Zapisuj tylko różnice między wersjami
-- **Deduplication**: Jeśli content identyczny, reuse snapshot
+- Maximum **100 versions** per file
+- Oldest entries auto-deleted when limit reached
 
 ---
 
-## 🔧 Advanced Usage
+## 🐛 Debug Console
 
-### Manual Snapshot with Comment (TODO in future)
+### Access
 
-```rust
-// In future version:
-create_snapshot(
-    &content, 
-    &password, 
-    &keyfile, 
-    &path,
-    Some("Before major refactoring".to_string())
-);
+Click **🐛** icon in toolbar (right side)
+
+### Log Levels
+
+- **INFO** (white) - Normal operations
+- **WARN** (yellow) - Warnings
+- **ERROR** (red) - Errors
+
+### Use Cases
+
+- Debug encryption issues
+- Track file operations
+- Monitor keyfile loading
+
+---
+
+## 🌲 File Tree
+
+### Setup
+
+1. Click **📁** (Open Directory) in toolbar
+2. Select folder containing `.sed` files
+3. File tree shows all `.sed` files
+4. Click filename to open
+
+### Auto-remember
+
+Last opened directory is saved in settings.
+
+---
+
+## ⌨️ Keyboard Shortcuts
+
+- **Ctrl+N** - New document
+- **Ctrl+O** - Open file
+- **Ctrl+S** - Save file
+
+---
+
+## 🔧 Troubleshooting
+
+### "Wrong keyfile" error
+
+- **Cause**: File encrypted with different keyfile
+- **Fix**: Use correct keyfile
+
+### File tree not showing files
+
+- **Cause**: No `.sed` files in directory
+- **Fix**: Save files with `.sed` extension
+
+### Theme not appearing
+
+- **Cause**: Invalid TOML format
+- **Fix**: Check theme file syntax, click **Refresh**
+
+### Line numbers misaligned
+
+- **Cause**: Different font sizes
+- **Fix**: Restart application
+
+---
+
+## 📊 Technical Details
+
+### Encryption
+
+- **Algorithm**: XChaCha20-Poly1305
+- **Key Derivation**: Argon2id (19 MiB, 2 iterations)
+- **Nonce**: Random per file
+- **Salt**: Random per file
+
+### File Format
+
 ```
-
-### Export History (TODO)
-
-```bash
-# Future feature:
-History → Export → encrypted_backup.tar.sed
-```
-
-### Diff View (TODO)
-
-```bash
-# Future feature:
-Select version A + version B → Show diff side-by-side
+[4-byte magic "SED2"]
+[32-byte salt]
+[encrypted data]
+[32-byte keyfile hash]
 ```
 
 ---
 
-## 🐛 Troubleshooting
+## 🔮 Planned Features
 
-### "No versions yet. Save to create first snapshot."
-
-- **Przyczyna**: Folder .history/ nie istnieje lub jest pusty
-- **Rozwiązanie**: Zapisz dokument - pierwszy snapshot zostanie utworzony
-
-### "Error loading version: Decryption failed"
-
-- **Przyczyna**: Snapshot skorumpowany lub błędne hasło/keyfile
-- **Rozwiązanie**: Spróbuj innych snapshotów, sprawdź hasło
-
-### "Cleanup Old: 0 versions deleted"
-
-- **Przyczyna**: Wszystkie wersje są młodsze niż retention_days
-- **Rozwiązanie**: Zmniejsz retention_days w Settings lub poczekaj
-
-### Folder .history/ jest ogromny!
-
-- **Przyczyna**: Dużo wersji dużych plików
-- **Rozwiązanie**:
-  1. History → Cleanup Old
-  2. Settings → Zmniejsz retention_days
-  3. Manual: Usuń stare snapshoty
-
-### Czy mogę przenieść plik + historię?
-
-**TAK!** Przenieś OBA:
-
-```bash
-mv document.sed /new/location/
-mv document.sed.history/ /new/location/
-```
-
-Aplikacja automatycznie znajdzie historię.
+- [ ] Diff view (compare versions side-by-side)
+- [ ] Syntax highlighting
+- [ ] Multiple tabs
+- [ ] Search & Replace
+- [ ] Compression before encryption
+- [ ] Export history as separate file
 
 ---
 
-## 📋 Changelog
+## 📝 License
 
-### v3.0.0 (2025-11-30)
-
-- ✨ **NEW**: Built-in version control system
-- ✨ **NEW**: Auto-snapshot on save
-- ✨ **NEW**: History panel (View/Restore/Delete)
-- ✨ **NEW**: Cleanup old versions
-- ✨ **NEW**: History stats display
-- ✨ **NEW**: Restore confirmation with auto-backup
-- ✨ **NEW**: Settings: auto_snapshot, retention_days
-
-### v2.0.0
-
-- ✨ Dual-factor authentication (password + keyfile)
-- ✨ Theme switching (Dark/Light)
-- ✨ Font customization
-- ✨ Settings persistence
-
-### v1.0.0
-
-- 🎉 Initial release
-- 🔐 XChaCha20-Poly1305 encryption
-- 🔑 Argon2id key derivation
-
----
-
-## 🔮 Roadmap (Future Versions)
-
-### v3.1 (Near Future)
-
-- [ ] **User comments** dla snapshotów
-- [ ] **Diff view** (side-by-side comparison)
-- [ ] **Search in history** (full-text search starych wersji)
-- [ ] **Export history** jako encrypted archive
-
-### v3.2
-
-- [ ] **Compression** (zstd przed szyfrowaniem)
-- [ ] **Delta encoding** (tylko różnice między wersjami)
-- [ ] **Automatic cleanup** (scheduled/on-save)
-
-### v4.0 (Major)
-
-- [ ] **Multiple documents** (tabs)
-- [ ] **Branching** (git-style branches)
-- [ ] **Merge conflicts** resolution
-- [ ] **Remote sync** (encrypted cloud backup)
-
----
-
-## 🛡️ Security Audit Checklist
-
-- ✅ **No unsafe code** (100% safe Rust)
-- ✅ **Zeroize all secrets** (password, keyfile hash, keys)
-- ✅ **AEAD encryption** (XChaCha20-Poly1305)
-- ✅ **KDF high memory** (Argon2id, 19 MiB)
-- ✅ **Random nonces/salts** per snapshot
-- ✅ **Authentication-first** decryption
-- ✅ **Dual-factor auth** (password + keyfile)
-- ✅ **History encrypted** (same security as main file)
-- ✅ **Separate auth tags** per snapshot
-- ✅ **No plaintext leaks** in history
-- ✅ **Timestamp format** (RFC3339 compatible)
-- ✅ **File format validation** (magic number check)
-
----
-
-## 💾 Disk Usage Examples
-
-### Small documents (1-10 KB)
-
-```
-Main file: 10 KB
-10 snapshots: ~100 KB
-Total: ~110 KB
-```
-
-### Medium documents (100 KB)
-
-```
-Main file: 100 KB
-30 snapshots: ~3 MB
-Total: ~3.1 MB
-```
-
-### Large documents (1 MB)
-
-```
-Main file: 1 MB
-50 snapshots: ~50 MB
-Total: ~51 MB
-```
-
-**Tip**: Use retention_days to limit disk usage automatically!
-
----
-
-## 📚 FAQ
-
-### Q: Czy mogę wyłączyć version control?
-
-**A**: Tak! Settings → Untick "Auto-snapshot on save". Możesz dalej tworzyć
-snapshoty manualnie.
-
-### Q: Ile snapshotów mogę mieć?
-
-**A**: Bez limitu (poza miejscem na dysku). Ale użyj retention_days dla
-auto-cleanup.
-
-### Q: Czy snapshoty są incrementalne?
-
-**A**: Nie (jeszcze). Każdy snapshot to pełna kopia. W v3.2 planujemy delta
-encoding.
-
-### Q: Co jeśli zapomnę hasła?
-
-**A**: **Nie da się odzyskać!** To jest celowe - bezpieczeństwo > convenience.
-
-### Q: Czy mogę używać SED jako "encrypted git"?
-
-**A**: Częściowo tak! Masz: snapshoty, timestamps, restore. Brakuje: branching,
-merging, diffs.
-
-### Q: Czy snapshoty spowalniają Save?
-
-**A**: Minimalnie. Główne opóźnienie to Argon2id (~500ms-2s), który jest obecny
-przy każdym Save niezależnie od snapshotów.
-
----
-
-## 🤝 Contributing
-
-Pull requests mile widziane!
-
-**Priority areas**:
-
-1. **Diff view** implementation
-2. **Compression** support
-3. **User comments** dla snapshotów
-4. **Search in history**
-
----
-
-## 📜 License
-
-MIT lub Apache-2.0 (do wyboru)
+MIT or Apache-2.0 (your choice)
 
 ---
 
 ## ⚠️ Disclaimer
 
-**Educational/personal use project.**
+This is an educational/personal project. For production use:
 
-Dla **produkcji**:
-
-- ✅ Professional security audit
-- ✅ Compliance review
-- ✅ Disaster recovery plan
-- ✅ User training
+- ✅ Professional security audit required
+- ✅ Regular backups of keyfiles
+- ✅ Test recovery procedures
 
 **USE AT YOUR OWN RISK**
 
 ---
 
-**Stay secure with version control! 🔐📜🚀**
+**Stay secure! 🔐📝✨**

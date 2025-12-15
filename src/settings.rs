@@ -5,53 +5,55 @@ use std::path::PathBuf;
 /// User preferences - persisted between sessions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
-    /// Font size (8-32 px)
-    pub font_size: f32,
-    
-    /// Font name (e.g. "Monospace", "Proportional")
-    pub font_family: String,
-    
-    /// Theme: true = dark, false = light
-    pub dark_theme: bool,
-    
-    /// Path to last used keyfile (legacy/temporary memory)
-    pub last_keyfile_path: Option<PathBuf>,
-    
-    /// Whether to remember keyfile path (legacy)
-    pub remember_keyfile_path: bool,
-    
-    /// Whether to automatically create snapshot on Save
-    pub auto_snapshot_on_save: bool,
-    
-    /// Number of days to keep history (0 = no limit)
-    pub snapshot_retention_days: i64,
+    /// UI font size (8-32 px)
+    pub ui_font_size: f32,
 
-    // --- NOWE POLA DLA DOMYŚLNEGO KLUCZA ---
-    /// Path to the global default keyfile
-    pub default_keyfile_path: Option<PathBuf>,
-    
-    /// Whether to enforce this keyfile globally on startup
-    pub use_default_keyfile: bool,
+    /// Editor font size (8-32 px)
+    pub editor_font_size: f32,
+
+    /// Current theme name
+    pub theme_name: String,
+
+    /// Path to global default keyfile
+    pub global_keyfile_path: Option<PathBuf>,
+
+    /// Whether to use global keyfile automatically on startup
+    pub use_global_keyfile: bool,
+
+    /// Whether to auto-create snapshot on save (when content changes)
+    pub auto_snapshot_on_save: bool,
+
+    /// Show line numbers in editor
+    pub show_line_numbers: bool,
+
+    /// Show file tree panel
+    pub show_file_tree: bool,
+
+    /// Show debug panel
+    pub show_debug_panel: bool,
+
+    /// Last opened directory for file tree
+    pub last_directory: Option<PathBuf>,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            font_size: 14.0,
-            font_family: "Monospace".to_string(),
-            dark_theme: true,
-            last_keyfile_path: None,
-            remember_keyfile_path: false,
+            ui_font_size: 14.0,
+            editor_font_size: 14.0,
+            theme_name: "Dark".to_string(),
+            global_keyfile_path: None,
+            use_global_keyfile: false,
             auto_snapshot_on_save: true,
-            snapshot_retention_days: 30,
-            // Domyślnie wyłączone
-            default_keyfile_path: None,
-            use_default_keyfile: false,
+            show_line_numbers: true,
+            show_file_tree: false,
+            show_debug_panel: false,
+            last_directory: None,
         }
     }
 }
 
-/// Settings-related errors
+/// Settings errors
 #[derive(Debug)]
 pub enum SettingsError {
     IoError(std::io::Error),
@@ -90,25 +92,24 @@ impl std::fmt::Display for SettingsError {
 impl std::error::Error for SettingsError {}
 
 impl Settings {
-    /// Returns path to configuration file
+    /// Get config file path
     fn config_path() -> Result<PathBuf, SettingsError> {
-        let config_dir = dirs::config_dir()
-            .ok_or_else(|| {
-                SettingsError::IoError(std::io::Error::new(
-                    std::io::ErrorKind::NotFound,
-                    "Cannot find config directory",
-                ))
-            })?;
-        
+        let config_dir = dirs::config_dir().ok_or_else(|| {
+            SettingsError::IoError(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "Cannot find config directory",
+            ))
+        })?;
+
         let app_config_dir = config_dir.join("sed");
-        
+
         if !app_config_dir.exists() {
             fs::create_dir_all(&app_config_dir)?;
         }
-        
+
         Ok(app_config_dir.join("settings.toml"))
     }
-    
+
     /// Load settings from file
     pub fn load() -> Self {
         match Self::load_internal() {
@@ -119,39 +120,33 @@ impl Settings {
             }
         }
     }
-    
+
     fn load_internal() -> Result<Self, SettingsError> {
         let config_path = Self::config_path()?;
-        
+
         if !config_path.exists() {
             let settings = Self::default();
             let _ = settings.save();
             return Ok(settings);
         }
-        
+
         let content = fs::read_to_string(&config_path)?;
         let settings: Settings = toml::from_str(&content)?;
-        
+
         Ok(settings)
     }
-    
+
     /// Save settings to file
     pub fn save(&self) -> Result<(), SettingsError> {
         let config_path = Self::config_path()?;
-        
         let toml_string = toml::to_string_pretty(self)?;
         fs::write(&config_path, toml_string)?;
-        
         Ok(())
     }
-    
-    /// Validate font size (8-32 px)
-    pub fn validate_font_size(&mut self) {
-        self.font_size = self.font_size.clamp(8.0, 32.0);
-    }
-    
-    /// Validate retention days (0-365)
-    pub fn validate_retention_days(&mut self) {
-        self.snapshot_retention_days = self.snapshot_retention_days.clamp(0, 365);
+
+    /// Validate font sizes
+    pub fn validate_font_sizes(&mut self) {
+        self.ui_font_size = self.ui_font_size.clamp(8.0, 32.0);
+        self.editor_font_size = self.editor_font_size.clamp(8.0, 32.0);
     }
 }

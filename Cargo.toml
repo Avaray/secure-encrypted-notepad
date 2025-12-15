@@ -1,16 +1,17 @@
 [package]
 name = "sed"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Dawid Wasowski"]
-description = "Secure Encrypted Document editor with dual-factor auth and version control"
+description = "Secure Encrypted Document editor with keyfile-only auth"
 
 [dependencies]
 # GUI Framework
 eframe = "0.30"
 egui = "0.30"
+egui_extras = { version = "0.30", features = ["image"] }
 
-# Kryptografia
+# Cryptography
 orion = "0.17"
 
 # File dialogs
@@ -22,10 +23,10 @@ sha2 = "0.10"
 # Random number generation
 rand = "0.8"
 
-# Bezpieczne wyzerowywanie pamięci
+# Secure memory zeroing
 zeroize = { version = "1.8", features = ["derive"] }
 
-# Settings persistence
+# Settings persistence and theme system
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 toml = "0.8"
@@ -34,17 +35,12 @@ dirs = "5.0"
 # Timestamps for version control
 chrono = { version = "0.4", features = ["serde"] }
 
+# Base64 encoding for embedded history
+base64 = "0.22"
+
 [profile.release]
 opt-level = 3
 lto = true
 codegen-units = 1
 strip = true
 panic = "abort"
-
-# Konfiguracja dla Windows - brak konsoli w release build
-[target.'cfg(windows)'.package.metadata.winres]
-Subsystem = "Windows"
-
-# Dodatkowe zależności dla Windows (niezbędne dla ikon i podsystemu)
-[target.'cfg(windows)'.dependencies]
-winres = "0.1"

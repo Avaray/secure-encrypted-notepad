@@ -2,130 +2,192 @@ use eframe::egui;
 use std::path::PathBuf;
 
 use crate::crypto::{decrypt_file, encrypt_file, generate_keyfile};
-use crate::history::{
-    cleanup_old_versions, create_snapshot, delete_version, get_history_stats, list_versions,
-    load_version, restore_version, VersionInfo,
-};
+use crate::history::DocumentWithHistory;
 use crate::settings::Settings;
+use crate::theme::{load_themes, Theme};
+
+/// Debug log entry
+#[derive(Debug, Clone)]
+struct LogEntry {
+    timestamp: chrono::DateTime<chrono::Local>,
+    level: LogLevel,
+    message: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum LogLevel {
+    Info,
+    Warning,
+    Error,
+}
+
+impl LogEntry {
+    fn new(level: LogLevel, message: String) -> Self {
+        Self {
+            timestamp: chrono::Local::now(),
+            level,
+            message,
+        }
+    }
+
+    fn display(&self) -> String {
+        let level_str = match self.level {
+            LogLevel::Info => "INFO",
+            LogLevel::Warning => "WARN",
+            LogLevel::Error => "ERROR",
+        };
+        format!(
+            "[{}] {}: {}",
+            self.timestamp.format("%H:%M:%S"),
+            level_str,
+            self.message
+        )
+    }
+}
 
 /// Application state
 pub struct EditorApp {
-    /// Text editor content
-    text_content: String,
+    /// Current document with embedded history
+    document: DocumentWithHistory,
+
     /// Path to keyfile
     keyfile_path: Option<PathBuf>,
+
     /// Path to currently open file
     current_file_path: Option<PathBuf>,
-    /// List of available versions in history
-    versions: Vec<VersionInfo>,
+
     /// Status message
     status_message: String,
+
     /// User preferences
     settings: Settings,
+
+    /// Available themes
+    themes: Vec<Theme>,
+
+    /// Current theme
+    current_theme: Theme,
+
     /// Show Settings panel
     show_settings_panel: bool,
+
     /// Show History panel
     show_history_panel: bool,
+
+    /// Show Debug panel
+    show_debug_panel: bool,
+
+    /// Show file tree panel
+    show_file_tree: bool,
+
     /// Document has been modified
     is_modified: bool,
-    /// Show restore confirmation dialog
-    show_restore_confirm: Option<VersionInfo>,
-    /// Show delete confirmation dialog
-    show_delete_confirm: Option<VersionInfo>,
-    /// Show alert when trying to save without keyfile
-    show_missing_keyfile_alert: bool,
-    /// Show save changes confirmation when previewing with unsaved changes
-    show_save_changes_dialog: Option<VersionInfo>,
+
+    /// Debug log entries
+    debug_log: Vec<LogEntry>,
+
+    /// File tree current directory
+    file_tree_dir: Option<PathBuf>,
+
+    /// File tree entries
+    file_tree_entries: Vec<PathBuf>,
 }
 
 impl Default for EditorApp {
     fn default() -> Self {
         let settings = Settings::load();
+        let themes = load_themes();
 
-        // Load initial keyfile based on settings
-        // Priority 1: Global default keyfile (if enabled and path exists)
-        // Priority 2: Last used keyfile (if "Remember" enabled)
-        let initial_keyfile =
-            if settings.use_default_keyfile && settings.default_keyfile_path.is_some() {
-                settings.default_keyfile_path.clone()
-            } else if settings.remember_keyfile_path {
-                settings.last_keyfile_path.clone()
-            } else {
-                None
-            };
+        // Find current theme
+        let current_theme = themes
+            .iter()
+            .find(|t| t.name == settings.theme_name)
+            .cloned()
+            .unwrap_or_else(|| Theme::dark());
 
-        let status = if let Some(path) = &initial_keyfile {
-            format!(
-                "Ready. Loaded keyfile: {}",
-                path.file_name().unwrap_or_default().to_string_lossy()
-            )
+        // Load global keyfile if enabled
+        let keyfile_path = if settings.use_global_keyfile {
+            settings.global_keyfile_path.clone()
         } else {
-            "Ready. Select a keyfile to begin.".to_string()
+            None
+        };
+
+        let status = if keyfile_path.is_some() {
+            "Ready with global keyfile loaded".to_string()
+        } else {
+            "Ready - Load or generate a keyfile".to_string()
         };
 
         Self {
-            text_content: String::new(),
-            keyfile_path: initial_keyfile,
+            document: DocumentWithHistory::default(),
+            keyfile_path,
             current_file_path: None,
-            versions: Vec::new(),
             status_message: status,
-            settings,
+            settings: settings.clone(),
+            themes,
+            current_theme,
             show_settings_panel: false,
             show_history_panel: false,
+            show_debug_panel: settings.show_debug_panel,
+            show_file_tree: settings.show_file_tree,
             is_modified: false,
-            show_restore_confirm: None,
-            show_delete_confirm: None,
-            show_missing_keyfile_alert: false,
-            show_save_changes_dialog: None,
+            debug_log: Vec::new(),
+            file_tree_dir: settings.last_directory.clone(),
+            file_tree_entries: Vec::new(),
         }
     }
 }
 
 impl EditorApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let app = Self::default();
-        app.apply_theme(&cc.egui_ctx);
+        let mut app = Self::default();
+        app.current_theme.apply(&cc.egui_ctx);
+        app.log_info("Application started");
+        app.refresh_file_tree();
         app
     }
 
+    /// Logging functions
+    fn log_info(&mut self, message: impl Into<String>) {
+        self.debug_log
+            .push(LogEntry::new(LogLevel::Info, message.into()));
+        if self.debug_log.len() > 1000 {
+            self.debug_log.drain(0..100);
+        }
+    }
+
+    fn log_warning(&mut self, message: impl Into<String>) {
+        self.debug_log
+            .push(LogEntry::new(LogLevel::Warning, message.into()));
+    }
+
+    fn log_error(&mut self, message: impl Into<String>) {
+        self.debug_log
+            .push(LogEntry::new(LogLevel::Error, message.into()));
+    }
+
+    /// Apply current theme
     fn apply_theme(&self, ctx: &egui::Context) {
-        if self.settings.dark_theme {
-            ctx.set_visuals(egui::Visuals::dark());
-        } else {
-            ctx.set_visuals(egui::Visuals::light());
-        }
+        self.current_theme.apply(ctx);
     }
 
-    /// Refresh list of versions from history
-    fn refresh_versions(&mut self) {
-        if let Some(path) = &self.current_file_path {
-            match list_versions(path) {
-                Ok(versions) => {
-                    self.versions = versions;
-                }
-                Err(e) => {
-                    eprintln!("Failed to refresh versions: {}", e);
-                }
-            }
-        }
-    }
-
+    /// New document
     fn new_document(&mut self) {
         if self.is_modified {
-            // TODO: In future add "Save changes?" dialog
+            // TODO: Save changes dialog
         }
 
-        self.text_content.clear();
-        // Don't clear keyfile_path - user might want to use the same one (especially default)
+        self.document = DocumentWithHistory::default();
         self.current_file_path = None;
-        self.versions.clear();
         self.is_modified = false;
         self.status_message = "New document created".to_string();
+        self.log_info("New document created");
     }
 
+    /// Open file dialog
     fn open_file_dialog(&mut self) {
         if let Some(path) = rfd::FileDialog::new()
-            .add_filter("Encrypted Document", &["sed"])
+            .add_filter("SED Files", &["sed"])
             .add_filter("All Files", &["*"])
             .pick_file()
         {
@@ -133,58 +195,80 @@ impl EditorApp {
         }
     }
 
+    /// Open file
     fn open_file(&mut self, path: PathBuf) {
         if self.keyfile_path.is_none() {
-            self.status_message = "Error: Select keyfile first".to_string();
-            self.show_missing_keyfile_alert = true;
+            self.status_message = "Error: No keyfile loaded".to_string();
+            self.log_error("Attempted to open file without keyfile");
             return;
         }
 
         let keyfile = self.keyfile_path.clone().unwrap();
 
-        if let Ok(metadata) = std::fs::metadata(&path) {
-            eprintln!("DEBUG: Opening file, size: {} bytes", metadata.len());
-        } else {
-            self.status_message = "✗ Error: File not found".to_string();
-            return;
-        }
-
-        eprintln!("DEBUG: Keyfile: {:?}", keyfile);
+        self.log_info(format!("Opening file: {}", path.display()));
 
         match decrypt_file(&keyfile, &path) {
             Ok(content) => {
-                eprintln!(
-                    "DEBUG: File decrypted successfully, {} bytes",
-                    content.len()
-                );
-                self.text_content = content;
+                self.document = DocumentWithHistory::from_file_content(&content);
                 self.current_file_path = Some(path.clone());
                 self.is_modified = false;
-                self.refresh_versions();
 
-                let version_count = self.versions.len();
+                let history_count = self.document.get_history().len();
                 self.status_message = format!(
-                    "✓ File opened: {} ({} versions)",
+                    "Opened: {} ({} history entries)",
                     path.display(),
-                    version_count
+                    history_count
                 );
-
-                if self.settings.remember_keyfile_path {
-                    self.settings.last_keyfile_path = Some(keyfile.clone());
-                    let _ = self.settings.save();
-                }
+                self.log_info(format!(
+                    "File opened successfully with {} history entries",
+                    history_count
+                ));
             }
             Err(e) => {
-                eprintln!("DEBUG: Decryption failed: {:?}", e);
-                self.status_message = format!("✗ Error: {}", e);
+                self.status_message = format!("Error: {}", e);
+                self.log_error(format!("Failed to open file: {}", e));
             }
         }
     }
 
+    /// Open directory for file tree
+    fn open_directory(&mut self) {
+        if let Some(path) = rfd::FileDialog::new().pick_folder() {
+            self.file_tree_dir = Some(path.clone());
+            self.settings.last_directory = Some(path);
+            let _ = self.settings.save();
+            self.refresh_file_tree();
+            self.log_info("Directory opened for file tree");
+        }
+    }
+
+    /// Refresh file tree entries
+    fn refresh_file_tree(&mut self) {
+        self.file_tree_entries.clear();
+
+        if let Some(dir) = &self.file_tree_dir {
+            if let Ok(entries) = std::fs::read_dir(dir) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    if path.is_file() {
+                        if let Some(ext) = path.extension() {
+                            if ext == "sed" {
+                                self.file_tree_entries.push(path);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        self.file_tree_entries.sort();
+    }
+
+    /// Save file
     fn save_file(&mut self) {
-        // Check if we have keyfile
         if self.keyfile_path.is_none() {
-            self.show_missing_keyfile_alert = true;
+            self.status_message = "Error: No keyfile loaded".to_string();
+            self.log_error("Attempted to save without keyfile");
             return;
         }
 
@@ -195,14 +279,16 @@ impl EditorApp {
         }
     }
 
+    /// Save file as
     fn save_file_as(&mut self) {
         if self.keyfile_path.is_none() {
-            self.show_missing_keyfile_alert = true;
+            self.status_message = "Error: No keyfile loaded".to_string();
+            self.log_error("Attempted to save as without keyfile");
             return;
         }
 
         if let Some(path) = rfd::FileDialog::new()
-            .add_filter("Encrypted Document", &["sed"])
+            .add_filter("SED Files", &["sed"])
             .set_file_name("document.sed")
             .save_file()
         {
@@ -210,256 +296,365 @@ impl EditorApp {
         }
     }
 
+    /// Perform actual save
     fn perform_save(&mut self, path: PathBuf) {
-        let keyfile = if let Some(k) = &self.keyfile_path {
-            k.clone()
-        } else {
-            self.status_message = "✗ No keyfile selected".to_string();
-            return;
-        };
+        let keyfile = self.keyfile_path.clone().unwrap();
 
-        eprintln!(
-            "DEBUG: Saving file with {} bytes of content",
-            self.text_content.len()
-        );
-        eprintln!("DEBUG: Keyfile: {:?}", keyfile);
-        eprintln!("DEBUG: Output path: {:?}", path);
+        // Add snapshot if auto-snapshot enabled and content changed
+        if self.settings.auto_snapshot_on_save && self.is_modified {
+            self.document.add_snapshot(None);
+            self.log_info("Snapshot created automatically");
+        }
 
-        match encrypt_file(&self.text_content, &keyfile, &path) {
+        let file_content = self.document.to_file_content();
+
+        self.log_info(format!("Saving file: {}", path.display()));
+
+        match encrypt_file(&file_content, &keyfile, &path) {
             Ok(_) => {
-                if let Ok(metadata) = std::fs::metadata(&path) {
-                    eprintln!(
-                        "DEBUG: File saved successfully, size: {} bytes",
-                        metadata.len()
-                    );
-                }
-
                 self.current_file_path = Some(path.clone());
                 self.is_modified = false;
 
-                if self.settings.auto_snapshot_on_save {
-                    match create_snapshot(&self.text_content, &keyfile, &path, None) {
-                        Ok(_) => {
-                            self.refresh_versions();
-                            self.status_message = format!(
-                                "✓ Saved: {} (snapshot created, {} versions)",
-                                path.display(),
-                                self.versions.len()
-                            );
-                        }
-                        Err(e) => {
-                            self.status_message = format!("⚠ Saved, but snapshot failed: {}", e);
-                        }
-                    }
-                } else {
-                    self.status_message = format!("✓ File saved: {}", path.display());
-                }
-
-                if self.settings.remember_keyfile_path {
-                    self.settings.last_keyfile_path = Some(keyfile.clone());
-                    let _ = self.settings.save();
-                }
+                let history_count = self.document.get_history().len();
+                self.status_message = format!(
+                    "Saved: {} ({} history entries)",
+                    path.display(),
+                    history_count
+                );
+                self.log_info("File saved successfully");
             }
             Err(e) => {
-                eprintln!("DEBUG: Encryption failed: {:?}", e);
-                self.status_message = format!("✗ Error saving: {}", e);
+                self.status_message = format!("Error: {}", e);
+                self.log_error(format!("Save failed: {}", e));
             }
         }
     }
 
-    fn select_keyfile(&mut self) {
-        if let Some(path) = rfd::FileDialog::new()
-            .add_filter("Key Files", &["key"])
-            .add_filter("All Files", &["*"])
-            .pick_file()
-        {
+    /// Load keyfile
+    fn load_keyfile(&mut self) {
+        if let Some(path) = rfd::FileDialog::new().pick_file() {
             self.keyfile_path = Some(path.clone());
-            self.status_message = format!("Keyfile selected: {}", path.display());
-
-            if self.settings.remember_keyfile_path {
-                self.settings.last_keyfile_path = Some(path);
-                let _ = self.settings.save();
-            }
+            self.status_message = format!("Keyfile loaded: {}", path.display());
+            self.log_info(format!("Keyfile loaded: {}", path.display()));
         }
     }
 
+    /// Generate new keyfile
     fn generate_new_keyfile(&mut self) {
-        if let Some(path) = rfd::FileDialog::new()
-            .add_filter("Key Files", &["key"])
-            .set_file_name("my.key")
-            .save_file()
-        {
+        if let Some(path) = rfd::FileDialog::new().set_file_name("keyfile").save_file() {
             match generate_keyfile(&path) {
                 Ok(_) => {
                     self.keyfile_path = Some(path.clone());
-                    self.status_message = format!("✓ Keyfile generated: {}", path.display());
-
-                    if self.settings.remember_keyfile_path {
-                        self.settings.last_keyfile_path = Some(path);
-                        let _ = self.settings.save();
-                    }
+                    self.status_message = format!("Keyfile generated: {}", path.display());
+                    self.log_info(format!("Keyfile generated: {}", path.display()));
                 }
                 Err(e) => {
-                    self.status_message = format!("✗ Error generating keyfile: {}", e);
+                    self.status_message = format!("Error: {}", e);
+                    self.log_error(format!("Keyfile generation failed: {}", e));
                 }
             }
         }
     }
 
-    fn preview_version(&mut self, version: &VersionInfo) {
-        // If there are unsaved changes, show dialog
-        if self.is_modified {
-            self.show_save_changes_dialog = Some(version.clone());
-        } else {
-            // Load directly to main editor
-            self.load_version_to_editor(version);
+    /// Load version from history
+    fn load_history_version(&mut self, index: usize) {
+        if self.document.load_version(index) {
+            self.is_modified = true;
+            self.status_message = "Version loaded from history".to_string();
+            self.log_info(format!("Loaded history version #{}", index));
         }
     }
 
-    fn load_version_to_editor(&mut self, version: &VersionInfo) {
-        if let Some(keyfile) = &self.keyfile_path {
-            match load_version(version, keyfile) {
-                Ok(content) => {
-                    self.text_content = content;
-                    self.is_modified = false;
-                    self.status_message =
-                        format!("📄 Loaded version: {}", version.display_timestamp());
-                }
-                Err(e) => {
-                    self.status_message = format!("✗ Error loading version: {}", e);
-                }
-            }
-        } else {
-            self.status_message = "✗ No keyfile selected".to_string();
+    /// Delete history entry
+    fn delete_history_entry(&mut self, index: usize) {
+        if self.document.delete_entry(index) {
+            self.status_message = "History entry deleted".to_string();
+            self.log_info(format!("Deleted history entry #{}", index));
         }
     }
-
-    fn restore_version_confirmed(&mut self, version: &VersionInfo) {
-        if let (Some(keyfile), Some(path)) = (&self.keyfile_path, &self.current_file_path) {
-            match restore_version(version, keyfile, path, true) {
-                Ok(_) => match decrypt_file(keyfile, path) {
-                    Ok(content) => {
-                        self.text_content = content;
-                        self.is_modified = false;
-                        self.refresh_versions();
-                        self.status_message =
-                            format!("✓ Restored: {}", version.display_timestamp());
-                    }
-                    Err(e) => {
-                        self.status_message = format!("✗ Error reloading: {}", e);
-                    }
-                },
-                Err(e) => {
-                    self.status_message = format!("✗ Error restoring: {}", e);
-                }
-            }
-
-            self.show_restore_confirm = None;
-        }
-    }
-
-    fn delete_version_confirmed(&mut self, version: &VersionInfo) {
-        match delete_version(version) {
-            Ok(_) => {
-                self.refresh_versions();
-                self.status_message = format!("✓ Deleted: {}", version.display_timestamp());
-            }
-            Err(e) => {
-                self.status_message = format!("✗ Error deleting: {}", e);
-            }
-        }
-
-        self.show_delete_confirm = None;
-    }
-
-    fn cleanup_old_versions(&mut self) {
-        if let Some(path) = &self.current_file_path {
-            let retention_days = self.settings.snapshot_retention_days;
-
-            match cleanup_old_versions(path, retention_days) {
-                Ok(count) => {
-                    self.refresh_versions();
-                    self.status_message = format!("✓ Cleaned up {} old versions", count);
-                }
-                Err(e) => {
-                    self.status_message = format!("✗ Cleanup error: {}", e);
-                }
-            }
-        }
-    }
-
-    // UI RENDERERS CONTINUE IN PART 2...
 }
 
-// PART 2: UI Renderers and eframe::App implementation
+// PART 2: UI Renderers
 
 impl EditorApp {
-    fn render_keyfile_alert(&mut self, ctx: &egui::Context) {
-        if self.show_missing_keyfile_alert {
-            egui::Window::new("⚠ Cannot Proceed")
-                .collapsible(false)
-                .resizable(false)
-                .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-                .show(ctx, |ui| {
-                    ui.colored_label(egui::Color32::RED, "Keyfile Required!");
-                    ui.add_space(5.0);
-                    ui.label("To open or save files, you must:");
-                    ui.label("• Select or generate a keyfile");
-                    ui.add_space(10.0);
+    /// Render icon toolbar (no text)
+    fn render_toolbar(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 4.0;
 
-                    if ui.button("OK, I'll do that").clicked() {
-                        self.show_missing_keyfile_alert = false;
-                    }
-                });
-        }
+            // New
+            if ui.button("📄").on_hover_text("New (Ctrl+N)").clicked() {
+                self.new_document();
+            }
+
+            // Open
+            if ui.button("📂").on_hover_text("Open (Ctrl+O)").clicked() {
+                self.open_file_dialog();
+            }
+
+            // Open Directory (for file tree)
+            if ui.button("📁").on_hover_text("Open Directory").clicked() {
+                self.open_directory();
+            }
+
+            // Save
+            if ui.button("💾").on_hover_text("Save (Ctrl+S)").clicked() {
+                self.save_file();
+            }
+
+            // Save As
+            if ui.button("📝").on_hover_text("Save As").clicked() {
+                self.save_file_as();
+            }
+
+            ui.separator();
+
+            // History
+            let history_icon = if self.show_history_panel {
+                "📜✓"
+            } else {
+                "📜"
+            };
+            if ui
+                .button(history_icon)
+                .on_hover_text("Toggle History")
+                .clicked()
+            {
+                self.show_history_panel = !self.show_history_panel;
+            }
+
+            // Settings
+            if ui.button("⚙").on_hover_text("Settings").clicked() {
+                self.show_settings_panel = true;
+            }
+
+            ui.separator();
+
+            // Load Key
+            if ui.button("🔑").on_hover_text("Load Keyfile").clicked() {
+                self.load_keyfile();
+            }
+
+            // Generate Key
+            if ui.button("✨").on_hover_text("Generate Keyfile").clicked() {
+                self.generate_new_keyfile();
+            }
+
+            ui.separator();
+
+            // Current keyfile indicator
+            if let Some(path) = &self.keyfile_path {
+                ui.label(
+                    egui::RichText::new(format!(
+                        "🔓 {}",
+                        path.file_name().unwrap_or_default().to_string_lossy()
+                    ))
+                    .color(egui::Color32::GREEN),
+                );
+            } else {
+                ui.label(egui::RichText::new("⚠ No keyfile").color(egui::Color32::RED));
+            }
+
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                // Debug toggle
+                let debug_icon = if self.show_debug_panel {
+                    "🛠✓"
+                } else {
+                    "🛠"
+                };
+                if ui
+                    .button(debug_icon)
+                    .on_hover_text("Toggle Debug")
+                    .clicked()
+                {
+                    self.show_debug_panel = !self.show_debug_panel;
+                }
+
+                // File tree toggle
+                let tree_icon = if self.show_file_tree {
+                    "🌲✓"
+                } else {
+                    "🌲"
+                };
+                if ui
+                    .button(tree_icon)
+                    .on_hover_text("Toggle File Tree")
+                    .clicked()
+                {
+                    self.show_file_tree = !self.show_file_tree;
+                }
+            });
+        });
     }
 
+    /// Render file tree panel
+    fn render_file_tree(&mut self, ui: &mut egui::Ui) {
+        ui.vertical(|ui| {
+            ui.heading("Files");
+
+            if let Some(dir) = &self.file_tree_dir {
+                ui.label(egui::RichText::new(dir.display().to_string()).small());
+                ui.separator();
+
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    for path in &self.file_tree_entries.clone() {
+                        let filename = path.file_name().unwrap_or_default().to_string_lossy();
+                        if ui.button(filename.as_ref()).clicked() {
+                            self.open_file(path.clone());
+                        }
+                    }
+                });
+            } else {
+                ui.label("No directory opened");
+                if ui.button("Open Directory").clicked() {
+                    self.open_directory();
+                }
+            }
+        });
+    }
+
+    /// Render history panel
+    fn render_history_panel(&mut self, ui: &mut egui::Ui) {
+        ui.vertical(|ui| {
+            ui.heading("History");
+
+            let history_len = self.document.get_history().len();
+            ui.label(format!("Entries: {}/100", history_len));
+            ui.separator();
+
+            // Clone history to avoid borrow issues in closure
+            let history_entries: Vec<_> = self.document.get_history().to_vec();
+
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                if history_entries.is_empty() {
+                    ui.label("No history");
+                } else {
+                    for (index, entry) in history_entries.iter().enumerate() {
+                        ui.group(|ui| {
+                            ui.label(format!("📅 {}", entry.display_timestamp()));
+                            ui.label(format!("💾 {}", entry.display_size()));
+
+                            ui.horizontal(|ui| {
+                                if ui.button("Load").clicked() {
+                                    self.load_history_version(index);
+                                }
+
+                                if ui.button("Delete").clicked() {
+                                    self.delete_history_entry(index);
+                                }
+                            });
+                        });
+                        ui.add_space(4.0);
+                    }
+                }
+            });
+        });
+    }
+
+    /// Render debug panel
+    fn render_debug_panel(&mut self, ui: &mut egui::Ui) {
+        ui.vertical(|ui| {
+            ui.heading("Debug Log");
+
+            ui.horizontal(|ui| {
+                if ui.button("Clear").clicked() {
+                    self.debug_log.clear();
+                }
+
+                ui.label(format!("Entries: {}", self.debug_log.len()));
+            });
+
+            ui.separator();
+
+            egui::ScrollArea::vertical()
+                .stick_to_bottom(true)
+                .show(ui, |ui| {
+                    for entry in &self.debug_log {
+                        let color = match entry.level {
+                            LogLevel::Info => egui::Color32::WHITE,
+                            LogLevel::Warning => egui::Color32::YELLOW,
+                            LogLevel::Error => egui::Color32::RED,
+                        };
+
+                        ui.colored_label(color, entry.display());
+                    }
+                });
+        });
+    }
+
+    /// Render settings panel
     fn render_settings_panel(&mut self, ctx: &egui::Context) {
-        egui::Window::new("⚙️ Settings")
+        egui::Window::new("⚙ Settings")
             .collapsible(false)
             .resizable(false)
-            .default_width(450.0)
+            .default_width(500.0)
             .show(ctx, |ui| {
                 ui.heading("Appearance");
 
+                // Theme selection
                 ui.horizontal(|ui| {
                     ui.label("Theme:");
-                    let changed = ui
-                        .selectable_value(&mut self.settings.dark_theme, true, "🌙 Dark")
-                        .clicked()
-                        || ui
-                            .selectable_value(&mut self.settings.dark_theme, false, "☀️ Light")
-                            .clicked();
+                    let current_name = self.current_theme.name.clone();
 
-                    if changed {
-                        self.apply_theme(ctx);
+                    egui::ComboBox::from_id_salt("theme_selector")
+                        .selected_text(&current_name)
+                        .show_ui(ui, |ui| {
+                            for theme in &self.themes {
+                                if ui
+                                    .selectable_label(theme.name == current_name, &theme.name)
+                                    .clicked()
+                                {
+                                    self.current_theme = theme.clone();
+                                    self.settings.theme_name = theme.name.clone();
+                                    self.apply_theme(ctx);
+                                    let _ = self.settings.save();
+                                }
+                            }
+                        });
+
+                    if ui.button("Refresh").clicked() {
+                        self.themes = load_themes();
+                        self.log_info("Themes refreshed");
+                    }
+                });
+
+                // UI font size
+                ui.horizontal(|ui| {
+                    ui.label("UI Font Size:");
+                    if ui
+                        .add(egui::Slider::new(
+                            &mut self.settings.ui_font_size,
+                            8.0..=32.0,
+                        ))
+                        .changed()
+                    {
+                        self.settings.validate_font_sizes();
                         let _ = self.settings.save();
                     }
                 });
 
+                // Editor font size
                 ui.horizontal(|ui| {
-                    ui.label("Font Size:");
+                    ui.label("Editor Font Size:");
                     if ui
-                        .add(
-                            egui::Slider::new(&mut self.settings.font_size, 8.0..=32.0)
-                                .suffix(" px"),
-                        )
+                        .add(egui::Slider::new(
+                            &mut self.settings.editor_font_size,
+                            8.0..=32.0,
+                        ))
                         .changed()
                     {
-                        self.settings.validate_font_size();
+                        self.settings.validate_font_sizes();
                         let _ = self.settings.save();
                     }
                 });
 
                 ui.separator();
-
-                ui.heading("Global Default Keyfile");
-                ui.label("Define a keyfile to be loaded automatically on startup.");
+                ui.heading("Global Keyfile");
 
                 if ui
                     .checkbox(
-                        &mut self.settings.use_default_keyfile,
-                        "Always use this keyfile globally",
+                        &mut self.settings.use_global_keyfile,
+                        "Use global keyfile on startup",
                     )
                     .changed()
                 {
@@ -467,46 +662,43 @@ impl EditorApp {
                 }
 
                 ui.horizontal(|ui| {
-                    ui.label("Current Default:");
-                    if let Some(path) = &self.settings.default_keyfile_path {
-                        ui.label(
-                            egui::RichText::new(
-                                path.file_name().unwrap_or_default().to_string_lossy(),
-                            )
-                            .strong(),
-                        );
+                    ui.label("Current:");
+                    if let Some(path) = &self.settings.global_keyfile_path {
+                        ui.label(path.file_name().unwrap_or_default().to_string_lossy());
                     } else {
-                        ui.colored_label(egui::Color32::YELLOW, "None set");
+                        ui.label("None");
                     }
                 });
 
                 ui.horizontal(|ui| {
-                    if ui.button("📂 Select Default Keyfile").clicked() {
-                        if let Some(path) = rfd::FileDialog::new()
-                            .add_filter("Key Files", &["key"])
-                            .pick_file()
-                        {
-                            self.settings.default_keyfile_path = Some(path.clone());
+                    if ui.button("Set Global Keyfile").clicked() {
+                        if let Some(path) = rfd::FileDialog::new().pick_file() {
+                            self.settings.global_keyfile_path = Some(path.clone());
 
-                            if self.settings.use_default_keyfile {
+                            if self.settings.use_global_keyfile {
                                 self.keyfile_path = Some(path);
-                                self.status_message =
-                                    "Default keyfile updated and applied.".to_string();
                             }
 
                             let _ = self.settings.save();
+                            self.log_info("Global keyfile set");
                         }
                     }
 
-                    if ui.button("🗑️ Clear").clicked() {
-                        self.settings.default_keyfile_path = None;
+                    if ui.button("Clear").clicked() {
+                        self.settings.global_keyfile_path = None;
                         let _ = self.settings.save();
                     }
                 });
 
                 ui.separator();
+                ui.heading("Editor");
 
-                ui.heading("Version Control");
+                if ui
+                    .checkbox(&mut self.settings.show_line_numbers, "Show line numbers")
+                    .changed()
+                {
+                    let _ = self.settings.save();
+                }
 
                 if ui
                     .checkbox(
@@ -518,20 +710,6 @@ impl EditorApp {
                     let _ = self.settings.save();
                 }
 
-                ui.horizontal(|ui| {
-                    ui.label("Retention:");
-                    if ui
-                        .add(
-                            egui::Slider::new(&mut self.settings.snapshot_retention_days, 0..=365)
-                                .suffix(" days"),
-                        )
-                        .changed()
-                    {
-                        self.settings.validate_retention_days();
-                        let _ = self.settings.save();
-                    }
-                });
-
                 ui.add_space(20.0);
 
                 if ui.button("Close").clicked() {
@@ -540,193 +718,65 @@ impl EditorApp {
             });
     }
 
-    fn render_history_panel(&mut self, ui: &mut egui::Ui) {
-        ui.vertical(|ui| {
-            ui.heading("📜 Version History");
-            ui.add_space(5.0);
+    /// Render text editor with line numbers
+    fn render_editor(&mut self, ui: &mut egui::Ui) {
+        let text = &mut self.document.current_content;
+        let line_count = text.lines().count().max(1);
 
-            if let Some(path) = &self.current_file_path {
-                if let Ok(stats) = get_history_stats(path) {
-                    ui.horizontal(|ui| {
-                        ui.label(format!("Ver: {}", stats.total_versions));
-                        ui.separator();
-                        let size_mb = stats.total_size_bytes as f64 / (1024.0 * 1024.0);
-                        ui.label(format!("{:.1} MB", size_mb));
-                    });
-                }
+        ui.horizontal_top(|ui| {
+            // Line numbers
+            if self.settings.show_line_numbers {
+                let line_number_width = (line_count.to_string().len() as f32 * 8.0).max(30.0);
 
-                ui.separator();
+                ui.allocate_ui_with_layout(
+                    egui::vec2(line_number_width, ui.available_height()),
+                    egui::Layout::top_down(egui::Align::RIGHT),
+                    |ui| {
+                        ui.set_min_height(ui.available_height());
 
-                ui.horizontal(|ui| {
-                    if ui.button("🗑️ Clean").clicked() {
-                        self.cleanup_old_versions();
-                    }
+                        egui::ScrollArea::vertical()
+                            .id_salt("line_numbers")
+                            .show(ui, |ui| {
+                                ui.style_mut().spacing.item_spacing.y = 0.0;
 
-                    if ui.button("🔄 Refresh").clicked() {
-                        self.refresh_versions();
-                    }
-                });
-
-                ui.separator();
-
-                egui::ScrollArea::vertical().show(ui, |ui| {
-                    if self.versions.is_empty() {
-                        ui.label("No versions.");
-                    } else {
-                        let versions = self.versions.clone();
-                        for version in &versions {
-                            ui.group(|ui| {
-                                ui.label(format!("📅 {}", version.display_timestamp()));
-
-                                ui.horizontal(|ui| {
-                                    if ui.button("👁").on_hover_text("Load this version").clicked()
-                                    {
-                                        self.preview_version(version);
-                                    }
-
-                                    if ui.button("↩️").clicked() {
-                                        self.show_restore_confirm = Some(version.clone());
-                                    }
-
-                                    if ui.button("🗑️").clicked() {
-                                        self.show_delete_confirm = Some(version.clone());
-                                    }
-                                });
+                                for i in 1..=line_count {
+                                    ui.label(
+                                        egui::RichText::new(i.to_string())
+                                            .color(egui::Color32::GRAY)
+                                            .monospace(),
+                                    );
+                                }
                             });
-                            ui.add_space(2.0);
-                        }
+                    },
+                );
+
+                ui.separator();
+            }
+
+            // Text editor
+            egui::ScrollArea::vertical()
+                .id_salt("editor")
+                .show(ui, |ui| {
+                    let available_height = ui.available_height();
+
+                    let text_edit = egui::TextEdit::multiline(text)
+                        .desired_width(f32::INFINITY)
+                        .min_size(egui::vec2(0.0, available_height))
+                        .font(egui::FontId::monospace(self.settings.editor_font_size))
+                        .code_editor()
+                        .frame(false); // Remove focus border
+
+                    if ui.add(text_edit).changed() {
+                        self.is_modified = true;
                     }
                 });
-            }
         });
-    }
-
-    fn render_save_changes_dialog(&mut self, ctx: &egui::Context) {
-        let version_data = self.show_save_changes_dialog.clone();
-        let mut do_save = false;
-        let mut do_discard = false;
-        let mut do_cancel = false;
-
-        if let Some(version) = version_data {
-            let version_clone = version.clone();
-
-            egui::Window::new("⚠️ Unsaved Changes")
-                .collapsible(false)
-                .resizable(false)
-                .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-                .show(ctx, |ui| {
-                    ui.label("You have unsaved changes in the current document.");
-                    ui.add_space(5.0);
-                    ui.label("Do you want to save them before loading a version?");
-                    ui.add_space(10.0);
-
-                    ui.horizontal(|ui| {
-                        if ui.button("💾 Save").clicked() {
-                            do_save = true;
-                        }
-
-                        if ui.button("🗑️ Discard").clicked() {
-                            do_discard = true;
-                        }
-
-                        if ui.button("✗ Cancel").clicked() {
-                            do_cancel = true;
-                        }
-                    });
-                });
-
-            if do_save {
-                self.save_file();
-                self.load_version_to_editor(&version_clone);
-                self.show_save_changes_dialog = None;
-            }
-
-            if do_discard {
-                self.load_version_to_editor(&version_clone);
-                self.show_save_changes_dialog = None;
-            }
-        }
-
-        if do_cancel {
-            self.show_save_changes_dialog = None;
-        }
-    }
-
-    fn render_restore_confirm(&mut self, ctx: &egui::Context) {
-        let restore_data = self.show_restore_confirm.clone();
-        let mut do_restore = false;
-        let mut do_cancel = false;
-
-        if let Some(version) = restore_data {
-            let version_clone = version.clone();
-
-            egui::Window::new("Confirm Restore")
-                .collapsible(false)
-                .resizable(false)
-                .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-                .show(ctx, |ui| {
-                    ui.label("Restore this version?");
-
-                    ui.horizontal(|ui| {
-                        if ui.button("Yes").clicked() {
-                            do_restore = true;
-                        }
-
-                        if ui.button("No").clicked() {
-                            do_cancel = true;
-                        }
-                    });
-                });
-
-            if do_restore {
-                self.restore_version_confirmed(&version_clone);
-            }
-        }
-
-        if do_cancel {
-            self.show_restore_confirm = None;
-        }
-    }
-
-    fn render_delete_confirm(&mut self, ctx: &egui::Context) {
-        let delete_data = self.show_delete_confirm.clone();
-        let mut do_delete = false;
-        let mut do_cancel = false;
-
-        if let Some(version) = delete_data {
-            let version_clone = version.clone();
-
-            egui::Window::new("Confirm Delete")
-                .collapsible(false)
-                .resizable(false)
-                .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-                .show(ctx, |ui| {
-                    ui.label("Delete this version?");
-
-                    ui.horizontal(|ui| {
-                        if ui.button("Yes").clicked() {
-                            do_delete = true;
-                        }
-
-                        if ui.button("No").clicked() {
-                            do_cancel = true;
-                        }
-                    });
-                });
-
-            if do_delete {
-                self.delete_version_confirmed(&version_clone);
-            }
-        }
-
-        if do_cancel {
-            self.show_delete_confirm = None;
-        }
     }
 }
 
 impl eframe::App for EditorApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Keyboard shortcuts
         ctx.input_mut(|i| {
             if i.consume_shortcut(&egui::KeyboardShortcut::new(
                 egui::Modifiers::CTRL,
@@ -748,160 +798,54 @@ impl eframe::App for EditorApp {
             }
         });
 
-        // Render dialogs
+        // Dialogs
         if self.show_settings_panel {
             self.render_settings_panel(ctx);
         }
 
-        if self.show_save_changes_dialog.is_some() {
-            self.render_save_changes_dialog(ctx);
-        }
-
-        if self.show_restore_confirm.is_some() {
-            self.render_restore_confirm(ctx);
-        }
-
-        if self.show_delete_confirm.is_some() {
-            self.render_delete_confirm(ctx);
-        }
-
-        self.render_keyfile_alert(ctx);
-
-        // Menu bar
-        egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
-                ui.menu_button("File", |ui| {
-                    if ui.button("📄 New").clicked() {
-                        self.new_document();
-                        ui.close_menu();
-                    }
-
-                    if ui.button("📂 Open").clicked() {
-                        self.open_file_dialog();
-                        ui.close_menu();
-                    }
-
-                    if ui.button("💾 Save").clicked() {
-                        self.save_file();
-                        ui.close_menu();
-                    }
-
-                    if ui.button("💾 Save As").clicked() {
-                        self.save_file_as();
-                        ui.close_menu();
-                    }
-
-                    ui.separator();
-
-                    if ui.button("⌫ Exit").clicked() {
-                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                    }
-                });
-
-                ui.menu_button("Security", |ui| {
-                    if ui.button("🔑 Select Keyfile").clicked() {
-                        self.select_keyfile();
-                        ui.close_menu();
-                    }
-
-                    if ui.button("✨ Generate Keyfile").clicked() {
-                        self.generate_new_keyfile();
-                        ui.close_menu();
-                    }
-                });
-
-                ui.menu_button("History", |ui| {
-                    if ui.button("📜 Toggle Panel").clicked() {
-                        self.show_history_panel = !self.show_history_panel;
-                        ui.close_menu();
-                    }
-                });
-
-                ui.menu_button("Settings", |ui| {
-                    if ui.button("⚙️ Preferences").clicked() {
-                        self.show_settings_panel = true;
-                        ui.close_menu();
-                    }
-                });
-            });
+        // Toolbar
+        egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {
+            self.render_toolbar(ui);
         });
 
-        // Auth Panel (Top) - Only Keyfile
-        egui::TopBottomPanel::top("auth_panel").show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                ui.heading("🔒 Auth");
-                ui.separator();
-
-                ui.label("Keyfile:");
-                if let Some(path) = &self.keyfile_path {
-                    ui.label(
-                        egui::RichText::new(path.file_name().unwrap_or_default().to_string_lossy())
-                            .strong(),
-                    );
-                } else {
-                    ui.colored_label(egui::Color32::YELLOW, "⚠ None");
-                }
-
-                if ui.button("Select").clicked() {
-                    self.select_keyfile();
-                }
-
-                if ui.button("Generate").clicked() {
-                    self.generate_new_keyfile();
-                }
-            });
-        });
-
-        // Status Bar (Bottom)
+        // Status bar
         egui::TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.label(&self.status_message);
 
                 if self.is_modified {
-                    ui.colored_label(egui::Color32::YELLOW, "* Modified");
+                    ui.label(egui::RichText::new("*").color(egui::Color32::YELLOW));
                 }
             });
         });
 
-        // History Panel (Right)
-        egui::SidePanel::right("history_panel")
+        // File tree (left)
+        egui::SidePanel::left("file_tree")
+            .resizable(true)
+            .default_width(200.0)
+            .show_animated(ctx, self.show_file_tree, |ui| {
+                self.render_file_tree(ui);
+            });
+
+        // History panel (right)
+        egui::SidePanel::right("history")
             .resizable(true)
             .default_width(250.0)
             .show_animated(ctx, self.show_history_panel, |ui| {
                 self.render_history_panel(ui);
             });
 
-        // Central Panel (Editor)
-        egui::CentralPanel::default().show(ctx, |ui| {
-            let style = (*ctx.style()).clone();
-            let font_id = if self.settings.font_family == "Monospace" {
-                egui::FontId::monospace(self.settings.font_size)
-            } else {
-                egui::FontId::proportional(self.settings.font_size)
-            };
-
-            let mut updated_style = style;
-            updated_style
-                .text_styles
-                .insert(egui::TextStyle::Body, font_id.clone());
-            updated_style
-                .text_styles
-                .insert(egui::TextStyle::Monospace, font_id);
-
-            ctx.set_style(updated_style);
-
-            let available_height = ui.available_height();
-
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                let text_edit = egui::TextEdit::multiline(&mut self.text_content)
-                    .desired_width(f32::INFINITY)
-                    .min_size(egui::vec2(0.0, available_height))
-                    .code_editor();
-
-                if ui.add(text_edit).changed() {
-                    self.is_modified = true;
-                }
+        // Debug panel (right, below history if both shown)
+        egui::SidePanel::right("debug")
+            .resizable(true)
+            .default_width(250.0)
+            .show_animated(ctx, self.show_debug_panel, |ui| {
+                self.render_debug_panel(ui);
             });
+
+        // Central editor
+        egui::CentralPanel::default().show(ctx, |ui| {
+            self.render_editor(ui);
         });
     }
 }
