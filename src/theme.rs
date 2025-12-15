@@ -85,9 +85,12 @@ impl ThemeColors {
         )
     }
 
-    // ✅ NEW: Icon hover color helper
     pub fn icon_hover_color(&self) -> egui::Color32 {
         egui::Color32::from_rgb(self.icon_hover[0], self.icon_hover[1], self.icon_hover[2])
+    }
+
+    pub fn comment_color(&self) -> egui::Color32 {
+        egui::Color32::from_rgb(self.comment[0], self.comment[1], self.comment[2])
     }
 
     pub fn success_color(&self) -> egui::Color32 {

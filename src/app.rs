@@ -624,6 +624,80 @@ impl EditorApp {
         self.log_info(format!("Cleared all history ({} entries)", count));
     }
 
+    /// Toggle comment on selected lines or current line
+    fn toggle_comment_lines(&mut self) {
+        let text = &mut self.document.current_content;
+        let lines: Vec<&str> = text.lines().collect();
+
+        if lines.is_empty() {
+            return;
+        }
+
+        // Get cursor position or selection range
+        // For now, we'll work with the entire text and detect which line to comment
+        // based on highlighted_line or comment all if no highlight
+
+        let line_to_comment = if let Some(line_num) = self.highlighted_line {
+            if line_num > 0 && line_num <= lines.len() {
+                Some(line_num - 1) // Convert to 0-indexed
+            } else {
+                None
+            }
+        } else {
+            // If no line is highlighted, comment the first line or do nothing
+            None
+        };
+
+        if line_to_comment.is_none() && lines.is_empty() {
+            return;
+        }
+
+        // Process all lines
+        let mut new_lines: Vec<String> = Vec::new();
+
+        for (idx, line) in lines.iter().enumerate() {
+            // Check if we should process this line
+            let should_process = if let Some(target_idx) = line_to_comment {
+                idx == target_idx
+            } else {
+                // If no specific line, comment all non-empty lines
+                !line.trim().is_empty()
+            };
+
+            if should_process {
+                let trimmed = line.trim_start();
+                if trimmed.starts_with("//") {
+                    // Uncomment: remove "//" and following space if present
+                    let uncommented = if trimmed.starts_with("// ") {
+                        trimmed.strip_prefix("// ").unwrap()
+                    } else {
+                        trimmed.strip_prefix("//").unwrap()
+                    };
+                    // Preserve original indentation
+                    let indent = line.len() - trimmed.len();
+                    new_lines.push(format!("{}{}", " ".repeat(indent), uncommented));
+                } else {
+                    // Comment: add "//" at start (preserving indentation)
+                    let indent_count = line.len() - trimmed.len();
+                    new_lines.push(format!("{}// {}", " ".repeat(indent_count), trimmed));
+                }
+            } else {
+                new_lines.push(line.to_string());
+            }
+        }
+
+        // Update document
+        *text = new_lines.join("\n");
+        self.is_modified = true;
+
+        // Log action
+        if let Some(line_num) = line_to_comment {
+            self.log_info(format!("Toggled comment on line {}", line_num + 1));
+        } else {
+            self.log_info("Toggled comments");
+        }
+    }
+
     /// Render icon toolbar with hover colors
     fn render_toolbar(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
@@ -1558,12 +1632,48 @@ impl EditorApp {
                         }
 
                         // Text editor
+                        let comment_color = self.current_theme.colors.comment_color();
+
                         let output = ui.add(
                             egui::TextEdit::multiline(text)
                                 .desired_width(f32::INFINITY)
                                 .desired_rows(line_count)
-                                .font(font_id)
-                                .code_editor()
+                                .font(font_id.clone())
+                                .layouter(&mut |ui: &egui::Ui, text: &str, _wrap_width: f32| {
+                                    let mut layout_job = egui::text::LayoutJob::default();
+
+                                    for line in text.split('\n') {
+                                        let trimmed = line.trim_start();
+                                        let is_comment = trimmed.starts_with("//");
+
+                                        let color = if is_comment {
+                                            comment_color
+                                        } else {
+                                            ui.visuals().text_color()
+                                        };
+
+                                        layout_job.append(
+                                            line,
+                                            0.0,
+                                            egui::TextFormat {
+                                                font_id: font_id.clone(),
+                                                color,
+                                                ..Default::default()
+                                            },
+                                        );
+
+                                        layout_job.append(
+                                            "\n",
+                                            0.0,
+                                            egui::TextFormat {
+                                                font_id: font_id.clone(),
+                                                ..Default::default()
+                                            },
+                                        );
+                                    }
+
+                                    ui.fonts(|f| f.layout_job(layout_job))
+                                })
                                 .frame(false)
                                 .lock_focus(true),
                         );
@@ -1669,6 +1779,14 @@ impl eframe::App for EditorApp {
                 egui::Key::G,
             )) {
                 self.show_goto_line = true;
+            }
+
+            // Ctrl+/: Toggle Comment
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL,
+                egui::Key::Slash,
+            )) {
+                self.toggle_comment_lines();
             }
         });
 
