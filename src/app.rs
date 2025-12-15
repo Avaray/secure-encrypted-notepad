@@ -494,121 +494,84 @@ impl EditorApp {
         self.log_info(format!("Cleared all history ({} entries)", count));
     }
 
-    /// Render icon toolbar
+    /// Render icon toolbar with hover colors
     fn render_toolbar(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 4.0;
 
-            // Stały rozmiar przycisków (kwadratowe)
             let button_size = egui::vec2(32.0, 32.0);
             let icon_size = egui::vec2(24.0, 24.0);
+            let hover_tint = self.current_theme.colors.icon_hover_color();
+
+            // Helper closure to render icon button with hover effect
+            let mut icon_button = |ui: &mut egui::Ui,
+                                   icon: &egui::TextureHandle,
+                                   tooltip: &str,
+                                   selected: bool|
+             -> egui::Response {
+                let (rect, mut response) =
+                    ui.allocate_exact_size(button_size, egui::Sense::click());
+
+                if response.clicked() {
+                    response.mark_changed();
+                }
+
+                // Draw background if selected
+                if selected {
+                    ui.painter()
+                        .rect_filled(rect, 4.0, ui.visuals().widgets.active.bg_fill);
+                } else if response.hovered() {
+                    ui.painter()
+                        .rect_filled(rect, 4.0, ui.visuals().widgets.hovered.bg_fill);
+                }
+
+                // Draw icon with tint on hover
+                let icon_rect = egui::Rect::from_center_size(rect.center(), icon_size);
+                let tint = if response.hovered() || selected {
+                    hover_tint
+                } else {
+                    egui::Color32::WHITE
+                };
+
+                ui.painter().image(
+                    icon.id(),
+                    icon_rect,
+                    egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
+                    tint,
+                );
+
+                response.on_hover_text(tooltip)
+            };
 
             // --- LEFT SIDE: Main Actions ---
 
-            // New
-            if ui
-                .add_sized(
-                    button_size,
-                    egui::ImageButton::new(
-                        egui::Image::new(&self.icons.new_doc).fit_to_exact_size(icon_size),
-                    )
-                    .frame(false),
-                )
-                .on_hover_text("New (Ctrl+N)")
-                .clicked()
-            {
+            if icon_button(ui, &self.icons.new_doc, "New (Ctrl+N)", false).clicked() {
                 self.new_document();
             }
 
-            // Open
-            if ui
-                .add_sized(
-                    button_size,
-                    egui::ImageButton::new(
-                        egui::Image::new(&self.icons.open).fit_to_exact_size(icon_size),
-                    )
-                    .frame(false),
-                )
-                .on_hover_text("Open (Ctrl+O)")
-                .clicked()
-            {
+            if icon_button(ui, &self.icons.open, "Open (Ctrl+O)", false).clicked() {
                 self.open_file_dialog();
             }
 
-            // Open Directory
-            if ui
-                .add_sized(
-                    button_size,
-                    egui::ImageButton::new(
-                        egui::Image::new(&self.icons.open_folder).fit_to_exact_size(icon_size),
-                    )
-                    .frame(false),
-                )
-                .on_hover_text("Open Directory")
-                .clicked()
-            {
+            if icon_button(ui, &self.icons.open_folder, "Open Directory", false).clicked() {
                 self.open_directory();
             }
 
-            // Save
-            if ui
-                .add_sized(
-                    button_size,
-                    egui::ImageButton::new(
-                        egui::Image::new(&self.icons.save).fit_to_exact_size(icon_size),
-                    )
-                    .frame(false),
-                )
-                .on_hover_text("Save (Ctrl+S)")
-                .clicked()
-            {
+            if icon_button(ui, &self.icons.save, "Save (Ctrl+S)", false).clicked() {
                 self.save_file();
             }
 
-            // Save As
-            if ui
-                .add_sized(
-                    button_size,
-                    egui::ImageButton::new(
-                        egui::Image::new(&self.icons.save_as).fit_to_exact_size(icon_size),
-                    )
-                    .frame(false),
-                )
-                .on_hover_text("Save As")
-                .clicked()
-            {
+            if icon_button(ui, &self.icons.save_as, "Save As", false).clicked() {
                 self.save_file_as();
             }
 
             ui.separator();
 
-            // Load Key
-            if ui
-                .add_sized(
-                    button_size,
-                    egui::ImageButton::new(
-                        egui::Image::new(&self.icons.key).fit_to_exact_size(icon_size),
-                    )
-                    .frame(false),
-                )
-                .on_hover_text("Load Keyfile")
-                .clicked()
-            {
+            if icon_button(ui, &self.icons.key, "Load Keyfile", false).clicked() {
                 self.load_keyfile();
             }
 
-            // Generate Key
-            if ui
-                .add_sized(
-                    button_size,
-                    egui::ImageButton::new(
-                        egui::Image::new(&self.icons.generate).fit_to_exact_size(icon_size),
-                    )
-                    .frame(false),
-                )
-                .on_hover_text("Generate Keyfile")
-                .clicked()
-            {
+            if icon_button(ui, &self.icons.generate, "Generate Keyfile", false).clicked() {
                 self.generate_new_keyfile();
             }
 
@@ -616,7 +579,7 @@ impl EditorApp {
             if let Some(path) = &self.keyfile_path {
                 ui.label(
                     egui::RichText::new(format!(
-                        "🔓 {}",
+                        "🔑 {}",
                         path.file_name().unwrap_or_default().to_string_lossy()
                     ))
                     .color(egui::Color32::GREEN),
@@ -629,49 +592,18 @@ impl EditorApp {
 
             // --- RIGHT SIDE: Toggles ---
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                // Theme Editor button
-                if ui
-                    .add_sized(
-                        button_size,
-                        egui::ImageButton::new(
-                            egui::Image::new(&self.icons.settings).fit_to_exact_size(icon_size),
-                        )
-                        .frame(false),
-                    )
-                    .on_hover_text("Theme Editor")
-                    .clicked()
-                {
+                if icon_button(ui, &self.icons.settings, "Theme Editor", false).clicked() {
                     self.show_theme_editor = true;
                     self.editing_theme = Some(self.current_theme.clone());
                 }
 
-                // Settings
-                if ui
-                    .add_sized(
-                        button_size,
-                        egui::ImageButton::new(
-                            egui::Image::new(&self.icons.settings).fit_to_exact_size(icon_size),
-                        )
-                        .frame(false),
-                    )
-                    .on_hover_text("Settings")
-                    .clicked()
-                {
+                if icon_button(ui, &self.icons.settings, "Settings", false).clicked() {
                     self.show_settings_panel = true;
                 }
 
                 ui.separator();
 
-                // Debug toggle
-                if ui
-                    .add_sized(
-                        button_size,
-                        egui::ImageButton::new(
-                            egui::Image::new(&self.icons.debug).fit_to_exact_size(icon_size),
-                        )
-                        .frame(self.show_debug_panel),
-                    )
-                    .on_hover_text("Toggle Debug")
+                if icon_button(ui, &self.icons.debug, "Toggle Debug", self.show_debug_panel)
                     .clicked()
                 {
                     self.show_debug_panel = !self.show_debug_panel;
@@ -679,32 +611,24 @@ impl EditorApp {
                     let _ = self.settings.save();
                 }
 
-                // History toggle
-                if ui
-                    .add_sized(
-                        button_size,
-                        egui::ImageButton::new(
-                            egui::Image::new(&self.icons.history).fit_to_exact_size(icon_size),
-                        )
-                        .frame(self.show_history_panel),
-                    )
-                    .on_hover_text("Toggle History")
-                    .clicked()
+                if icon_button(
+                    ui,
+                    &self.icons.history,
+                    "Toggle History",
+                    self.show_history_panel,
+                )
+                .clicked()
                 {
                     self.show_history_panel = !self.show_history_panel;
                 }
 
-                // File tree toggle
-                if ui
-                    .add_sized(
-                        button_size,
-                        egui::ImageButton::new(
-                            egui::Image::new(&self.icons.file_tree).fit_to_exact_size(icon_size),
-                        )
-                        .frame(self.show_file_tree),
-                    )
-                    .on_hover_text("Toggle File Tree")
-                    .clicked()
+                if icon_button(
+                    ui,
+                    &self.icons.file_tree,
+                    "Toggle File Tree",
+                    self.show_file_tree,
+                )
+                .clicked()
                 {
                     self.show_file_tree = !self.show_file_tree;
                     self.settings.show_file_tree = self.show_file_tree;
@@ -715,6 +639,7 @@ impl EditorApp {
     }
 
     /// Render theme editor panel
+    /// Render theme editor panel with icon hover color
     fn render_theme_editor_panel(&mut self, ctx: &egui::Context) {
         let mut close_editor = false;
         let mut action: Option<ThemeEditorAction> = None;
@@ -798,7 +723,7 @@ impl EditorApp {
                             }
                         });
 
-                        // ✅ NOWY: Kursor
+                        // Cursor Color
                         ui.horizontal(|ui| {
                             ui.label("Cursor Color:");
                             let mut color = egui::Color32::from_rgb(
@@ -828,6 +753,24 @@ impl EditorApp {
 
                         ui.add_space(8.0);
                         ui.separator();
+                        ui.label(egui::RichText::new("UI Colors").strong());
+
+                        // ✅ NEW: Icon Hover Color
+                        ui.horizontal(|ui| {
+                            ui.label("Icon Hover Tint:");
+                            let mut color = egui::Color32::from_rgb(
+                                theme.colors.icon_hover[0],
+                                theme.colors.icon_hover[1],
+                                theme.colors.icon_hover[2],
+                            );
+                            if ui.color_edit_button_srgba(&mut color).changed() {
+                                theme.colors.icon_hover = [color.r(), color.g(), color.b()];
+                                theme.apply(ctx);
+                            }
+                        });
+
+                        ui.add_space(8.0);
+                        ui.separator();
                         ui.label(egui::RichText::new("Syntax Colors").strong());
 
                         // Comment
@@ -849,25 +792,21 @@ impl EditorApp {
 
                     // Buttons
                     ui.horizontal(|ui| {
-                        // Save button
                         if ui.button("💾 Save Theme").clicked() {
                             action = Some(ThemeEditorAction::Save(theme.clone()));
                             close_editor = true;
                         }
 
-                        // Apply without saving
                         if ui.button("✓ Apply").clicked() {
                             action = Some(ThemeEditorAction::Apply(theme.clone()));
                             close_editor = true;
                         }
 
-                        // Cancel
                         if ui.button("✖ Cancel").clicked() {
                             action = Some(ThemeEditorAction::Cancel);
                             close_editor = true;
                         }
 
-                        // Reset to defaults
                         if ui.button("🔄 Reset to Dark").clicked() {
                             *theme = crate::theme::Theme::dark();
                             theme.apply(ctx);

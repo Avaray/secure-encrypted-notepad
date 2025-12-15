@@ -13,6 +13,7 @@ pub struct ThemeColors {
     pub cursor: [u8; 3],
     pub line_number: [u8; 3],
     pub comment: [u8; 3],
+    pub icon_hover: [u8; 3], // ✅ NEW: Icon hover color
 }
 
 impl Default for ThemeColors {
@@ -31,6 +32,7 @@ impl ThemeColors {
             cursor: [255, 255, 255],
             line_number: [128, 128, 128],
             comment: [106, 153, 85],
+            icon_hover: [100, 150, 255], // ✅ Blue tint on hover
         }
     }
 
@@ -43,22 +45,14 @@ impl ThemeColors {
             cursor: [0, 0, 0],
             line_number: [128, 128, 128],
             comment: [0, 128, 0],
+            icon_hover: [0, 100, 255], // ✅ Blue tint on hover
         }
     }
 
     pub fn to_egui_color32(&self, rgb: [u8; 3]) -> egui::Color32 {
         egui::Color32::from_rgb(rgb[0], rgb[1], rgb[2])
     }
-}
 
-/// Complete theme definition
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Theme {
-    pub name: String,
-    pub colors: ThemeColors,
-}
-
-impl ThemeColors {
     pub fn line_number_color(&self) -> egui::Color32 {
         egui::Color32::from_rgb(
             self.line_number[0],
@@ -78,6 +72,18 @@ impl ThemeColors {
             self.selection_background[2],
         )
     }
+
+    // ✅ NEW: Icon hover color helper
+    pub fn icon_hover_color(&self) -> egui::Color32 {
+        egui::Color32::from_rgb(self.icon_hover[0], self.icon_hover[1], self.icon_hover[2])
+    }
+}
+
+/// Complete theme definition
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Theme {
+    pub name: String,
+    pub colors: ThemeColors,
 }
 
 impl Theme {
@@ -107,7 +113,6 @@ impl Theme {
         visuals.panel_fill = self.colors.to_egui_color32(self.colors.panel_background);
         visuals.extreme_bg_color = self.colors.to_egui_color32(self.colors.panel_background);
 
-        // ✅ Użyj helper functions
         visuals.selection.bg_fill = self.colors.selection_color();
         visuals.selection.stroke.color = self.colors.cursor_color();
 
