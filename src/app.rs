@@ -691,7 +691,6 @@ impl EditorApp {
             }
 
             ui.separator();
-
             ui.add_space(20.0);
 
             // --- RIGHT SIDE: Toggles ---
@@ -1702,20 +1701,22 @@ impl eframe::App for EditorApp {
         });
 
         // File tree (left)
-        egui::SidePanel::left("file_tree")
-            .resizable(true)
-            .default_width(self.settings.file_tree_width)
-            .width_range(150.0..=500.0)
-            .show_animated(ctx, self.show_file_tree, |ui| {
-                self.render_file_tree(ui);
+        if self.show_file_tree {
+            egui::SidePanel::left("file_tree")
+                .resizable(true)
+                .default_width(self.settings.file_tree_width)
+                .width_range(150.0..=500.0)
+                .show(ctx, |ui| {
+                    self.render_file_tree(ui);
 
-                // Save width if changed
-                let current_width = ui.available_width();
-                if (current_width - self.settings.file_tree_width).abs() > 1.0 {
-                    self.settings.file_tree_width = current_width;
-                    let _ = self.settings.save();
-                }
-            });
+                    // Save width if changed
+                    let current_width = ui.available_width();
+                    if (current_width - self.settings.file_tree_width).abs() > 1.0 {
+                        self.settings.file_tree_width = current_width;
+                        let _ = self.settings.save();
+                    }
+                });
+        }
 
         // History panel (right)
         egui::SidePanel::right("history")
