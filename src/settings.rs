@@ -34,6 +34,9 @@ pub struct Settings {
 
     /// Last opened directory for file tree
     pub last_directory: Option<PathBuf>,
+
+    /// File tree panel width
+    pub file_tree_width: f32,
 }
 
 impl Default for Settings {
@@ -49,6 +52,7 @@ impl Default for Settings {
             show_file_tree: false,
             show_debug_panel: false,
             last_directory: None,
+            file_tree_width: 200.0,
         }
     }
 }

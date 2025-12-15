@@ -91,6 +91,9 @@ pub struct EditorApp {
 
     /// File tree entries
     file_tree_entries: Vec<PathBuf>,
+
+    /// Icons
+    icons: crate::icons::Icons,
 }
 
 impl Default for EditorApp {
@@ -134,6 +137,7 @@ impl Default for EditorApp {
             debug_log: Vec::new(),
             file_tree_dir: settings.last_directory.clone(),
             file_tree_entries: Vec::new(),
+            icons: crate::icons::Icons::load(&egui::Context::default()),
         }
     }
 }
@@ -141,10 +145,41 @@ impl Default for EditorApp {
 impl EditorApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let mut app = Self::default();
+        app.icons = crate::icons::Icons::load(&cc.egui_ctx);
         app.current_theme.apply(&cc.egui_ctx);
         app.log_info("Application started");
         app.refresh_file_tree();
         app
+    }
+
+    /// Update UI style (fonts) based on settings
+    fn apply_style(&self, ctx: &egui::Context) {
+        ctx.style_mut(|style| {
+            use egui::{FontFamily, FontId, TextStyle};
+            style.text_styles = [
+                (
+                    TextStyle::Heading,
+                    FontId::new(self.settings.ui_font_size + 4.0, FontFamily::Proportional),
+                ),
+                (
+                    TextStyle::Body,
+                    FontId::new(self.settings.ui_font_size, FontFamily::Proportional),
+                ),
+                (
+                    TextStyle::Monospace,
+                    FontId::new(self.settings.editor_font_size, FontFamily::Monospace),
+                ),
+                (
+                    TextStyle::Button,
+                    FontId::new(self.settings.ui_font_size, FontFamily::Proportional),
+                ),
+                (
+                    TextStyle::Small,
+                    FontId::new(self.settings.ui_font_size - 4.0, FontFamily::Proportional),
+                ),
+            ]
+            .into();
+        });
     }
 
     /// Logging functions
@@ -186,12 +221,15 @@ impl EditorApp {
 
     /// Open file dialog
     fn open_file_dialog(&mut self) {
+        self.log_info("Opening file dialog");
         if let Some(path) = rfd::FileDialog::new()
             .add_filter("SED Files", &["sed"])
             .add_filter("All Files", &["*"])
             .pick_file()
         {
             self.open_file(path);
+        } else {
+            self.log_info("File dialog cancelled");
         }
     }
 
@@ -206,6 +244,7 @@ impl EditorApp {
         let keyfile = self.keyfile_path.clone().unwrap();
 
         self.log_info(format!("Opening file: {}", path.display()));
+        self.log_info(format!("Using keyfile: {}", keyfile.display()));
 
         match decrypt_file(&keyfile, &path) {
             Ok(content) => {
@@ -220,7 +259,7 @@ impl EditorApp {
                     history_count
                 );
                 self.log_info(format!(
-                    "File opened successfully with {} history entries",
+                    "✓ File opened successfully with {} history entries",
                     history_count
                 ));
             }
@@ -234,11 +273,11 @@ impl EditorApp {
     /// Open directory for file tree
     fn open_directory(&mut self) {
         if let Some(path) = rfd::FileDialog::new().pick_folder() {
+            self.log_info(format!("Opening directory: {}", path.display()));
             self.file_tree_dir = Some(path.clone());
             self.settings.last_directory = Some(path);
             let _ = self.settings.save();
             self.refresh_file_tree();
-            self.log_info("Directory opened for file tree");
         }
     }
 
@@ -246,19 +285,37 @@ impl EditorApp {
     fn refresh_file_tree(&mut self) {
         self.file_tree_entries.clear();
 
-        if let Some(dir) = &self.file_tree_dir {
-            if let Ok(entries) = std::fs::read_dir(dir) {
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.is_file() {
-                        if let Some(ext) = path.extension() {
-                            if ext == "sed" {
-                                self.file_tree_entries.push(path);
+        // Fix: Clone to release borrow on self
+        let dir_opt = self.file_tree_dir.clone();
+
+        if let Some(dir) = dir_opt {
+            self.log_info(format!("Refreshing file tree for: {}", dir.display()));
+
+            match std::fs::read_dir(dir) {
+                Ok(entries) => {
+                    let mut count = 0;
+                    for entry in entries.flatten() {
+                        let path = entry.path();
+                        // self.log_info(format!("Found: {}", path.display()));
+
+                        if path.is_file() {
+                            if let Some(ext) = path.extension() {
+                                if ext == "sed" {
+                                    self.file_tree_entries.push(path.clone());
+                                    count += 1;
+                                    self.log_info(format!("Added .sed file: {}", path.display()));
+                                }
                             }
                         }
                     }
+                    self.log_info(format!("Found {} .sed files", count));
+                }
+                Err(e) => {
+                    self.log_error(format!("Failed to read directory: {}", e));
                 }
             }
+        } else {
+            self.log_warning("No directory selected for file tree");
         }
 
         self.file_tree_entries.sort();
@@ -272,9 +329,12 @@ impl EditorApp {
             return;
         }
 
-        if let Some(path) = &self.current_file_path {
-            self.perform_save(path.clone());
+        // Fix: Clone path to release borrow on self
+        if let Some(path) = self.current_file_path.clone() {
+            self.log_info("Saving to existing file path");
+            self.perform_save(path);
         } else {
+            self.log_info("No file path set, opening save dialog");
             self.save_file_as();
         }
     }
@@ -287,18 +347,23 @@ impl EditorApp {
             return;
         }
 
+        self.log_info("Opening save as dialog");
         if let Some(path) = rfd::FileDialog::new()
             .add_filter("SED Files", &["sed"])
             .set_file_name("document.sed")
             .save_file()
         {
             self.perform_save(path);
+        } else {
+            self.log_info("Save as dialog cancelled");
         }
     }
 
     /// Perform actual save
     fn perform_save(&mut self, path: PathBuf) {
         let keyfile = self.keyfile_path.clone().unwrap();
+
+        self.log_info(format!("Saving file: {}", path.display()));
 
         // Add snapshot if auto-snapshot enabled and content changed
         if self.settings.auto_snapshot_on_save && self.is_modified {
@@ -307,8 +372,7 @@ impl EditorApp {
         }
 
         let file_content = self.document.to_file_content();
-
-        self.log_info(format!("Saving file: {}", path.display()));
+        self.log_info(format!("Content size: {} bytes", file_content.len()));
 
         match encrypt_file(&file_content, &keyfile, &path) {
             Ok(_) => {
@@ -321,7 +385,10 @@ impl EditorApp {
                     path.display(),
                     history_count
                 );
-                self.log_info("File saved successfully");
+                self.log_info("✓ File saved successfully");
+
+                // Refresh file tree in case it was a new file
+                self.refresh_file_tree();
             }
             Err(e) => {
                 self.status_message = format!("Error: {}", e);
@@ -333,20 +400,68 @@ impl EditorApp {
     /// Load keyfile
     fn load_keyfile(&mut self) {
         if let Some(path) = rfd::FileDialog::new().pick_file() {
-            self.keyfile_path = Some(path.clone());
-            self.status_message = format!("Keyfile loaded: {}", path.display());
-            self.log_info(format!("Keyfile loaded: {}", path.display()));
+            self.log_info(format!("Attempting to load keyfile: {}", path.display()));
+
+            // Validate keyfile
+            match std::fs::metadata(&path) {
+                Ok(metadata) => {
+                    let size = metadata.len();
+                    self.log_info(format!("Keyfile size: {} bytes", size));
+
+                    if size != 256 {
+                        self.status_message =
+                            format!("Error: Invalid keyfile (must be 256 bytes, got {})", size);
+                        self.log_error(format!(
+                            "Invalid keyfile size: {} bytes (expected 256)",
+                            size
+                        ));
+                        return;
+                    }
+
+                    // Try to read the file
+                    match std::fs::read(&path) {
+                        Ok(content) => {
+                            if content.len() != 256 {
+                                self.status_message = "Error: Invalid keyfile content".to_string();
+                                self.log_error("Keyfile content length mismatch");
+                                return;
+                            }
+
+                            self.keyfile_path = Some(path.clone());
+                            self.status_message =
+                                format!("✓ Valid keyfile loaded: {}", path.display());
+                            self.log_info(format!(
+                                "✓ Valid keyfile loaded successfully: {}",
+                                path.display()
+                            ));
+                        }
+                        Err(e) => {
+                            self.status_message = format!("Error: Cannot read keyfile: {}", e);
+                            self.log_error(format!("Cannot read keyfile: {}", e));
+                        }
+                    }
+                }
+                Err(e) => {
+                    self.status_message = format!("Error: Cannot access keyfile: {}", e);
+                    self.log_error(format!("Cannot access keyfile: {}", e));
+                }
+            }
         }
     }
 
     /// Generate new keyfile
     fn generate_new_keyfile(&mut self) {
         if let Some(path) = rfd::FileDialog::new().set_file_name("keyfile").save_file() {
+            self.log_info(format!("Generating new keyfile: {}", path.display()));
+
             match generate_keyfile(&path) {
                 Ok(_) => {
                     self.keyfile_path = Some(path.clone());
-                    self.status_message = format!("Keyfile generated: {}", path.display());
-                    self.log_info(format!("Keyfile generated: {}", path.display()));
+                    self.status_message = format!("✓ Keyfile generated: {}", path.display());
+                    self.log_info(format!(
+                        "✓ Keyfile generated successfully (256 bytes): {}",
+                        path.display()
+                    ));
                 }
                 Err(e) => {
                     self.status_message = format!("Error: {}", e);
@@ -377,72 +492,77 @@ impl EditorApp {
 // PART 2: UI Renderers
 
 impl EditorApp {
-    /// Render icon toolbar (no text)
+    /// Render icon toolbar
     fn render_toolbar(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 4.0;
 
             // New
-            if ui.button("📄").on_hover_text("New (Ctrl+N)").clicked() {
+            if ui
+                .add(egui::ImageButton::new(&self.icons.new_doc).frame(false))
+                .on_hover_text("New (Ctrl+N)")
+                .clicked()
+            {
                 self.new_document();
             }
 
             // Open
-            if ui.button("📂").on_hover_text("Open (Ctrl+O)").clicked() {
+            if ui
+                .add(egui::ImageButton::new(&self.icons.open).frame(false))
+                .on_hover_text("Open (Ctrl+O)")
+                .clicked()
+            {
                 self.open_file_dialog();
             }
 
-            // Open Directory (for file tree)
-            if ui.button("📁").on_hover_text("Open Directory").clicked() {
+            // Open Directory
+            if ui
+                .add(egui::ImageButton::new(&self.icons.open_folder).frame(false))
+                .on_hover_text("Open Directory")
+                .clicked()
+            {
                 self.open_directory();
             }
 
             // Save
-            if ui.button("💾").on_hover_text("Save (Ctrl+S)").clicked() {
+            if ui
+                .add(egui::ImageButton::new(&self.icons.save).frame(false))
+                .on_hover_text("Save (Ctrl+S)")
+                .clicked()
+            {
                 self.save_file();
             }
 
             // Save As
-            if ui.button("📝").on_hover_text("Save As").clicked() {
+            if ui
+                .add(egui::ImageButton::new(&self.icons.save_as).frame(false))
+                .on_hover_text("Save As")
+                .clicked()
+            {
                 self.save_file_as();
             }
 
             ui.separator();
 
-            // History
-            let history_icon = if self.show_history_panel {
-                "📜✓"
-            } else {
-                "📜"
-            };
+            // Load Key
             if ui
-                .button(history_icon)
-                .on_hover_text("Toggle History")
+                .add(egui::ImageButton::new(&self.icons.key).frame(false))
+                .on_hover_text("Load Keyfile")
                 .clicked()
             {
-                self.show_history_panel = !self.show_history_panel;
-            }
-
-            // Settings
-            if ui.button("⚙").on_hover_text("Settings").clicked() {
-                self.show_settings_panel = true;
-            }
-
-            ui.separator();
-
-            // Load Key
-            if ui.button("🔑").on_hover_text("Load Keyfile").clicked() {
                 self.load_keyfile();
             }
 
             // Generate Key
-            if ui.button("✨").on_hover_text("Generate Keyfile").clicked() {
+            if ui
+                .add(egui::ImageButton::new(&self.icons.generate).frame(false))
+                .on_hover_text("Generate Keyfile")
+                .clicked()
+            {
                 self.generate_new_keyfile();
             }
 
-            ui.separator();
-
-            // Current keyfile indicator
+            // Keyfile indicator (pozostaw jako tekst)
             if let Some(path) = &self.keyfile_path {
                 ui.label(
                     egui::RichText::new(format!(
@@ -455,33 +575,50 @@ impl EditorApp {
                 ui.label(egui::RichText::new("⚠ No keyfile").color(egui::Color32::RED));
             }
 
+            ui.add_space(20.0);
+
+            // Right side
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                // Debug toggle
-                let debug_icon = if self.show_debug_panel {
-                    "🛠✓"
-                } else {
-                    "🛠"
-                };
+                // Settings
                 if ui
-                    .button(debug_icon)
+                    .add(egui::ImageButton::new(&self.icons.settings).frame(false))
+                    .on_hover_text("Settings")
+                    .clicked()
+                {
+                    self.show_settings_panel = true;
+                }
+
+                ui.separator();
+
+                // Debug toggle
+                if ui
+                    .add(egui::ImageButton::new(&self.icons.debug).frame(self.show_debug_panel))
                     .on_hover_text("Toggle Debug")
                     .clicked()
                 {
                     self.show_debug_panel = !self.show_debug_panel;
+                    self.settings.show_debug_panel = self.show_debug_panel;
+                    let _ = self.settings.save();
+                }
+
+                // History toggle
+                if ui
+                    .add(egui::ImageButton::new(&self.icons.history).frame(self.show_history_panel))
+                    .on_hover_text("Toggle History")
+                    .clicked()
+                {
+                    self.show_history_panel = !self.show_history_panel;
                 }
 
                 // File tree toggle
-                let tree_icon = if self.show_file_tree {
-                    "🌲✓"
-                } else {
-                    "🌲"
-                };
                 if ui
-                    .button(tree_icon)
+                    .add(egui::ImageButton::new(&self.icons.file_tree).frame(self.show_file_tree))
                     .on_hover_text("Toggle File Tree")
                     .clicked()
                 {
                     self.show_file_tree = !self.show_file_tree;
+                    self.settings.show_file_tree = self.show_file_tree;
+                    let _ = self.settings.save();
                 }
             });
         });
@@ -571,9 +708,9 @@ impl EditorApp {
                 .show(ui, |ui| {
                     for entry in &self.debug_log {
                         let color = match entry.level {
-                            LogLevel::Info => egui::Color32::WHITE,
-                            LogLevel::Warning => egui::Color32::YELLOW,
-                            LogLevel::Error => egui::Color32::RED,
+                            LogLevel::Info => ui.style().visuals.text_color(),
+                            LogLevel::Warning => egui::Color32::from_rgb(255, 200, 0),
+                            LogLevel::Error => egui::Color32::from_rgb(255, 80, 80),
                         };
 
                         ui.colored_label(color, entry.display());
@@ -776,6 +913,9 @@ impl EditorApp {
 
 impl eframe::App for EditorApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Fix: Apply styles (font sizes) every frame/update
+        self.apply_style(ctx);
+
         // Keyboard shortcuts
         ctx.input_mut(|i| {
             if i.consume_shortcut(&egui::KeyboardShortcut::new(
@@ -822,9 +962,17 @@ impl eframe::App for EditorApp {
         // File tree (left)
         egui::SidePanel::left("file_tree")
             .resizable(true)
-            .default_width(200.0)
+            .default_width(self.settings.file_tree_width)
+            .width_range(150.0..=500.0)
             .show_animated(ctx, self.show_file_tree, |ui| {
                 self.render_file_tree(ui);
+
+                // Save width if changed
+                let current_width = ui.available_width();
+                if (current_width - self.settings.file_tree_width).abs() > 1.0 {
+                    self.settings.file_tree_width = current_width;
+                    let _ = self.settings.save();
+                }
             });
 
         // History panel (right)

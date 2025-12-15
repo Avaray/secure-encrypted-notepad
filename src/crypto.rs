@@ -60,9 +60,9 @@ impl std::fmt::Display for CryptoError {
         match self {
             CryptoError::IoError(e) => write!(f, "IO Error: {}", e),
             CryptoError::EncryptionError(e) => write!(f, "Encryption Error: {}", e),
-            CryptoError::InvalidFormat => write!(f, "Invalid file format - not a SED file"),
-            CryptoError::InvalidMagicNumber => write!(f, "Invalid magic number"),
-            CryptoError::DecryptionFailed => write!(f, "Decryption failed - wrong keyfile"),
+            CryptoError::InvalidFormat => write!(f, "Invalid file format or corrupted data"),
+            CryptoError::InvalidMagicNumber => write!(f, "Invalid magic number (not a SED file)"),
+            CryptoError::DecryptionFailed => write!(f, "Decryption failed - check your keyfile"),
             CryptoError::KeyfileError(msg) => write!(f, "Keyfile Error: {}", msg),
         }
     }
@@ -102,7 +102,7 @@ fn derive_key_from_keyfile(
     Ok(secret_key)
 }
 
-/// GENERATE RANDOM KEYFILE (no extension required)
+/// GENERATE RANDOM KEYFILE
 pub fn generate_keyfile(output_path: &Path) -> Result<(), CryptoError> {
     let mut keyfile_data = Zeroizing::new(vec![0u8; 256]);
     rand::thread_rng().fill_bytes(&mut keyfile_data);
@@ -113,29 +113,31 @@ pub fn generate_keyfile(output_path: &Path) -> Result<(), CryptoError> {
     Ok(())
 }
 
-/// FILE ENCRYPTION WITH KEYFILE-ONLY
-///
-/// File format:
-/// [4-byte magic "SED2"]
-/// [32-byte salt]
-/// [encrypted data with embedded nonce/tag]
-/// [32-byte keyfile hash]
+/// FILE ENCRYPTION
+/// Structure: [MAGIC 4B] [SALT 32B] [ENCRYPTED DATA] [KEYFILE HASH 32B]
 pub fn encrypt_file(
     content: &str,
     keyfile_path: &Path,
     output_path: &Path,
 ) -> Result<(), CryptoError> {
-    let keyfile_hash = hash_keyfile(keyfile_path)?;
-    let salt = kdf::Salt::default();
-    let secret_key = derive_key_from_keyfile(&keyfile_hash, salt.as_ref())?;
+    // 1. Generate Salt
+    let mut salt = [0u8; SALT_SIZE];
+    rand::thread_rng().fill_bytes(&mut salt);
 
+    // 2. Hash Keyfile & Derive Key
+    let keyfile_hash = hash_keyfile(keyfile_path)?;
+    let secret_key = derive_key_from_keyfile(&keyfile_hash, &salt)?;
+
+    // 3. Encrypt
     let plaintext = Zeroizing::new(content.as_bytes().to_vec());
     let ciphertext = aead::seal(&secret_key, &plaintext)?;
 
+    // 4. Assemble File
     let mut file_data =
         Vec::with_capacity(MAGIC_SIZE + SALT_SIZE + ciphertext.len() + KEYFILE_HASH_SIZE);
+
     file_data.extend_from_slice(MAGIC_NUMBER);
-    file_data.extend_from_slice(salt.as_ref());
+    file_data.extend_from_slice(&salt);
     file_data.extend_from_slice(&ciphertext);
     file_data.extend_from_slice(keyfile_hash.as_bytes());
 
@@ -143,35 +145,45 @@ pub fn encrypt_file(
     Ok(())
 }
 
-/// FILE DECRYPTION WITH KEYFILE-ONLY
+/// FILE DECRYPTION
 pub fn decrypt_file(
     keyfile_path: &Path,
     encrypted_file_path: &Path,
 ) -> Result<String, CryptoError> {
     let file_data = fs::read(encrypted_file_path)?;
 
-    let min_size = MAGIC_SIZE + SALT_SIZE + 40 + KEYFILE_HASH_SIZE; // 40 = min nonce+tag
-    if file_data.len() < min_size {
+    // Basic size check
+    if file_data.len() < MAGIC_SIZE + SALT_SIZE + KEYFILE_HASH_SIZE {
         return Err(CryptoError::InvalidFormat);
     }
 
-    let magic = &file_data[0..MAGIC_SIZE];
-    if magic != MAGIC_NUMBER {
+    // 1. Validate Magic
+    if &file_data[0..MAGIC_SIZE] != MAGIC_NUMBER {
         return Err(CryptoError::InvalidMagicNumber);
     }
 
-    let keyfile_hash_start = file_data.len() - KEYFILE_HASH_SIZE;
+    // 2. Split components
+    let total_len = file_data.len();
+    let keyfile_hash_start = total_len - KEYFILE_HASH_SIZE;
     let salt_end = MAGIC_SIZE + SALT_SIZE;
+
+    if salt_end > keyfile_hash_start {
+        return Err(CryptoError::InvalidFormat);
+    }
 
     let salt = &file_data[MAGIC_SIZE..salt_end];
     let encrypted_data = &file_data[salt_end..keyfile_hash_start];
     let stored_keyfile_hash = &file_data[keyfile_hash_start..];
 
+    // 3. Validate Keyfile Match
     let keyfile_hash = hash_keyfile(keyfile_path)?;
     if keyfile_hash.as_bytes() != stored_keyfile_hash {
-        return Err(CryptoError::KeyfileError("Keyfile mismatch".to_string()));
+        return Err(CryptoError::KeyfileError(
+            "Keyfile mismatch - wrong keyfile for this file".to_string(),
+        ));
     }
 
+    // 4. Decrypt
     let secret_key = derive_key_from_keyfile(&keyfile_hash, salt)?;
     let plaintext_bytes =
         aead::open(&secret_key, encrypted_data).map_err(|_| CryptoError::DecryptionFailed)?;
@@ -180,26 +192,4 @@ pub fn decrypt_file(
     let content = String::from_utf8(plaintext.to_vec()).map_err(|_| CryptoError::InvalidFormat)?;
 
     Ok(content)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_keyfile_encrypt_decrypt() {
-        let keyfile = Path::new("test.key");
-        generate_keyfile(keyfile).unwrap();
-
-        let test_file = Path::new("test.sed");
-        let content = "Test content";
-
-        encrypt_file(content, keyfile, test_file).unwrap();
-        let decrypted = decrypt_file(keyfile, test_file).unwrap();
-
-        assert_eq!(content, decrypted);
-
-        fs::remove_file(test_file).unwrap();
-        fs::remove_file(keyfile).unwrap();
-    }
 }

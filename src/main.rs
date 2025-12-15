@@ -1,6 +1,7 @@
 mod app;
 mod crypto;
 mod history;
+mod icons;
 mod settings;
 mod theme;
 
@@ -11,8 +12,6 @@ fn main() -> eframe::Result<()> {
         viewport: egui::ViewportBuilder::default()
             .with_maximized(true)
             .with_min_inner_size([1000.0, 700.0])
-            .with_inner_size([1400.0, 900.0])
-            .with_icon(eframe::icon_data::from_png_bytes(&[]).unwrap_or_default())
             .with_fullscreen(false)
             .with_resizable(true)
             .with_decorations(true),
