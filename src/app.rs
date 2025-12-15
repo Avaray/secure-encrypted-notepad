@@ -1,6 +1,5 @@
 use eframe::egui;
 use std::path::PathBuf;
-use zeroize::Zeroizing;
 
 use crate::crypto::{decrypt_file, encrypt_file, generate_keyfile};
 use crate::history::{
@@ -13,10 +12,6 @@ use crate::settings::Settings;
 pub struct EditorApp {
     /// Text editor content
     text_content: String,
-    /// Password for encryption/decryption
-    password: String,
-    /// Temporary password for open dialog
-    dialog_password: String,
     /// Path to keyfile
     keyfile_path: Option<PathBuf>,
     /// Path to currently open file
@@ -27,10 +22,6 @@ pub struct EditorApp {
     status_message: String,
     /// User preferences
     settings: Settings,
-    /// Show password dialog (for Open)
-    show_password_dialog: bool,
-    /// Pending path for file to open
-    pending_open_path: Option<PathBuf>,
     /// Show Settings panel
     show_settings_panel: bool,
     /// Show History panel
@@ -41,8 +32,8 @@ pub struct EditorApp {
     show_restore_confirm: Option<VersionInfo>,
     /// Show delete confirmation dialog
     show_delete_confirm: Option<VersionInfo>,
-    /// Show alert when trying to save without auth
-    show_missing_auth_alert: bool,
+    /// Show alert when trying to save without keyfile
+    show_missing_keyfile_alert: bool,
     /// Show save changes confirmation when previewing with unsaved changes
     show_save_changes_dialog: Option<VersionInfo>,
 }
@@ -50,9 +41,10 @@ pub struct EditorApp {
 impl Default for EditorApp {
     fn default() -> Self {
         let settings = Settings::load();
-        // --- NOWA LOGIKA: Ładowanie klucza początkowego ---
-        // Priorytet 1: Globalny domyślny klucz (jeśli opcja włączona i ścieżka istnieje)
-        // Priorytet 2: Ostatnio używany klucz (jeśli opcja "Remember" włączona)
+
+        // Load initial keyfile based on settings
+        // Priority 1: Global default keyfile (if enabled and path exists)
+        // Priority 2: Last used keyfile (if "Remember" enabled)
         let initial_keyfile =
             if settings.use_default_keyfile && settings.default_keyfile_path.is_some() {
                 settings.default_keyfile_path.clone()
@@ -68,26 +60,22 @@ impl Default for EditorApp {
                 path.file_name().unwrap_or_default().to_string_lossy()
             )
         } else {
-            "Ready.".to_string()
+            "Ready. Select a keyfile to begin.".to_string()
         };
 
         Self {
             text_content: String::new(),
-            password: String::new(),
-            dialog_password: String::new(),
             keyfile_path: initial_keyfile,
             current_file_path: None,
             versions: Vec::new(),
             status_message: status,
             settings,
-            show_password_dialog: false,
-            pending_open_path: None,
             show_settings_panel: false,
             show_history_panel: false,
             is_modified: false,
             show_restore_confirm: None,
             show_delete_confirm: None,
-            show_missing_auth_alert: false,
+            show_missing_keyfile_alert: false,
             show_save_changes_dialog: None,
         }
     }
@@ -124,13 +112,11 @@ impl EditorApp {
 
     fn new_document(&mut self) {
         if self.is_modified {
-            // TODO: W przyszłości dialog "Czy zapisać zmiany?"
+            // TODO: In future add "Save changes?" dialog
         }
 
         self.text_content.clear();
-        // Nie czyścimy klucza (keyfile_path), bo użytkownik może chcieć użyć tego samego (zwłaszcza domyślnego).
-        // Ale czyścimy hasło dla bezpieczeństwa przy nowym dokumencie.
-        self.password.clear();
+        // Don't clear keyfile_path - user might want to use the same one (especially default)
         self.current_file_path = None;
         self.versions.clear();
         self.is_modified = false;
@@ -143,78 +129,62 @@ impl EditorApp {
             .add_filter("All Files", &["*"])
             .pick_file()
         {
-            self.pending_open_path = Some(path);
-            self.dialog_password.clear();
-            self.show_password_dialog = true;
-            self.status_message = "Enter password to decrypt".to_string();
+            self.open_file(path);
         }
     }
 
-    fn open_file_with_password(&mut self) {
+    fn open_file(&mut self, path: PathBuf) {
         if self.keyfile_path.is_none() {
             self.status_message = "Error: Select keyfile first".to_string();
+            self.show_missing_keyfile_alert = true;
             return;
         }
 
-        if self.dialog_password.is_empty() {
-            self.status_message = "Error: Password required".to_string();
+        let keyfile = self.keyfile_path.clone().unwrap();
+
+        if let Ok(metadata) = std::fs::metadata(&path) {
+            eprintln!("DEBUG: Opening file, size: {} bytes", metadata.len());
+        } else {
+            self.status_message = "✗ Error: File not found".to_string();
             return;
         }
 
-        let pending_path = self.pending_open_path.clone();
-        let keyfile_path_clone = self.keyfile_path.clone();
+        eprintln!("DEBUG: Keyfile: {:?}", keyfile);
 
-        if let (Some(path), Some(keyfile)) = (pending_path, keyfile_path_clone) {
-            if let Ok(metadata) = std::fs::metadata(&path) {
-                eprintln!("DEBUG: Opening file, size: {} bytes", metadata.len());
-            } else {
-                self.status_message = "✗ Error: File not found".to_string();
-                return;
+        match decrypt_file(&keyfile, &path) {
+            Ok(content) => {
+                eprintln!(
+                    "DEBUG: File decrypted successfully, {} bytes",
+                    content.len()
+                );
+                self.text_content = content;
+                self.current_file_path = Some(path.clone());
+                self.is_modified = false;
+                self.refresh_versions();
+
+                let version_count = self.versions.len();
+                self.status_message = format!(
+                    "✓ File opened: {} ({} versions)",
+                    path.display(),
+                    version_count
+                );
+
+                if self.settings.remember_keyfile_path {
+                    self.settings.last_keyfile_path = Some(keyfile.clone());
+                    let _ = self.settings.save();
+                }
             }
-
-            let password = Zeroizing::new(self.dialog_password.clone());
-
-            eprintln!("DEBUG: Password length: {}", password.len());
-            eprintln!("DEBUG: Keyfile: {:?}", keyfile);
-
-            match decrypt_file(&*password, &keyfile, &path) {
-                Ok(content) => {
-                    eprintln!(
-                        "DEBUG: File decrypted successfully, {} bytes",
-                        content.len()
-                    );
-                    self.text_content = content;
-                    self.current_file_path = Some(path.clone());
-                    self.is_modified = false;
-                    self.show_password_dialog = false;
-                    self.pending_open_path = None;
-                    self.dialog_password.clear();
-                    self.refresh_versions();
-
-                    let version_count = self.versions.len();
-                    self.status_message = format!(
-                        "✓ File opened: {} ({} versions)",
-                        path.display(),
-                        version_count
-                    );
-
-                    if self.settings.remember_keyfile_path {
-                        self.settings.last_keyfile_path = Some(keyfile.clone());
-                        let _ = self.settings.save();
-                    }
-                }
-                Err(e) => {
-                    eprintln!("DEBUG: Decryption failed: {:?}", e);
-                    self.status_message = format!("✗ Error: {}", e);
-                }
+            Err(e) => {
+                eprintln!("DEBUG: Decryption failed: {:?}", e);
+                self.status_message = format!("✗ Error: {}", e);
             }
         }
     }
 
     fn save_file(&mut self) {
-        // Sprawdzenie czy mamy klucz i hasło. Jeśli nie -> Alert.
-        if self.keyfile_path.is_none() || self.password.is_empty() {
-            self.show_missing_auth_alert = true;
+        // Check if we have keyfile
+        if self.keyfile_path.is_none() {
+            self.show_missing_keyfile_alert = true;
             return;
         }
 
@@ -226,8 +196,8 @@ impl EditorApp {
     }
 
     fn save_file_as(&mut self) {
-        if self.keyfile_path.is_none() || self.password.is_empty() {
-            self.show_missing_auth_alert = true;
+        if self.keyfile_path.is_none() {
+            self.show_missing_keyfile_alert = true;
             return;
         }
 
@@ -248,20 +218,15 @@ impl EditorApp {
             return;
         };
 
-        let password = Zeroizing::new(self.password.clone());
-
-        // DEBUG: Sprawdź długość contentu
         eprintln!(
             "DEBUG: Saving file with {} bytes of content",
             self.text_content.len()
         );
-        eprintln!("DEBUG: Password length: {}", password.len());
         eprintln!("DEBUG: Keyfile: {:?}", keyfile);
         eprintln!("DEBUG: Output path: {:?}", path);
 
-        match encrypt_file(&self.text_content, &*password, &keyfile, &path) {
+        match encrypt_file(&self.text_content, &keyfile, &path) {
             Ok(_) => {
-                // Sprawdź czy plik faktycznie istnieje i jaka jest jego wielkość
                 if let Ok(metadata) = std::fs::metadata(&path) {
                     eprintln!(
                         "DEBUG: File saved successfully, size: {} bytes",
@@ -273,7 +238,7 @@ impl EditorApp {
                 self.is_modified = false;
 
                 if self.settings.auto_snapshot_on_save {
-                    match create_snapshot(&self.text_content, &*password, &keyfile, &path, None) {
+                    match create_snapshot(&self.text_content, &keyfile, &path, None) {
                         Ok(_) => {
                             self.refresh_versions();
                             self.status_message = format!(
@@ -290,7 +255,6 @@ impl EditorApp {
                     self.status_message = format!("✓ File saved: {}", path.display());
                 }
 
-                // Aktualizacja ustawień last_keyfile_path
                 if self.settings.remember_keyfile_path {
                     self.settings.last_keyfile_path = Some(keyfile.clone());
                     let _ = self.settings.save();
@@ -343,23 +307,21 @@ impl EditorApp {
     }
 
     fn preview_version(&mut self, version: &VersionInfo) {
-        // Jeśli są niezapisane zmiany, pokaż dialog
+        // If there are unsaved changes, show dialog
         if self.is_modified {
             self.show_save_changes_dialog = Some(version.clone());
         } else {
-            // Bezpośrednio załaduj do głównego edytora
+            // Load directly to main editor
             self.load_version_to_editor(version);
         }
     }
 
     fn load_version_to_editor(&mut self, version: &VersionInfo) {
         if let Some(keyfile) = &self.keyfile_path {
-            let password = Zeroizing::new(self.password.clone());
-
-            match load_version(version, &*password, keyfile) {
+            match load_version(version, keyfile) {
                 Ok(content) => {
                     self.text_content = content;
-                    self.is_modified = false; // Załadowana wersja nie jest zmodyfikowana
+                    self.is_modified = false;
                     self.status_message =
                         format!("📄 Loaded version: {}", version.display_timestamp());
                 }
@@ -374,10 +336,8 @@ impl EditorApp {
 
     fn restore_version_confirmed(&mut self, version: &VersionInfo) {
         if let (Some(keyfile), Some(path)) = (&self.keyfile_path, &self.current_file_path) {
-            let password = Zeroizing::new(self.password.clone());
-
-            match restore_version(version, &password, keyfile, path, true) {
-                Ok(_) => match decrypt_file(&password, keyfile, path) {
+            match restore_version(version, keyfile, path, true) {
+                Ok(_) => match decrypt_file(keyfile, path) {
                     Ok(content) => {
                         self.text_content = content;
                         self.is_modified = false;
@@ -428,110 +388,38 @@ impl EditorApp {
         }
     }
 
-    // --- UI RENDERERS ---
+    // UI RENDERERS CONTINUE IN PART 2...
+}
 
-    fn render_password_dialog(&mut self, ctx: &egui::Context) {
-        let mut open_confirmed = false;
-        let mut open_cancelled = false;
+// PART 2: UI Renderers and eframe::App implementation
 
-        egui::Window::new("🔐 Enter Password")
-            .collapsible(false)
-            .resizable(false)
-            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-            .show(ctx, |ui| {
-                ui.label("Enter password and keyfile to decrypt:");
-                ui.add_space(10.0);
-
-                ui.horizontal(|ui| {
-                    ui.label("Password:");
-                    let response = ui.add(
-                        egui::TextEdit::singleline(&mut self.dialog_password)
-                            .password(true)
-                            .desired_width(250.0),
-                    );
-
-                    if self.show_password_dialog {
-                        response.request_focus();
-                    }
-
-                    if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                        open_confirmed = true;
-                    }
-                });
-
-                ui.horizontal(|ui| {
-                    ui.label("Keyfile:");
-                    if let Some(path) = &self.keyfile_path {
-                        ui.label(
-                            path.file_name()
-                                .unwrap_or_default()
-                                .to_string_lossy()
-                                .to_string(),
-                        );
-                    } else {
-                        ui.label("❌ Not selected");
-                    }
-
-                    if ui.button("Select").clicked() {
-                        self.select_keyfile();
-                    }
-                });
-
-                ui.add_space(10.0);
-                ui.separator();
-
-                ui.horizontal(|ui| {
-                    if ui.button("✓ Open").clicked() {
-                        open_confirmed = true;
-                    }
-
-                    if ui.button("✗ Cancel").clicked() {
-                        open_cancelled = true;
-                    }
-                });
-            });
-
-        if open_confirmed {
-            self.open_file_with_password();
-        }
-
-        if open_cancelled {
-            self.show_password_dialog = false;
-            self.pending_open_path = None;
-            self.password.clear();
-            self.status_message = "Open cancelled".to_string();
-        }
-    }
-
-    fn render_auth_alert(&mut self, ctx: &egui::Context) {
-        if self.show_missing_auth_alert {
-            egui::Window::new("❌ Cannot Save")
+impl EditorApp {
+    fn render_keyfile_alert(&mut self, ctx: &egui::Context) {
+        if self.show_missing_keyfile_alert {
+            egui::Window::new("⚠ Cannot Proceed")
                 .collapsible(false)
                 .resizable(false)
                 .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
                 .show(ctx, |ui| {
-                    ui.colored_label(egui::Color32::RED, "Authentication Missing!");
+                    ui.colored_label(egui::Color32::RED, "Keyfile Required!");
                     ui.add_space(5.0);
-                    ui.label("To save a file, you must:");
-                    ui.label("1. Select a Keyfile");
-                    ui.label("2. Enter a Password");
+                    ui.label("To open or save files, you must:");
+                    ui.label("• Select or generate a keyfile");
                     ui.add_space(10.0);
 
                     if ui.button("OK, I'll do that").clicked() {
-                        self.show_missing_auth_alert = false;
+                        self.show_missing_keyfile_alert = false;
                     }
                 });
         }
     }
 
-    // --- UAKTUALNIONY PANEL USTAWIEŃ ---
     fn render_settings_panel(&mut self, ctx: &egui::Context) {
         egui::Window::new("⚙️ Settings")
             .collapsible(false)
             .resizable(false)
-            .default_width(450.0) // Nieco szersze dla ścieżek
+            .default_width(450.0)
             .show(ctx, |ui| {
-                // SEKCJA WYGLĄDU
                 ui.heading("Appearance");
 
                 ui.horizontal(|ui| {
@@ -565,11 +453,9 @@ impl EditorApp {
 
                 ui.separator();
 
-                // --- NOWA SEKCJA: GLOBALNY KLUCZ DOMYŚLNY ---
                 ui.heading("Global Default Keyfile");
                 ui.label("Define a keyfile to be loaded automatically on startup.");
 
-                // Checkbox włączający funkcję
                 if ui
                     .checkbox(
                         &mut self.settings.use_default_keyfile,
@@ -580,7 +466,6 @@ impl EditorApp {
                     let _ = self.settings.save();
                 }
 
-                // Wyświetlanie aktualnej ścieżki
                 ui.horizontal(|ui| {
                     ui.label("Current Default:");
                     if let Some(path) = &self.settings.default_keyfile_path {
@@ -595,7 +480,6 @@ impl EditorApp {
                     }
                 });
 
-                // Przyciski wyboru / czyszczenia
                 ui.horizontal(|ui| {
                     if ui.button("📂 Select Default Keyfile").clicked() {
                         if let Some(path) = rfd::FileDialog::new()
@@ -604,7 +488,6 @@ impl EditorApp {
                         {
                             self.settings.default_keyfile_path = Some(path.clone());
 
-                            // UX: Jeśli włączono opcję globalną, od razu podmień też aktywny klucz w sesji
                             if self.settings.use_default_keyfile {
                                 self.keyfile_path = Some(path);
                                 self.status_message =
@@ -623,7 +506,6 @@ impl EditorApp {
 
                 ui.separator();
 
-                // SEKCJA HISTORII
                 ui.heading("Version Control");
 
                 if ui
@@ -754,15 +636,12 @@ impl EditorApp {
                 });
 
             if do_save {
-                // Zapisz aktualny plik
                 self.save_file();
-                // Następnie załaduj wersję
                 self.load_version_to_editor(&version_clone);
                 self.show_save_changes_dialog = None;
             }
 
             if do_discard {
-                // Porzuć zmiany i załaduj wersję
                 self.load_version_to_editor(&version_clone);
                 self.show_save_changes_dialog = None;
             }
@@ -869,11 +748,7 @@ impl eframe::App for EditorApp {
             }
         });
 
-        // Renderuj dialogi
-        if self.show_password_dialog {
-            self.render_password_dialog(ctx);
-        }
-
+        // Render dialogs
         if self.show_settings_panel {
             self.render_settings_panel(ctx);
         }
@@ -890,8 +765,7 @@ impl eframe::App for EditorApp {
             self.render_delete_confirm(ctx);
         }
 
-        // Alert o braku uprawnień
-        self.render_auth_alert(ctx);
+        self.render_keyfile_alert(ctx);
 
         // Menu bar
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
@@ -919,7 +793,7 @@ impl eframe::App for EditorApp {
 
                     ui.separator();
 
-                    if ui.button("❌ Exit").clicked() {
+                    if ui.button("⌫ Exit").clicked() {
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                 });
@@ -952,33 +826,27 @@ impl eframe::App for EditorApp {
             });
         });
 
-        // Auth Panel (Top)
+        // Auth Panel (Top) - Only Keyfile
         egui::TopBottomPanel::top("auth_panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.heading("🔒 Auth");
                 ui.separator();
 
-                ui.label("Pass:");
-                ui.add(
-                    egui::TextEdit::singleline(&mut self.password)
-                        .password(true)
-                        .desired_width(120.0),
-                );
-
-                ui.separator();
-
-                ui.label("Key:");
+                ui.label("Keyfile:");
                 if let Some(path) = &self.keyfile_path {
-                    ui.label(path.file_name().unwrap_or_default().to_string_lossy());
+                    ui.label(
+                        egui::RichText::new(path.file_name().unwrap_or_default().to_string_lossy())
+                            .strong(),
+                    );
                 } else {
-                    ui.colored_label(egui::Color32::YELLOW, "None");
+                    ui.colored_label(egui::Color32::YELLOW, "⚠ None");
                 }
 
                 if ui.button("Select").clicked() {
                     self.select_keyfile();
                 }
 
-                if ui.button("Gen").clicked() {
+                if ui.button("Generate").clicked() {
                     self.generate_new_keyfile();
                 }
             });
@@ -1022,7 +890,6 @@ impl eframe::App for EditorApp {
 
             ctx.set_style(updated_style);
 
-            // Wypełnia dostępną przestrzeń
             let available_height = ui.available_height();
 
             egui::ScrollArea::vertical().show(ui, |ui| {
