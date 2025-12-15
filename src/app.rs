@@ -358,6 +358,11 @@ impl EditorApp {
             self.log_info(format!("Opening directory: {}", path.display()));
             self.file_tree_dir = Some(path.clone());
             self.settings.last_directory = Some(path);
+
+            // Automatically open file tree panel when directory is selected
+            self.show_file_tree = true;
+            self.settings.show_file_tree = true;
+
             let _ = self.settings.save();
             self.refresh_file_tree();
         }
