@@ -1719,20 +1719,24 @@ impl eframe::App for EditorApp {
         }
 
         // History panel (right)
-        egui::SidePanel::right("history")
-            .resizable(true)
-            .default_width(250.0)
-            .show_animated(ctx, self.show_history_panel, |ui| {
-                self.render_history_panel(ui);
-            });
+        if self.show_history_panel {
+            egui::SidePanel::right("history")
+                .resizable(true)
+                .default_width(250.0)
+                .show(ctx, |ui| {
+                    self.render_history_panel(ui);
+                });
+        }
 
         // Debug panel (right, below history if both shown)
-        egui::SidePanel::right("debug")
-            .resizable(true)
-            .default_width(250.0)
-            .show_animated(ctx, self.show_debug_panel, |ui| {
-                self.render_debug_panel(ui);
-            });
+        if self.show_debug_panel {
+            egui::SidePanel::right("debug")
+                .resizable(true)
+                .default_width(250.0)
+                .show(ctx, |ui| {
+                    self.render_debug_panel(ui);
+                });
+        }
 
         self.render_confirmation_dialog(ctx);
 
