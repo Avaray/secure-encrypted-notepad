@@ -1363,150 +1363,153 @@ impl EditorApp {
     }
 
     /// Render settings panel
-    fn render_settings_panel(&mut self, ctx: &egui::Context) {
-        egui::Window::new("⚙ Settings")
-            .collapsible(false)
-            .resizable(false)
-            .default_width(500.0)
-            .show(ctx, |ui| {
-                ui.heading("Appearance");
+    fn render_settings_panel(&mut self, ui: &mut egui::Ui) {
+        ui.vertical(|ui| {
+            ui.heading("⚙ Settings");
 
-                // Theme selection
-                ui.horizontal(|ui| {
-                    ui.label("Theme:");
-                    let current_name = self.current_theme.name.clone();
+            egui::ScrollArea::vertical()
+                .auto_shrink([false, false])
+                .max_height(ui.available_height() - 60.0)
+                .show(ui, |ui| {
+                    ui.heading("Appearance");
 
-                    egui::ComboBox::from_id_salt("theme_selector")
-                        .selected_text(&current_name)
-                        .show_ui(ui, |ui| {
-                            for theme in &self.themes {
-                                if ui
-                                    .selectable_label(theme.name == current_name, &theme.name)
-                                    .clicked()
-                                {
-                                    self.current_theme = theme.clone();
-                                    self.settings.theme_name = theme.name.clone();
-                                    self.apply_theme(ctx);
-                                    let _ = self.settings.save();
+                    // Theme selection
+                    ui.horizontal(|ui| {
+                        ui.label("Theme:");
+                        egui::ComboBox::from_id_salt("theme_selector")
+                            .selected_text(&self.current_theme.name)
+                            .show_ui(ui, |ui| {
+                                for theme in &self.themes.clone() {
+                                    if ui
+                                        .selectable_label(
+                                            theme.name == self.current_theme.name,
+                                            &theme.name,
+                                        )
+                                        .clicked()
+                                    {
+                                        self.current_theme = theme.clone();
+                                        self.settings.theme_name = theme.name.clone();
+                                        self.apply_theme(ui.ctx());
+                                        let _ = self.settings.save();
+                                    }
                                 }
-                            }
-                        });
-
-                    if ui.button("Refresh").clicked() {
-                        self.themes = load_themes();
-                        self.log_info("Themes refreshed");
-                    }
-                });
-
-                // UI font size
-                ui.horizontal(|ui| {
-                    ui.label("UI Font Size:");
-                    if ui
-                        .add(
-                            egui::DragValue::new(&mut self.settings.ui_font_size)
-                                .speed(0.5)
-                                .range(8.0..=32.0),
-                        )
-                        .changed()
-                    {
-                        self.settings.validate_font_sizes();
-                        let _ = self.settings.save();
-                    }
-                });
-
-                // Editor font size
-                ui.horizontal(|ui| {
-                    ui.label("Editor Font Size:");
-                    if ui
-                        .add(
-                            egui::DragValue::new(&mut self.settings.editor_font_size)
-                                .speed(0.5)
-                                .range(8.0..=32.0),
-                        )
-                        .changed()
-                    {
-                        self.settings.validate_font_sizes();
-                        let _ = self.settings.save();
-                    }
-                });
-
-                ui.separator();
-                ui.heading("Global Keyfile");
-
-                if ui
-                    .checkbox(
-                        &mut self.settings.use_global_keyfile,
-                        "Use global keyfile on startup",
-                    )
-                    .changed()
-                {
-                    let _ = self.settings.save();
-                }
-
-                ui.horizontal(|ui| {
-                    ui.label("Current:");
-                    if let Some(path) = &self.settings.global_keyfile_path {
-                        ui.label(path.file_name().unwrap_or_default().to_string_lossy());
-                    } else {
-                        ui.label("None");
-                    }
-                });
-
-                ui.horizontal(|ui| {
-                    if ui.button("Set Global Keyfile").clicked() {
-                        if let Some(path) = rfd::FileDialog::new().pick_file() {
-                            self.settings.global_keyfile_path = Some(path.clone());
-                            if self.settings.use_global_keyfile {
-                                self.keyfile_path = Some(path);
-                            }
-                            let _ = self.settings.save();
-                            self.log_info("Global keyfile set");
+                            });
+                        if ui.button("Refresh").clicked() {
+                            self.themes = crate::theme::load_themes();
+                            self.log_info("Themes refreshed");
                         }
+                    });
+
+                    // UI font size
+                    ui.horizontal(|ui| {
+                        ui.label("UI Font Size:");
+                        if ui
+                            .add(
+                                egui::DragValue::new(&mut self.settings.ui_font_size)
+                                    .speed(0.5)
+                                    .range(8.0..=32.0),
+                            )
+                            .changed()
+                        {
+                            self.settings.validate_font_sizes();
+                            let _ = self.settings.save();
+                        }
+                    });
+
+                    // Editor font size
+                    ui.horizontal(|ui| {
+                        ui.label("Editor Font Size:");
+                        if ui
+                            .add(
+                                egui::DragValue::new(&mut self.settings.editor_font_size)
+                                    .speed(0.5)
+                                    .range(8.0..=32.0),
+                            )
+                            .changed()
+                        {
+                            self.settings.validate_font_sizes();
+                            let _ = self.settings.save();
+                        }
+                    });
+
+                    ui.separator();
+                    ui.heading("Global Keyfile");
+
+                    if ui
+                        .checkbox(
+                            &mut self.settings.use_global_keyfile,
+                            "Use global keyfile on startup",
+                        )
+                        .changed()
+                    {
+                        let _ = self.settings.save();
                     }
 
-                    if ui.button("Clear").clicked() {
-                        self.settings.global_keyfile_path = None;
+                    ui.horizontal(|ui| {
+                        ui.label("Current:");
+                        if let Some(path) = &self.settings.global_keyfile_path {
+                            ui.label(path.file_name().unwrap_or_default().to_string_lossy());
+                        } else {
+                            ui.label("None");
+                        }
+                    });
+
+                    ui.horizontal(|ui| {
+                        if ui.button("Set Global Keyfile").clicked() {
+                            if let Some(path) = rfd::FileDialog::new().pick_file() {
+                                self.settings.global_keyfile_path = Some(path.clone());
+                                if self.settings.use_global_keyfile {
+                                    self.keyfile_path = Some(path);
+                                }
+                                let _ = self.settings.save();
+                                self.log_info("Global keyfile set");
+                            }
+                        }
+                        if ui.button("Clear").clicked() {
+                            self.settings.global_keyfile_path = None;
+                            let _ = self.settings.save();
+                        }
+                    });
+
+                    ui.separator();
+                    ui.heading("Editor");
+
+                    if ui
+                        .checkbox(&mut self.settings.show_line_numbers, "Show line numbers")
+                        .changed()
+                    {
                         let _ = self.settings.save();
+                    }
+
+                    if ui
+                        .checkbox(
+                            &mut self.settings.auto_snapshot_on_save,
+                            "Auto-snapshot on save",
+                        )
+                        .changed()
+                    {
+                        let _ = self.settings.save();
+                    }
+
+                    ui.separator();
+                    ui.heading("File Tree");
+
+                    if ui
+                        .checkbox(&mut self.settings.show_subfolders, "Show subfolders")
+                        .changed()
+                    {
+                        let _ = self.settings.save();
+                        self.refresh_file_tree();
                     }
                 });
 
-                ui.separator();
-                ui.heading("Editor");
+            ui.separator();
+            ui.add_space(4.0);
 
-                if ui
-                    .checkbox(&mut self.settings.show_line_numbers, "Show line numbers")
-                    .changed()
-                {
-                    let _ = self.settings.save();
-                }
-
-                if ui
-                    .checkbox(
-                        &mut self.settings.auto_snapshot_on_save,
-                        "Auto-snapshot on save",
-                    )
-                    .changed()
-                {
-                    let _ = self.settings.save();
-                }
-
-                ui.separator();
-                ui.heading("File Tree");
-
-                if ui
-                    .checkbox(&mut self.settings.show_subfolders, "Show subfolders")
-                    .changed()
-                {
-                    let _ = self.settings.save();
-                    self.refresh_file_tree();
-                }
-
-                ui.add_space(20.0);
-
-                if ui.button("Close").clicked() {
-                    self.show_settings_panel = false;
-                }
-            });
+            if ui.button("✖ Close").clicked() {
+                self.show_settings_panel = false;
+            }
+        });
     }
 
     /// Render "Go to Line" dialog
@@ -1876,11 +1879,6 @@ impl eframe::App for EditorApp {
             }
         });
 
-        // Dialogs
-        if self.show_settings_panel {
-            self.render_settings_panel(ctx);
-        }
-
         // Go to Line Dialog
         self.render_goto_line_dialog(ctx);
 
@@ -2017,9 +2015,20 @@ impl eframe::App for EditorApp {
         if self.show_theme_editor {
             egui::SidePanel::right("theme_editor")
                 .resizable(true)
-                .default_width(350.0)
+                .default_width(270.0)
                 .show(ctx, |ui| {
                     self.render_theme_editor_panel(ui);
+                });
+        }
+
+        // Settings panel right
+        if self.show_settings_panel {
+            egui::SidePanel::right("settings_panel")
+                .resizable(true)
+                .default_width(350.0)
+                .min_width(300.0)
+                .show(ctx, |ui| {
+                    self.render_settings_panel(ui);
                 });
         }
 
