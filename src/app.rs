@@ -302,10 +302,11 @@ impl EditorApp {
 
     /// New document implementation
     fn perform_new_document(&mut self) {
-        self.document = DocumentWithHistory::default();
+        // Create new document with current settings limit
+        self.document = DocumentWithHistory::new_with_limit(self.settings.max_history_length);
         self.current_file_path = None;
         self.is_modified = false;
-        self.loaded_history_index = None; // ← DODAJ
+        self.loaded_history_index = None;
         self.status_message = "New document created".to_string();
         self.log_info("New document created");
     }
@@ -1286,21 +1287,44 @@ impl EditorApp {
             ui.heading("📜 History");
 
             let history_len = self.document.get_history().len();
+            let doc_max_limit = self.document.get_max_history_length();
 
+            // Document-specific history limit
             ui.horizontal(|ui| {
-                ui.label(format!(
-                    "Entries: {}/{}",
-                    history_len, self.settings.max_history_length
-                ));
-
-                // Clear All button
-                if history_len > 0 {
-                    if ui.button("🗑 Clear All").clicked() {
-                        self.clear_all_history();
-                        self.loaded_history_index = None; // Reset on clear
-                    }
+                ui.label("Max History for this file:");
+                let mut temp_limit = doc_max_limit;
+                if ui
+                    .add(
+                        egui::DragValue::new(&mut temp_limit)
+                            .speed(1.0)
+                            .range(1..=1000),
+                    )
+                    .changed()
+                {
+                    self.document.set_max_history_length(temp_limit);
+                    self.is_modified = true;
+                    self.log_info(format!("Document history limit set to {}", temp_limit));
                 }
             });
+
+            ui.label(
+                egui::RichText::new(format!(
+                    "Current: {}/{} entries",
+                    history_len, doc_max_limit
+                ))
+                .small()
+                .weak(),
+            );
+
+            ui.separator();
+
+            // Clear All button
+            if history_len > 0 {
+                if ui.button("🗑 Clear All History").clicked() {
+                    self.clear_all_history();
+                    self.loaded_history_index = None;
+                }
+            }
 
             ui.separator();
 
@@ -1589,26 +1613,6 @@ impl EditorApp {
                     }
 
                     ui.separator();
-                    ui.heading("History");
-
-                    ui.horizontal(|ui| {
-                        ui.label("Max History Length:");
-                        if ui
-                            .add(
-                                egui::DragValue::new(&mut self.settings.max_history_length)
-                                    .speed(1.0)
-                                    .range(10..=1000),
-                            )
-                            .changed()
-                        {
-                            self.settings.validate_history_length();
-                            let _ = self.settings.save();
-                            self.log_info(format!(
-                                "History limit set to {}",
-                                self.settings.max_history_length
-                            ));
-                        }
-                    });
 
                     ui.label(
                         egui::RichText::new(format!(

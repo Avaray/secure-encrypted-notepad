@@ -40,8 +40,15 @@ impl HistoryEntry {
 pub struct DocumentWithHistory {
     /// Current document content
     pub current_content: String,
-    /// History entries (max 100)
+    /// History entries (max configurable per file)
     pub history: Vec<HistoryEntry>,
+    /// Maximum history length for this document
+    #[serde(default = "default_max_history")]
+    pub max_history_length: usize,
+}
+
+fn default_max_history() -> usize {
+    100
 }
 
 impl Default for DocumentWithHistory {
@@ -49,84 +56,121 @@ impl Default for DocumentWithHistory {
         Self {
             current_content: String::new(),
             history: Vec::new(),
+            max_history_length: 100,
         }
     }
 }
 
 impl DocumentWithHistory {
-    /// Parse file content (current + history)
+    /// Create new document with specific history limit
+    pub fn new_with_limit(max_history_length: usize) -> Self {
+        Self {
+            current_content: String::new(),
+            history: Vec::new(),
+            max_history_length,
+        }
+    }
+
+    /// Parse file content (current + history + settings)
     pub fn from_file_content(file_content: &str) -> Self {
         if let Some(pos) = file_content.find(HISTORY_SEPARATOR) {
             let current_content = file_content[..pos].to_string();
             let history_json = &file_content[pos + HISTORY_SEPARATOR.len()..];
-            let history: Vec<HistoryEntry> = serde_json::from_str(history_json).unwrap_or_default();
-            Self {
-                current_content,
-                history,
+
+            // Try to deserialize with max_history_length field
+            if let Ok(doc) = serde_json::from_str::<DocumentWithHistory>(&format!(
+                r#"{{"current_content":"","history":{},"max_history_length":100}}"#,
+                history_json
+            )) {
+                Self {
+                    current_content,
+                    history: doc.history,
+                    max_history_length: doc.max_history_length,
+                }
+            } else {
+                // Fallback: old format without max_history_length
+                let history: Vec<HistoryEntry> =
+                    serde_json::from_str(history_json).unwrap_or_default();
+                Self {
+                    current_content,
+                    history,
+                    max_history_length: 100,
+                }
             }
         } else {
             // No history, just content
             Self {
                 current_content: file_content.to_string(),
                 history: Vec::new(),
+                max_history_length: 100,
             }
         }
     }
 
-    /// Convert to file format (current + history)
+    /// Convert to file format (current + history + settings)
     pub fn to_file_content(&self) -> String {
         if self.history.is_empty() {
             self.current_content.clone()
         } else {
-            let history_json = serde_json::to_string(&self.history).unwrap_or_default();
+            // Serialize entire document structure
+            let doc_data = serde_json::json!({
+                "history": self.history,
+                "max_history_length": self.max_history_length
+            });
+            let history_json = serde_json::to_string(&doc_data).unwrap_or_default();
             format!(
-                "{}{}{}",
+                "{}\n{}\n{}",
                 self.current_content, HISTORY_SEPARATOR, history_json
             )
         }
     }
 
-    /// Add new snapshot to history
-    pub fn add_snapshot(&mut self, description: Option<String>) {
+    /// Add new snapshot to history (with automatic trimming)
+    pub fn add_snapshot(&mut self, comment: Option<String>) {
         let snapshot = HistoryEntry {
             content: self.current_content.clone(),
             timestamp: chrono::Local::now(),
-            comment: description,
-        };
-        self.history.push(snapshot);
-    }
-
-    /// Add snapshot with max length check
-    pub fn add_snapshot_with_limit(&mut self, description: Option<String>, max_length: usize) {
-        let snapshot = HistoryEntry {
-            content: self.current_content.clone(),
-            timestamp: chrono::Local::now(),
-            comment: description,
+            comment,
         };
         self.history.push(snapshot);
 
-        // Trim oldest entries if exceeded
-        while self.history.len() > max_length {
+        // Automatically trim to max_history_length
+        while self.history.len() > self.max_history_length {
             self.history.remove(0);
         }
     }
 
-    /// Get history entries
-    pub fn get_history(&self) -> &[HistoryEntry] {
+    /// Set maximum history length and trim if necessary
+    pub fn set_max_history_length(&mut self, max_length: usize) {
+        self.max_history_length = max_length.max(1); // At least 1
+
+        // Trim existing history if needed
+        while self.history.len() > self.max_history_length {
+            self.history.remove(0);
+        }
+    }
+
+    /// Get maximum history length
+    pub fn get_max_history_length(&self) -> usize {
+        self.max_history_length
+    }
+
+    /// Get reference to history
+    pub fn get_history(&self) -> &Vec<HistoryEntry> {
         &self.history
     }
 
-    /// Load specific version into current content
+    /// Load version from history by index
     pub fn load_version(&mut self, index: usize) -> bool {
-        if let Some(entry) = self.history.get(index) {
-            self.current_content = entry.content.clone();
+        if index < self.history.len() {
+            self.current_content = self.history[index].content.clone();
             true
         } else {
             false
         }
     }
 
-    /// Delete specific history entry
+    /// Delete history entry by index
     pub fn delete_entry(&mut self, index: usize) -> bool {
         if index < self.history.len() {
             self.history.remove(index);
@@ -139,19 +183,6 @@ impl DocumentWithHistory {
     /// Clear all history
     pub fn clear_history(&mut self) {
         self.history.clear();
-    }
-
-    /// Set maximum history length
-    pub fn set_max_history_length(&mut self, max_length: usize) {
-        // Trim existing history if needed
-        while self.history.len() > max_length {
-            self.history.remove(0);
-        }
-    }
-
-    /// Get maximum history length (currently hardcoded but can be made configurable)
-    pub fn get_max_history_length(&self) -> usize {
-        100 // This will be replaced with settings value
     }
 }
 
