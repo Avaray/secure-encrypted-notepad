@@ -43,6 +43,8 @@ chrono = { version = "0.4", features = ["serde"] }
 # Base64 encoding for embedded history
 base64 = "0.22"
 
+font-kit = "0.14"
+
 # ============================================================================
 # BUILD PROFILES - Zoptymalizowane dla szybkości kompilacji
 # ============================================================================

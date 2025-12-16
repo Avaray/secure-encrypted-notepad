@@ -122,12 +122,15 @@ pub struct EditorApp {
     text_cursor_range: Option<std::ops::Range<usize>>,
     /// Currently loaded history index (None = current document)
     loaded_history_index: Option<usize>,
+    /// Available system fonts
+    available_fonts: Vec<String>,
 }
 
 impl Default for EditorApp {
     fn default() -> Self {
         let settings = Settings::load();
         let themes = load_themes();
+        let available_fonts = crate::fonts::get_system_fonts();
 
         // Find current theme
         let current_theme = themes
@@ -175,6 +178,7 @@ impl Default for EditorApp {
             pending_action: PendingAction::None,
             text_cursor_range: None,
             loaded_history_index: None,
+            available_fonts,
         }
     }
 }
@@ -189,22 +193,73 @@ impl EditorApp {
         app
     }
 
+    /// Load custom fonts into egui
+    fn load_custom_fonts(&self, ctx: &egui::Context) {
+        let mut fonts = egui::FontDefinitions::default();
+
+        // Load UI font if custom
+        if !self.settings.ui_font_family.contains("(Default)") {
+            if let Some(font_data) = crate::fonts::load_font_data(&self.settings.ui_font_family) {
+                fonts.font_data.insert(
+                    self.settings.ui_font_family.clone(),
+                    egui::FontData::from_owned(font_data).into(),
+                );
+
+                fonts
+                    .families
+                    .entry(egui::FontFamily::Proportional)
+                    .or_default()
+                    .insert(0, self.settings.ui_font_family.clone());
+            }
+        }
+
+        // Load Editor font if custom
+        if !self.settings.editor_font_family.contains("(Default)") {
+            if let Some(font_data) = crate::fonts::load_font_data(&self.settings.editor_font_family)
+            {
+                fonts.font_data.insert(
+                    self.settings.editor_font_family.clone(),
+                    egui::FontData::from_owned(font_data).into(), // Dodaj .into()
+                );
+
+                fonts
+                    .families
+                    .entry(egui::FontFamily::Monospace)
+                    .or_default()
+                    .insert(0, self.settings.editor_font_family.clone());
+            }
+        }
+
+        ctx.set_fonts(fonts);
+    }
+
     /// Update UI style + fonts based on settings
     fn apply_style(&self, ctx: &egui::Context) {
+        // Load custom fonts first
+        self.load_custom_fonts(ctx);
+
         ctx.style_mut(|style| {
             use egui::{FontFamily, FontId, TextStyle};
 
             // Map font family string to egui FontFamily
-            let ui_family = match self.settings.ui_font_family.as_str() {
-                "Proportional" => FontFamily::Proportional,
-                "Monospace" => FontFamily::Monospace,
-                _ => FontFamily::Proportional,
+            let ui_family = if self.settings.ui_font_family.contains("(Default)") {
+                if self.settings.ui_font_family.contains("Monospace") {
+                    FontFamily::Monospace
+                } else {
+                    FontFamily::Proportional
+                }
+            } else {
+                FontFamily::Proportional
             };
 
-            let editor_family = match self.settings.editor_font_family.as_str() {
-                "Monospace" => FontFamily::Monospace,
-                "Proportional" => FontFamily::Proportional,
-                _ => FontFamily::Monospace,
+            let editor_family = if self.settings.editor_font_family.contains("(Default)") {
+                if self.settings.editor_font_family.contains("Proportional") {
+                    FontFamily::Proportional
+                } else {
+                    FontFamily::Monospace
+                }
+            } else {
+                FontFamily::Monospace
             };
 
             style.text_styles = [
@@ -1545,25 +1600,17 @@ impl EditorApp {
                         egui::ComboBox::from_id_salt("ui_font_selector")
                             .selected_text(&self.settings.ui_font_family)
                             .show_ui(ui, |ui| {
-                                if ui
-                                    .selectable_label(
-                                        self.settings.ui_font_family == "Proportional",
-                                        "Proportional",
-                                    )
-                                    .clicked()
-                                {
-                                    self.settings.ui_font_family = "Proportional".to_string();
-                                    changed = true;
-                                }
-                                if ui
-                                    .selectable_label(
-                                        self.settings.ui_font_family == "Monospace",
-                                        "Monospace",
-                                    )
-                                    .clicked()
-                                {
-                                    self.settings.ui_font_family = "Monospace".to_string();
-                                    changed = true;
+                                for font in &self.available_fonts {
+                                    if ui
+                                        .selectable_label(
+                                            self.settings.ui_font_family == *font,
+                                            font,
+                                        )
+                                        .clicked()
+                                    {
+                                        self.settings.ui_font_family = font.clone();
+                                        changed = true;
+                                    }
                                 }
                             });
 
@@ -1601,25 +1648,17 @@ impl EditorApp {
                         egui::ComboBox::from_id_salt("editor_font_selector")
                             .selected_text(&self.settings.editor_font_family)
                             .show_ui(ui, |ui| {
-                                if ui
-                                    .selectable_label(
-                                        self.settings.editor_font_family == "Monospace",
-                                        "Monospace",
-                                    )
-                                    .clicked()
-                                {
-                                    self.settings.editor_font_family = "Monospace".to_string();
-                                    changed = true;
-                                }
-                                if ui
-                                    .selectable_label(
-                                        self.settings.editor_font_family == "Proportional",
-                                        "Proportional",
-                                    )
-                                    .clicked()
-                                {
-                                    self.settings.editor_font_family = "Proportional".to_string();
-                                    changed = true;
+                                for font in &self.available_fonts {
+                                    if ui
+                                        .selectable_label(
+                                            self.settings.editor_font_family == *font,
+                                            font,
+                                        )
+                                        .clicked()
+                                    {
+                                        self.settings.editor_font_family = font.clone();
+                                        changed = true;
+                                    }
                                 }
                             });
 

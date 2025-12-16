@@ -1,5 +1,6 @@
 mod app;
 mod crypto;
+mod fonts;
 mod history;
 mod icons;
 mod settings;
