@@ -74,6 +74,10 @@ impl ThemeColors {
         }
     }
 
+    pub fn foreground_color(&self) -> egui::Color32 {
+        egui::Color32::from_rgb(self.foreground[0], self.foreground[1], self.foreground[2])
+    }
+
     pub fn to_egui_color32(&self, rgb: [u8; 3]) -> egui::Color32 {
         egui::Color32::from_rgb(rgb[0], rgb[1], rgb[2])
     }
