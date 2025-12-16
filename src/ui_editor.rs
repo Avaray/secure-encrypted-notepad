@@ -7,7 +7,6 @@ impl EditorApp {
         let line_count = text.lines().count().max(1);
         let editor_font_size = self.settings.editor_font_size;
         let show_line_numbers = self.settings.show_line_numbers;
-        let row_height = editor_font_size * 1.4;
         let highlight_line = self.highlighted_line;
 
         // Capture colors
@@ -17,48 +16,35 @@ impl EditorApp {
         let comment_color = self.current_theme.colors.comment_color();
         let highlight_bg = selection_bg.linear_multiply(0.2);
 
-        // Poziomy layout: numery linii + editor
-        ui.horizontal_top(|ui| {
-            // Panel z numerami linii (opcjonalny)
-            if show_line_numbers {
-                egui::ScrollArea::vertical()
-                    .id_salt("line_numbers")
-                    .show(ui, |ui| {
-                        ui.vertical(|ui| {
-                            for line_num in 1..=line_count {
-                                let text_color = if Some(line_num) == highlight_line {
-                                    foreground_color
-                                } else {
-                                    line_number_color
-                                };
+        // Oblicz szerokość potrzebną dla numerów linii
+        let line_number_width = if show_line_numbers {
+            let max_digits = line_count.to_string().len().max(3);
+            (max_digits as f32 * editor_font_size * 0.6) + 20.0 // margines
+        } else {
+            0.0
+        };
 
-                                ui.label(
-                                    egui::RichText::new(format!("{:4}", line_num))
-                                        .color(text_color)
-                                        .monospace()
-                                        .size(editor_font_size),
-                                );
-                            }
-                        });
-                    });
+        egui::ScrollArea::both()
+            .id_salt("main_editor")
+            .auto_shrink(false)
+            .show(ui, |ui| {
+                ui.horizontal_top(|ui| {
+                    // Pusty obszar dla numerów linii
+                    if show_line_numbers {
+                        ui.add_space(line_number_width);
+                        ui.separator();
+                        ui.add_space(5.0);
+                    }
 
-                ui.separator();
-            }
-
-            // Główne pole edytora ze scrollowaniem
-            egui::ScrollArea::both()
-                .id_salt("editor")
-                .auto_shrink(false)
-                .show(ui, |ui| {
-                    // Custom layouter BEZ numerów linii
-                    let layouter = |ui: &egui::Ui, text_str: &str, wrap_width: f32| {
+                    // Custom layouter BEZ numerów
+                    let layouter = |ui: &egui::Ui, text_str: &str, _wrap_width: f32| {
                         let mut layout_job = egui::text::LayoutJob::default();
                         let font_id = egui::FontId::monospace(editor_font_size);
 
                         for (line_idx, line) in text_str.lines().enumerate() {
                             let line_num = line_idx + 1;
 
-                            // Podświetlenie tła linii
+                            // Podświetlenie tła bieżącej linii
                             if Some(line_num) == highlight_line {
                                 layout_job.sections.push(egui::text::LayoutSection {
                                     leading_space: 0.0,
@@ -71,7 +57,7 @@ impl EditorApp {
                                 });
                             }
 
-                            // Kolor treści (wykrywanie komentarzy)
+                            // Kolor treści
                             let trimmed = line.trim_start();
                             let is_comment = trimmed.starts_with("//");
                             let content_color = if is_comment {
@@ -80,7 +66,6 @@ impl EditorApp {
                                 foreground_color
                             };
 
-                            // Dodaj treść linii
                             layout_job.append(
                                 line,
                                 0.0,
@@ -91,28 +76,25 @@ impl EditorApp {
                                 },
                             );
 
-                            // Nowa linia
-                            if line_idx < text_str.lines().count() - 1 {
-                                layout_job.append(
-                                    "\n",
-                                    0.0,
-                                    egui::TextFormat {
-                                        font_id: font_id.clone(),
-                                        ..Default::default()
-                                    },
-                                );
-                            }
+                            layout_job.append(
+                                "\n",
+                                0.0,
+                                egui::TextFormat {
+                                    font_id: font_id.clone(),
+                                    ..Default::default()
+                                },
+                            );
                         }
 
                         ui.fonts(|f| f.layout_job(layout_job))
                     };
 
-                    // TextEdit z nieskończoną szerokością dla scroll poziomego
+                    // Renderuj TextEdit i zapisz jego pozycję
                     let output = egui::TextEdit::multiline(text)
                         .font(egui::TextStyle::Monospace)
                         .code_editor()
-                        .desired_width(f32::INFINITY) // KLUCZOWE dla scroll poziomo
-                        .desired_rows(line_count.max(20))
+                        .desired_width(f32::INFINITY)
+                        .desired_rows(line_count)
                         .frame(false)
                         .lock_focus(true)
                         .layouter(&mut |ui, text_str, wrap_width| {
@@ -120,21 +102,62 @@ impl EditorApp {
                         })
                         .show(ui);
 
+                    // Rysuj numery linii NA PODSTAWIE rzeczywistego galley
+                    if show_line_numbers {
+                        let galley = &output.galley;
+                        let painter = ui.painter();
+                        let font_id = egui::FontId::monospace(editor_font_size);
+
+                        // Pozycja TextEdit
+                        let text_rect = output.response.rect;
+
+                        // Pozycja startowa numerów (z lewej od TextEdit, w zarezerwowanym obszarze)
+                        let line_num_x = text_rect.min.x - line_number_width - 5.0 + 10.0;
+
+                        for (row_idx, row) in galley.rows.iter().enumerate() {
+                            let line_num = row_idx + 1;
+
+                            // Oblicz Y na podstawie rzeczywistej pozycji linii w galley
+                            let line_y = text_rect.min.y + row.min_y();
+
+                            let text_color = if Some(line_num) == highlight_line {
+                                foreground_color
+                            } else {
+                                line_number_color
+                            };
+
+                            // Narysuj numer linii wyrównany do prawej
+                            painter.text(
+                                egui::pos2(line_num_x, line_y),
+                                egui::Align2::RIGHT_TOP,
+                                format!("{}", line_num),
+                                font_id.clone(),
+                                text_color,
+                            );
+                        }
+
+                        // Narysuj separator między numerami a tekstem
+                        let separator_x = text_rect.min.x - 10.0;
+                        painter.vline(
+                            separator_x,
+                            text_rect.min.y..=text_rect.max.y,
+                            ui.visuals().widgets.noninteractive.bg_stroke,
+                        );
+                    }
+
                     // Track changes
                     if output.response.changed() {
                         self.is_modified = true;
                         self.loaded_history_index = None;
                     }
 
-                    // Aktualizacja podświetlonej linii na kliknięciu
-                    if output.response.clicked() {
+                    // Aktualizacja podświetlonej linii
+                    if output.response.clicked() || output.response.has_focus() {
                         if let Some(state) =
                             egui::TextEdit::load_state(ui.ctx(), output.response.id)
                         {
                             if let Some(cursor_range) = state.cursor.char_range() {
                                 let cursor_pos = cursor_range.primary.index;
-
-                                // Oblicz numer linii z pozycji kursora
                                 let line_num =
                                     text[..cursor_pos.min(text.len())].lines().count().max(1);
 
@@ -149,6 +172,6 @@ impl EditorApp {
                         }
                     }
                 });
-        });
+            });
     }
 }
