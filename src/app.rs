@@ -877,7 +877,7 @@ impl EditorApp {
         let mut should_reset = false;
 
         ui.vertical(|ui| {
-            ui.heading("🎨 Theme Editor");
+            ui.heading("Theme Editor");
 
             // Clone theme to work with it without long-lived mutable borrow
             if let Some(ref mut theme) = self.editing_theme {
