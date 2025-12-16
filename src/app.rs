@@ -1215,7 +1215,6 @@ impl EditorApp {
     }
 
     /// Render file tree panel
-    /// Render file tree panel
     fn render_file_tree(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
             ui.heading("Files");
@@ -1281,6 +1280,7 @@ impl EditorApp {
             ui.heading("History");
 
             let history_len = self.document.get_history().len();
+
             ui.horizontal(|ui| {
                 ui.label(format!("Entries: {}/100", history_len));
 
@@ -1531,6 +1531,38 @@ impl EditorApp {
                     {
                         let _ = self.settings.save();
                     }
+
+                    ui.separator();
+                    ui.heading("History");
+
+                    ui.horizontal(|ui| {
+                        ui.label("Max History Length:");
+                        if ui
+                            .add(
+                                egui::DragValue::new(&mut self.settings.max_history_length)
+                                    .speed(1.0)
+                                    .range(10..=1000),
+                            )
+                            .changed()
+                        {
+                            self.settings.validate_history_length();
+                            let _ = self.settings.save();
+                            self.log_info(format!(
+                                "History limit set to {}",
+                                self.settings.max_history_length
+                            ));
+                        }
+                    });
+
+                    ui.label(
+                        egui::RichText::new(format!(
+                            "Current document: {}/{} entries",
+                            self.document.get_history().len(),
+                            self.settings.max_history_length
+                        ))
+                        .small()
+                        .weak(),
+                    );
 
                     ui.separator();
                     ui.heading("File Tree");

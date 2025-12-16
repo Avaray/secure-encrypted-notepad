@@ -40,6 +40,9 @@ pub struct Settings {
 
     /// Show subfolders in file tree
     pub show_subfolders: bool,
+
+    // Max history length
+    pub max_history_length: usize,
 }
 
 impl Default for Settings {
@@ -57,6 +60,7 @@ impl Default for Settings {
             last_directory: None,
             file_tree_width: 200.0,
             show_subfolders: true,
+            max_history_length: 100,
         }
     }
 }
@@ -120,13 +124,17 @@ impl Settings {
 
     /// Load settings from file
     pub fn load() -> Self {
-        match Self::load_internal() {
-            Ok(settings) => settings,
-            Err(e) => {
-                eprintln!("Failed to load settings: {}. Using defaults.", e);
-                Self::default()
+        if let Some(config_dir) = dirs::config_dir() {
+            let config_path = config_dir.join("sed").join("config.toml");
+            if config_path.exists() {
+                if let Ok(content) = fs::read_to_string(&config_path) {
+                    if let Ok(settings) = toml::from_str(&content) {
+                        return settings;
+                    }
+                }
             }
         }
+        Self::default()
     }
 
     fn load_internal() -> Result<Self, SettingsError> {
@@ -145,10 +153,14 @@ impl Settings {
     }
 
     /// Save settings to file
-    pub fn save(&self) -> Result<(), SettingsError> {
-        let config_path = Self::config_path()?;
-        let toml_string = toml::to_string_pretty(self)?;
-        fs::write(&config_path, toml_string)?;
+    pub fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
+        if let Some(config_dir) = dirs::config_dir() {
+            let config_dir = config_dir.join("sed");
+            fs::create_dir_all(&config_dir)?;
+            let config_path = config_dir.join("config.toml");
+            let toml_string = toml::to_string_pretty(self)?;
+            fs::write(config_path, toml_string)?;
+        }
         Ok(())
     }
 
@@ -156,5 +168,10 @@ impl Settings {
     pub fn validate_font_sizes(&mut self) {
         self.ui_font_size = self.ui_font_size.clamp(8.0, 32.0);
         self.editor_font_size = self.editor_font_size.clamp(8.0, 32.0);
+    }
+
+    // Validate history length
+    pub fn validate_history_length(&mut self) {
+        self.max_history_length = self.max_history_length.clamp(10, 1000);
     }
 }

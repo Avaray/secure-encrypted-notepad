@@ -87,17 +87,27 @@ impl DocumentWithHistory {
     }
 
     /// Add new snapshot to history
-    pub fn add_snapshot(&mut self, comment: Option<String>) {
-        let entry = HistoryEntry {
-            timestamp: Local::now(),
+    pub fn add_snapshot(&mut self, description: Option<String>) {
+        let snapshot = HistoryEntry {
             content: self.current_content.clone(),
-            comment,
+            timestamp: chrono::Local::now(),
+            comment: description,
         };
-        self.history.insert(0, entry); // Insert at beginning (newest first)
+        self.history.push(snapshot);
+    }
 
-        // Keep only last 100 entries
-        if self.history.len() > MAX_HISTORY_ENTRIES {
-            self.history.truncate(MAX_HISTORY_ENTRIES);
+    /// Add snapshot with max length check
+    pub fn add_snapshot_with_limit(&mut self, description: Option<String>, max_length: usize) {
+        let snapshot = HistoryEntry {
+            content: self.current_content.clone(),
+            timestamp: chrono::Local::now(),
+            comment: description,
+        };
+        self.history.push(snapshot);
+
+        // Trim oldest entries if exceeded
+        while self.history.len() > max_length {
+            self.history.remove(0);
         }
     }
 
@@ -129,6 +139,19 @@ impl DocumentWithHistory {
     /// Clear all history
     pub fn clear_history(&mut self) {
         self.history.clear();
+    }
+
+    /// Set maximum history length
+    pub fn set_max_history_length(&mut self, max_length: usize) {
+        // Trim existing history if needed
+        while self.history.len() > max_length {
+            self.history.remove(0);
+        }
+    }
+
+    /// Get maximum history length (currently hardcoded but can be made configurable)
+    pub fn get_max_history_length(&self) -> usize {
+        100 // This will be replaced with settings value
     }
 }
 
