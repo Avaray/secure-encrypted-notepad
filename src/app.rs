@@ -881,6 +881,8 @@ impl EditorApp {
 
             // Clone theme to work with it without long-lived mutable borrow
             if let Some(ref mut theme) = self.editing_theme {
+                let mut theme_changed = false;
+
                 // Theme name
                 ui.horizontal(|ui| {
                     ui.label("Theme Name:");
@@ -891,191 +893,213 @@ impl EditorApp {
 
                 egui::ScrollArea::vertical()
                     .auto_shrink([false, false])
-                    .max_height(ui.available_height() - 80.0) // Zostaw miejsce na przyciski
+                    .max_height(ui.available_height() - 80.0)
                     .show(ui, |ui| {
                         ui.heading("Colors");
+                        ui.add_space(4.0);
 
-                        // Background
-                        ui.horizontal(|ui| {
-                            ui.label("Background:");
-                            let mut color = egui::Color32::from_rgb(
-                                theme.colors.background[0],
-                                theme.colors.background[1],
-                                theme.colors.background[2],
-                            );
-                            if ui.color_edit_button_srgba(&mut color).changed() {
-                                theme.colors.background = [color.r(), color.g(), color.b()];
-                                theme.apply(ui.ctx());
-                            }
-                        });
+                        egui::Grid::new("theme_colors_grid")
+                            .num_columns(2)
+                            .spacing([40.0, 4.0])
+                            .striped(false)
+                            .show(ui, |ui| {
+                                // Background
+                                ui.label("Background:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.background[0],
+                                    theme.colors.background[1],
+                                    theme.colors.background[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.background = [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
 
-                        // Foreground
-                        ui.horizontal(|ui| {
-                            ui.label("Foreground:");
-                            let mut color = egui::Color32::from_rgb(
-                                theme.colors.foreground[0],
-                                theme.colors.foreground[1],
-                                theme.colors.foreground[2],
-                            );
-                            if ui.color_edit_button_srgba(&mut color).changed() {
-                                theme.colors.foreground = [color.r(), color.g(), color.b()];
-                                theme.apply(ui.ctx());
-                            }
-                        });
+                                // Foreground
+                                ui.label("Foreground:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.foreground[0],
+                                    theme.colors.foreground[1],
+                                    theme.colors.foreground[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.foreground = [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
 
-                        // Panel Background
-                        ui.horizontal(|ui| {
-                            ui.label("Panel Background:");
-                            let mut color = egui::Color32::from_rgb(
-                                theme.colors.panel_background[0],
-                                theme.colors.panel_background[1],
-                                theme.colors.panel_background[2],
-                            );
-                            if ui.color_edit_button_srgba(&mut color).changed() {
-                                theme.colors.panel_background = [color.r(), color.g(), color.b()];
-                                theme.apply(ui.ctx());
-                            }
-                        });
+                                // Panel Background
+                                ui.label("Panel Background:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.panel_background[0],
+                                    theme.colors.panel_background[1],
+                                    theme.colors.panel_background[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.panel_background =
+                                        [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
+                            });
 
                         ui.add_space(8.0);
                         ui.separator();
                         ui.label(egui::RichText::new("Editor Colors").strong());
+                        ui.add_space(4.0);
 
-                        // Selection Background
-                        ui.horizontal(|ui| {
-                            ui.label("Selection Background:");
-                            let mut color = egui::Color32::from_rgb(
-                                theme.colors.selection_background[0],
-                                theme.colors.selection_background[1],
-                                theme.colors.selection_background[2],
-                            );
-                            if ui.color_edit_button_srgba(&mut color).changed() {
-                                theme.colors.selection_background =
-                                    [color.r(), color.g(), color.b()];
-                                theme.apply(ui.ctx());
-                            }
-                        });
+                        egui::Grid::new("editor_colors_grid")
+                            .num_columns(2)
+                            .spacing([40.0, 4.0])
+                            .striped(false)
+                            .show(ui, |ui| {
+                                // Selection Background
+                                ui.label("Selection Background:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.selection_background[0],
+                                    theme.colors.selection_background[1],
+                                    theme.colors.selection_background[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.selection_background =
+                                        [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
 
-                        // Cursor Color
-                        ui.horizontal(|ui| {
-                            ui.label("Cursor Color:");
-                            let mut color = egui::Color32::from_rgb(
-                                theme.colors.cursor[0],
-                                theme.colors.cursor[1],
-                                theme.colors.cursor[2],
-                            );
-                            if ui.color_edit_button_srgba(&mut color).changed() {
-                                theme.colors.cursor = [color.r(), color.g(), color.b()];
-                                theme.apply(ui.ctx());
-                            }
-                        });
+                                // Cursor Color
+                                ui.label("Cursor Color:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.cursor[0],
+                                    theme.colors.cursor[1],
+                                    theme.colors.cursor[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.cursor = [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
 
-                        // Line Number
-                        ui.horizontal(|ui| {
-                            ui.label("Line Number:");
-                            let mut color = egui::Color32::from_rgb(
-                                theme.colors.line_number[0],
-                                theme.colors.line_number[1],
-                                theme.colors.line_number[2],
-                            );
-                            if ui.color_edit_button_srgba(&mut color).changed() {
-                                theme.colors.line_number = [color.r(), color.g(), color.b()];
-                                theme.apply(ui.ctx());
-                            }
-                        });
+                                // Line Number
+                                ui.label("Line Number:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.line_number[0],
+                                    theme.colors.line_number[1],
+                                    theme.colors.line_number[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.line_number = [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
+                            });
 
                         ui.add_space(8.0);
                         ui.separator();
                         ui.label(egui::RichText::new("UI Colors").strong());
+                        ui.add_space(4.0);
 
-                        // Icon Hover Color
-                        ui.horizontal(|ui| {
-                            ui.label("Icon Hover Tint:");
-                            let mut color = egui::Color32::from_rgb(
-                                theme.colors.icon_hover[0],
-                                theme.colors.icon_hover[1],
-                                theme.colors.icon_hover[2],
-                            );
-                            if ui.color_edit_button_srgba(&mut color).changed() {
-                                theme.colors.icon_hover = [color.r(), color.g(), color.b()];
-                                theme.apply(ui.ctx());
-                            }
-                        });
+                        egui::Grid::new("ui_colors_grid")
+                            .num_columns(2)
+                            .spacing([40.0, 4.0])
+                            .striped(false)
+                            .show(ui, |ui| {
+                                // Icon Hover Color
+                                ui.label("Icon Hover Tint:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.icon_hover[0],
+                                    theme.colors.icon_hover[1],
+                                    theme.colors.icon_hover[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.icon_hover = [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
 
-                        // Success Color
-                        ui.horizontal(|ui| {
-                            ui.label("Success:");
-                            let mut color = egui::Color32::from_rgb(
-                                theme.colors.success[0],
-                                theme.colors.success[1],
-                                theme.colors.success[2],
-                            );
-                            if ui.color_edit_button_srgba(&mut color).changed() {
-                                theme.colors.success = [color.r(), color.g(), color.b()];
-                                theme.apply(ui.ctx());
-                            }
-                        });
+                                // Success Color
+                                ui.label("Success:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.success[0],
+                                    theme.colors.success[1],
+                                    theme.colors.success[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.success = [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
 
-                        // Info Color
-                        ui.horizontal(|ui| {
-                            ui.label("Info:");
-                            let mut color = egui::Color32::from_rgb(
-                                theme.colors.info[0],
-                                theme.colors.info[1],
-                                theme.colors.info[2],
-                            );
-                            if ui.color_edit_button_srgba(&mut color).changed() {
-                                theme.colors.info = [color.r(), color.g(), color.b()];
-                                theme.apply(ui.ctx());
-                            }
-                        });
+                                // Info Color
+                                ui.label("Info:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.info[0],
+                                    theme.colors.info[1],
+                                    theme.colors.info[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.info = [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
 
-                        // Warning Color
-                        ui.horizontal(|ui| {
-                            ui.label("Warning:");
-                            let mut color = egui::Color32::from_rgb(
-                                theme.colors.warning[0],
-                                theme.colors.warning[1],
-                                theme.colors.warning[2],
-                            );
-                            if ui.color_edit_button_srgba(&mut color).changed() {
-                                theme.colors.warning = [color.r(), color.g(), color.b()];
-                                theme.apply(ui.ctx());
-                            }
-                        });
+                                // Warning Color
+                                ui.label("Warning:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.warning[0],
+                                    theme.colors.warning[1],
+                                    theme.colors.warning[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.warning = [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
 
-                        // Error Color
-                        ui.horizontal(|ui| {
-                            ui.label("Error:");
-                            let mut color = egui::Color32::from_rgb(
-                                theme.colors.error[0],
-                                theme.colors.error[1],
-                                theme.colors.error[2],
-                            );
-                            if ui.color_edit_button_srgba(&mut color).changed() {
-                                theme.colors.error = [color.r(), color.g(), color.b()];
-                                theme.apply(ui.ctx());
-                            }
-                        });
+                                // Error Color
+                                ui.label("Error:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.error[0],
+                                    theme.colors.error[1],
+                                    theme.colors.error[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.error = [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
+                            });
 
                         ui.add_space(8.0);
                         ui.separator();
                         ui.label(egui::RichText::new("Syntax Colors").strong());
+                        ui.add_space(4.0);
 
-                        // Comment
-                        ui.horizontal(|ui| {
-                            ui.label("Comment:");
-                            let mut color = egui::Color32::from_rgb(
-                                theme.colors.comment[0],
-                                theme.colors.comment[1],
-                                theme.colors.comment[2],
-                            );
-                            if ui.color_edit_button_srgba(&mut color).changed() {
-                                theme.colors.comment = [color.r(), color.g(), color.b()];
-                                theme.apply(ui.ctx());
-                            }
-                        });
+                        egui::Grid::new("syntax_colors_grid")
+                            .num_columns(2)
+                            .spacing([40.0, 4.0])
+                            .striped(false)
+                            .show(ui, |ui| {
+                                // Comment
+                                ui.label("Comment:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.comment[0],
+                                    theme.colors.comment[1],
+                                    theme.colors.comment[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.comment = [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
+                            });
                     });
+
+                // Apply theme if any color changed
+                if theme_changed {
+                    theme.apply(ui.ctx());
+                }
 
                 ui.separator();
 
