@@ -2,155 +2,153 @@ use crate::EditorApp;
 use eframe::egui;
 
 impl EditorApp {
-    /// Advanced render with automatic current-line highlighting
     pub(crate) fn render_editor(&mut self, ui: &mut egui::Ui) {
         let text = &mut self.document.current_content;
         let line_count = text.lines().count().max(1);
         let editor_font_size = self.settings.editor_font_size;
         let show_line_numbers = self.settings.show_line_numbers;
-
-        // Calculate line height
         let row_height = editor_font_size * 1.4;
-
-        // Determine which line to highlight
         let highlight_line = self.highlighted_line;
-        let editor_start = ui.cursor().min;
-        let mut clicked_line: Option<usize> = None;
-        let mut clicked_below_content = false;
 
-        // Capture colors for layouter closure
+        // Capture colors
         let foreground_color = self.current_theme.colors.foreground_color();
         let selection_bg = self.current_theme.colors.selection_color();
         let line_number_color = self.current_theme.colors.line_number_color();
         let comment_color = self.current_theme.colors.comment_color();
+        let highlight_bg = selection_bg.linear_multiply(0.2);
 
-        // Custom layouter with syntax highlighting
-        let layouter = |ui: &egui::Ui, text_str: &str, wrap_width: f32| {
-            let mut layoutjob = egui::text::LayoutJob::default();
-            let font_id = egui::FontId::monospace(editor_font_size);
+        // Poziomy layout: numery linii + editor
+        ui.horizontal_top(|ui| {
+            // Panel z numerami linii (opcjonalny)
+            if show_line_numbers {
+                egui::ScrollArea::vertical()
+                    .id_salt("line_numbers")
+                    .show(ui, |ui| {
+                        ui.vertical(|ui| {
+                            for line_num in 1..=line_count {
+                                let text_color = if Some(line_num) == highlight_line {
+                                    foreground_color
+                                } else {
+                                    line_number_color
+                                };
 
-            for (line_idx, line) in text_str.lines().enumerate() {
-                let line_num = line_idx + 1;
-
-                // Highlight current line background
-                if Some(line_num) == highlight_line {
-                    let highlight_bg = selection_bg.linear_multiply(0.2);
-                    layoutjob.sections.push(egui::text::LayoutSection {
-                        leading_space: 0.0,
-                        byte_range: layoutjob.text.len()..layoutjob.text.len(),
-                        format: egui::TextFormat {
-                            font_id: font_id.clone(),
-                            background: highlight_bg,
-                            ..Default::default()
-                        },
+                                ui.label(
+                                    egui::RichText::new(format!("{:4}", line_num))
+                                        .color(text_color)
+                                        .monospace()
+                                        .size(editor_font_size),
+                                );
+                            }
+                        });
                     });
-                }
 
-                // Line number
-                if show_line_numbers {
-                    let line_num_str = format!("{:4} ", line_num);
-                    layoutjob.append(
-                        &line_num_str,
-                        0.0,
-                        egui::TextFormat {
-                            font_id: font_id.clone(),
-                            color: line_number_color,
-                            ..Default::default()
-                        },
-                    );
-                }
-
-                // Line content - detect comments
-                let trimmed = line.trim_start();
-                let is_comment = trimmed.starts_with("//");
-                let content_color = if is_comment {
-                    comment_color
-                } else {
-                    foreground_color
-                };
-
-                layoutjob.append(
-                    line,
-                    0.0,
-                    egui::TextFormat {
-                        font_id: font_id.clone(),
-                        color: content_color,
-                        ..Default::default()
-                    },
-                );
-
-                layoutjob.append(
-                    "\n",
-                    0.0,
-                    egui::TextFormat {
-                        font_id: font_id.clone(),
-                        ..Default::default()
-                    },
-                );
+                ui.separator();
             }
 
-            ui.fonts(|f| f.layout_job(layoutjob))
-        };
+            // Główne pole edytora ze scrollowaniem
+            egui::ScrollArea::both()
+                .id_salt("editor")
+                .auto_shrink(false)
+                .show(ui, |ui| {
+                    // Custom layouter BEZ numerów linii
+                    let layouter = |ui: &egui::Ui, text_str: &str, wrap_width: f32| {
+                        let mut layout_job = egui::text::LayoutJob::default();
+                        let font_id = egui::FontId::monospace(editor_font_size);
 
-        let output = egui::TextEdit::multiline(text)
-            .font(egui::TextStyle::Monospace)
-            .desired_width(f32::INFINITY)
-            .desired_rows(line_count.max(20))
-            .frame(false)
-            .lock_focus(true)
-            .layouter(&mut |ui, text_str, wrap_width| layouter(ui, text_str, wrap_width))
-            .show(ui);
+                        for (line_idx, line) in text_str.lines().enumerate() {
+                            let line_num = line_idx + 1;
 
-        // Track changes
-        if output.response.changed() {
-            self.is_modified = true;
-            self.loaded_history_index = None;
-        }
+                            // Podświetlenie tła linii
+                            if Some(line_num) == highlight_line {
+                                layout_job.sections.push(egui::text::LayoutSection {
+                                    leading_space: 0.0,
+                                    byte_range: layout_job.text.len()..layout_job.text.len(),
+                                    format: egui::TextFormat {
+                                        font_id: font_id.clone(),
+                                        background: highlight_bg,
+                                        ..Default::default()
+                                    },
+                                });
+                            }
 
-        // Detect clicks below the last line of content
-        let editor_content_height = line_count as f32 * row_height;
-        let editor_rect = egui::Rect::from_min_size(
-            editor_start,
-            egui::vec2(
-                ui.available_width(),
-                ui.available_height().max(editor_content_height),
-            ),
-        );
+                            // Kolor treści (wykrywanie komentarzy)
+                            let trimmed = line.trim_start();
+                            let is_comment = trimmed.starts_with("//");
+                            let content_color = if is_comment {
+                                comment_color
+                            } else {
+                                foreground_color
+                            };
 
-        // Check if clicked in the editor area below content
-        if ui.rect_contains_pointer(editor_rect) {
-            if ui.input(|i| i.pointer.primary_clicked()) {
-                if let Some(pos) = ui.input(|i| i.pointer.interact_pos()) {
-                    let relative_y = pos.y - editor_start.y;
-                    if relative_y > editor_content_height {
-                        // Clicked below content - select last line
-                        clicked_below_content = true;
-                        output.response.request_focus();
-                    } else {
-                        // Calculate which line was clicked
-                        let line = ((relative_y / row_height) as usize).min(line_count - 1) + 1;
-                        clicked_line = Some(line);
+                            // Dodaj treść linii
+                            layout_job.append(
+                                line,
+                                0.0,
+                                egui::TextFormat {
+                                    font_id: font_id.clone(),
+                                    color: content_color,
+                                    ..Default::default()
+                                },
+                            );
+
+                            // Nowa linia
+                            if line_idx < text_str.lines().count() - 1 {
+                                layout_job.append(
+                                    "\n",
+                                    0.0,
+                                    egui::TextFormat {
+                                        font_id: font_id.clone(),
+                                        ..Default::default()
+                                    },
+                                );
+                            }
+                        }
+
+                        ui.fonts(|f| f.layout_job(layout_job))
+                    };
+
+                    // TextEdit z nieskończoną szerokością dla scroll poziomego
+                    let output = egui::TextEdit::multiline(text)
+                        .font(egui::TextStyle::Monospace)
+                        .code_editor()
+                        .desired_width(f32::INFINITY) // KLUCZOWE dla scroll poziomo
+                        .desired_rows(line_count.max(20))
+                        .frame(false)
+                        .lock_focus(true)
+                        .layouter(&mut |ui, text_str, wrap_width| {
+                            layouter(ui, text_str, wrap_width)
+                        })
+                        .show(ui);
+
+                    // Track changes
+                    if output.response.changed() {
+                        self.is_modified = true;
+                        self.loaded_history_index = None;
                     }
-                }
-            }
-        }
 
-        // Save cursor range for comment toggling
-        if let Some(state) = egui::TextEdit::load_state(ui.ctx(), output.response.id) {
-            if let Some(cursor_range) = state.cursor.char_range() {
-                let start = cursor_range.primary.index.min(cursor_range.secondary.index);
-                let end = cursor_range.primary.index.max(cursor_range.secondary.index);
-                self.text_cursor_range = Some(start..end);
-            }
-        }
+                    // Aktualizacja podświetlonej linii na kliknięciu
+                    if output.response.clicked() {
+                        if let Some(state) =
+                            egui::TextEdit::load_state(ui.ctx(), output.response.id)
+                        {
+                            if let Some(cursor_range) = state.cursor.char_range() {
+                                let cursor_pos = cursor_range.primary.index;
 
-        // Update clicked line
-        if let Some(line) = clicked_line {
-            self.highlighted_line = Some(line);
-            self.log_info(format!("Line {} selected", line));
-        } else if clicked_below_content {
-            self.highlighted_line = Some(line_count);
-            self.log_info(format!("Line {} selected (last line)", line_count));
-        }
+                                // Oblicz numer linii z pozycji kursora
+                                let line_num =
+                                    text[..cursor_pos.min(text.len())].lines().count().max(1);
+
+                                self.highlighted_line = Some(line_num);
+
+                                let start =
+                                    cursor_range.primary.index.min(cursor_range.secondary.index);
+                                let end =
+                                    cursor_range.primary.index.max(cursor_range.secondary.index);
+                                self.text_cursor_range = Some(start..end);
+                            }
+                        }
+                    }
+                });
+        });
     }
 }

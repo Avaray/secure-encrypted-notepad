@@ -86,6 +86,7 @@ impl EditorApp {
                 FontFamily::Monospace
             };
 
+            // Set text styles
             style.text_styles = [
                 (
                     TextStyle::Heading,
@@ -109,6 +110,20 @@ impl EditorApp {
                 ),
             ]
             .into();
+
+            // ✅ POPRAWKA: Ustaw spacing aby tekst był wycentrowany w pionie
+            // Button padding - zwiększ padding w pionie (drugi parametr)
+            style.spacing.button_padding = egui::vec2(6.0, 4.0);
+
+            // Item spacing - zwiększ spacing w pionie
+            style.spacing.item_spacing = egui::vec2(8.0, 6.0);
+
+            // Interact size - wysokość interaktywnych elementów
+            style.spacing.interact_size.y = self.settings.ui_font_size + 8.0;
+
+            // Opcjonalnie: window padding
+            style.spacing.window_margin = egui::Margin::same(8.0);
+            style.spacing.item_spacing.y = 6.0; // spacing między elementami
         });
     }
 
