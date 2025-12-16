@@ -16,10 +16,17 @@ impl EditorApp {
         let comment_color = self.current_theme.colors.comment_color();
         let highlight_bg = selection_bg.linear_multiply(0.2);
 
-        // Oblicz szerokość potrzebną dla numerów linii (dynamicznie rośnie)
+        // Oblicz PRECYZYJNĄ szerokość dla numerów linii
         let line_number_width = if show_line_numbers {
-            let max_digits = line_count.to_string().len().max(2);
-            (max_digits as f32 * editor_font_size * 0.6) + 20.0 // Więcej miejsca
+            let font_id = egui::FontId::monospace(editor_font_size);
+
+            // Zmierz rzeczywistą szerokość najdłuższego numeru
+            let max_line_text = format!("{}", line_count);
+            let text_width =
+                ui.fonts(|f| f.glyph_width(&font_id, ' ') * max_line_text.len() as f32);
+
+            // Dodaj marginesy: 10px z lewej + 15px z prawej (przed separatorem)
+            text_width + 25.0
         } else {
             0.0
         };
@@ -29,11 +36,11 @@ impl EditorApp {
             .auto_shrink(false)
             .show(ui, |ui| {
                 ui.horizontal_top(|ui| {
-                    // Zarezerwuj miejsce dla numerów linii
+                    // Zarezerwuj DOKŁADNIE tyle miejsca, ile potrzeba
                     if show_line_numbers {
                         ui.add_space(line_number_width);
                         ui.separator();
-                        ui.add_space(10.0); // Więcej odstępu między separatorem a tekstem
+                        ui.add_space(10.0);
                     }
 
                     // Custom layouter BEZ numerów
@@ -111,12 +118,11 @@ impl EditorApp {
                         // Pozycja TextEdit
                         let text_rect = output.response.rect;
 
-                        // Pozycja separatora (z większym odstępem od tekstu)
+                        // Separator 10px przed tekstem
                         let separator_x = text_rect.min.x - 10.0;
 
-                        // Pozycja numerów - PO LEWEJ od separatora
-                        // Zwiększam odstęp do 12px, żeby numery nie nachodziły
-                        let line_num_anchor_x = separator_x - 12.0;
+                        // Numery 15px przed separatorem (anchor po prawej)
+                        let line_num_anchor_x = separator_x - 15.0;
 
                         for (row_idx, row) in galley.rows.iter().enumerate() {
                             let line_num = row_idx + 1;
@@ -130,7 +136,7 @@ impl EditorApp {
                                 line_number_color
                             };
 
-                            // Narysuj numer wyrównany DO PRAWEJ (rośnie w lewo)
+                            // Narysuj numer wyrównany DO PRAWEJ
                             painter.text(
                                 egui::pos2(line_num_anchor_x, line_y),
                                 egui::Align2::RIGHT_TOP,
@@ -140,7 +146,7 @@ impl EditorApp {
                             );
                         }
 
-                        // Separator między numerami a tekstem
+                        // Separator
                         painter.vline(
                             separator_x,
                             text_rect.min.y..=text_rect.max.y,
