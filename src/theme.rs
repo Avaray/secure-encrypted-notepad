@@ -169,6 +169,9 @@ impl Theme {
         visuals.selection.bg_fill = self.colors.selection_color();
         visuals.selection.stroke.color = self.colors.cursor_color();
 
+        // KLUCZOWE: Ustaw kolor kursora TextEdit
+        visuals.text_cursor.stroke.color = self.colors.cursor_color();
+
         // Apply foreground (text) color
         let foreground = self.colors.to_egui_color32(self.colors.foreground);
         visuals.widgets.noninteractive.fg_stroke.color = foreground;

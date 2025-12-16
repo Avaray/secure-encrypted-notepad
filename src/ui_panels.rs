@@ -497,8 +497,6 @@ impl EditorApp {
     /// Render theme editor panel
     pub(crate) fn render_theme_editor_panel(&mut self, ui: &mut egui::Ui) {
         let mut theme_to_save: Option<crate::theme::Theme> = None;
-        let mut should_close = false;
-        let mut should_apply = false;
         let mut should_reset = false;
 
         ui.vertical(|ui| {
@@ -525,7 +523,6 @@ impl EditorApp {
                                 theme.color_scheme = crate::theme::ColorScheme::Dark;
                                 theme_changed = true;
                             }
-
                             if ui
                                 .selectable_label(
                                     matches!(theme.color_scheme, crate::theme::ColorScheme::Light),
@@ -543,7 +540,7 @@ impl EditorApp {
 
                 egui::ScrollArea::vertical()
                     .auto_shrink([false, false])
-                    .max_height(ui.available_height() - 100.0)
+                    .max_height(ui.available_height() - 80.0)
                     .show(ui, |ui| {
                         ui.heading("Colors");
                         ui.add_space(4.0);
@@ -555,40 +552,30 @@ impl EditorApp {
                             .show(ui, |ui| {
                                 // Background
                                 ui.label("Background:");
-                                let mut color = egui::Color32::from_rgb(
-                                    theme.colors.background[0],
-                                    theme.colors.background[1],
-                                    theme.colors.background[2],
-                                );
-                                if ui.color_edit_button_srgba(&mut color).changed() {
-                                    theme.colors.background = [color.r(), color.g(), color.b()];
+                                if ui
+                                    .color_edit_button_srgb(&mut theme.colors.background)
+                                    .changed()
+                                {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
 
                                 // Foreground
                                 ui.label("Foreground:");
-                                let mut color = egui::Color32::from_rgb(
-                                    theme.colors.foreground[0],
-                                    theme.colors.foreground[1],
-                                    theme.colors.foreground[2],
-                                );
-                                if ui.color_edit_button_srgba(&mut color).changed() {
-                                    theme.colors.foreground = [color.r(), color.g(), color.b()];
+                                if ui
+                                    .color_edit_button_srgb(&mut theme.colors.foreground)
+                                    .changed()
+                                {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
 
                                 // Panel Background
                                 ui.label("Panel Background:");
-                                let mut color = egui::Color32::from_rgb(
-                                    theme.colors.panel_background[0],
-                                    theme.colors.panel_background[1],
-                                    theme.colors.panel_background[2],
-                                );
-                                if ui.color_edit_button_srgba(&mut color).changed() {
-                                    theme.colors.panel_background =
-                                        [color.r(), color.g(), color.b()];
+                                if ui
+                                    .color_edit_button_srgb(&mut theme.colors.panel_background)
+                                    .changed()
+                                {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
@@ -599,66 +586,50 @@ impl EditorApp {
 
                                 // Selection Background
                                 ui.label("Selection Background:");
-                                let mut color = egui::Color32::from_rgb(
-                                    theme.colors.selection_background[0],
-                                    theme.colors.selection_background[1],
-                                    theme.colors.selection_background[2],
-                                );
-                                if ui.color_edit_button_srgba(&mut color).changed() {
-                                    theme.colors.selection_background =
-                                        [color.r(), color.g(), color.b()];
+                                if ui
+                                    .color_edit_button_srgb(&mut theme.colors.selection_background)
+                                    .changed()
+                                {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
 
                                 // Cursor
                                 ui.label("Cursor Color:");
-                                let mut color = egui::Color32::from_rgb(
-                                    theme.colors.cursor[0],
-                                    theme.colors.cursor[1],
-                                    theme.colors.cursor[2],
-                                );
-                                if ui.color_edit_button_srgba(&mut color).changed() {
-                                    theme.colors.cursor = [color.r(), color.g(), color.b()];
+                                if ui
+                                    .color_edit_button_srgb(&mut theme.colors.cursor)
+                                    .changed()
+                                {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
 
                                 // Icon Hover
                                 ui.label("Icon Hover Tint:");
-                                let mut color = egui::Color32::from_rgb(
-                                    theme.colors.icon_hover[0],
-                                    theme.colors.icon_hover[1],
-                                    theme.colors.icon_hover[2],
-                                );
-                                if ui.color_edit_button_srgba(&mut color).changed() {
-                                    theme.colors.icon_hover = [color.r(), color.g(), color.b()];
+                                if ui
+                                    .color_edit_button_srgb(&mut theme.colors.icon_hover)
+                                    .changed()
+                                {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
 
                                 // Line Number Color
                                 ui.label("Line Numbers:");
-                                let mut color = egui::Color32::from_rgb(
-                                    theme.colors.line_number[0],
-                                    theme.colors.line_number[1],
-                                    theme.colors.line_number[2],
-                                );
-                                if ui.color_edit_button_srgba(&mut color).changed() {
-                                    theme.colors.line_number = [color.r(), color.g(), color.b()];
+                                if ui
+                                    .color_edit_button_srgb(&mut theme.colors.line_number)
+                                    .changed()
+                                {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
 
                                 // Comment Color
                                 ui.label("Comments:");
-                                let mut color = egui::Color32::from_rgb(
-                                    theme.colors.comment[0],
-                                    theme.colors.comment[1],
-                                    theme.colors.comment[2],
-                                );
-                                if ui.color_edit_button_srgba(&mut color).changed() {
-                                    theme.colors.comment = [color.r(), color.g(), color.b()];
+                                if ui
+                                    .color_edit_button_srgb(&mut theme.colors.comment)
+                                    .changed()
+                                {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
@@ -669,78 +640,55 @@ impl EditorApp {
 
                                 // Status colors section
                                 ui.label("Success Color:");
-                                let mut color = egui::Color32::from_rgb(
-                                    theme.colors.success[0],
-                                    theme.colors.success[1],
-                                    theme.colors.success[2],
-                                );
-                                if ui.color_edit_button_srgba(&mut color).changed() {
-                                    theme.colors.success = [color.r(), color.g(), color.b()];
+                                if ui
+                                    .color_edit_button_srgb(&mut theme.colors.success)
+                                    .changed()
+                                {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
 
                                 ui.label("Warning Color:");
-                                let mut color = egui::Color32::from_rgb(
-                                    theme.colors.warning[0],
-                                    theme.colors.warning[1],
-                                    theme.colors.warning[2],
-                                );
-                                if ui.color_edit_button_srgba(&mut color).changed() {
-                                    theme.colors.warning = [color.r(), color.g(), color.b()];
+                                if ui
+                                    .color_edit_button_srgb(&mut theme.colors.warning)
+                                    .changed()
+                                {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
 
                                 ui.label("Error Color:");
-                                let mut color = egui::Color32::from_rgb(
-                                    theme.colors.error[0],
-                                    theme.colors.error[1],
-                                    theme.colors.error[2],
-                                );
-                                if ui.color_edit_button_srgba(&mut color).changed() {
-                                    theme.colors.error = [color.r(), color.g(), color.b()];
+                                if ui.color_edit_button_srgb(&mut theme.colors.error).changed() {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
                             });
                     });
 
+                // KLUCZOWA ZMIANA: Synchronizuj z current_theme natychmiast!
                 if theme_changed {
                     theme.apply(ui.ctx());
+                    self.current_theme = theme.clone();
                 }
 
                 ui.separator();
 
+                // Tylko 2 przyciski: Save i Reset (pionowo)
                 ui.vertical(|ui| {
                     ui.add_space(4.0);
 
-                    ui.horizontal(|ui| {
-                        if ui.button("💾 Save Theme").clicked() {
-                            theme_to_save = Some(theme.clone());
-                        }
-
-                        if ui.button("✓ Apply").clicked() {
-                            should_apply = true;
-                        }
-                    });
+                    if ui.button("💾 Save Theme").clicked() {
+                        theme_to_save = Some(theme.clone());
+                    }
 
                     let current_scheme = theme.color_scheme;
-
-                    ui.horizontal(|ui| {
-                        let reset_text = match current_scheme {
-                            crate::theme::ColorScheme::Light => "🔄 Reset to Light",
-                            crate::theme::ColorScheme::Dark => "🔄 Reset to Dark",
-                        };
-
-                        if ui.button(reset_text).clicked() {
-                            should_reset = true;
-                        }
-
-                        if ui.button("✖ Close").clicked() {
-                            should_close = true;
-                        }
-                    });
+                    let reset_text = match current_scheme {
+                        crate::theme::ColorScheme::Light => "↺ Reset to Light",
+                        crate::theme::ColorScheme::Dark => "↺ Reset to Dark",
+                    };
+                    if ui.button(reset_text).clicked() {
+                        should_reset = true;
+                    }
                 });
             } else {
                 ui.label("No theme being edited");
@@ -755,17 +703,7 @@ impl EditorApp {
                     crate::theme::ColorScheme::Dark => crate::theme::Theme::dark(),
                 };
                 theme.apply(ui.ctx());
-            }
-        }
-
-        if should_apply {
-            if let Some(theme) = &self.editing_theme {
                 self.current_theme = theme.clone();
-                self.settings.theme_name = theme.name.clone();
-                self.current_theme.apply(ui.ctx());
-                let _ = self.settings.save();
-                self.status_message = "Theme applied".to_string();
-                self.log_info("Theme applied");
             }
         }
 
@@ -776,20 +714,14 @@ impl EditorApp {
                     self.settings.theme_name = theme.name.clone();
                     let _ = self.settings.save();
                     self.themes = crate::theme::load_themes();
-                    self.status_message = format!("✓ Theme '{}' saved", theme.name);
-                    self.log_info(format!("Theme '{}' saved successfully", theme.name));
+                    self.status_message = format!("✓ Theme saved: {}", theme.name);
+                    self.log_info(format!("Theme saved successfully: {}", theme.name));
                 }
                 Err(e) => {
                     self.status_message = format!("Error saving theme: {}", e);
                     self.log_error(format!("Failed to save theme: {}", e));
                 }
             }
-        }
-
-        if should_close {
-            self.show_theme_editor = false;
-            self.editing_theme = None;
-            self.current_theme.apply(ui.ctx());
         }
     }
 }

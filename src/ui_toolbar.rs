@@ -38,14 +38,12 @@ impl EditorApp {
                 } else {
                     egui::Color32::WHITE
                 };
-
                 ui.painter().image(
                     icon.id(),
                     icon_rect,
                     egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
                     tint,
                 );
-
                 response.on_hover_text(tooltip)
             };
 
@@ -95,14 +93,12 @@ impl EditorApp {
                     } else {
                         egui::Color32::WHITE
                     };
-
                     ui.painter().image(
                         icon.id(),
                         icon_rect,
                         egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
                         tint,
                     );
-
                     response.on_hover_text(tooltip)
                 };
 
@@ -119,13 +115,32 @@ impl EditorApp {
 
             // --- RIGHT SIDE: Toggles ---
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if icon_button(ui, &self.icons.theme, "Theme Editor", false).clicked() {
-                    self.show_theme_editor = true;
-                    self.editing_theme = Some(self.current_theme.clone());
+                // Theme Editor toggle
+                if icon_button(
+                    ui,
+                    &self.icons.theme,
+                    "Toggle Theme Editor",
+                    self.show_theme_editor,
+                )
+                .clicked()
+                {
+                    self.show_theme_editor = !self.show_theme_editor;
+                    // Jeśli otwieramy, ustaw editing_theme
+                    if self.show_theme_editor {
+                        self.editing_theme = Some(self.current_theme.clone());
+                    }
                 }
 
-                if icon_button(ui, &self.icons.settings, "Settings", false).clicked() {
-                    self.show_settings_panel = true;
+                // Settings toggle
+                if icon_button(
+                    ui,
+                    &self.icons.settings,
+                    "Toggle Settings",
+                    self.show_settings_panel,
+                )
+                .clicked()
+                {
+                    self.show_settings_panel = !self.show_settings_panel;
                 }
 
                 ui.separator();
