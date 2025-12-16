@@ -298,6 +298,7 @@ impl EditorApp {
     }
 
     pub(crate) fn open_file(&mut self, path: PathBuf) {
+        // Pliki sprawdzają zmiany
         self.check_changes_before_action(PendingAction::OpenFileFromTree(path));
     }
 
@@ -306,6 +307,7 @@ impl EditorApp {
     }
 
     pub(crate) fn change_directory(&mut self, path: PathBuf) {
-        self.check_changes_before_action(PendingAction::ChangeDirectory(path));
+        // POPRAWKA: Foldery NIE sprawdzają zmian - nawigacja jest zawsze dozwolona
+        self.perform_change_directory(path);
     }
 }
