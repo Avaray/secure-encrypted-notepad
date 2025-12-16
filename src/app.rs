@@ -871,8 +871,7 @@ impl EditorApp {
     /// Render theme editor panel with icon hover color
     fn render_theme_editor_panel(&mut self, ui: &mut egui::Ui) {
         // Local variables to track actions (avoid borrowing issues)
-        let mut action_to_perform: Option<String> = None;
-        let mut theme_to_save: Option<crate::theme::Theme> = None;
+        let mut theme_to_save: Option<Theme> = None;
         let mut should_close = false;
         let mut should_apply = false;
         let mut should_reset = false;
@@ -892,6 +891,7 @@ impl EditorApp {
 
                 egui::ScrollArea::vertical()
                     .auto_shrink([false, false])
+                    .max_height(ui.available_height() - 80.0) // Zostaw miejsce na przyciski
                     .show(ui, |ui| {
                         ui.heading("Colors");
 
@@ -1079,24 +1079,27 @@ impl EditorApp {
 
                 ui.separator();
 
-                // Buttons - just set flags, don't mutate self
-                ui.horizontal(|ui| {
-                    if ui.button("💾 Save Theme").clicked() {
-                        theme_to_save = Some(theme.clone());
-                        action_to_perform = Some("save".to_string());
-                    }
+                // Buttons - ZAWSZE WIDOCZNE na dole
+                ui.vertical(|ui| {
+                    ui.add_space(4.0);
 
-                    if ui.button("✓ Apply").clicked() {
-                        should_apply = true;
-                    }
+                    ui.horizontal(|ui| {
+                        if ui.button("💾 Save Theme").clicked() {
+                            theme_to_save = Some(theme.clone());
+                        }
 
-                    if ui.button("🔄 Reset to Dark").clicked() {
-                        should_reset = true;
-                    }
+                        if ui.button("✓ Apply").clicked() {
+                            should_apply = true;
+                        }
 
-                    if ui.button("✖ Close").clicked() {
-                        should_close = true;
-                    }
+                        if ui.button("🔄 Reset to Dark").clicked() {
+                            should_reset = true;
+                        }
+
+                        if ui.button("✖ Close").clicked() {
+                            should_close = true;
+                        }
+                    });
                 });
             } else {
                 ui.label("No theme being edited");
@@ -1106,7 +1109,7 @@ impl EditorApp {
         // Now execute actions with full access to self (no borrow conflicts)
         if should_reset {
             if let Some(ref mut theme) = self.editing_theme {
-                *theme = crate::theme::Theme::dark();
+                *theme = Theme::dark();
                 theme.apply(ui.ctx());
             }
         }
