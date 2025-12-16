@@ -21,13 +21,6 @@ enum LogLevel {
     Error,
 }
 
-#[derive(Debug, Clone)]
-enum ThemeEditorAction {
-    Save(Theme),
-    Apply(Theme),
-    Cancel,
-}
-
 impl LogEntry {
     fn new(level: LogLevel, message: String) -> Self {
         Self {
@@ -124,6 +117,10 @@ pub struct EditorApp {
     loaded_history_index: Option<usize>,
     /// Available system fonts
     available_fonts: Vec<String>,
+    /// Selected font index for UI (for keyboard navigation)
+    ui_font_index: usize,
+    /// Selected font index for Editor (for keyboard navigation)
+    editor_font_index: usize,
 }
 
 impl Default for EditorApp {
@@ -131,6 +128,17 @@ impl Default for EditorApp {
         let settings = Settings::load();
         let themes = load_themes();
         let available_fonts = crate::fonts::get_system_fonts();
+
+        // Find current font indices
+        let ui_font_index = available_fonts
+            .iter()
+            .position(|f| f == &settings.ui_font_family)
+            .unwrap_or(0);
+
+        let editor_font_index = available_fonts
+            .iter()
+            .position(|f| f == &settings.editor_font_family)
+            .unwrap_or(1);
 
         // Find current theme
         let current_theme = themes
@@ -179,6 +187,8 @@ impl Default for EditorApp {
             text_cursor_range: None,
             loaded_history_index: None,
             available_fonts,
+            ui_font_index,
+            editor_font_index,
         }
     }
 }
@@ -1593,34 +1603,60 @@ impl EditorApp {
 
                     ui.separator();
 
-                    // UI font family
+                    // UI font family with keyboard navigation
                     ui.horizontal(|ui| {
                         ui.label("UI Font:");
-                        let mut changed = false;
-                        egui::ComboBox::from_id_salt("ui_font_selector")
-                            .selected_text(&self.settings.ui_font_family)
+
+                        let _response = egui::ComboBox::from_id_salt("ui_font_selector")
+                            .selected_text(&self.available_fonts[self.ui_font_index])
                             .show_ui(ui, |ui| {
-                                for font in &self.available_fonts {
-                                    if ui
-                                        .selectable_label(
-                                            self.settings.ui_font_family == *font,
-                                            font,
-                                        )
-                                        .clicked()
-                                    {
-                                        self.settings.ui_font_family = font.clone();
+                                let mut changed = false;
+
+                                // Handle keyboard navigation
+                                if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)) {
+                                    if self.ui_font_index > 0 {
+                                        self.ui_font_index -= 1;
                                         changed = true;
                                     }
                                 }
-                            });
+                                if ui.input(|i| i.key_pressed(egui::Key::ArrowDown)) {
+                                    if self.ui_font_index < self.available_fonts.len() - 1 {
+                                        self.ui_font_index += 1;
+                                        changed = true;
+                                    }
+                                }
 
-                        if changed {
-                            let _ = self.settings.save();
-                            self.log_info(format!(
-                                "UI font changed to {}",
-                                self.settings.ui_font_family
-                            ));
-                        }
+                                // Render font list with auto-scroll to selected
+                                egui::ScrollArea::vertical()
+                                    .max_height(300.0)
+                                    .auto_shrink([false, false])
+                                    .show(ui, |ui| {
+                                        for (idx, font) in self.available_fonts.iter().enumerate() {
+                                            let is_selected = idx == self.ui_font_index;
+                                            let response = ui.selectable_label(is_selected, font);
+
+                                            if response.clicked() {
+                                                self.ui_font_index = idx;
+                                                changed = true;
+                                            }
+
+                                            // Auto-scroll to selected item
+                                            if is_selected {
+                                                response.scroll_to_me(Some(egui::Align::Center));
+                                            }
+                                        }
+                                    });
+
+                                if changed {
+                                    self.settings.ui_font_family =
+                                        self.available_fonts[self.ui_font_index].clone();
+                                    let _ = self.settings.save();
+                                    self.log_info(format!(
+                                        "UI font changed to {}",
+                                        self.settings.ui_font_family
+                                    ));
+                                }
+                            });
                     });
 
                     // UI font size
@@ -1641,34 +1677,60 @@ impl EditorApp {
 
                     ui.separator();
 
-                    // Editor font family
+                    // Editor font family with keyboard navigation
                     ui.horizontal(|ui| {
                         ui.label("Editor Font:");
-                        let mut changed = false;
-                        egui::ComboBox::from_id_salt("editor_font_selector")
-                            .selected_text(&self.settings.editor_font_family)
+
+                        let _response = egui::ComboBox::from_id_salt("editor_font_selector")
+                            .selected_text(&self.available_fonts[self.editor_font_index])
                             .show_ui(ui, |ui| {
-                                for font in &self.available_fonts {
-                                    if ui
-                                        .selectable_label(
-                                            self.settings.editor_font_family == *font,
-                                            font,
-                                        )
-                                        .clicked()
-                                    {
-                                        self.settings.editor_font_family = font.clone();
+                                let mut changed = false;
+
+                                // Handle keyboard navigation
+                                if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)) {
+                                    if self.editor_font_index > 0 {
+                                        self.editor_font_index -= 1;
                                         changed = true;
                                     }
                                 }
-                            });
+                                if ui.input(|i| i.key_pressed(egui::Key::ArrowDown)) {
+                                    if self.editor_font_index < self.available_fonts.len() - 1 {
+                                        self.editor_font_index += 1;
+                                        changed = true;
+                                    }
+                                }
 
-                        if changed {
-                            let _ = self.settings.save();
-                            self.log_info(format!(
-                                "Editor font changed to {}",
-                                self.settings.editor_font_family
-                            ));
-                        }
+                                // Render font list with auto-scroll to selected
+                                egui::ScrollArea::vertical()
+                                    .max_height(300.0)
+                                    .auto_shrink([false, false])
+                                    .show(ui, |ui| {
+                                        for (idx, font) in self.available_fonts.iter().enumerate() {
+                                            let is_selected = idx == self.editor_font_index;
+                                            let response = ui.selectable_label(is_selected, font);
+
+                                            if response.clicked() {
+                                                self.editor_font_index = idx;
+                                                changed = true;
+                                            }
+
+                                            // Auto-scroll to selected item
+                                            if is_selected {
+                                                response.scroll_to_me(Some(egui::Align::Center));
+                                            }
+                                        }
+                                    });
+
+                                if changed {
+                                    self.settings.editor_font_family =
+                                        self.available_fonts[self.editor_font_index].clone();
+                                    let _ = self.settings.save();
+                                    self.log_info(format!(
+                                        "Editor font changed to {}",
+                                        self.settings.editor_font_family
+                                    ));
+                                }
+                            });
                     });
 
                     // Editor font size
@@ -1688,6 +1750,7 @@ impl EditorApp {
                     });
 
                     ui.separator();
+
                     ui.heading("Global Keyfile");
 
                     if ui

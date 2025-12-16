@@ -109,6 +109,7 @@ impl std::error::Error for SettingsError {}
 
 impl Settings {
     /// Get config file path
+    #[allow(dead_code)]
     fn config_path() -> Result<PathBuf, SettingsError> {
         let config_dir = dirs::config_dir().ok_or_else(|| {
             SettingsError::IoError(std::io::Error::new(
@@ -140,6 +141,7 @@ impl Settings {
         Self::default()
     }
 
+    #[allow(dead_code)]
     fn load_internal() -> Result<Self, SettingsError> {
         let config_path = Self::config_path()?;
 
@@ -173,6 +175,7 @@ impl Settings {
     }
 
     /// Validate history length
+    #[allow(dead_code)]
     pub fn validate_history_length(&mut self) {
         self.max_history_length = self.max_history_length.clamp(10, 1000);
     }

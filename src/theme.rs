@@ -110,6 +110,7 @@ impl ThemeColors {
         egui::Color32::from_rgb(self.success[0], self.success[1], self.success[2])
     }
 
+    #[allow(dead_code)]
     pub fn info_color(&self) -> egui::Color32 {
         egui::Color32::from_rgb(self.info[0], self.info[1], self.info[2])
     }
@@ -118,6 +119,7 @@ impl ThemeColors {
         egui::Color32::from_rgb(self.warning[0], self.warning[1], self.warning[2])
     }
 
+    #[allow(dead_code)]
     pub fn error_color(&self) -> egui::Color32 {
         egui::Color32::from_rgb(self.error[0], self.error[1], self.error[2])
     }

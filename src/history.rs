@@ -1,9 +1,6 @@
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
-/// Maximum number of history entries per file
-const MAX_HISTORY_ENTRIES: usize = 100;
-
 /// Separator between content and history in file
 const HISTORY_SEPARATOR: &str = "\n<<HISTORY>>\n";
 
