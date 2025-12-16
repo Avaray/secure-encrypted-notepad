@@ -16,6 +16,10 @@ impl EditorApp {
         let comment_color = self.current_theme.colors.comment_color();
         let highlight_bg = selection_bg.linear_multiply(0.2);
 
+        // Symetryczne paddingi wokół numerów
+        let line_number_side_padding = 10.0; // Po lewej i prawej od numeru
+        let text_left_padding = 10.0; // Odstęp między separatorem a tekstem
+
         // Oblicz PRECYZYJNĄ szerokość dla numerów linii
         let line_number_width = if show_line_numbers {
             let font_id = egui::FontId::monospace(editor_font_size);
@@ -25,8 +29,8 @@ impl EditorApp {
             let text_width =
                 ui.fonts(|f| f.glyph_width(&font_id, ' ') * max_line_text.len() as f32);
 
-            // Dodaj marginesy: 10px z lewej + 15px z prawej (przed separatorem)
-            text_width + 25.0
+            // Szerokość obszaru: lewy padding + tekst + prawy padding
+            line_number_side_padding + text_width + line_number_side_padding
         } else {
             0.0
         };
@@ -36,9 +40,9 @@ impl EditorApp {
             .auto_shrink(false)
             .show(ui, |ui| {
                 ui.horizontal_top(|ui| {
-                    // Zarezerwuj miejsce dla numerów linii + separator (15px) + odstęp (10px)
+                    // Zarezerwuj miejsce dla numerów + separator + odstęp do tekstu
                     if show_line_numbers {
-                        ui.add_space(line_number_width + 25.0);
+                        ui.add_space(line_number_width + text_left_padding);
                     }
 
                     // Custom layouter BEZ numerów
@@ -116,11 +120,11 @@ impl EditorApp {
                         // Pozycja TextEdit
                         let text_rect = output.response.rect;
 
-                        // Separator 10px przed tekstem
-                        let separator_x = text_rect.min.x - 10.0;
+                        // Separator z odstępem przed tekstem
+                        let separator_x = text_rect.min.x - text_left_padding;
 
-                        // Numery 15px przed separatorem (anchor po prawej)
-                        let line_num_anchor_x = separator_x - 15.0;
+                        // Anchor dla numerów: prawy padding przed separatorem
+                        let line_num_anchor_x = separator_x - line_number_side_padding;
 
                         // Pobierz pełną wysokość ScrollArea
                         let scroll_rect = ui.clip_rect();
@@ -147,7 +151,7 @@ impl EditorApp {
                             );
                         }
 
-                        // JEDYNY separator - rysowany przez cały dostępny obszar
+                        // Separator
                         painter.vline(
                             separator_x,
                             scroll_rect.top()..=scroll_rect.bottom(),
