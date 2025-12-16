@@ -36,11 +36,9 @@ impl EditorApp {
             .auto_shrink(false)
             .show(ui, |ui| {
                 ui.horizontal_top(|ui| {
-                    // Zarezerwuj DOKŁADNIE tyle miejsca, ile potrzeba
+                    // Zarezerwuj miejsce dla numerów linii + separator (15px) + odstęp (10px)
                     if show_line_numbers {
-                        ui.add_space(line_number_width);
-                        ui.separator();
-                        ui.add_space(10.0);
+                        ui.add_space(line_number_width + 25.0);
                     }
 
                     // Custom layouter BEZ numerów
@@ -124,6 +122,9 @@ impl EditorApp {
                         // Numery 15px przed separatorem (anchor po prawej)
                         let line_num_anchor_x = separator_x - 15.0;
 
+                        // Pobierz pełną wysokość ScrollArea
+                        let scroll_rect = ui.clip_rect();
+
                         for (row_idx, row) in galley.rows.iter().enumerate() {
                             let line_num = row_idx + 1;
 
@@ -146,10 +147,10 @@ impl EditorApp {
                             );
                         }
 
-                        // Separator
+                        // JEDYNY separator - rysowany przez cały dostępny obszar
                         painter.vline(
                             separator_x,
-                            text_rect.min.y..=text_rect.max.y,
+                            scroll_rect.top()..=scroll_rect.bottom(),
                             ui.visuals().widgets.noninteractive.bg_stroke,
                         );
                     }
