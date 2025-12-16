@@ -120,6 +120,8 @@ pub struct EditorApp {
     pending_action: PendingAction,
     /// Text cursor range for comment toggling (char indices)
     text_cursor_range: Option<std::ops::Range<usize>>,
+    /// Currently loaded history index (None = current document)
+    loaded_history_index: Option<usize>,
 }
 
 impl Default for EditorApp {
@@ -172,6 +174,7 @@ impl Default for EditorApp {
             show_close_confirmation: false,
             pending_action: PendingAction::None,
             text_cursor_range: None,
+            loaded_history_index: None,
         }
     }
 }
@@ -302,6 +305,7 @@ impl EditorApp {
         self.document = DocumentWithHistory::default();
         self.current_file_path = None;
         self.is_modified = false;
+        self.loaded_history_index = None; // ← DODAJ
         self.status_message = "New document created".to_string();
         self.log_info("New document created");
     }
@@ -337,6 +341,7 @@ impl EditorApp {
                 self.document = DocumentWithHistory::from_file_content(&content);
                 self.current_file_path = Some(path.clone());
                 self.is_modified = false;
+                self.loaded_history_index = None;
                 let history_count = self.document.get_history().len();
                 self.status_message = format!(
                     "Opened: {} ({} history entries)",
@@ -623,6 +628,7 @@ impl EditorApp {
         let count = self.document.get_history().len();
         self.document.clear_history();
         self.is_modified = true;
+        self.loaded_history_index = None;
         self.status_message = format!("Cleared {} history entries", count);
         self.log_info(format!("Cleared all history ({} entries)", count));
     }
@@ -1277,17 +1283,21 @@ impl EditorApp {
     /// Render history panel
     fn render_history_panel(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
-            ui.heading("History");
+            ui.heading("📜 History");
 
             let history_len = self.document.get_history().len();
 
             ui.horizontal(|ui| {
-                ui.label(format!("Entries: {}/100", history_len));
+                ui.label(format!(
+                    "Entries: {}/{}",
+                    history_len, self.settings.max_history_length
+                ));
 
                 // Clear All button
                 if history_len > 0 {
-                    if ui.button("Clear All").clicked() {
+                    if ui.button("🗑 Clear All").clicked() {
                         self.clear_all_history();
+                        self.loaded_history_index = None; // Reset on clear
                     }
                 }
             });
@@ -1301,19 +1311,65 @@ impl EditorApp {
                 if history_entries.is_empty() {
                     ui.label("No history");
                 } else {
-                    for (index, entry) in history_entries.iter().enumerate() {
-                        ui.group(|ui| {
-                            ui.label(format!("📅 {}", entry.display_timestamp()));
-                            ui.label(format!("💾 {}", entry.display_size()));
+                    // REVERSE ORDER - newest first
+                    for (index, entry) in history_entries.iter().enumerate().rev() {
+                        // Check if this is the currently loaded entry
+                        let is_loaded = self.loaded_history_index == Some(index);
 
-                            ui.horizontal(|ui| {
-                                if ui.button("Load").clicked() {
-                                    self.load_history_version(index);
+                        // Create frame with highlight if loaded
+                        let frame = if is_loaded {
+                            egui::Frame::none()
+                                .fill(
+                                    self.current_theme
+                                        .colors
+                                        .selection_color()
+                                        .linear_multiply(0.3),
+                                )
+                                .stroke(egui::Stroke::new(
+                                    2.0,
+                                    self.current_theme.colors.cursor_color(),
+                                ))
+                                .inner_margin(8.0)
+                                .rounding(4.0)
+                        } else {
+                            egui::Frame::none().inner_margin(4.0)
+                        };
+
+                        frame.show(ui, |ui| {
+                            ui.group(|ui| {
+                                // Show indicator if this is the currently loaded entry
+                                if is_loaded {
+                                    ui.label(
+                                        egui::RichText::new("▶ LOADED")
+                                            .color(self.current_theme.colors.cursor_color())
+                                            .strong(),
+                                    );
                                 }
 
-                                if ui.button("Delete").clicked() {
-                                    self.delete_history_entry(index);
+                                ui.label(format!("📅 {}", entry.display_timestamp()));
+                                ui.label(format!("💾 {}", entry.display_size()));
+
+                                if let Some(ref comment) = entry.comment {
+                                    ui.label(
+                                        egui::RichText::new(format!("💬 {}", comment))
+                                            .italics()
+                                            .weak(),
+                                    );
                                 }
+
+                                ui.horizontal(|ui| {
+                                    if ui.button("📂 Load").clicked() {
+                                        self.load_history_version(index);
+                                        self.loaded_history_index = Some(index);
+                                    }
+                                    if ui.button("🗑 Delete").clicked() {
+                                        self.delete_history_entry(index);
+                                        // Reset loaded index if we deleted the loaded entry
+                                        if self.loaded_history_index == Some(index) {
+                                            self.loaded_history_index = None;
+                                        }
+                                    }
+                                });
                             });
                         });
 
@@ -1843,6 +1899,7 @@ impl EditorApp {
                         // Track changes
                         if output.changed() {
                             self.is_modified = true;
+                            self.loaded_history_index = None;
                         }
 
                         // Detect clicks below the last line of content
