@@ -189,30 +189,44 @@ impl EditorApp {
         app
     }
 
-    /// Update UI style (fonts) based on settings
+    /// Update UI style + fonts based on settings
     fn apply_style(&self, ctx: &egui::Context) {
         ctx.style_mut(|style| {
             use egui::{FontFamily, FontId, TextStyle};
+
+            // Map font family string to egui FontFamily
+            let ui_family = match self.settings.ui_font_family.as_str() {
+                "Proportional" => FontFamily::Proportional,
+                "Monospace" => FontFamily::Monospace,
+                _ => FontFamily::Proportional,
+            };
+
+            let editor_family = match self.settings.editor_font_family.as_str() {
+                "Monospace" => FontFamily::Monospace,
+                "Proportional" => FontFamily::Proportional,
+                _ => FontFamily::Monospace,
+            };
+
             style.text_styles = [
                 (
                     TextStyle::Heading,
-                    FontId::new(self.settings.ui_font_size + 4.0, FontFamily::Proportional),
+                    FontId::new(self.settings.ui_font_size + 4.0, ui_family.clone()),
                 ),
                 (
                     TextStyle::Body,
-                    FontId::new(self.settings.ui_font_size, FontFamily::Proportional),
+                    FontId::new(self.settings.ui_font_size, ui_family.clone()),
                 ),
                 (
                     TextStyle::Monospace,
-                    FontId::new(self.settings.editor_font_size, FontFamily::Monospace),
+                    FontId::new(self.settings.editor_font_size, editor_family),
                 ),
                 (
                     TextStyle::Button,
-                    FontId::new(self.settings.ui_font_size, FontFamily::Proportional),
+                    FontId::new(self.settings.ui_font_size, ui_family.clone()),
                 ),
                 (
                     TextStyle::Small,
-                    FontId::new(self.settings.ui_font_size - 4.0, FontFamily::Proportional),
+                    FontId::new(self.settings.ui_font_size - 4.0, ui_family),
                 ),
             ]
             .into();
@@ -1515,9 +1529,50 @@ impl EditorApp {
                                     }
                                 }
                             });
-                        if ui.button("Refresh").clicked() {
+
+                        if ui.button("🔄 Refresh").clicked() {
                             self.themes = crate::theme::load_themes();
                             self.log_info("Themes refreshed");
+                        }
+                    });
+
+                    ui.separator();
+
+                    // UI font family
+                    ui.horizontal(|ui| {
+                        ui.label("UI Font:");
+                        let mut changed = false;
+                        egui::ComboBox::from_id_salt("ui_font_selector")
+                            .selected_text(&self.settings.ui_font_family)
+                            .show_ui(ui, |ui| {
+                                if ui
+                                    .selectable_label(
+                                        self.settings.ui_font_family == "Proportional",
+                                        "Proportional",
+                                    )
+                                    .clicked()
+                                {
+                                    self.settings.ui_font_family = "Proportional".to_string();
+                                    changed = true;
+                                }
+                                if ui
+                                    .selectable_label(
+                                        self.settings.ui_font_family == "Monospace",
+                                        "Monospace",
+                                    )
+                                    .clicked()
+                                {
+                                    self.settings.ui_font_family = "Monospace".to_string();
+                                    changed = true;
+                                }
+                            });
+
+                        if changed {
+                            let _ = self.settings.save();
+                            self.log_info(format!(
+                                "UI font changed to {}",
+                                self.settings.ui_font_family
+                            ));
                         }
                     });
 
@@ -1534,6 +1589,46 @@ impl EditorApp {
                         {
                             self.settings.validate_font_sizes();
                             let _ = self.settings.save();
+                        }
+                    });
+
+                    ui.separator();
+
+                    // Editor font family
+                    ui.horizontal(|ui| {
+                        ui.label("Editor Font:");
+                        let mut changed = false;
+                        egui::ComboBox::from_id_salt("editor_font_selector")
+                            .selected_text(&self.settings.editor_font_family)
+                            .show_ui(ui, |ui| {
+                                if ui
+                                    .selectable_label(
+                                        self.settings.editor_font_family == "Monospace",
+                                        "Monospace",
+                                    )
+                                    .clicked()
+                                {
+                                    self.settings.editor_font_family = "Monospace".to_string();
+                                    changed = true;
+                                }
+                                if ui
+                                    .selectable_label(
+                                        self.settings.editor_font_family == "Proportional",
+                                        "Proportional",
+                                    )
+                                    .clicked()
+                                {
+                                    self.settings.editor_font_family = "Proportional".to_string();
+                                    changed = true;
+                                }
+                            });
+
+                        if changed {
+                            let _ = self.settings.save();
+                            self.log_info(format!(
+                                "Editor font changed to {}",
+                                self.settings.editor_font_family
+                            ));
                         }
                     });
 
@@ -1721,7 +1816,12 @@ impl EditorApp {
         let selection_bg_color = self.current_theme.colors.selection_color();
         let cursor_color = self.current_theme.colors.cursor_color();
 
-        let font_id = egui::FontId::monospace(editor_font_size);
+        let font_family = match self.settings.editor_font_family.as_str() {
+            "Monospace" => egui::FontFamily::Monospace,
+            "Proportional" => egui::FontFamily::Proportional,
+            _ => egui::FontFamily::Monospace,
+        };
+        let font_id = egui::FontId::new(editor_font_size, font_family);
         let row_height = ui.fonts(|f| f.row_height(&font_id));
 
         // Calculate line number width

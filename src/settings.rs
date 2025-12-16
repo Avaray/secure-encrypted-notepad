@@ -7,42 +7,44 @@ use std::path::PathBuf;
 pub struct Settings {
     /// UI font size (8-32 px)
     pub ui_font_size: f32,
-
     /// Editor font size (8-32 px)
     pub editor_font_size: f32,
-
+    /// UI font family
+    #[serde(default = "default_ui_font")]
+    pub ui_font_family: String,
+    /// Editor font family
+    #[serde(default = "default_editor_font")]
+    pub editor_font_family: String,
     /// Current theme name
     pub theme_name: String,
-
     /// Path to global default keyfile
     pub global_keyfile_path: Option<PathBuf>,
-
     /// Whether to use global keyfile automatically on startup
     pub use_global_keyfile: bool,
-
-    /// Whether to auto-create snapshot on save (when content changes)
+    /// Whether to auto-create snapshot on save when content changes
     pub auto_snapshot_on_save: bool,
-
     /// Show line numbers in editor
     pub show_line_numbers: bool,
-
     /// Show file tree panel
     pub show_file_tree: bool,
-
     /// Show debug panel
     pub show_debug_panel: bool,
-
     /// Last opened directory for file tree
     pub last_directory: Option<PathBuf>,
-
     /// File tree panel width
     pub file_tree_width: f32,
-
     /// Show subfolders in file tree
     pub show_subfolders: bool,
-
-    // Max history length
+    /// Max history length
     pub max_history_length: usize,
+}
+
+fn default_ui_font() -> String {
+    "Proportional".to_string()
+}
+
+fn default_editor_font() -> String {
+    "Monospace".to_string()
 }
 
 impl Default for Settings {
@@ -50,6 +52,8 @@ impl Default for Settings {
         Self {
             ui_font_size: 20.0,
             editor_font_size: 20.0,
+            ui_font_family: "Proportional".to_string(),
+            editor_font_family: "Monospace".to_string(),
             theme_name: "Dark".to_string(),
             global_keyfile_path: None,
             use_global_keyfile: false,
@@ -114,7 +118,6 @@ impl Settings {
         })?;
 
         let app_config_dir = config_dir.join("sed");
-
         if !app_config_dir.exists() {
             fs::create_dir_all(&app_config_dir)?;
         }
@@ -148,7 +151,6 @@ impl Settings {
 
         let content = fs::read_to_string(&config_path)?;
         let settings: Settings = toml::from_str(&content)?;
-
         Ok(settings)
     }
 
@@ -159,7 +161,7 @@ impl Settings {
             fs::create_dir_all(&config_dir)?;
             let config_path = config_dir.join("config.toml");
             let toml_string = toml::to_string_pretty(self)?;
-            fs::write(config_path, toml_string)?;
+            fs::write(&config_path, toml_string)?;
         }
         Ok(())
     }
@@ -170,7 +172,7 @@ impl Settings {
         self.editor_font_size = self.editor_font_size.clamp(8.0, 32.0);
     }
 
-    // Validate history length
+    /// Validate history length
     pub fn validate_history_length(&mut self) {
         self.max_history_length = self.max_history_length.clamp(10, 1000);
     }
