@@ -50,9 +50,43 @@ impl EditorApp {
         // KLUCZOWE: Zapisz oryginalny clip rect całego editora
         let full_clip_rect = ui.clip_rect();
 
-        egui::ScrollArea::both()
+        // Wczytaj aktualny stan scrolla
+        let scroll_id = ui.id().with("main_editor");
+        let mut scroll_state =
+            egui::scroll_area::State::load(ui.ctx(), scroll_id).unwrap_or_default();
+
+        // MIDDLE MOUSE BUTTON PANNING
+        let pointer = ui.input(|i| i.pointer.clone());
+
+        // Wykryj środkowy przycisk myszy
+        if pointer.middle_down() {
+            if let Some(pos) = pointer.latest_pos() {
+                // Sprawdź czy jesteśmy w obszarze editora
+                if full_clip_rect.contains(pos) {
+                    // Delta ruchu myszy
+                    let delta = pointer.delta();
+
+                    // Odwróć kierunek (przeciąganie = przesuwanie widoku w przeciwnym kierunku)
+                    scroll_state.offset.x -= delta.x;
+                    scroll_state.offset.y -= delta.y;
+
+                    // Ogranicz do wartości nieujemnych
+                    scroll_state.offset.x = scroll_state.offset.x.max(0.0);
+                    scroll_state.offset.y = scroll_state.offset.y.max(0.0);
+
+                    // Zapisz zmodyfikowany stan
+                    scroll_state.store(ui.ctx(), scroll_id);
+
+                    // Zmień kursor na "grabbing"
+                    ui.ctx().set_cursor_icon(egui::CursorIcon::Grabbing);
+                }
+            }
+        }
+
+        let scroll_output = egui::ScrollArea::both()
             .id_salt("main_editor")
             .auto_shrink(false)
+            .scroll_offset(scroll_state.offset.into())
             .show(ui, |ui| {
                 // KLUCZOWE: Ustaw clip rect dla tekstu - zaczyna się PO numerach
                 let text_area_clip = if show_line_numbers {
@@ -250,5 +284,8 @@ impl EditorApp {
                     }
                 });
             });
+
+        // Zapisz finalny stan scrolla
+        scroll_output.state.store(ui.ctx(), scroll_id);
     }
 }
