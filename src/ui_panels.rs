@@ -1,4 +1,5 @@
 use crate::app_state::{FileTreeEntry, LogLevel};
+use crate::history::HistoryEntry;
 use crate::EditorApp;
 use eframe::egui;
 
@@ -285,11 +286,19 @@ impl EditorApp {
 
     /// Render history panel
     pub(crate) fn render_history_panel(&mut self, ui: &mut egui::Ui) {
+        // Zbierz wszystkie dane PRZED closure
+        let visible_history: Vec<(usize, HistoryEntry)> = self
+            .document
+            .get_visible_history()
+            .into_iter()
+            .map(|(idx, entry)| (idx, entry.clone()))
+            .collect();
+
+        let history_len = visible_history.len();
+        let doc_max_limit = self.document.get_max_history_length();
+
         ui.vertical(|ui| {
             ui.heading("📜 History");
-
-            let history_len = self.document.get_history().len();
-            let doc_max_limit = self.document.get_max_history_length();
 
             ui.horizontal(|ui| {
                 ui.label("Max History for this file:");
@@ -328,14 +337,13 @@ impl EditorApp {
 
             ui.separator();
 
-            let history_entries: Vec<_> = self.document.get_history().to_vec();
-
             egui::ScrollArea::vertical().show(ui, |ui| {
-                if history_entries.is_empty() {
+                if history_len == 0 {
                     ui.label("No history");
                 } else {
-                    for (index, entry) in history_entries.iter().enumerate().rev() {
-                        let is_loaded = self.loaded_history_index == Some(index);
+                    // Iteruj po sklonowanych danych
+                    for (original_index, entry) in visible_history.iter().rev() {
+                        let is_loaded = self.loaded_history_index == Some(*original_index);
 
                         let frame = if is_loaded {
                             egui::Frame::none()
@@ -378,19 +386,20 @@ impl EditorApp {
 
                                 ui.horizontal(|ui| {
                                     if ui.button("📂 Load").clicked() {
-                                        self.load_history_version(index);
-                                        self.loaded_history_index = Some(index);
+                                        self.load_history_version(*original_index);
+                                        self.loaded_history_index = Some(*original_index);
                                     }
 
                                     if ui.button("🗑 Delete").clicked() {
-                                        self.delete_history_entry(index);
-                                        if self.loaded_history_index == Some(index) {
+                                        self.delete_history_entry(*original_index);
+                                        if self.loaded_history_index == Some(*original_index) {
                                             self.loaded_history_index = None;
                                         }
                                     }
                                 });
                             });
                         });
+
                         ui.add_space(4.0);
                     }
                 }

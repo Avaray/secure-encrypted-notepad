@@ -72,7 +72,8 @@ impl EditorApp {
                 self.current_file_path = Some(path.clone());
                 self.is_modified = false;
                 self.loaded_history_index = None;
-                let history_count = self.document.get_history().len();
+
+                let history_count = self.document.get_visible_history().len();
                 self.status_message = format!(
                     "Opened: {} ({} history entries)",
                     path.display(),
@@ -154,6 +155,7 @@ impl EditorApp {
         let keyfile = self.keyfile_path.clone().unwrap();
         self.log_info(format!("Saving file: {}", path.display()));
 
+        // Auto-snapshot if enabled
         if self.settings.auto_snapshot_on_save && self.is_modified {
             self.document.add_snapshot(None);
             self.log_info("Snapshot created automatically");
@@ -166,7 +168,8 @@ impl EditorApp {
             Ok(_) => {
                 self.current_file_path = Some(path.clone());
                 self.is_modified = false;
-                let history_count = self.document.get_history().len();
+
+                let history_count = self.document.get_visible_history().len();
                 self.status_message = format!(
                     "Saved: {} ({} history entries)",
                     path.display(),
@@ -191,6 +194,7 @@ impl EditorApp {
                 Ok(metadata) => {
                     let size = metadata.len();
                     self.log_info(format!("Keyfile size: {} bytes", size));
+
                     if size != 256 {
                         self.status_message =
                             format!("Error: Invalid keyfile (must be 256 bytes, got {})", size);
@@ -208,6 +212,7 @@ impl EditorApp {
                                 self.log_error("Keyfile content length mismatch");
                                 return;
                             }
+
                             self.keyfile_path = Some(path.clone());
                             self.status_message =
                                 format!("✓ Valid keyfile loaded: {}", path.display());
@@ -234,6 +239,7 @@ impl EditorApp {
     pub(crate) fn generate_new_keyfile(&mut self) {
         if let Some(path) = rfd::FileDialog::new().set_file_name("keyfile").save_file() {
             self.log_info(format!("Generating new keyfile: {}", path.display()));
+
             match generate_keyfile(&path) {
                 Ok(_) => {
                     self.keyfile_path = Some(path.clone());
@@ -260,22 +266,26 @@ impl EditorApp {
         }
     }
 
-    /// Delete history entry
+    /// Delete history entry (soft delete - mark as deleted)
     pub(crate) fn delete_history_entry(&mut self, index: usize) {
-        if self.document.delete_entry(index) {
-            self.status_message = "History entry deleted".to_string();
-            self.log_info(format!("Deleted history entry #{}", index));
+        if self.document.mark_entry_deleted(index) {
+            self.is_modified = true;
+            self.status_message = "History entry marked for deletion (save to apply)".to_string();
+            self.log_info(format!("Marked history entry #{} for deletion", index));
         }
     }
 
-    /// Clear all history
+    /// Clear all history (soft delete - mark all as deleted)
     pub(crate) fn clear_all_history(&mut self) {
-        let count = self.document.get_history().len();
-        self.document.clear_history();
+        let count = self.document.get_visible_history().len();
+        self.document.mark_all_deleted();
         self.is_modified = true;
         self.loaded_history_index = None;
-        self.status_message = format!("Cleared {} history entries", count);
-        self.log_info(format!("Cleared all history ({} entries)", count));
+        self.status_message = format!("Marked {} entries for deletion (save to apply)", count);
+        self.log_info(format!(
+            "Marked all history for deletion ({} entries)",
+            count
+        ));
     }
 
     /// Wrapper functions for UI

@@ -2,7 +2,7 @@ use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 
 /// Separator between content and history in file
-const HISTORY_SEPARATOR: &str = "\n<<HISTORY>>\n";
+const HISTORY_SEPARATOR: &str = "\n<>\n";
 
 /// Single history entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -13,6 +13,9 @@ pub struct HistoryEntry {
     pub content: String,
     /// Optional user comment
     pub comment: Option<String>,
+    /// Soft delete flag (not saved until file save)
+    #[serde(default)]
+    pub deleted: bool,
 }
 
 impl HistoryEntry {
@@ -74,18 +77,22 @@ impl DocumentWithHistory {
             let current_content = file_content[..pos].to_string();
             let history_json = &file_content[pos + HISTORY_SEPARATOR.len()..];
 
-            // Try to deserialize with max_history_length field
-            if let Ok(doc) = serde_json::from_str::<DocumentWithHistory>(&format!(
-                r#"{{"current_content":"","history":{},"max_history_length":100}}"#,
-                history_json
-            )) {
+            // POPRAWKA: Deserializuj bezpośrednio jako obiekt z history i max_history_length
+            #[derive(Deserialize)]
+            struct HistoryData {
+                history: Vec<HistoryEntry>,
+                #[serde(default = "default_max_history")]
+                max_history_length: usize,
+            }
+
+            if let Ok(data) = serde_json::from_str::<HistoryData>(history_json) {
                 Self {
                     current_content,
-                    history: doc.history,
-                    max_history_length: doc.max_history_length,
+                    history: data.history,
+                    max_history_length: data.max_history_length,
                 }
             } else {
-                // Fallback: old format without max_history_length
+                // Fallback: old format - tylko array historii
                 let history: Vec<HistoryEntry> =
                     serde_json::from_str(history_json).unwrap_or_default();
                 Self {
@@ -106,45 +113,79 @@ impl DocumentWithHistory {
 
     /// Convert to file format (current + history + settings)
     pub fn to_file_content(&self) -> String {
-        if self.history.is_empty() {
+        // Filter out deleted entries before saving
+        let active_history: Vec<HistoryEntry> = self
+            .history
+            .iter()
+            .filter(|entry| !entry.deleted)
+            .cloned()
+            .collect();
+
+        if active_history.is_empty() {
             self.current_content.clone()
         } else {
-            // Serialize entire document structure
+            // Serialize as object with history and max_history_length
             let doc_data = serde_json::json!({
-                "history": self.history,
+                "history": active_history,
                 "max_history_length": self.max_history_length
             });
+
             let history_json = serde_json::to_string(&doc_data).unwrap_or_default();
             format!(
-                "{}\n{}\n{}",
+                "{}{}{}",
                 self.current_content, HISTORY_SEPARATOR, history_json
             )
         }
     }
 
     /// Add new snapshot to history (with automatic trimming)
-    pub fn add_snapshot(&mut self, comment: Option<String>) {
+    /// Returns `true` if snapshot was added, `false` if content unchanged
+    pub fn add_snapshot(&mut self, comment: Option<String>) -> bool {
+        // ✅ NOWA LOGIKA: Sprawdź czy content się zmienił
+        if let Some(last_entry) = self.history.iter().rev().find(|e| !e.deleted) {
+            if last_entry.content == self.current_content {
+                // Zawartość identyczna - nie dodawaj
+                return false;
+            }
+        }
+
         let snapshot = HistoryEntry {
             content: self.current_content.clone(),
             timestamp: chrono::Local::now(),
             comment,
+            deleted: false,
         };
         self.history.push(snapshot);
 
-        // Automatically trim to max_history_length
-        while self.history.len() > self.max_history_length {
-            self.history.remove(0);
+        // Automatically mark oldest as deleted if over limit
+        self.trim_to_limit();
+
+        true
+    }
+
+    /// Mark entries as deleted to fit max_history_length (soft delete)
+    fn trim_to_limit(&mut self) {
+        let visible_count = self.history.iter().filter(|e| !e.deleted).count();
+        if visible_count > self.max_history_length {
+            let to_delete = visible_count - self.max_history_length;
+            let mut deleted_count = 0;
+
+            for entry in &mut self.history {
+                if deleted_count >= to_delete {
+                    break;
+                }
+                if !entry.deleted {
+                    entry.deleted = true;
+                    deleted_count += 1;
+                }
+            }
         }
     }
 
-    /// Set maximum history length and trim if necessary
+    /// Set maximum history length and mark excess as deleted (soft delete)
     pub fn set_max_history_length(&mut self, max_length: usize) {
         self.max_history_length = max_length.max(1); // At least 1
-
-        // Trim existing history if needed
-        while self.history.len() > self.max_history_length {
-            self.history.remove(0);
-        }
+        self.trim_to_limit();
     }
 
     /// Get maximum history length
@@ -152,14 +193,23 @@ impl DocumentWithHistory {
         self.max_history_length
     }
 
-    /// Get reference to history
+    /// Get reference to ALL history (including deleted)
     pub fn get_history(&self) -> &Vec<HistoryEntry> {
         &self.history
     }
 
-    /// Load version from history by index
+    /// Get only visible (non-deleted) history for UI display
+    pub fn get_visible_history(&self) -> Vec<(usize, &HistoryEntry)> {
+        self.history
+            .iter()
+            .enumerate()
+            .filter(|(_, entry)| !entry.deleted)
+            .collect()
+    }
+
+    /// Load version from history by index (original index, not filtered)
     pub fn load_version(&mut self, index: usize) -> bool {
-        if index < self.history.len() {
+        if index < self.history.len() && !self.history[index].deleted {
             self.current_content = self.history[index].content.clone();
             true
         } else {
@@ -167,19 +217,27 @@ impl DocumentWithHistory {
         }
     }
 
-    /// Delete history entry by index
-    pub fn delete_entry(&mut self, index: usize) -> bool {
+    /// Mark history entry as deleted by index (soft delete)
+    pub fn mark_entry_deleted(&mut self, index: usize) -> bool {
         if index < self.history.len() {
-            self.history.remove(index);
+            self.history[index].deleted = true;
             true
         } else {
             false
         }
     }
 
-    /// Clear all history
-    pub fn clear_history(&mut self) {
-        self.history.clear();
+    /// Mark all history as deleted (soft delete)
+    pub fn mark_all_deleted(&mut self) {
+        for entry in &mut self.history {
+            entry.deleted = true;
+        }
+    }
+
+    /// Apply deletions - physically remove deleted entries
+    /// NOTE: This is NOT used during save anymore - to_file_content() filters automatically
+    pub fn apply_deletions(&mut self) {
+        self.history.retain(|entry| !entry.deleted);
     }
 }
 
@@ -191,9 +249,10 @@ mod tests {
     fn test_history_embedded() {
         let mut doc = DocumentWithHistory::default();
         doc.current_content = "Initial content".to_string();
-        doc.add_snapshot(Some("First save".to_string()));
+        assert!(doc.add_snapshot(Some("First save".to_string())));
+
         doc.current_content = "Modified content".to_string();
-        doc.add_snapshot(Some("Second save".to_string()));
+        assert!(doc.add_snapshot(Some("Second save".to_string())));
 
         assert_eq!(doc.history.len(), 2);
 
@@ -202,5 +261,39 @@ mod tests {
 
         assert_eq!(loaded.current_content, "Modified content");
         assert_eq!(loaded.history.len(), 2);
+    }
+
+    #[test]
+    fn test_no_duplicate_snapshots() {
+        let mut doc = DocumentWithHistory::default();
+        doc.current_content = "Same content".to_string();
+
+        assert!(doc.add_snapshot(Some("First".to_string())));
+        // Try to add same content again
+        assert!(!doc.add_snapshot(Some("Second".to_string())));
+
+        assert_eq!(doc.history.len(), 1); // Only one entry
+    }
+
+    #[test]
+    fn test_soft_delete() {
+        let mut doc = DocumentWithHistory::default();
+        doc.current_content = "Test".to_string();
+        doc.add_snapshot(Some("v1".to_string()));
+
+        doc.current_content = "Test2".to_string();
+        doc.add_snapshot(Some("v2".to_string()));
+
+        assert_eq!(doc.history.len(), 2);
+
+        // Soft delete first entry
+        doc.mark_entry_deleted(0);
+        assert_eq!(doc.history.len(), 2); // Still 2
+        assert_eq!(doc.get_visible_history().len(), 1); // But only 1 visible
+
+        // Save should remove deleted
+        let content = doc.to_file_content();
+        let reloaded = DocumentWithHistory::from_file_content(&content);
+        assert_eq!(reloaded.history.len(), 1); // Only 1 after reload
     }
 }
