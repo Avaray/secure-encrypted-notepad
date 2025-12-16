@@ -3,6 +3,19 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+/// Color scheme type
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum ColorScheme {
+    Dark,
+    Light,
+}
+
+impl Default for ColorScheme {
+    fn default() -> Self {
+        Self::Dark
+    }
+}
+
 /// Color scheme definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThemeColors {
@@ -115,6 +128,8 @@ impl ThemeColors {
 pub struct Theme {
     pub name: String,
     pub colors: ThemeColors,
+    #[serde(default)]
+    pub color_scheme: ColorScheme,
 }
 
 impl Theme {
@@ -122,6 +137,7 @@ impl Theme {
         Self {
             name: "Dark".to_string(),
             colors: ThemeColors::dark(),
+            color_scheme: ColorScheme::Dark,
         }
     }
 
@@ -129,11 +145,12 @@ impl Theme {
         Self {
             name: "Light".to_string(),
             colors: ThemeColors::light(),
+            color_scheme: ColorScheme::Light,
         }
     }
 
     pub fn apply(&self, ctx: &egui::Context) {
-        let mut visuals = if self.name == "Light" {
+        let mut visuals = if self.color_scheme == ColorScheme::Light {
             egui::Visuals::light()
         } else {
             egui::Visuals::dark()
@@ -143,7 +160,6 @@ impl Theme {
         visuals.window_fill = self.colors.to_egui_color32(self.colors.background);
         visuals.panel_fill = self.colors.to_egui_color32(self.colors.panel_background);
         visuals.extreme_bg_color = self.colors.to_egui_color32(self.colors.panel_background);
-
         visuals.selection.bg_fill = self.colors.selection_color();
         visuals.selection.stroke.color = self.colors.cursor_color();
 
@@ -205,9 +221,7 @@ pub fn save_theme(theme: &Theme) -> Result<(), Box<dyn std::error::Error>> {
     let themes_dir = ensure_themes_dir()?;
     let filename = format!("{}.toml", theme.name.to_lowercase().replace(' ', "_"));
     let path = themes_dir.join(filename);
-
     let toml_string = toml::to_string_pretty(theme)?;
     fs::write(path, toml_string)?;
-
     Ok(())
 }

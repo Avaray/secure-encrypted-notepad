@@ -887,6 +887,35 @@ impl EditorApp {
                 ui.label("Theme Name:");
                 ui.text_edit_singleline(&mut theme.name);
 
+                // Color scheme selector
+                ui.horizontal(|ui| {
+                    ui.label("Base Scheme:");
+                    egui::ComboBox::from_id_salt("color_scheme_selector")
+                        .selected_text(format!("{:?}", theme.color_scheme))
+                        .show_ui(ui, |ui| {
+                            if ui
+                                .selectable_label(
+                                    matches!(theme.color_scheme, crate::theme::ColorScheme::Dark),
+                                    "Dark",
+                                )
+                                .clicked()
+                            {
+                                theme.color_scheme = crate::theme::ColorScheme::Dark;
+                                theme_changed = true;
+                            }
+                            if ui
+                                .selectable_label(
+                                    matches!(theme.color_scheme, crate::theme::ColorScheme::Light),
+                                    "Light",
+                                )
+                                .clicked()
+                            {
+                                theme.color_scheme = crate::theme::ColorScheme::Light;
+                                theme_changed = true;
+                            }
+                        });
+                });
+
                 ui.separator();
 
                 egui::ScrollArea::vertical()
@@ -1114,9 +1143,17 @@ impl EditorApp {
                         }
                     });
 
+                    // Store color_scheme before closure to avoid borrow conflict
+                    let current_scheme = theme.color_scheme;
+
                     // Second row: Reset and Close
                     ui.horizontal(|ui| {
-                        if ui.button("🔄 Reset to Dark").clicked() {
+                        let reset_text = match current_scheme {
+                            crate::theme::ColorScheme::Light => "🔄 Reset to Light",
+                            crate::theme::ColorScheme::Dark => "🔄 Reset to Dark",
+                        };
+
+                        if ui.button(reset_text).clicked() {
                             should_reset = true;
                         }
 
@@ -1133,7 +1170,11 @@ impl EditorApp {
         // Now execute actions with full access to self (no borrow conflicts)
         if should_reset {
             if let Some(ref mut theme) = self.editing_theme {
-                *theme = Theme::dark();
+                // Reset based on color scheme
+                *theme = match theme.color_scheme {
+                    crate::theme::ColorScheme::Light => Theme::light(),
+                    crate::theme::ColorScheme::Dark => Theme::dark(),
+                };
                 theme.apply(ui.ctx());
             }
         }
