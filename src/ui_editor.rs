@@ -14,72 +14,83 @@ impl EditorApp {
 
         // Determine which line to highlight
         let highlight_line = self.highlighted_line;
-
         let editor_start = ui.cursor().min;
         let mut clicked_line: Option<usize> = None;
         let mut clicked_below_content = false;
 
-        // Build custom editor with line-by-line rendering
-        let mut layoutjob = egui::text::LayoutJob::default();
-        let font_id = egui::FontId::monospace(editor_font_size);
-
+        // Capture colors for layouter closure
         let foreground_color = self.current_theme.colors.foreground_color();
         let selection_bg = self.current_theme.colors.selection_color();
         let line_number_color = self.current_theme.colors.line_number_color();
+        let comment_color = self.current_theme.colors.comment_color();
 
-        for (line_idx, line) in text.lines().enumerate() {
-            let line_num = line_idx + 1;
+        // Custom layouter with syntax highlighting
+        let layouter = |ui: &egui::Ui, text_str: &str, wrap_width: f32| {
+            let mut layoutjob = egui::text::LayoutJob::default();
+            let font_id = egui::FontId::monospace(editor_font_size);
 
-            // Highlight current line background
-            if Some(line_num) == highlight_line {
-                let highlight_bg = selection_bg.linear_multiply(0.2);
-                layoutjob.sections.push(egui::text::LayoutSection {
-                    leading_space: 0.0,
-                    byte_range: layoutjob.text.len()..layoutjob.text.len(),
-                    format: egui::TextFormat {
-                        font_id: font_id.clone(),
-                        background: highlight_bg,
-                        ..Default::default()
-                    },
-                });
-            }
+            for (line_idx, line) in text_str.lines().enumerate() {
+                let line_num = line_idx + 1;
 
-            // Line number
-            if show_line_numbers {
-                let line_num_str = format!("{:4} ", line_num);
+                // Highlight current line background
+                if Some(line_num) == highlight_line {
+                    let highlight_bg = selection_bg.linear_multiply(0.2);
+                    layoutjob.sections.push(egui::text::LayoutSection {
+                        leading_space: 0.0,
+                        byte_range: layoutjob.text.len()..layoutjob.text.len(),
+                        format: egui::TextFormat {
+                            font_id: font_id.clone(),
+                            background: highlight_bg,
+                            ..Default::default()
+                        },
+                    });
+                }
+
+                // Line number
+                if show_line_numbers {
+                    let line_num_str = format!("{:4} ", line_num);
+                    layoutjob.append(
+                        &line_num_str,
+                        0.0,
+                        egui::TextFormat {
+                            font_id: font_id.clone(),
+                            color: line_number_color,
+                            ..Default::default()
+                        },
+                    );
+                }
+
+                // Line content - detect comments
+                let trimmed = line.trim_start();
+                let is_comment = trimmed.starts_with("//");
+                let content_color = if is_comment {
+                    comment_color
+                } else {
+                    foreground_color
+                };
+
                 layoutjob.append(
-                    &line_num_str,
+                    line,
                     0.0,
                     egui::TextFormat {
                         font_id: font_id.clone(),
-                        color: line_number_color,
+                        color: content_color,
+                        ..Default::default()
+                    },
+                );
+
+                layoutjob.append(
+                    "\n",
+                    0.0,
+                    egui::TextFormat {
+                        font_id: font_id.clone(),
                         ..Default::default()
                     },
                 );
             }
 
-            // Line content
-            layoutjob.append(
-                line,
-                0.0,
-                egui::TextFormat {
-                    font_id: font_id.clone(),
-                    color: foreground_color,
-                    ..Default::default()
-                },
-            );
-
-            layoutjob.append(
-                "\n",
-                0.0,
-                egui::TextFormat {
-                    font_id: font_id.clone(),
-                    ..Default::default()
-                },
-            );
-        }
-
-        let _galley = ui.fonts(|f| f.layout_job(layoutjob));
+            ui.fonts(|f| f.layout_job(layoutjob))
+        };
 
         let output = egui::TextEdit::multiline(text)
             .font(egui::TextStyle::Monospace)
@@ -87,6 +98,7 @@ impl EditorApp {
             .desired_rows(line_count.max(20))
             .frame(false)
             .lock_focus(true)
+            .layouter(&mut |ui, text_str, wrap_width| layouter(ui, text_str, wrap_width))
             .show(ui);
 
         // Track changes
@@ -140,26 +152,5 @@ impl EditorApp {
             self.highlighted_line = Some(line_count);
             self.log_info(format!("Line {} selected (last line)", line_count));
         }
-
-        // Manual snapshot button
-        ui.separator();
-        ui.horizontal(|ui| {
-            if ui.button("📸 Create Snapshot").clicked() {
-                self.document.add_snapshot(None);
-                self.is_modified = true;
-                self.status_message = "Snapshot created".to_string();
-                self.log_info("Manual snapshot created");
-            }
-
-            ui.label(
-                egui::RichText::new(format!(
-                    "History: {}/{}",
-                    self.document.get_history().len(),
-                    self.document.get_max_history_length()
-                ))
-                .small()
-                .weak(),
-            );
-        });
     }
 }

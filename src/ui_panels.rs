@@ -627,6 +627,73 @@ impl EditorApp {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
+
+                                // Line Number Color
+                                ui.label("Line Numbers:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.line_number[0],
+                                    theme.colors.line_number[1],
+                                    theme.colors.line_number[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.line_number = [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
+
+                                // Comment Color
+                                ui.label("Comments:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.comment[0],
+                                    theme.colors.comment[1],
+                                    theme.colors.comment[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.comment = [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
+
+                                ui.label("");
+                                ui.label("");
+                                ui.end_row();
+
+                                // Status colors section
+                                ui.label("Success Color:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.success[0],
+                                    theme.colors.success[1],
+                                    theme.colors.success[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.success = [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
+
+                                ui.label("Warning Color:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.warning[0],
+                                    theme.colors.warning[1],
+                                    theme.colors.warning[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.warning = [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
+
+                                ui.label("Error Color:");
+                                let mut color = egui::Color32::from_rgb(
+                                    theme.colors.error[0],
+                                    theme.colors.error[1],
+                                    theme.colors.error[2],
+                                );
+                                if ui.color_edit_button_srgba(&mut color).changed() {
+                                    theme.colors.error = [color.r(), color.g(), color.b()];
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
                             });
                     });
 
