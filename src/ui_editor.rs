@@ -16,10 +16,10 @@ impl EditorApp {
         let comment_color = self.current_theme.colors.comment_color();
         let highlight_bg = selection_bg.linear_multiply(0.2);
 
-        // Oblicz szerokość potrzebną dla numerów linii
+        // Oblicz szerokość potrzebną dla numerów linii (dynamicznie rośnie)
         let line_number_width = if show_line_numbers {
-            let max_digits = line_count.to_string().len().max(3);
-            (max_digits as f32 * editor_font_size * 0.6) + 20.0 // margines
+            let max_digits = line_count.to_string().len().max(2);
+            (max_digits as f32 * editor_font_size * 0.6) + 20.0 // Więcej miejsca
         } else {
             0.0
         };
@@ -29,11 +29,11 @@ impl EditorApp {
             .auto_shrink(false)
             .show(ui, |ui| {
                 ui.horizontal_top(|ui| {
-                    // Pusty obszar dla numerów linii
+                    // Zarezerwuj miejsce dla numerów linii
                     if show_line_numbers {
                         ui.add_space(line_number_width);
                         ui.separator();
-                        ui.add_space(5.0);
+                        ui.add_space(10.0); // Więcej odstępu między separatorem a tekstem
                     }
 
                     // Custom layouter BEZ numerów
@@ -89,7 +89,7 @@ impl EditorApp {
                         ui.fonts(|f| f.layout_job(layout_job))
                     };
 
-                    // Renderuj TextEdit i zapisz jego pozycję
+                    // Renderuj TextEdit
                     let output = egui::TextEdit::multiline(text)
                         .font(egui::TextStyle::Monospace)
                         .code_editor()
@@ -102,7 +102,7 @@ impl EditorApp {
                         })
                         .show(ui);
 
-                    // Rysuj numery linii NA PODSTAWIE rzeczywistego galley
+                    // Rysuj numery linii
                     if show_line_numbers {
                         let galley = &output.galley;
                         let painter = ui.painter();
@@ -111,13 +111,17 @@ impl EditorApp {
                         // Pozycja TextEdit
                         let text_rect = output.response.rect;
 
-                        // Pozycja startowa numerów (z lewej od TextEdit, w zarezerwowanym obszarze)
-                        let line_num_x = text_rect.min.x - line_number_width - 5.0 + 10.0;
+                        // Pozycja separatora (z większym odstępem od tekstu)
+                        let separator_x = text_rect.min.x - 10.0;
+
+                        // Pozycja numerów - PO LEWEJ od separatora
+                        // Zwiększam odstęp do 12px, żeby numery nie nachodziły
+                        let line_num_anchor_x = separator_x - 12.0;
 
                         for (row_idx, row) in galley.rows.iter().enumerate() {
                             let line_num = row_idx + 1;
 
-                            // Oblicz Y na podstawie rzeczywistej pozycji linii w galley
+                            // Y na podstawie rzeczywistej pozycji linii
                             let line_y = text_rect.min.y + row.min_y();
 
                             let text_color = if Some(line_num) == highlight_line {
@@ -126,9 +130,9 @@ impl EditorApp {
                                 line_number_color
                             };
 
-                            // Narysuj numer linii wyrównany do prawej
+                            // Narysuj numer wyrównany DO PRAWEJ (rośnie w lewo)
                             painter.text(
-                                egui::pos2(line_num_x, line_y),
+                                egui::pos2(line_num_anchor_x, line_y),
                                 egui::Align2::RIGHT_TOP,
                                 format!("{}", line_num),
                                 font_id.clone(),
@@ -136,8 +140,7 @@ impl EditorApp {
                             );
                         }
 
-                        // Narysuj separator między numerami a tekstem
-                        let separator_x = text_rect.min.x - 10.0;
+                        // Separator między numerami a tekstem
                         painter.vline(
                             separator_x,
                             text_rect.min.y..=text_rect.max.y,
