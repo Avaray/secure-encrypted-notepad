@@ -893,14 +893,16 @@ impl EditorApp {
 
                 egui::ScrollArea::vertical()
                     .auto_shrink([false, false])
-                    .max_height(ui.available_height() - 80.0)
+                    .max_height(ui.available_height() - 100.0)
                     .show(ui, |ui| {
                         ui.heading("Colors");
                         ui.add_space(4.0);
 
-                        egui::Grid::new("theme_colors_grid")
+                        // Single grid for ALL colors - ensures vertical alignment
+                        egui::Grid::new("all_theme_colors_grid")
                             .num_columns(2)
-                            .spacing([40.0, 4.0])
+                            .spacing([20.0, 4.0])
+                            .min_col_width(160.0) // Minimum width for first column
                             .striped(false)
                             .show(ui, |ui| {
                                 // Background
@@ -942,18 +944,17 @@ impl EditorApp {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
-                            });
 
-                        ui.add_space(8.0);
-                        ui.separator();
-                        ui.label(egui::RichText::new("Editor Colors").strong());
-                        ui.add_space(4.0);
+                                // Separator row
+                                ui.label("");
+                                ui.label("");
+                                ui.end_row();
 
-                        egui::Grid::new("editor_colors_grid")
-                            .num_columns(2)
-                            .spacing([40.0, 4.0])
-                            .striped(false)
-                            .show(ui, |ui| {
+                                // EDITOR COLORS SECTION
+                                ui.label(egui::RichText::new("Editor Colors").strong());
+                                ui.label("");
+                                ui.end_row();
+
                                 // Selection Background
                                 ui.label("Selection Background:");
                                 let mut color = egui::Color32::from_rgb(
@@ -993,18 +994,17 @@ impl EditorApp {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
-                            });
 
-                        ui.add_space(8.0);
-                        ui.separator();
-                        ui.label(egui::RichText::new("UI Colors").strong());
-                        ui.add_space(4.0);
+                                // Separator row
+                                ui.label("");
+                                ui.label("");
+                                ui.end_row();
 
-                        egui::Grid::new("ui_colors_grid")
-                            .num_columns(2)
-                            .spacing([40.0, 4.0])
-                            .striped(false)
-                            .show(ui, |ui| {
+                                // UI COLORS SECTION
+                                ui.label(egui::RichText::new("UI Colors").strong());
+                                ui.label("");
+                                ui.end_row();
+
                                 // Icon Hover Color
                                 ui.label("Icon Hover Tint:");
                                 let mut color = egui::Color32::from_rgb(
@@ -1069,18 +1069,17 @@ impl EditorApp {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
-                            });
 
-                        ui.add_space(8.0);
-                        ui.separator();
-                        ui.label(egui::RichText::new("Syntax Colors").strong());
-                        ui.add_space(4.0);
+                                // Separator row
+                                ui.label("");
+                                ui.label("");
+                                ui.end_row();
 
-                        egui::Grid::new("syntax_colors_grid")
-                            .num_columns(2)
-                            .spacing([40.0, 4.0])
-                            .striped(false)
-                            .show(ui, |ui| {
+                                // SYNTAX COLORS SECTION
+                                ui.label(egui::RichText::new("Syntax Colors").strong());
+                                ui.label("");
+                                ui.end_row();
+
                                 // Comment
                                 ui.label("Comment:");
                                 let mut color = egui::Color32::from_rgb(
@@ -1103,10 +1102,11 @@ impl EditorApp {
 
                 ui.separator();
 
-                // Buttons - ZAWSZE WIDOCZNE na dole
+                // Buttons in 2 rows - 2x2 grid
                 ui.vertical(|ui| {
                     ui.add_space(4.0);
 
+                    // First row: Save and Apply
                     ui.horizontal(|ui| {
                         if ui.button("💾 Save Theme").clicked() {
                             theme_to_save = Some(theme.clone());
@@ -1115,7 +1115,10 @@ impl EditorApp {
                         if ui.button("✓ Apply").clicked() {
                             should_apply = true;
                         }
+                    });
 
+                    // Second row: Reset and Close
+                    ui.horizontal(|ui| {
                         if ui.button("🔄 Reset to Dark").clicked() {
                             should_reset = true;
                         }
