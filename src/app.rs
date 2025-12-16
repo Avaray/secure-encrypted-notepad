@@ -877,17 +877,15 @@ impl EditorApp {
         let mut should_reset = false;
 
         ui.vertical(|ui| {
-            ui.heading("Theme Editor");
+            ui.heading("🎨 Theme Editor");
 
             // Clone theme to work with it without long-lived mutable borrow
             if let Some(ref mut theme) = self.editing_theme {
                 let mut theme_changed = false;
 
-                // Theme name
-                ui.horizontal(|ui| {
-                    ui.label("Theme Name:");
-                    ui.text_edit_singleline(&mut theme.name);
-                });
+                // Theme name - vertical layout
+                ui.label("Theme Name:");
+                ui.text_edit_singleline(&mut theme.name);
 
                 ui.separator();
 
@@ -898,15 +896,14 @@ impl EditorApp {
                         ui.heading("Colors");
                         ui.add_space(4.0);
 
-                        // Single grid for ALL colors - ensures vertical alignment
+                        // Single grid for ALL colors
                         egui::Grid::new("all_theme_colors_grid")
                             .num_columns(2)
                             .spacing([20.0, 4.0])
-                            .min_col_width(160.0) // Minimum width for first column
                             .striped(false)
                             .show(ui, |ui| {
                                 // Background
-                                ui.label("Background:");
+                                ui.label("Background:").on_hover_text("Background color");
                                 let mut color = egui::Color32::from_rgb(
                                     theme.colors.background[0],
                                     theme.colors.background[1],
