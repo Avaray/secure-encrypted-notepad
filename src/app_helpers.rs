@@ -144,7 +144,10 @@ impl EditorApp {
             return;
         }
 
-        let lines: Vec<&str> = text.lines().collect();
+        // POPRAWKA: Użyj split('\n') zamiast lines() aby zachować końcowe puste linie
+        let lines: Vec<&str> = text.split('\n').collect();
+
+        // Check if all selected lines are commented
         let all_commented = lines_to_toggle.iter().all(|&line_idx| {
             if line_idx < lines.len() {
                 let trimmed = lines[line_idx].trim_start();
@@ -155,22 +158,26 @@ impl EditorApp {
         });
 
         let mut new_lines: Vec<String> = Vec::new();
+
         for (idx, line) in lines.iter().enumerate() {
             if lines_to_toggle.contains(&idx) {
                 let trimmed = line.trim_start();
+
                 if all_commented {
-                    if trimmed.starts_with("//") {
-                        let uncommented = if trimmed.starts_with("// ") {
-                            trimmed.strip_prefix("// ").unwrap()
-                        } else {
-                            trimmed.strip_prefix("//").unwrap()
-                        };
+                    // Uncomment
+                    if trimmed.starts_with("// ") {
+                        let uncommented = trimmed.strip_prefix("// ").unwrap();
+                        let indent = line.len() - trimmed.len();
+                        new_lines.push(format!("{}{}", " ".repeat(indent), uncommented));
+                    } else if trimmed.starts_with("//") {
+                        let uncommented = trimmed.strip_prefix("//").unwrap();
                         let indent = line.len() - trimmed.len();
                         new_lines.push(format!("{}{}", " ".repeat(indent), uncommented));
                     } else {
                         new_lines.push(line.to_string());
                     }
                 } else {
+                    // Comment
                     if !trimmed.starts_with("//") {
                         let indent_count = line.len() - trimmed.len();
                         new_lines.push(format!("{}// {}", " ".repeat(indent_count), trimmed));
@@ -183,6 +190,7 @@ impl EditorApp {
             }
         }
 
+        // POPRAWKA: Użyj join('\n') żeby zachować strukturę
         *text = new_lines.join("\n");
         self.is_modified = true;
 
