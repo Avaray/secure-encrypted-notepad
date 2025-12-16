@@ -23,11 +23,9 @@ impl EditorApp {
         // Oblicz PRECYZYJNĄ szerokość dla numerów linii
         let line_number_width = if show_line_numbers {
             let font_id = egui::FontId::monospace(editor_font_size);
-
             let max_line_text = format!("{}", line_count);
             let text_width =
                 ui.fonts(|f| f.glyph_width(&font_id, ' ') * max_line_text.len() as f32);
-
             line_number_side_padding + text_width + line_number_side_padding
         } else {
             0.0
@@ -36,10 +34,37 @@ impl EditorApp {
         // Stałe ID dla TextEdit
         let text_edit_id = ui.id().with("main_text_editor");
 
+        // Zapisz fixed position dla numerów (lewy brzeg widoku)
+        let editor_left_edge = ui.cursor().left();
+        let line_numbers_x = if show_line_numbers {
+            editor_left_edge + line_number_width - line_number_side_padding
+        } else {
+            0.0
+        };
+        let separator_x = if show_line_numbers {
+            editor_left_edge + line_number_width
+        } else {
+            0.0
+        };
+
+        // KLUCZOWE: Zapisz oryginalny clip rect całego editora
+        let full_clip_rect = ui.clip_rect();
+
         egui::ScrollArea::both()
             .id_salt("main_editor")
             .auto_shrink(false)
             .show(ui, |ui| {
+                // KLUCZOWE: Ustaw clip rect dla tekstu - zaczyna się PO numerach
+                let text_area_clip = if show_line_numbers {
+                    egui::Rect::from_min_max(
+                        egui::pos2(separator_x + text_left_padding, full_clip_rect.min.y),
+                        full_clip_rect.max,
+                    )
+                } else {
+                    full_clip_rect
+                };
+                ui.set_clip_rect(text_area_clip);
+
                 // Stwórz klikalny obszar NA CAŁĄ wysokość
                 let full_area = ui.available_rect_before_wrap();
                 let sense_rect = ui.interact(
@@ -147,41 +172,47 @@ impl EditorApp {
 
                                 // Ustaw podświetlenie na ostatnią linię
                                 self.highlighted_line = Some(line_count);
-
                                 // Zażądaj focusa
                                 ui.memory_mut(|mem| mem.request_focus(text_edit_id));
                             }
                         }
                     }
 
-                    // Rysuj numery linii
+                    // Przywróć pełny clip rect dla rysowania numerów i separatora
+                    ui.set_clip_rect(full_clip_rect);
+
+                    // Rysuj numery linii w FIXED pozycji (nie scrollują poziomo)
                     if show_line_numbers {
                         let painter = ui.painter();
                         let font_id = egui::FontId::monospace(editor_font_size);
-
-                        let separator_x = text_rect.min.x - text_left_padding;
-                        let line_num_anchor_x = separator_x - line_number_side_padding;
                         let scroll_rect = ui.clip_rect();
 
+                        // KLUCZOWA ZMIANA: Używamy fixed X position
                         for (row_idx, row) in galley.rows.iter().enumerate() {
                             let line_num = row_idx + 1;
+                            // Y z galley (synchronizowane z tekstem)
                             let line_y = text_rect.min.y + row.min_y();
 
-                            let text_color = if Some(line_num) == highlight_line {
-                                foreground_color
-                            } else {
-                                line_number_color
-                            };
+                            // Rysuj tylko jeśli linia jest widoczna
+                            if line_y >= scroll_rect.top() && line_y <= scroll_rect.bottom() {
+                                let text_color = if Some(line_num) == highlight_line {
+                                    foreground_color
+                                } else {
+                                    line_number_color
+                                };
 
-                            painter.text(
-                                egui::pos2(line_num_anchor_x, line_y),
-                                egui::Align2::RIGHT_TOP,
-                                format!("{}", line_num),
-                                font_id.clone(),
-                                text_color,
-                            );
+                                // X jest FIXED - nie zmienia się przy poziomym scrollu
+                                painter.text(
+                                    egui::pos2(line_numbers_x, line_y),
+                                    egui::Align2::RIGHT_TOP,
+                                    format!("{}", line_num),
+                                    font_id.clone(),
+                                    text_color,
+                                );
+                            }
                         }
 
+                        // Separator również w fixed pozycji
                         painter.vline(
                             separator_x,
                             scroll_rect.top()..=scroll_rect.bottom(),
@@ -194,13 +225,13 @@ impl EditorApp {
                         self.loaded_history_index = None;
                     }
 
-                    // Aktualizacja podświetlonej linii dla normalnych kliknięć
-                    if output.response.clicked() || output.response.has_focus() {
+                    // AKTUALIZUJ PODŚWIETLENIE W KAŻDEJ KLATCE gdy TextEdit ma fokus
+                    if output.response.has_focus() {
                         if let Some(state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
                             if let Some(cursor_range) = state.cursor.char_range() {
                                 let cursor_pos = cursor_range.primary.index;
 
-                                // POPRAWNE liczenie linii: policz znaki '\n' przed kursorem + 1
+                                // Policz znaki '\n' przed kursorem + 1
                                 let line_num = text[..cursor_pos.min(text.len())]
                                     .chars()
                                     .filter(|&c| c == '\n')
