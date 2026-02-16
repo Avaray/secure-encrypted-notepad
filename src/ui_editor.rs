@@ -57,9 +57,10 @@ impl EditorApp {
 
         // MIDDLE MOUSE BUTTON PANNING
         let pointer = ui.input(|i| i.pointer.clone());
+        let middle_button_active = pointer.middle_down();
 
         // Wykryj środkowy przycisk myszy
-        if pointer.middle_down() {
+        if middle_button_active {
             if let Some(pos) = pointer.latest_pos() {
                 // Sprawdź czy jesteśmy w obszarze editora
                 if full_clip_rect.contains(pos) {
@@ -98,6 +99,9 @@ impl EditorApp {
                     full_clip_rect
                 };
                 ui.set_clip_rect(text_area_clip);
+
+                // Zapisz rect scroll area dla auto-scroll podczas zaznaczania
+                let scroll_area_rect = ui.clip_rect();
 
                 // Stwórz klikalny obszar NA CAŁĄ wysokość
                 let full_area = ui.available_rect_before_wrap();
@@ -162,6 +166,13 @@ impl EditorApp {
                         ui.fonts(|f| f.layout_job(layout_job))
                     };
 
+                    // KLUCZOWE: Dodaj niewidzialną warstwę blokującą podczas middle mouse
+                    if middle_button_active {
+                        // Stwórz niewidzialny overlay który "przechwytuje" eventy
+                        let overlay_rect = ui.max_rect();
+                        ui.allocate_rect(overlay_rect, egui::Sense::click_and_drag());
+                    }
+
                     let output = egui::TextEdit::multiline(text)
                         .id(text_edit_id)
                         .font(egui::TextStyle::Monospace)
@@ -170,6 +181,7 @@ impl EditorApp {
                         .desired_rows(line_count)
                         .frame(false)
                         .lock_focus(true)
+                        .interactive(!middle_button_active) // Wyłącz interakcję podczas middle mouse
                         .layouter(&mut |ui, text_str, wrap_width| {
                             layouter(ui, text_str, wrap_width)
                         })
@@ -177,6 +189,33 @@ impl EditorApp {
 
                     let text_rect = output.response.rect;
                     let galley = &output.galley;
+
+                    // AUTO-SCROLL podczas zaznaczania tekstu lewym przyciskiem
+                    if pointer.primary_down() && !middle_button_active {
+                        if let Some(pointer_pos) = pointer.latest_pos() {
+                            let scroll_speed = 15.0; // piksele na klatkę
+                            let scroll_margin = 30.0; // margines od krawędzi
+
+                            // Auto-scroll w pionie
+                            if pointer_pos.y < scroll_area_rect.top() + scroll_margin {
+                                scroll_state.offset.y =
+                                    (scroll_state.offset.y - scroll_speed).max(0.0);
+                            } else if pointer_pos.y > scroll_area_rect.bottom() - scroll_margin {
+                                scroll_state.offset.y += scroll_speed;
+                            }
+
+                            // Auto-scroll w poziomie
+                            if pointer_pos.x < scroll_area_rect.left() + scroll_margin {
+                                scroll_state.offset.x =
+                                    (scroll_state.offset.x - scroll_speed).max(0.0);
+                            } else if pointer_pos.x > scroll_area_rect.right() - scroll_margin {
+                                scroll_state.offset.x += scroll_speed;
+                            }
+
+                            // Zapisz zmodyfikowany stan
+                            scroll_state.store(ui.ctx(), scroll_id);
+                        }
+                    }
 
                     // Oblicz wysokość rzeczywistej treści
                     let content_height = if !galley.rows.is_empty() {
@@ -186,8 +225,8 @@ impl EditorApp {
                     };
                     let content_bottom = text_rect.min.y + content_height;
 
-                    // Wykryj kliknięcie w pustej przestrzeni PONIŻEJ tekstu
-                    if sense_rect.clicked() {
+                    // Wykryj kliknięcie w pustej przestrzeni PONIŻEJ tekstu (tylko gdy nie middle mouse)
+                    if sense_rect.clicked() && !middle_button_active {
                         if let Some(pointer_pos) = ui.input(|i| i.pointer.interact_pos()) {
                             if pointer_pos.y > content_bottom && pointer_pos.x >= text_rect.min.x {
                                 // Kliknięto poniżej treści - przenieś kursor na koniec
