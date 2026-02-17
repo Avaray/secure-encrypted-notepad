@@ -24,6 +24,8 @@ pub struct Settings {
     pub theme_name: String,
     /// Whether to use global keyfile automatically on startup
     pub use_global_keyfile: bool,
+    /// Path to the global keyfile (persisted in plaintext)
+    pub global_keyfile_path: Option<PathBuf>,
     /// Whether to auto-create snapshot on save when content changes
     pub auto_snapshot_on_save: bool,
     /// Show line numbers in editor
@@ -59,6 +61,24 @@ pub struct Settings {
     /// Start window in maximized mode
     #[serde(default)]
     pub start_maximized: bool,
+    
+    /// Window dimensions and position
+    #[serde(default = "default_window_width")]
+    pub window_width: f32,
+    #[serde(default = "default_window_height")]
+    pub window_height: f32,
+    #[serde(default)]
+    pub window_pos_x: f32,
+    #[serde(default)]
+    pub window_pos_y: f32,
+}
+
+fn default_window_width() -> f32 {
+    1200.0
+}
+
+fn default_window_height() -> f32 {
+    800.0
 }
 
 fn default_ui_font() -> String {
@@ -78,6 +98,7 @@ impl Default for Settings {
             editor_font_family: "Monospace".to_string(),
             theme_name: "Dark".to_string(),
             use_global_keyfile: false,
+            global_keyfile_path: None,
             auto_snapshot_on_save: true,
             show_line_numbers: true,
             show_file_tree: true,
@@ -94,6 +115,10 @@ impl Default for Settings {
             max_history_length: 100,
             master_password_enabled: false,
             start_maximized: false,
+            window_width: 1200.0,
+            window_height: 800.0,
+            window_pos_x: -1.0, // -1 means "let OS decide" or "center"
+            window_pos_y: -1.0,
         }
     }
 }

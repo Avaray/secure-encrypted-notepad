@@ -22,11 +22,21 @@ use app::EditorApp;
 
 fn main() -> Result<(), eframe::Error> {
     let settings = crate::settings::Settings::load();
+    let mut viewport_builder = eframe::egui::ViewportBuilder::default()
+        .with_inner_size([settings.window_width, settings.window_height])
+        .with_min_inner_size([800.0, 600.0])
+        .with_maximized(settings.start_maximized);
+
+    // Apply saved position if valid
+    if settings.window_pos_x >= 0.0 && settings.window_pos_y >= 0.0 {
+        viewport_builder = viewport_builder.with_position(eframe::egui::pos2(
+            settings.window_pos_x,
+            settings.window_pos_y,
+        ));
+    }
+
     let options = eframe::NativeOptions {
-        viewport: eframe::egui::ViewportBuilder::default()
-            .with_inner_size([1200.0, 800.0])
-            .with_min_inner_size([800.0, 600.0])
-            .with_maximized(settings.start_maximized),
+        viewport: viewport_builder,
         ..Default::default()
     };
 

@@ -112,6 +112,9 @@ pub struct EditorApp {
     pub(crate) search_case_sensitive: bool,
     pub(crate) search_matches: Vec<usize>,       // List of match starting indices (byte offsets)
     pub(crate) current_match_index: Option<usize>, // Index into search_matches
+
+    // Window state tracking
+    pub(crate) last_known_maximized: bool,
 }
 
 impl Default for EditorApp {
@@ -137,7 +140,7 @@ impl Default for EditorApp {
             .unwrap_or_else(|| Theme::dark());
 
         let keyfile_path = if settings.use_global_keyfile {
-            sensitive_settings.global_keyfile_path.clone()
+            settings.global_keyfile_path.clone()
         } else {
             None
         };
@@ -186,7 +189,7 @@ impl Default for EditorApp {
             search_case_sensitive: false,
             search_matches: Vec::new(),
             current_match_index: None,
-            
+            last_known_maximized: settings.start_maximized,
             last_autosave_time: None,
             last_copy_time: None,
             
@@ -211,14 +214,50 @@ impl eframe::App for EditorApp {
         // Update window title dynamically
         self.update_window_title(ctx);
 
-        // Track maximize/restore and persist
-        let is_maximized = ctx.input(|i| {
-            i.viewport().maximized.unwrap_or(false)
+        // Track window state (maximized, position, size)
+        ctx.input(|i| {
+            let is_maximized = i.viewport().maximized.unwrap_or(false);
+            
+            // Only save changes to avoid disk spam
+            let mut changed = false;
+
+            if is_maximized != self.last_known_maximized {
+                self.settings.start_maximized = is_maximized;
+                self.last_known_maximized = is_maximized;
+                changed = true;
+            }
+
+            // If not maximized, save position and size
+            if !is_maximized {
+                if let Some(rect) = i.viewport().outer_rect {
+                    // Save position if valid (not negative coordinates that might be off-screen/minimized)
+                    if rect.min.x >= 0.0 && rect.min.y >= 0.0 {
+                         if (self.settings.window_pos_x - rect.min.x).abs() > 1.0 {
+                            self.settings.window_pos_x = rect.min.x;
+                            changed = true;
+                         }
+                         if (self.settings.window_pos_y - rect.min.y).abs() > 1.0 {
+                            self.settings.window_pos_y = rect.min.y;
+                            changed = true;
+                         }
+                    }
+
+                    // Save size
+                    if (self.settings.window_width - rect.width()).abs() > 1.0 {
+                        self.settings.window_width = rect.width();
+                        changed = true;
+                    }
+                    if (self.settings.window_height - rect.height()).abs() > 1.0 {
+                        self.settings.window_height = rect.height();
+                        changed = true;
+                    }
+                }
+            }
+
+            if changed {
+                let _ = self.settings.save();
+            }
         });
-        if is_maximized != self.settings.start_maximized {
-            self.settings.start_maximized = is_maximized;
-            let _ = self.settings.save();
-        }
 
         // Perform auto-save check
         self.perform_autosave();
@@ -239,6 +278,8 @@ impl eframe::App for EditorApp {
             self.apply_style(ctx);
             self.style_dirty = false;
         }
+
+
 
         // Keyboard shortcuts
         ctx.input_mut(|i| {
@@ -398,13 +439,6 @@ impl eframe::App for EditorApp {
                 .width_range(150.0..=f32::INFINITY)
                 .show(ctx, |ui| {
                     self.render_file_tree(ui);
-
-                    // Save width if changed
-                    let current_width = ui.available_width();
-                    if (current_width - self.settings.file_tree_width).abs() > 1.0 {
-                        self.settings.file_tree_width = current_width;
-                        let _ = self.settings.save();
-                    }
                 });
         }
 

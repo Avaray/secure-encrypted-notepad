@@ -207,6 +207,10 @@ impl EditorApp {
                         .checkbox(&mut self.settings.start_maximized, "Start Maximized")
                         .changed()
                     {
+                        ui.ctx()
+                            .send_viewport_cmd(egui::ViewportCommand::Maximized(
+                                self.settings.start_maximized,
+                            ));
                         let _ = self.settings.save();
                     }
 
@@ -281,7 +285,7 @@ impl EditorApp {
 
                     ui.horizontal(|ui| {
                         ui.label("Current:");
-                        if let Some(path) = &self.sensitive_settings.global_keyfile_path {
+                        if let Some(path) = &self.settings.global_keyfile_path {
                             ui.label(path.file_name().unwrap_or_default().to_string_lossy());
                         } else {
                             ui.label("None");
@@ -291,7 +295,7 @@ impl EditorApp {
                     ui.horizontal(|ui| {
                         if ui.button("Set Global Keyfile").clicked() {
                             if let Some(path) = rfd::FileDialog::new().pick_file() {
-                                self.sensitive_settings.global_keyfile_path = Some(path.clone());
+                                self.settings.global_keyfile_path = Some(path.clone());
                                 if self.settings.use_global_keyfile {
                                     self.keyfile_path = Some(path);
                                 }
@@ -300,11 +304,12 @@ impl EditorApp {
                             }
                         }
                         if ui.button("Clear").clicked() {
-                            self.sensitive_settings.global_keyfile_path = None;
+                            self.settings.global_keyfile_path = None;
                             let _ = self.settings.save();
                         }
                     });
 
+                    ui.separator();
                     ui.separator();
                     ui.heading("Editor");
 
@@ -525,6 +530,9 @@ impl EditorApp {
     /// Render file tree panel
     pub(crate) fn render_file_tree(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
+            // Ensure panel has width to be grabbed
+            ui.set_min_width(ui.available_width());
+            
             ui.heading("Files");
 
             if let Some(dir) = &self.file_tree_dir {
@@ -579,6 +587,8 @@ impl EditorApp {
             }
         });
     }
+
+
 
     /// Render theme editor panel
     pub(crate) fn render_theme_editor_panel(&mut self, ui: &mut egui::Ui) {
