@@ -184,6 +184,22 @@ impl EditorApp {
                             Self::handle_copy_key(ui, text_edit_id, text, &mut self.last_copy_time);
                         } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::X)) {
                             Self::handle_cut_key(ui, text_edit_id, text, &mut self.is_modified, &mut self.last_copy_time);
+                        } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::A)) {
+                            // Select all without scrolling view to end
+                            if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
+                                // Primary cursor stays at current position (determines view scroll),
+                                // secondary extends to cover all text
+                                let current_pos = state.cursor.char_range()
+                                    .map(|r| r.primary.index)
+                                    .unwrap_or(0);
+                                state.cursor.set_char_range(Some(egui::text::CCursorRange {
+                                    primary: egui::text::CCursor::new(current_pos),
+                                    secondary: egui::text::CCursor::new(
+                                        if current_pos == 0 { text.len() } else { 0 }
+                                    ),
+                                }));
+                                state.store(ui.ctx(), text_edit_id);
+                            }
                         }
                     }
 

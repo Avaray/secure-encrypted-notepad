@@ -17,6 +17,7 @@ pub struct Icons {
     pub unsecured: TextureHandle,
     pub export: TextureHandle,
     pub rotate: TextureHandle,
+    pub batch_convert: TextureHandle,
 }
 
 impl Icons {
@@ -101,6 +102,11 @@ impl Icons {
                 ctx,
                 include_bytes!("../assets/MaterialSymbolsKeyRotation.svg"),
                 "icon_rotate",
+            ),
+            batch_convert: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/MaterialSymbolsBatchConvert.svg"),
+                "icon_batch_convert",
             ),
         }
     }

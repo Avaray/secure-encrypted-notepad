@@ -118,6 +118,10 @@ impl EditorApp {
                 self.export_plaintext();
             }
 
+            if small_icon_btn(ui, &self.icons.batch_convert, "Batch Convert to SED").clicked() {
+                self.batch_convert();
+            }
+
             ui.separator();
             ui.add_space(20.0);
 

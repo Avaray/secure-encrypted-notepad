@@ -21,10 +21,12 @@ mod ui_toolbar;
 use app::EditorApp;
 
 fn main() -> Result<(), eframe::Error> {
+    let settings = crate::settings::Settings::load();
     let options = eframe::NativeOptions {
         viewport: eframe::egui::ViewportBuilder::default()
             .with_inner_size([1200.0, 800.0])
-            .with_min_inner_size([800.0, 600.0]),
+            .with_min_inner_size([800.0, 600.0])
+            .with_maximized(settings.start_maximized),
         ..Default::default()
     };
 

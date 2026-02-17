@@ -211,6 +211,15 @@ impl eframe::App for EditorApp {
         // Update window title dynamically
         self.update_window_title(ctx);
 
+        // Track maximize/restore and persist
+        let is_maximized = ctx.input(|i| {
+            i.viewport().maximized.unwrap_or(false)
+        });
+        if is_maximized != self.settings.start_maximized {
+            self.settings.start_maximized = is_maximized;
+            let _ = self.settings.save();
+        }
+
         // Perform auto-save check
         self.perform_autosave();
 
@@ -386,7 +395,7 @@ impl eframe::App for EditorApp {
             egui::SidePanel::left("file_tree")
                 .resizable(true)
                 .default_width(self.settings.file_tree_width)
-                .width_range(150.0..=500.0)
+                .width_range(150.0..=f32::INFINITY)
                 .show(ctx, |ui| {
                     self.render_file_tree(ui);
 

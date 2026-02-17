@@ -56,6 +56,9 @@ pub struct Settings {
     /// Whether master password protection is enabled for sensitive settings
     #[serde(default)]
     pub master_password_enabled: bool,
+    /// Start window in maximized mode
+    #[serde(default)]
+    pub start_maximized: bool,
 }
 
 fn default_ui_font() -> String {
@@ -90,6 +93,7 @@ impl Default for Settings {
             show_subfolders: true,
             max_history_length: 100,
             master_password_enabled: false,
+            start_maximized: false,
         }
     }
 }

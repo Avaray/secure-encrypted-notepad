@@ -203,6 +203,13 @@ impl EditorApp {
                         let _ = self.settings.save();
                     }
 
+                    if ui
+                        .checkbox(&mut self.settings.start_maximized, "Start Maximized")
+                        .changed()
+                    {
+                        let _ = self.settings.save();
+                    }
+
                     ui.separator();
                     ui.heading("Reliability");
 
