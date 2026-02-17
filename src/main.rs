@@ -15,6 +15,7 @@ mod app_state;
 mod ui_dialogs;
 mod ui_editor;
 mod ui_panels;
+mod ui_search;
 mod ui_toolbar;
 
 use app::EditorApp;

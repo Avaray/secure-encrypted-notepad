@@ -313,4 +313,18 @@ impl EditorApp {
             self.log_warning("No directory selected for file tree");
         }
     }
+
+    /// Update window title based on current file and modified state
+    pub(crate) fn update_window_title(&self, ctx: &egui::Context) {
+        let title = if let Some(path) = &self.current_file_path {
+            let filename = path.file_name().unwrap_or_default().to_string_lossy();
+            let modified = if self.is_modified { "*" } else { "" };
+            format!("{} {} - SED", filename, modified)
+        } else {
+            let modified = if self.is_modified { "*" } else { "" };
+            format!("Untitled {} - SED", modified)
+        };
+
+        ctx.send_viewport_cmd(egui::ViewportCommand::Title(title));
+    }
 }

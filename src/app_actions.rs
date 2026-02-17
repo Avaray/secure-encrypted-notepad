@@ -96,7 +96,7 @@ impl EditorApp {
         if let Some(path) = rfd::FileDialog::new().pick_folder() {
             self.log_info(format!("Opening directory: {}", path.display()));
             self.file_tree_dir = Some(path.clone());
-            self.settings.last_directory = Some(path);
+            self.sensitive_settings.last_directory = Some(path);
             self.show_file_tree = true;
             self.settings.show_file_tree = true;
             let _ = self.settings.save();
@@ -108,7 +108,7 @@ impl EditorApp {
     pub(crate) fn perform_change_directory(&mut self, path: PathBuf) {
         self.log_info(format!("Changing to directory: {}", path.display()));
         self.file_tree_dir = Some(path.clone());
-        self.settings.last_directory = Some(path);
+        self.sensitive_settings.last_directory = Some(path);
         let _ = self.settings.save();
         self.refresh_file_tree();
     }
@@ -177,6 +177,18 @@ impl EditorApp {
                 );
                 self.log_info("✓ File saved successfully");
                 self.refresh_file_tree();
+
+                // Cleanup autosave file
+                let file_name = path.file_name().unwrap_or_default().to_string_lossy();
+                let autosave_name = format!("{}.autosave.sed", file_name);
+                let autosave_path = path.with_file_name(autosave_name);
+                if autosave_path.exists() {
+                     if let Err(e) = std::fs::remove_file(&autosave_path) {
+                         self.log_error(format!("Failed to remove autosave file: {}", e));
+                     } else {
+                         self.log_info("Autosave file cleaned up");
+                     }
+                }
             }
             Err(e) => {
                 self.status_message = format!("Error: {}", e);
@@ -309,5 +321,174 @@ impl EditorApp {
     pub(crate) fn change_directory(&mut self, path: PathBuf) {
         // POPRAWKA: Foldery NIE sprawdzają zmian - nawigacja jest zawsze dozwolona
         self.perform_change_directory(path);
+    }
+
+    /// Export current document as plaintext .txt file
+    pub(crate) fn export_plaintext(&mut self) {
+        let content = &self.document.current_content;
+        if content.is_empty() {
+            self.status_message = "Nothing to export — document is empty".to_string();
+            self.log_warning("Export cancelled: empty document");
+            return;
+        }
+
+        // Suggest filename based on current file
+        let suggested_name = if let Some(path) = &self.current_file_path {
+            let stem = path.file_stem().unwrap_or_default().to_string_lossy();
+            format!("{}.txt", stem)
+        } else {
+            "document.txt".to_string()
+        };
+
+        if let Some(path) = rfd::FileDialog::new()
+            .add_filter("Text Files", &["txt"])
+            .add_filter("All Files", &["*"])
+            .set_file_name(&suggested_name)
+            .save_file()
+        {
+            match std::fs::write(&path, &content) {
+                Ok(_) => {
+                    self.status_message =
+                        format!("✓ Exported as plaintext: {}", path.display());
+                    self.log_info(format!(
+                        "✓ Exported {} bytes to {}",
+                        content.len(),
+                        path.display()
+                    ));
+                }
+                Err(e) => {
+                    self.status_message = format!("Error exporting: {}", e);
+                    self.log_error(format!("Export failed: {}", e));
+                }
+            }
+        } else {
+            self.log_info("Export dialog cancelled");
+        }
+    }
+
+    /// Rotate keyfile — re-encrypt current file with a new keyfile
+    pub(crate) fn rotate_keyfile(&mut self) {
+        // Must have an open, decrypted file
+        if self.current_file_path.is_none() {
+            self.status_message = "Error: No file is open to rotate keyfile for".to_string();
+            self.log_error("Keyfile rotation requires an open file");
+            return;
+        }
+        if self.keyfile_path.is_none() {
+            self.status_message = "Error: No current keyfile loaded".to_string();
+            self.log_error("Keyfile rotation requires a current keyfile");
+            return;
+        }
+
+        // Ask user to select or generate a new keyfile
+        self.log_info("Selecting new keyfile for rotation...");
+
+        if let Some(new_keyfile_path) = rfd::FileDialog::new()
+            .set_title("Select New Keyfile")
+            .pick_file()
+        {
+            // Validate the new keyfile
+            match std::fs::metadata(&new_keyfile_path) {
+                Ok(metadata) => {
+                    if metadata.len() != 256 {
+                        self.status_message = format!(
+                            "Error: New keyfile must be 256 bytes (got {})",
+                            metadata.len()
+                        );
+                        self.log_error(format!(
+                            "Invalid new keyfile size: {} bytes",
+                            metadata.len()
+                        ));
+                        return;
+                    }
+                }
+                Err(e) => {
+                    self.status_message = format!("Error: Cannot read new keyfile: {}", e);
+                    self.log_error(format!("Cannot access new keyfile: {}", e));
+                    return;
+                }
+            }
+
+            // Re-encrypt with the new keyfile
+            let file_path = self.current_file_path.clone().unwrap();
+            let file_content = self.document.to_file_content();
+
+            match encrypt_file(&file_content, &new_keyfile_path, &file_path) {
+                Ok(_) => {
+                    let old_name = self
+                        .keyfile_path
+                        .as_ref()
+                        .and_then(|p| p.file_name())
+                        .map(|n| n.to_string_lossy().to_string())
+                        .unwrap_or_else(|| "unknown".to_string());
+
+                    self.keyfile_path = Some(new_keyfile_path.clone());
+                    self.is_modified = false;
+
+                    self.status_message = format!(
+                        "✓ Keyfile rotated: {} → {}",
+                        old_name,
+                        new_keyfile_path
+                            .file_name()
+                            .unwrap_or_default()
+                            .to_string_lossy()
+                    );
+                    self.log_info(format!(
+                        "✓ Keyfile rotated successfully for {}",
+                        file_path.display()
+                    ));
+                }
+                Err(e) => {
+                    self.status_message = format!("Error during keyfile rotation: {}", e);
+                    self.log_error(format!("Keyfile rotation failed: {}", e));
+                }
+            }
+        } else {
+            self.log_info("Keyfile rotation cancelled");
+        }
+    }
+
+    /// Perform auto-save if needed
+    pub(crate) fn perform_autosave(&mut self) {
+        if !self.settings.auto_save_enabled {
+            return;
+        }
+
+        // Only save if modified, file is open, and keyfile exists
+        if !self.is_modified || self.current_file_path.is_none() || self.keyfile_path.is_none() {
+            return;
+        }
+
+        let now = std::time::Instant::now();
+        if let Some(last_time) = self.last_autosave_time {
+            if now.duration_since(last_time).as_secs() < self.settings.auto_save_interval_secs {
+                return;
+            }
+        } else {
+             // Initialize timer if not set (wait for first interval)
+             self.last_autosave_time = Some(now);
+             return;
+        }
+
+        let original_path = self.current_file_path.as_ref().unwrap();
+        // Construct autosave path: filename.autosave.sed
+        let file_name = original_path.file_name().unwrap_or_default().to_string_lossy();
+        let autosave_name = format!("{}.autosave.sed", file_name);
+        let autosave_path = original_path.with_file_name(autosave_name);
+        
+        let keyfile = self.keyfile_path.clone().unwrap();
+        
+        // Encrypt and save silently
+        let file_content = self.document.to_file_content();
+        
+        match encrypt_file(&file_content, &keyfile, &autosave_path) {
+            Ok(_) => {
+                self.last_autosave_time = Some(now);
+                self.log_info(format!("Auto-saved to {}", autosave_path.display()));
+            }
+            Err(e) => {
+                self.log_error(format!("Auto-save failed: {}", e));
+            }
+        }
     }
 }

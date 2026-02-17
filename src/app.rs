@@ -1,9 +1,10 @@
 use eframe::egui;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::time::Instant;
 
 use crate::app_state::{FileTreeEntry, LogEntry, PendingAction};
 use crate::history::DocumentWithHistory;
-use crate::settings::Settings;
+use crate::settings::{Settings, SensitiveSettings};
 use crate::theme::{load_themes, Theme};
 
 /// Application state
@@ -20,8 +21,11 @@ pub struct EditorApp {
     /// Status message
     pub(crate) status_message: String,
 
-    /// User preferences
+    /// User preferences (non-sensitive, saved as plaintext TOML)
     pub(crate) settings: Settings,
+
+    /// Sensitive settings (keyfile path, last directory) - memory only or encrypted
+    pub(crate) sensitive_settings: SensitiveSettings,
 
     /// Available themes
     pub(crate) themes: Vec<Theme>,
@@ -91,11 +95,29 @@ pub struct EditorApp {
 
     /// Selected font index for Editor
     pub(crate) editor_font_index: usize,
+
+    // Auto-save state
+    pub last_autosave_time: Option<Instant>,
+
+    // Clipboard security state
+    pub last_copy_time: Option<Instant>,
+
+    // Style dirty flag
+    pub(crate) style_dirty: bool,
+
+    // Search state
+    pub show_search_panel: bool,
+    pub(crate) search_query: String,
+    pub(crate) replace_query: String,
+    pub(crate) search_case_sensitive: bool,
+    pub(crate) search_matches: Vec<usize>,       // List of match starting indices (byte offsets)
+    pub(crate) current_match_index: Option<usize>, // Index into search_matches
 }
 
 impl Default for EditorApp {
     fn default() -> Self {
         let settings = Settings::load();
+        let sensitive_settings = SensitiveSettings::default();
         let themes = load_themes();
         let available_fonts = crate::fonts::get_system_fonts();
 
@@ -115,7 +137,7 @@ impl Default for EditorApp {
             .unwrap_or_else(|| Theme::dark());
 
         let keyfile_path = if settings.use_global_keyfile {
-            settings.global_keyfile_path.clone()
+            sensitive_settings.global_keyfile_path.clone()
         } else {
             None
         };
@@ -126,12 +148,15 @@ impl Default for EditorApp {
             "Ready - Load or generate a keyfile".to_string()
         };
 
+        let file_tree_dir = sensitive_settings.last_directory.clone();
+
         Self {
             document: DocumentWithHistory::default(),
             keyfile_path,
             current_file_path: None,
             status_message: status,
             settings: settings.clone(),
+            sensitive_settings,
             themes,
             current_theme,
             show_settings_panel: false,
@@ -140,7 +165,7 @@ impl Default for EditorApp {
             show_file_tree: settings.show_file_tree,
             is_modified: false,
             debug_log: Vec::new(),
-            file_tree_dir: settings.last_directory.clone(),
+            file_tree_dir,
             file_tree_entries: Vec::new(),
             icons: crate::icons::Icons::load(&egui::Context::default()),
             show_theme_editor: false,
@@ -155,6 +180,17 @@ impl Default for EditorApp {
             available_fonts,
             ui_font_index,
             editor_font_index,
+            show_search_panel: false,
+            search_query: String::new(),
+            replace_query: String::new(),
+            search_case_sensitive: false,
+            search_matches: Vec::new(),
+            current_match_index: None,
+            
+            last_autosave_time: None,
+            last_copy_time: None,
+            
+            style_dirty: true, // Apply style on startup
         }
     }
 }
@@ -172,6 +208,15 @@ impl EditorApp {
 
 impl eframe::App for EditorApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Update window title dynamically
+        self.update_window_title(ctx);
+
+        // Perform auto-save check
+        self.perform_autosave();
+
+        // Check clipboard timeout
+        self.check_clipboard_timeout(ctx);
+
         // Handle close request
         if ctx.input(|i| i.viewport().close_requested()) {
             if self.is_modified {
@@ -180,8 +225,11 @@ impl eframe::App for EditorApp {
             }
         }
 
-        // Apply styles & font sizes every frame/update
-        self.apply_style(ctx);
+        // Apply styles & font sizes if dirty
+        if self.style_dirty {
+            self.apply_style(ctx);
+            self.style_dirty = false;
+        }
 
         // Keyboard shortcuts
         ctx.input_mut(|i| {
@@ -224,6 +272,24 @@ impl eframe::App for EditorApp {
             )) {
                 self.toggle_comment_lines();
             }
+
+            // Ctrl+F: Find
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL,
+                egui::Key::F,
+            )) {
+                self.show_search_panel = true;
+                // Focus logic will be added later or handled by egui if possible
+            }
+
+            // Ctrl+H: Replace
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL,
+                egui::Key::H,
+            )) {
+                self.show_search_panel = true;
+                // TODO: set focus to replace field
+            }
         });
 
         // Go to Line Dialog
@@ -238,6 +304,12 @@ impl eframe::App for EditorApp {
             .show(ctx, |ui| {
                 ui.add_space(4.0);
                 self.render_toolbar(ui);
+            });
+
+        // Search panel (below toolbar)
+        egui::TopBottomPanel::top("search_panel")
+            .show_animated(ctx, self.show_search_panel, |ui| {
+                self.render_search_panel(ui);
             });
 
         // Status bar
@@ -372,5 +444,22 @@ impl eframe::App for EditorApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             self.render_editor(ui);
         });
+    }
+}
+
+impl EditorApp {
+    fn check_clipboard_timeout(&mut self, ctx: &egui::Context) {
+        if !self.settings.clipboard_security_enabled {
+            return;
+        }
+
+        if let Some(last_time) = self.last_copy_time {
+            if last_time.elapsed().as_secs() >= self.settings.clipboard_clear_timeout_secs {
+                // Clear clipboard
+                ctx.output_mut(|o| o.copied_text = String::new());
+                self.last_copy_time = None;
+                self.log_info("Clipboard cleared for security");
+            }
+        }
     }
 }

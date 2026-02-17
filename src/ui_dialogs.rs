@@ -38,9 +38,12 @@ impl EditorApp {
                             if let PendingAction::Exit = action {
                                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                             } else {
-                                self.execute_pending_action(action);
+                                    self.execute_pending_action(action);
+                                }
+                            } else {
+                                // Save failed or cancelled
+                                self.status_message = "Save cancelled or failed".to_string();
                             }
-                        }
 
                         if ui.button("Cancel").clicked() {
                             self.show_close_confirmation = false;

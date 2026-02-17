@@ -77,9 +77,7 @@ impl EditorApp {
                                                 changed = true;
                                             }
 
-                                            if is_selected {
-                                                response.scroll_to_me(Some(egui::Align::Center));
-                                            }
+
                                         }
                                     });
 
@@ -87,6 +85,7 @@ impl EditorApp {
                                     self.settings.ui_font_family =
                                         self.available_fonts[self.ui_font_index].clone();
                                     let _ = self.settings.save();
+                                    self.style_dirty = true;
                                     self.log_info(format!(
                                         "UI font changed to: {}",
                                         self.settings.ui_font_family
@@ -108,6 +107,7 @@ impl EditorApp {
                         {
                             self.settings.validate_font_sizes();
                             let _ = self.settings.save();
+                            self.style_dirty = true;
                         }
                     });
 
@@ -146,9 +146,7 @@ impl EditorApp {
                                                 changed = true;
                                             }
 
-                                            if is_selected {
-                                                response.scroll_to_me(Some(egui::Align::Center));
-                                            }
+
                                         }
                                     });
 
@@ -156,6 +154,7 @@ impl EditorApp {
                                     self.settings.editor_font_family =
                                         self.available_fonts[self.editor_font_index].clone();
                                     let _ = self.settings.save();
+                                    self.style_dirty = true;
                                     self.log_info(format!(
                                         "Editor font changed to: {}",
                                         self.settings.editor_font_family
@@ -177,7 +176,87 @@ impl EditorApp {
                         {
                             self.settings.validate_font_sizes();
                             let _ = self.settings.save();
+                            self.style_dirty = true;
                         }
+                    });
+
+                    ui.separator();
+
+                    ui.horizontal(|ui| {
+                        ui.label("Tab Size:");
+                        if ui
+                            .add(egui::DragValue::new(&mut self.settings.tab_size).range(2..=8))
+                            .changed()
+                        {
+                            let _ = self.settings.save();
+                        }
+                    });
+
+                    if ui
+                        .checkbox(&mut self.settings.use_spaces_for_tabs, "Use spaces for tabs")
+                        .changed()
+                    {
+                        let _ = self.settings.save();
+                    }
+
+                    if ui.checkbox(&mut self.settings.word_wrap, "Word wrap").changed() {
+                        let _ = self.settings.save();
+                    }
+
+                    ui.separator();
+                    ui.heading("Reliability");
+
+                    ui.group(|ui| {
+                        ui.label("Auto Save");
+                        if ui
+                            .checkbox(&mut self.settings.auto_save_enabled, "Enable Auto-save")
+                            .changed()
+                        {
+                            let _ = self.settings.save();
+                        }
+
+                        ui.horizontal(|ui| {
+                            ui.label("Interval (seconds):");
+                            if ui
+                                .add(
+                                    egui::DragValue::new(&mut self.settings.auto_save_interval_secs)
+                                        .range(5..=3600),
+                                )
+                                .changed()
+                            {
+                                let _ = self.settings.save();
+                            }
+                        });
+                    });
+
+                    ui.add_space(4.0);
+
+                    ui.group(|ui| {
+                        ui.label("Clipboard Security");
+                        if ui
+                            .checkbox(
+                                &mut self.settings.clipboard_security_enabled,
+                                "Clear clipboard after timeout",
+                            )
+                            .changed()
+                        {
+                            let _ = self.settings.save();
+                        }
+
+                        ui.horizontal(|ui| {
+                            ui.label("Timeout (seconds):");
+                            if ui
+                                .add(
+                                    egui::DragValue::new(
+                                        &mut self.settings.clipboard_clear_timeout_secs,
+                                    )
+                                    .range(5..=300),
+                                )
+                                .changed()
+                            {
+                                let _ = self.settings.save();
+                            }
+                        });
                     });
 
                     ui.separator();
@@ -195,7 +274,7 @@ impl EditorApp {
 
                     ui.horizontal(|ui| {
                         ui.label("Current:");
-                        if let Some(path) = &self.settings.global_keyfile_path {
+                        if let Some(path) = &self.sensitive_settings.global_keyfile_path {
                             ui.label(path.file_name().unwrap_or_default().to_string_lossy());
                         } else {
                             ui.label("None");
@@ -205,7 +284,7 @@ impl EditorApp {
                     ui.horizontal(|ui| {
                         if ui.button("Set Global Keyfile").clicked() {
                             if let Some(path) = rfd::FileDialog::new().pick_file() {
-                                self.settings.global_keyfile_path = Some(path.clone());
+                                self.sensitive_settings.global_keyfile_path = Some(path.clone());
                                 if self.settings.use_global_keyfile {
                                     self.keyfile_path = Some(path);
                                 }
@@ -214,7 +293,7 @@ impl EditorApp {
                             }
                         }
                         if ui.button("Clear").clicked() {
-                            self.settings.global_keyfile_path = None;
+                            self.sensitive_settings.global_keyfile_path = None;
                             let _ = self.settings.save();
                         }
                     });

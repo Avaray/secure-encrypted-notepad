@@ -6,8 +6,9 @@ use std::fs;
 use std::path::Path;
 use zeroize::{ZeroizeOnDrop, Zeroizing};
 
-/// Magic number for file format verification: "SED2"
-const MAGIC_NUMBER: &[u8; 4] = b"SED2";
+/// Magic number for file format verification: "SED3"
+/// SED3 format: keyfile hash is inside encrypted payload (not appended in plaintext)
+const MAGIC_NUMBER: &[u8; 4] = b"SED3";
 
 /// Component sizes in file
 const MAGIC_SIZE: usize = 4;
@@ -114,7 +115,9 @@ pub fn generate_keyfile(output_path: &Path) -> Result<(), CryptoError> {
 }
 
 /// FILE ENCRYPTION
-/// Structure: [MAGIC 4B] [SALT 32B] [ENCRYPTED DATA] [KEYFILE HASH 32B]
+/// SED3 Structure: [MAGIC 4B] [SALT 32B] [ENCRYPTED DATA]
+/// Encrypted payload: [KEYFILE HASH 32B] [CONTENT BYTES]
+/// The keyfile hash is inside the encrypted payload for security
 pub fn encrypt_file(
     content: &str,
     keyfile_path: &Path,
@@ -128,32 +131,36 @@ pub fn encrypt_file(
     let keyfile_hash = hash_keyfile(keyfile_path)?;
     let secret_key = derive_key_from_keyfile(&keyfile_hash, &salt)?;
 
-    // 3. Encrypt
-    let plaintext = Zeroizing::new(content.as_bytes().to_vec());
-    let ciphertext = aead::seal(&secret_key, &plaintext)?;
+    // 3. Build plaintext: [keyfile_hash 32B] + [content]
+    // Keyfile hash is embedded inside encrypted data for verification
+    let content_bytes = content.as_bytes();
+    let mut payload = Zeroizing::new(Vec::with_capacity(KEYFILE_HASH_SIZE + content_bytes.len()));
+    payload.extend_from_slice(keyfile_hash.as_bytes());
+    payload.extend_from_slice(content_bytes);
 
-    // 4. Assemble File
-    let mut file_data =
-        Vec::with_capacity(MAGIC_SIZE + SALT_SIZE + ciphertext.len() + KEYFILE_HASH_SIZE);
+    // 4. Encrypt
+    let ciphertext = aead::seal(&secret_key, &payload)?;
 
+    // 5. Assemble File: [MAGIC] [SALT] [ENCRYPTED DATA]
+    let mut file_data = Vec::with_capacity(MAGIC_SIZE + SALT_SIZE + ciphertext.len());
     file_data.extend_from_slice(MAGIC_NUMBER);
     file_data.extend_from_slice(&salt);
     file_data.extend_from_slice(&ciphertext);
-    file_data.extend_from_slice(keyfile_hash.as_bytes());
 
     fs::write(output_path, file_data)?;
     Ok(())
 }
 
 /// FILE DECRYPTION
+/// SED3: keyfile hash is verified from inside the encrypted payload
 pub fn decrypt_file(
     keyfile_path: &Path,
     encrypted_file_path: &Path,
 ) -> Result<String, CryptoError> {
     let file_data = fs::read(encrypted_file_path)?;
 
-    // Basic size check
-    if file_data.len() < MAGIC_SIZE + SALT_SIZE + KEYFILE_HASH_SIZE {
+    // Basic size check: magic + salt + at least some encrypted data
+    if file_data.len() < MAGIC_SIZE + SALT_SIZE + 1 {
         return Err(CryptoError::InvalidFormat);
     }
 
@@ -162,34 +169,179 @@ pub fn decrypt_file(
         return Err(CryptoError::InvalidMagicNumber);
     }
 
-    // 2. Split components
-    let total_len = file_data.len();
-    let keyfile_hash_start = total_len - KEYFILE_HASH_SIZE;
+    // 2. Split components: [MAGIC 4B] [SALT 32B] [ENCRYPTED DATA]
     let salt_end = MAGIC_SIZE + SALT_SIZE;
+    let salt = &file_data[MAGIC_SIZE..salt_end];
+    let encrypted_data = &file_data[salt_end..];
 
-    if salt_end > keyfile_hash_start {
+    // 3. Hash keyfile & derive key
+    let keyfile_hash = hash_keyfile(keyfile_path)?;
+    let secret_key = derive_key_from_keyfile(&keyfile_hash, salt)?;
+
+    // 4. Decrypt
+    let plaintext_bytes =
+        aead::open(&secret_key, encrypted_data).map_err(|_| CryptoError::DecryptionFailed)?;
+    let plaintext = Zeroizing::new(plaintext_bytes);
+
+    // 5. Verify keyfile hash from decrypted payload: [HASH 32B] [CONTENT]
+    if plaintext.len() < KEYFILE_HASH_SIZE {
         return Err(CryptoError::InvalidFormat);
     }
 
-    let salt = &file_data[MAGIC_SIZE..salt_end];
-    let encrypted_data = &file_data[salt_end..keyfile_hash_start];
-    let stored_keyfile_hash = &file_data[keyfile_hash_start..];
-
-    // 3. Validate Keyfile Match
-    let keyfile_hash = hash_keyfile(keyfile_path)?;
-    if keyfile_hash.as_bytes() != stored_keyfile_hash {
+    let stored_hash = &plaintext[..KEYFILE_HASH_SIZE];
+    if keyfile_hash.as_bytes() != stored_hash {
         return Err(CryptoError::KeyfileError(
             "Keyfile mismatch - wrong keyfile for this file".to_string(),
         ));
     }
 
-    // 4. Decrypt
-    let secret_key = derive_key_from_keyfile(&keyfile_hash, salt)?;
-    let plaintext_bytes =
-        aead::open(&secret_key, encrypted_data).map_err(|_| CryptoError::DecryptionFailed)?;
-
-    let plaintext = Zeroizing::new(plaintext_bytes);
-    let content = String::from_utf8(plaintext.to_vec()).map_err(|_| CryptoError::InvalidFormat)?;
+    // 6. Extract content (after the hash)
+    let content_bytes = &plaintext[KEYFILE_HASH_SIZE..];
+    let content =
+        String::from_utf8(content_bytes.to_vec()).map_err(|_| CryptoError::InvalidFormat)?;
 
     Ok(content)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+    use std::path::PathBuf;
+
+    /// Helper: create a temp keyfile with given content
+    fn create_temp_keyfile(name: &str, content: &[u8]) -> PathBuf {
+        let dir = std::env::temp_dir().join("sed_tests");
+        fs::create_dir_all(&dir).unwrap();
+        let path = dir.join(name);
+        let mut file = fs::File::create(&path).unwrap();
+        file.write_all(content).unwrap();
+        path
+    }
+
+    /// Helper: create a random 256-byte keyfile
+    fn create_random_keyfile(name: &str) -> PathBuf {
+        let mut data = vec![0u8; 256];
+        rand::thread_rng().fill_bytes(&mut data);
+        create_temp_keyfile(name, &data)
+    }
+
+    #[test]
+    fn test_encrypt_decrypt_roundtrip() {
+        let keyfile = create_random_keyfile("test_roundtrip.key");
+        let output = std::env::temp_dir().join("sed_tests").join("roundtrip.sed");
+        let content = "Hello, SED3! This is a test document.\nLine 2.\n";
+
+        encrypt_file(content, &keyfile, &output).expect("Encryption should succeed");
+
+        let decrypted = decrypt_file(&keyfile, &output).expect("Decryption should succeed");
+        assert_eq!(decrypted, content);
+
+        // Verify SED3 magic
+        let raw = fs::read(&output).unwrap();
+        assert_eq!(&raw[0..4], b"SED3");
+
+        // Verify keyfile hash is NOT at the end of the file (SED2 vulnerability)
+        let keyfile_hash = hash_keyfile(&keyfile).unwrap();
+        let file_end = &raw[raw.len().saturating_sub(32)..];
+        assert_ne!(file_end, keyfile_hash.as_bytes(), "Keyfile hash must NOT be at end of file in plaintext");
+
+        // Cleanup
+        let _ = fs::remove_file(&output);
+        let _ = fs::remove_file(&keyfile);
+    }
+
+    #[test]
+    fn test_wrong_keyfile_fails() {
+        let keyfile1 = create_random_keyfile("test_wrong_key1.key");
+        let keyfile2 = create_random_keyfile("test_wrong_key2.key");
+        let output = std::env::temp_dir().join("sed_tests").join("wrong_key.sed");
+
+        encrypt_file("Secret data", &keyfile1, &output).unwrap();
+
+        let result = decrypt_file(&keyfile2, &output);
+        assert!(result.is_err(), "Decryption with wrong keyfile should fail");
+
+        // Cleanup
+        let _ = fs::remove_file(&output);
+        let _ = fs::remove_file(&keyfile1);
+        let _ = fs::remove_file(&keyfile2);
+    }
+
+    #[test]
+    fn test_invalid_magic_number() {
+        let keyfile = create_random_keyfile("test_magic.key");
+        let output = std::env::temp_dir().join("sed_tests").join("bad_magic.sed");
+
+        // Write a file with wrong magic number
+        let mut data = vec![0u8; 100];
+        data[0..4].copy_from_slice(b"FAKE");
+        fs::write(&output, &data).unwrap();
+
+        let result = decrypt_file(&keyfile, &output);
+        assert!(matches!(result, Err(CryptoError::InvalidMagicNumber)));
+
+        // Cleanup
+        let _ = fs::remove_file(&output);
+        let _ = fs::remove_file(&keyfile);
+    }
+
+    #[test]
+    fn test_corrupted_file_too_short() {
+        let keyfile = create_random_keyfile("test_corrupt.key");
+        let output = std::env::temp_dir().join("sed_tests").join("corrupt.sed");
+
+        // Write a file that's too short (just magic + partial salt)
+        let mut data = vec![0u8; 10];
+        data[0..4].copy_from_slice(b"SED3");
+        fs::write(&output, &data).unwrap();
+
+        let result = decrypt_file(&keyfile, &output);
+        assert!(result.is_err(), "Truncated file should fail");
+
+        // Cleanup
+        let _ = fs::remove_file(&output);
+        let _ = fs::remove_file(&keyfile);
+    }
+
+    #[test]
+    fn test_empty_keyfile_rejected() {
+        let keyfile = create_temp_keyfile("test_empty.key", b"");
+        let output = std::env::temp_dir().join("sed_tests").join("empty_key.sed");
+
+        let result = encrypt_file("test", &keyfile, &output);
+        assert!(matches!(result, Err(CryptoError::KeyfileError(_))));
+
+        // Cleanup
+        let _ = fs::remove_file(&keyfile);
+    }
+
+    #[test]
+    fn test_empty_content_roundtrip() {
+        let keyfile = create_random_keyfile("test_empty_content.key");
+        let output = std::env::temp_dir().join("sed_tests").join("empty_content.sed");
+
+        encrypt_file("", &keyfile, &output).expect("Encrypting empty content should succeed");
+        let decrypted = decrypt_file(&keyfile, &output).expect("Decrypting should succeed");
+        assert_eq!(decrypted, "");
+
+        // Cleanup
+        let _ = fs::remove_file(&output);
+        let _ = fs::remove_file(&keyfile);
+    }
+
+    #[test]
+    fn test_large_content_roundtrip() {
+        let keyfile = create_random_keyfile("test_large.key");
+        let output = std::env::temp_dir().join("sed_tests").join("large.sed");
+        let content = "A".repeat(100_000); // 100KB content
+
+        encrypt_file(&content, &keyfile, &output).unwrap();
+        let decrypted = decrypt_file(&keyfile, &output).unwrap();
+        assert_eq!(decrypted, content);
+
+        // Cleanup
+        let _ = fs::remove_file(&output);
+        let _ = fs::remove_file(&keyfile);
+    }
 }

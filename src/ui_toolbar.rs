@@ -110,6 +110,14 @@ impl EditorApp {
                 self.load_keyfile();
             }
 
+            if small_icon_btn(ui, &self.icons.rotate, "Rotate Keyfile").clicked() {
+                self.rotate_keyfile();
+            }
+
+            if small_icon_btn(ui, &self.icons.export, "Export as Plaintext").clicked() {
+                self.export_plaintext();
+            }
+
             ui.separator();
             ui.add_space(20.0);
 

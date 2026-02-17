@@ -15,6 +15,8 @@ pub struct Icons {
     pub theme: TextureHandle,
     pub secured: TextureHandle,
     pub unsecured: TextureHandle,
+    pub export: TextureHandle,
+    pub rotate: TextureHandle,
 }
 
 impl Icons {
@@ -89,6 +91,16 @@ impl Icons {
                 ctx,
                 include_bytes!("../assets/MdiShield.svg"),
                 "icon_unsecured",
+            ),
+            export: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/MaterialSymbolsExportNotes.svg"),
+                "icon_export",
+            ),
+            rotate: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/MaterialSymbolsKeyRotation.svg"),
+                "icon_rotate",
             ),
         }
     }
