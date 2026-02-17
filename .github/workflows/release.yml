@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    branches: ["main"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check-version:
+    name: Check Version & Tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      created: ${{ steps.check_tag.outputs.created }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get version from Cargo.toml
+        id: get_version
+        run: |
+          # Extract version from Cargo.toml (assuming standard format)
+          VERSION=$(grep '^version =' Cargo.toml | head -n1 | cut -d '"' -f 2)
+          echo "Detected version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          # Check if tag v{version} already exists in remote
+          if git ls-remote --exit-code --tags origin "v${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
+            echo "Tag v${{ steps.get_version.outputs.version }} already exists. Skipping release."
+            echo "created=false" >> $GITHUB_OUTPUT
+          else
+            echo "Tag v${{ steps.get_version.outputs.version }} does not exist. Proceeding with release."
+            echo "created=true" >> $GITHUB_OUTPUT
+          fi
+
+  build-and-release:
+    name: Build & Release (Windows)
+    needs: check-version
+    if: needs.check-version.outputs.created == 'true'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Build Release Binary
+        run: cargo build --release --verbose
+
+      - name: Rename Binary
+        run: |
+          # Rename sed.exe to sed-v${{ needs.check-version.outputs.version }}.exe for clarity
+          mv target/release/sed.exe target/release/sed-v${{ needs.check-version.outputs.version }}.exe
+        shell: bash
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.check-version.outputs.version }}
+          name: v${{ needs.check-version.outputs.version }}
+          files: target/release/sed-v${{ needs.check-version.outputs.version }}.exe
+          generate_release_notes: true
+          draft: false
+          prerelease: false

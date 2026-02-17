@@ -25,7 +25,7 @@ fn main() -> Result<(), eframe::Error> {
     let mut viewport_builder = eframe::egui::ViewportBuilder::default()
         .with_inner_size([settings.window_width, settings.window_height])
         .with_min_inner_size([800.0, 600.0])
-        .with_maximized(settings.start_maximized);
+        .with_maximized(true);
 
     // Apply saved position if valid
     if settings.window_pos_x >= 0.0 && settings.window_pos_y >= 0.0 {

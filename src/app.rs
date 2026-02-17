@@ -114,7 +114,9 @@ pub struct EditorApp {
     pub(crate) current_match_index: Option<usize>, // Index into search_matches
 
     // Window state tracking
+    // Window state tracking
     pub(crate) last_known_maximized: bool,
+    pub(crate) startup_frame_count: usize,
 }
 
 impl Default for EditorApp {
@@ -190,6 +192,7 @@ impl Default for EditorApp {
             search_matches: Vec::new(),
             current_match_index: None,
             last_known_maximized: settings.start_maximized,
+            startup_frame_count: 0,
             last_autosave_time: None,
             last_copy_time: None,
             
@@ -215,7 +218,17 @@ impl eframe::App for EditorApp {
         self.update_window_title(ctx);
 
         // Track window state (maximized, position, size)
-        ctx.input(|i| {
+        // Wait for a few frames to let the OS apply the initial window state
+        if self.startup_frame_count <= 30 {
+            if self.startup_frame_count == 0 {
+                // Force maximize on startup as requested
+                ctx.send_viewport_cmd(egui::ViewportCommand::Maximized(true));
+            }
+            self.startup_frame_count += 1;
+        }
+        
+        if self.startup_frame_count > 30 {
+            ctx.input(|i| {
             let is_maximized = i.viewport().maximized.unwrap_or(false);
             
             // Only save changes to avoid disk spam
@@ -258,6 +271,7 @@ impl eframe::App for EditorApp {
                 let _ = self.settings.save();
             }
         });
+        }
 
         // Perform auto-save check
         self.perform_autosave();
