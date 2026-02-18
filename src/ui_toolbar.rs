@@ -9,6 +9,7 @@ impl EditorApp {
             let button_size = egui::vec2(32.0, 32.0);
             let icon_size = egui::vec2(24.0, 24.0);
             let hover_tint = self.current_theme.colors.icon_hover_color();
+            let default_tint = self.current_theme.colors.icon_color();
 
             // Helper closure to render icon button with hover effect
             let icon_button = |ui: &mut egui::Ui,
@@ -36,7 +37,7 @@ impl EditorApp {
                 let tint = if response.hovered() || selected {
                     hover_tint
                 } else {
-                    egui::Color32::WHITE
+                    default_tint
                 };
                 ui.painter().image(
                     icon.id(),
@@ -91,7 +92,7 @@ impl EditorApp {
                     let tint = if response.hovered() {
                         hover_tint
                     } else {
-                        egui::Color32::WHITE
+                        default_tint
                     };
                     ui.painter().image(
                         icon.id(),

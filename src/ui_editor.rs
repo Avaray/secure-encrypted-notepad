@@ -4,23 +4,34 @@ use eframe::egui;
 impl EditorApp {
     pub(crate) fn render_editor(&mut self, ui: &mut egui::Ui) {
         let text = &mut self.document.current_content;
-        let line_count = text.lines().count().max(1);
+        let line_count = if text.is_empty() {
+            1
+        } else {
+            text.lines().count() + if text.ends_with('\n') { 1 } else { 0 }
+        };
         let editor_font_size = self.settings.editor_font_size;
         let show_line_numbers = self.settings.show_line_numbers;
         let highlight_line = self.highlighted_line;
+        let word_wrap = self.settings.word_wrap;
 
         // Capture colors
         let foreground_color = self.current_theme.colors.editor_foreground_color();
         let selection_bg = self.current_theme.colors.selection_color();
         let line_number_color = self.current_theme.colors.line_number_color();
         let comment_color = self.current_theme.colors.comment_color();
-        let highlight_bg = selection_bg.linear_multiply(0.2);
+        let _highlight_bg = selection_bg.linear_multiply(0.2);
 
-        // Symetryczne paddingi wokół numerów
+        // Capture search state for the layouter
+        let search_matches: Vec<usize> = self.search_matches.clone();
+        let search_query_len = self.search_query.len();
+        let search_active = !self.search_query.is_empty() && !search_matches.is_empty();
+        let highlight_color = self.current_theme.colors.highlight_color();
+
+        // Symmetric padding around line numbers
         let line_number_side_padding = 10.0;
         let text_left_padding = 10.0;
 
-        // Oblicz PRECYZYJNĄ szerokość dla numerów linii
+        // Calculate precise width for line numbers
         let line_number_width = if show_line_numbers {
             let font_id = egui::FontId::monospace(editor_font_size);
             let max_line_text = format!("{}", line_count);
@@ -31,10 +42,10 @@ impl EditorApp {
             0.0
         };
 
-        // Stałe ID dla TextEdit
+        // Fixed ID for TextEdit
         let text_edit_id = ui.id().with("main_text_editor");
 
-        // Zapisz fixed position dla numerów (lewy brzeg widoku)
+        // Save fixed position for line numbers (left edge of view)
         let editor_left_edge = ui.cursor().left();
         let line_numbers_x = if show_line_numbers {
             editor_left_edge + line_number_width - line_number_side_padding
@@ -47,10 +58,10 @@ impl EditorApp {
             0.0
         };
 
-        // KLUCZOWE: Zapisz oryginalny clip rect całego editora
+        // Save original clip rect of the whole editor
         let full_clip_rect = ui.clip_rect();
 
-        // Wczytaj aktualny stan scrolla
+        // Load current scroll state
         let scroll_id = ui.id().with("main_editor");
         let mut scroll_state =
             egui::scroll_area::State::load(ui.ctx(), scroll_id).unwrap_or_default();
@@ -59,26 +70,15 @@ impl EditorApp {
         let pointer = ui.input(|i| i.pointer.clone());
         let middle_button_active = pointer.middle_down();
 
-        // Wykryj środkowy przycisk myszy
         if middle_button_active {
             if let Some(pos) = pointer.latest_pos() {
-                // Sprawdź czy jesteśmy w obszarze editora
                 if full_clip_rect.contains(pos) {
-                    // Delta ruchu myszy
                     let delta = pointer.delta();
-
-                    // Odwróć kierunek (przeciąganie = przesuwanie widoku w przeciwnym kierunku)
                     scroll_state.offset.x -= delta.x;
                     scroll_state.offset.y -= delta.y;
-
-                    // Ogranicz do wartości nieujemnych
                     scroll_state.offset.x = scroll_state.offset.x.max(0.0);
                     scroll_state.offset.y = scroll_state.offset.y.max(0.0);
-
-                    // Zapisz zmodyfikowany stan
                     scroll_state.store(ui.ctx(), scroll_id);
-
-                    // Zmień kursor na "grabbing"
                     ui.ctx().set_cursor_icon(egui::CursorIcon::Grabbing);
                 }
             }
@@ -89,7 +89,7 @@ impl EditorApp {
             .auto_shrink(false)
             .scroll_offset(scroll_state.offset.into())
             .show(ui, |ui| {
-                // KLUCZOWE: Ustaw clip rect dla tekstu - zaczyna się PO numerach
+                // Set clip rect for text - starts AFTER line numbers
                 let text_area_clip = if show_line_numbers {
                     egui::Rect::from_min_max(
                         egui::pos2(separator_x + text_left_padding, full_clip_rect.min.y),
@@ -100,10 +100,10 @@ impl EditorApp {
                 };
                 ui.set_clip_rect(text_area_clip);
 
-                // Zapisz rect scroll area dla auto-scroll podczas zaznaczania
+                // Save scroll area rect for auto-scroll during selection
                 let scroll_area_rect = ui.clip_rect();
 
-                // Stwórz klikalny obszar NA CAŁĄ wysokość
+                // Create clickable area over the FULL height
                 let full_area = ui.available_rect_before_wrap();
                 let sense_rect = ui.interact(
                     full_area,
@@ -116,25 +116,41 @@ impl EditorApp {
                         ui.add_space(line_number_width + text_left_padding);
                     }
 
-                    let layouter = |ui: &egui::Ui, text_str: &str, _wrap_width: f32| {
+                    let layouter = |ui: &egui::Ui, text_str: &str, wrap_width: f32| {
                         let mut layout_job = egui::text::LayoutJob::default();
                         let font_id = egui::FontId::monospace(editor_font_size);
 
-                        for (line_idx, line) in text_str.lines().enumerate() {
-                            let line_num = line_idx + 1;
+                        // Set wrapping
+                        if word_wrap {
+                            layout_job.wrap.max_width = wrap_width;
+                        } else {
+                            layout_job.wrap.max_width = f32::INFINITY;
+                        }
 
-                            if Some(line_num) == highlight_line {
-                                layout_job.sections.push(egui::text::LayoutSection {
-                                    leading_space: 0.0,
-                                    byte_range: layout_job.text.len()..layout_job.text.len(),
-                                    format: egui::TextFormat {
-                                        font_id: font_id.clone(),
-                                        background: highlight_bg,
-                                        ..Default::default()
-                                    },
-                                });
-                            }
+                        // Split text into lines & process each
+                        let mut byte_offset: usize = 0;
 
+                        // Handle empty text
+                        if text_str.is_empty() {
+                            layout_job.append(
+                                "",
+                                0.0,
+                                egui::TextFormat {
+                                    font_id: font_id.clone(),
+                                    color: foreground_color,
+                                    ..Default::default()
+                                },
+                            );
+                            return ui.fonts(|f| f.layout_job(layout_job));
+                        }
+
+                        // Iterate lines, including trailing empty line after final \n
+                        let mut lines_iter = text_str.split('\n').peekable();
+                        let mut _line_idx = 0;
+                        while let Some(line) = lines_iter.next() {
+                            let is_last = lines_iter.peek().is_none();
+
+                            // Determine colors
                             let trimmed = line.trim_start();
                             let is_comment = trimmed.starts_with("//");
                             let content_color = if is_comment {
@@ -143,32 +159,107 @@ impl EditorApp {
                                 foreground_color
                             };
 
-                            layout_job.append(
-                                line,
-                                0.0,
-                                egui::TextFormat {
-                                    font_id: font_id.clone(),
-                                    color: content_color,
-                                    ..Default::default()
-                                },
-                            );
+                            // Add the line content with search highlighting
+                            if search_active && !line.is_empty() {
+                                // Render line with search match highlighting
+                                let line_start_byte = byte_offset;
+                                let line_end_byte = byte_offset + line.len();
+                                let mut pos = 0usize; // position within the line
 
-                            layout_job.append(
-                                "\n",
-                                0.0,
-                                egui::TextFormat {
-                                    font_id: font_id.clone(),
-                                    ..Default::default()
-                                },
-                            );
+                                for &match_start in &search_matches {
+                                    let match_end = match_start + search_query_len;
+                                    // Check if this match overlaps with current line
+                                    if match_end <= line_start_byte || match_start >= line_end_byte {
+                                        continue;
+                                    }
+                                    // Clamp to line boundaries
+                                    let local_start = if match_start > line_start_byte {
+                                        match_start - line_start_byte
+                                    } else {
+                                        0
+                                    };
+                                    let local_end = if match_end < line_end_byte {
+                                        match_end - line_start_byte
+                                    } else {
+                                        line.len()
+                                    };
+
+                                    // Append text before match
+                                    if local_start > pos {
+                                        layout_job.append(
+                                            &line[pos..local_start],
+                                            if pos == 0 { 0.0 } else { 0.0 },
+                                            egui::TextFormat {
+                                                font_id: font_id.clone(),
+                                                color: content_color,
+                                                ..Default::default()
+                                            },
+                                        );
+                                    }
+                                    // Append matched text with highlight background
+                                    if local_end > local_start {
+                                        layout_job.append(
+                                            &line[local_start..local_end],
+                                            0.0,
+                                            egui::TextFormat {
+                                                font_id: font_id.clone(),
+                                                color: content_color,
+                                                background: highlight_color,
+                                                ..Default::default()
+                                            },
+                                        );
+                                    }
+                                    pos = local_end;
+                                }
+                                // Append remaining text after last match
+                                if pos < line.len() {
+                                    layout_job.append(
+                                        &line[pos..],
+                                        if pos == 0 { 0.0 } else { 0.0 },
+                                        egui::TextFormat {
+                                            font_id: font_id.clone(),
+                                            color: content_color,
+                                            ..Default::default()
+                                        },
+                                    );
+                                }
+                                // Handle empty line edge case (pos == 0 and line is empty)
+                            } else {
+                                // No search highlighting - simple append
+                                layout_job.append(
+                                    line,
+                                    0.0,
+                                    egui::TextFormat {
+                                        font_id: font_id.clone(),
+                                        color: content_color,
+                                        ..Default::default()
+                                    },
+                                );
+                            }
+
+                            // Add newline separator (except after the very last segment if text doesn't end with \n)
+                            if !is_last {
+                                layout_job.append(
+                                    "\n",
+                                    0.0,
+                                    egui::TextFormat {
+                                        font_id: font_id.clone(),
+                                        ..Default::default()
+                                    },
+                                );
+                                byte_offset += line.len() + 1; // +1 for '\n'
+                            } else {
+                                byte_offset += line.len();
+                            }
+
+                            line_idx += 1;
                         }
 
                         ui.fonts(|f| f.layout_job(layout_job))
                     };
 
-                    // KLUCZOWE: Dodaj niewidzialną warstwę blokującą podczas middle mouse
+                    // Add invisible blocking layer during middle mouse
                     if middle_button_active {
-                        // Stwórz niewidzialny overlay który "przechwytuje" eventy
                         let overlay_rect = ui.max_rect();
                         ui.allocate_rect(overlay_rect, egui::Sense::click_and_drag());
                     }
@@ -187,8 +278,6 @@ impl EditorApp {
                         } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::A)) {
                             // Select all without scrolling view to end
                             if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
-                                // Primary cursor stays at current position (determines view scroll),
-                                // secondary extends to cover all text
                                 let current_pos = state.cursor.char_range()
                                     .map(|r| r.primary.index)
                                     .unwrap_or(0);
@@ -203,19 +292,21 @@ impl EditorApp {
                         }
                     }
 
+                    let available_width = if word_wrap {
+                        ui.available_width()
+                    } else {
+                        f32::INFINITY
+                    };
+
                     let output = egui::TextEdit::multiline(text)
                         .id(text_edit_id)
                         .font(egui::TextStyle::Monospace)
                         .code_editor()
-                        .desired_width(if self.settings.word_wrap {
-                            0.0 // 0.0 means wrap at available width (default behavior)
-                        } else {
-                            f32::INFINITY // No wrap
-                        })
+                        .desired_width(available_width)
                         .desired_rows(line_count)
                         .frame(false)
                         .lock_focus(true)
-                        .interactive(!middle_button_active) // Wyłącz interakcję podczas middle mouse
+                        .interactive(!middle_button_active)
                         .layouter(&mut |ui, text_str, wrap_width| {
                             layouter(ui, text_str, wrap_width)
                         })
@@ -224,13 +315,12 @@ impl EditorApp {
                     let text_rect = output.response.rect;
                     let galley = &output.galley;
 
-                    // AUTO-SCROLL podczas zaznaczania tekstu lewym przyciskiem
+                    // AUTO-SCROLL during text selection with left button
                     if pointer.primary_down() && !middle_button_active {
                         if let Some(pointer_pos) = pointer.latest_pos() {
-                            let scroll_speed = 15.0; // piksele na klatkę
-                            let scroll_margin = 30.0; // margines od krawędzi
+                            let scroll_speed = 15.0;
+                            let scroll_margin = 30.0;
 
-                            // Auto-scroll w pionie
                             if pointer_pos.y < scroll_area_rect.top() + scroll_margin {
                                 scroll_state.offset.y =
                                     (scroll_state.offset.y - scroll_speed).max(0.0);
@@ -238,7 +328,6 @@ impl EditorApp {
                                 scroll_state.offset.y += scroll_speed;
                             }
 
-                            // Auto-scroll w poziomie
                             if pointer_pos.x < scroll_area_rect.left() + scroll_margin {
                                 scroll_state.offset.x =
                                     (scroll_state.offset.x - scroll_speed).max(0.0);
@@ -246,12 +335,11 @@ impl EditorApp {
                                 scroll_state.offset.x += scroll_speed;
                             }
 
-                            // Zapisz zmodyfikowany stan
                             scroll_state.store(ui.ctx(), scroll_id);
                         }
                     }
 
-                    // Oblicz wysokość rzeczywistej treści
+                    // Calculate content height
                     let content_height = if !galley.rows.is_empty() {
                         galley.rows.last().unwrap().max_y()
                     } else {
@@ -259,12 +347,12 @@ impl EditorApp {
                     };
                     let content_bottom = text_rect.min.y + content_height;
 
-                    // Wykryj kliknięcie w pustej przestrzeni PONIŻEJ tekstu (tylko gdy nie middle mouse)
+                    // Detect click in empty space BELOW text (only when not middle mouse)
                     if sense_rect.clicked() && !middle_button_active {
-                        let end_pos = text.len();
                         if let Some(pointer_pos) = ui.input(|i| i.pointer.interact_pos()) {
                             if pointer_pos.y > content_bottom && pointer_pos.x >= text_rect.min.x {
-                                // Kliknięto poniżej treści - przenieś kursor na koniec
+                                // Clicked below content - move cursor to end
+                                let end_pos = text.len();
                                 if let Some(mut state) =
                                     egui::TextEdit::load_state(ui.ctx(), text_edit_id)
                                 {
@@ -275,50 +363,67 @@ impl EditorApp {
                                     ));
                                     state.store(ui.ctx(), text_edit_id);
                                 }
-
-                                // Ustaw podświetlenie na ostatnią linię
                                 self.highlighted_line = Some(line_count);
-                                // Zażądaj focusa
+                                ui.memory_mut(|mem| mem.request_focus(text_edit_id));
+                            } else if pointer_pos.y <= content_bottom {
+                                // Clicked within text area - request focus
                                 ui.memory_mut(|mem| mem.request_focus(text_edit_id));
                             }
                         }
                     }
 
-                    // Przywróć pełny clip rect dla rysowania numerów i separatora
+                    // Restore full clip rect for drawing line numbers and separator
                     ui.set_clip_rect(full_clip_rect);
 
-                    // Rysuj numery linii w FIXED pozycji (nie scrollują poziomo)
+                    // Draw line numbers at FIXED position (don't scroll horizontally)
                     if show_line_numbers {
                         let painter = ui.painter();
                         let font_id = egui::FontId::monospace(editor_font_size);
                         let scroll_rect = ui.clip_rect();
 
-                        // KLUCZOWA ZMIANA: Używamy fixed X position
-                        for (row_idx, row) in galley.rows.iter().enumerate() {
-                            let line_num = row_idx + 1;
-                            // Y z galley (synchronizowane z tekstem)
+                        // Track line numbers using Row::ends_with_newline
+                        // Each row that ends_with_newline signals a logical line boundary.
+                        // Rows that don't end with newline (and aren't the last) are wrapped.
+                        let mut current_line: usize = 1;
+                        let mut is_continuation = false;
+
+                        for row in galley.rows.iter() {
                             let line_y = text_rect.min.y + row.min_y();
 
-                            // Rysuj tylko jeśli linia jest widoczna
-                            if line_y >= scroll_rect.top() && line_y <= scroll_rect.bottom() {
-                                let text_color = if Some(line_num) == highlight_line {
-                                    foreground_color
-                                } else {
-                                    line_number_color
-                                };
+                            // Only draw if visible
+                            if line_y >= scroll_rect.top() - editor_font_size
+                                && line_y <= scroll_rect.bottom() + editor_font_size
+                            {
+                                if !is_continuation {
+                                    // First row of a logical line - show line number
+                                    let text_color = if Some(current_line) == highlight_line {
+                                        foreground_color
+                                    } else {
+                                        line_number_color
+                                    };
 
-                                // X jest FIXED - nie zmienia się przy poziomym scrollu
-                                painter.text(
-                                    egui::pos2(line_numbers_x, line_y),
-                                    egui::Align2::RIGHT_TOP,
-                                    format!("{}", line_num),
-                                    font_id.clone(),
-                                    text_color,
-                                );
+                                    painter.text(
+                                        egui::pos2(line_numbers_x, line_y),
+                                        egui::Align2::RIGHT_TOP,
+                                        format!("{}", current_line),
+                                        font_id.clone(),
+                                        text_color,
+                                    );
+                                }
+                                // Wrapped continuation rows get no line number (blank)
+                            }
+
+                            // Advance: if row ends with newline, next row is a new logical line
+                            if row.ends_with_newline {
+                                current_line += 1;
+                                is_continuation = false;
+                            } else {
+                                // This row is wrapped, so the NEXT row is a continuation
+                                is_continuation = true;
                             }
                         }
 
-                        // Separator również w fixed pozycji
+                        // Separator also at fixed position
                         painter.vline(
                             separator_x,
                             scroll_rect.top()..=scroll_rect.bottom(),
@@ -331,16 +436,18 @@ impl EditorApp {
                         self.loaded_history_index = None;
                     }
 
-                    // AKTUALIZUJ PODŚWIETLENIE W KAŻDEJ KLATCE gdy TextEdit ma fokus
+                    // UPDATE HIGHLIGHTING EVERY FRAME when TextEdit has focus
                     if output.response.has_focus() {
                         if let Some(state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
                             if let Some(cursor_range) = state.cursor.char_range() {
                                 let cursor_pos = cursor_range.primary.index;
 
-                                // Policz znaki '\n' przed kursorem + 1
-                                let line_num = text[..cursor_pos.min(text.len())]
-                                    .chars()
-                                    .filter(|&c| c == '\n')
+                                // Count '\n' characters before cursor + 1
+                                let clamped_pos = cursor_pos.min(text.len());
+                                let line_num = text[..clamped_pos]
+                                    .as_bytes()
+                                    .iter()
+                                    .filter(|&&b| b == b'\n')
                                     .count()
                                     + 1;
 
@@ -357,7 +464,7 @@ impl EditorApp {
                 });
             });
 
-        // Zapisz finalny stan scrolla
+        // Save final scroll state
         scroll_output.state.store(ui.ctx(), scroll_id);
     }
 
@@ -385,7 +492,6 @@ impl EditorApp {
                      }
                 } else {
                      // Multi-line indent/unindent or single line unindent
-                     // MVP: Handle unindent on current line if cursor is single point
                      if unindent && start == end {
                          let text_ref = &*text;
                          // Find line start/end

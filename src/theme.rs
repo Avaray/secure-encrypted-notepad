@@ -29,6 +29,12 @@ pub struct ThemeColors {
     pub line_number: [u8; 3],
     pub comment: [u8; 3],
     pub icon_hover: [u8; 3],
+    /// Default icon tint color (non-hovered state)
+    #[serde(default)]
+    pub icon_color: Option<[u8; 3]>,
+    /// Highlight color for search matches and history loaded indicator
+    #[serde(default)]
+    pub highlight: Option<[u8; 3]>,
     pub success: [u8; 3],
     pub info: [u8; 3],
     pub warning: [u8; 3],
@@ -46,17 +52,19 @@ impl ThemeColors {
         Self {
             background: [27, 27, 27],
             foreground: [255, 255, 255],
-            editor_foreground: None, // Use foreground by default
+            editor_foreground: None,
             panel_background: [37, 37, 37],
             selection_background: [51, 51, 51],
             cursor: [255, 255, 255],
             line_number: [128, 128, 128],
             comment: [106, 153, 85],
             icon_hover: [100, 150, 255],
-            success: [76, 175, 80], // Green
-            info: [33, 150, 243],   // Blue
-            warning: [255, 152, 0], // Orange
-            error: [244, 67, 54],   // Red
+            icon_color: None,    // defaults to [200, 200, 200]
+            highlight: None,     // defaults to cursor color at 35% opacity
+            success: [76, 175, 80],
+            info: [33, 150, 243],
+            warning: [255, 152, 0],
+            error: [244, 67, 54],
         }
     }
 
@@ -64,17 +72,19 @@ impl ThemeColors {
         Self {
             background: [255, 255, 255],
             foreground: [0, 0, 0],
-            editor_foreground: None, // Use foreground by default
+            editor_foreground: None,
             panel_background: [245, 245, 245],
             selection_background: [173, 214, 255],
             cursor: [0, 0, 0],
             line_number: [128, 128, 128],
             comment: [0, 128, 0],
             icon_hover: [0, 100, 255],
-            success: [46, 125, 50], // Dark green
-            info: [13, 71, 161],    // Dark blue
-            warning: [230, 81, 0],  // Dark orange
-            error: [198, 40, 40],   // Dark red
+            icon_color: None,    // defaults to [80, 80, 80]
+            highlight: None,     // defaults to cursor color at 35% opacity
+            success: [46, 125, 50],
+            info: [13, 71, 161],
+            warning: [230, 81, 0],
+            error: [198, 40, 40],
         }
     }
 
@@ -109,6 +119,23 @@ impl ThemeColors {
 
     pub fn icon_hover_color(&self) -> egui::Color32 {
         egui::Color32::from_rgb(self.icon_hover[0], self.icon_hover[1], self.icon_hover[2])
+    }
+
+    pub fn icon_color(&self) -> egui::Color32 {
+        let c = self.icon_color.unwrap_or(if self.background[0] > 128 {
+            [80, 80, 80] // light theme
+        } else {
+            [200, 200, 200] // dark theme
+        });
+        egui::Color32::from_rgb(c[0], c[1], c[2])
+    }
+
+    pub fn highlight_color(&self) -> egui::Color32 {
+        if let Some(h) = self.highlight {
+            egui::Color32::from_rgb(h[0], h[1], h[2])
+        } else {
+            self.cursor_color().linear_multiply(0.35)
+        }
     }
 
     pub fn comment_color(&self) -> egui::Color32 {
