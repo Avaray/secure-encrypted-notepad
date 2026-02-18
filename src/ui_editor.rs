@@ -146,7 +146,7 @@ impl EditorApp {
 
                         // Iterate lines, including trailing empty line after final \n
                         let mut lines_iter = text_str.split('\n').peekable();
-                        let mut _line_idx = 0;
+                        let mut line_idx = 0;
                         while let Some(line) = lines_iter.next() {
                             let is_last = lines_iter.peek().is_none();
 

@@ -120,7 +120,7 @@ impl EditorApp {
             }
 
             if small_icon_btn(ui, &self.icons.batch_convert, "Batch Convert to SED").clicked() {
-                self.batch_convert();
+                self.show_batch_converter = !self.show_batch_converter;
             }
 
             ui.separator();

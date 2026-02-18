@@ -17,6 +17,7 @@ mod ui_editor;
 mod ui_panels;
 mod ui_search;
 mod ui_toolbar;
+mod ui_batch;
 
 use app::EditorApp;
 

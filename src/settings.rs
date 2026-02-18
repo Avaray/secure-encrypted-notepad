@@ -6,6 +6,11 @@ use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::PathBuf;
 use zeroize::Zeroizing;
+use keyring::Entry;
+
+const CONFIG_MAGIC: &[u8; 4] = b"SEDC";
+const SERVICE_NAME: &str = "sed-editor";
+const USER_NAME: &str = "config-key";
 
 /// User preferences - persisted between sessions
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -130,9 +135,30 @@ impl Settings {
         if let Some(config_dir) = dirs::config_dir() {
             let config_path = config_dir.join("sed").join("config.toml");
             if config_path.exists() {
-                if let Ok(content) = fs::read_to_string(&config_path) {
-                    if let Ok(settings) = toml::from_str(&content) {
-                        return settings;
+                if let Ok(content_bytes) = fs::read(&config_path) {
+                    // Check for encryption magic header
+                    if content_bytes.len() > 4 && &content_bytes[0..4] == CONFIG_MAGIC {
+                        // Encrypted content
+                        if let Ok(key_bytes) = Self::get_or_create_config_key() {
+                            if let Ok(secret_key) = aead::SecretKey::from_slice(&key_bytes) {
+                                let encrypted_data = &content_bytes[4..];
+                                if let Ok(plaintext) = aead::open(&secret_key, encrypted_data) {
+                                    if let Ok(settings) = toml::from_str(&String::from_utf8_lossy(&plaintext)) {
+                                        return settings;
+                                    }
+                                }
+                            }
+                        }
+                        // Fallback implementation if key or decryption fails?
+                        // Ideally we should log error but we don't have logger here easily.
+                        // Return default.
+                    } else {
+                        // Plaintext fallback (legacy)
+                        if let Ok(content_str) = String::from_utf8(content_bytes) {
+                             if let Ok(settings) = toml::from_str(&content_str) {
+                                return settings;
+                            }
+                        }
                     }
                 }
             }
@@ -140,16 +166,59 @@ impl Settings {
         Self::default()
     }
 
-    /// Save settings to file
+    /// Save settings to file (encrypted)
     pub fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(config_dir) = dirs::config_dir() {
             let config_dir = config_dir.join("sed");
             fs::create_dir_all(&config_dir)?;
             let config_path = config_dir.join("config.toml");
+            
             let toml_string = toml::to_string_pretty(self)?;
-            fs::write(&config_path, toml_string)?;
+            
+            // Generate/Get encryption key
+            let key_bytes = Self::get_or_create_config_key()?;
+            let secret_key = aead::SecretKey::from_slice(&key_bytes)?;
+            
+            // Encrypt
+            let ciphertext = aead::seal(&secret_key, toml_string.as_bytes())?;
+            
+            // Prepend magic bytes
+            let mut file_data = Vec::with_capacity(4 + ciphertext.len());
+            file_data.extend_from_slice(CONFIG_MAGIC);
+            file_data.extend_from_slice(&ciphertext);
+            
+            fs::write(&config_path, file_data)?;
         }
         Ok(())
+    }
+
+    /// Get or create a random 32-byte encryption key stored in OS keyring
+    fn get_or_create_config_key() -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+        let entry = Entry::new(SERVICE_NAME, USER_NAME)?;
+        
+        match entry.get_password() {
+            Ok(password) => {
+                // Password is hex encoded key
+                if let Ok(key_bytes) = hex::decode(password) {
+                    if key_bytes.len() == 32 {
+                        return Ok(key_bytes);
+                    }
+                }
+            }
+            Err(_) => {
+                // Key not found or error, create new
+            }
+        }
+        
+        // Generate new key
+        let mut key = [0u8; 32];
+        rand::thread_rng().fill_bytes(&mut key);
+        let key_hex = hex::encode(key);
+        
+        // Store in keyring
+        entry.set_password(&key_hex)?;
+        
+        Ok(key.to_vec())
     }
 
     /// Validate font sizes

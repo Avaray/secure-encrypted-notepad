@@ -1,5 +1,5 @@
 use eframe::egui;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::time::Instant;
 
 use crate::app_state::{FileTreeEntry, LogEntry, PendingAction};
@@ -113,6 +113,12 @@ pub struct EditorApp {
     pub(crate) search_matches: Vec<usize>,       // List of match starting indices (byte offsets)
     pub(crate) current_match_index: Option<usize>, // Index into search_matches
 
+    // Batch Converter State
+    pub(crate) show_batch_converter: bool,
+    pub(crate) batch_files: Vec<PathBuf>,
+    pub(crate) batch_keyfile: Option<PathBuf>,
+    pub(crate) batch_output_dir: Option<PathBuf>,
+
     // Window state tracking
     // Window state tracking
     pub(crate) last_known_maximized: bool,
@@ -191,6 +197,10 @@ impl Default for EditorApp {
             search_case_sensitive: false,
             search_matches: Vec::new(),
             current_match_index: None,
+            show_batch_converter: false,
+            batch_files: Vec::new(),
+            batch_keyfile: None,
+            batch_output_dir: None,
             last_known_maximized: settings.start_maximized,
             startup_frame_count: 0,
             last_autosave_time: None,
@@ -369,6 +379,11 @@ impl eframe::App for EditorApp {
                 ui.add_space(4.0);
                 self.render_toolbar(ui);
             });
+            
+        // Batch Converter Window
+        if self.show_batch_converter {
+            self.render_batch_converter_window(ctx);
+        }
 
         // Search panel (below toolbar)
         egui::TopBottomPanel::top("search_panel")

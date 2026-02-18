@@ -23,6 +23,12 @@ pub struct ThemeColors {
     pub foreground: [u8; 3],
     #[serde(default)]
     pub editor_foreground: Option<[u8; 3]>,
+    #[serde(default)]
+    pub button_bg: Option<[u8; 3]>,
+    #[serde(default)]
+    pub button_fg: Option<[u8; 3]>,
+    #[serde(default)]
+    pub separator: Option<[u8; 3]>,
     pub panel_background: [u8; 3],
     pub selection_background: [u8; 3],
     pub cursor: [u8; 3],
@@ -53,6 +59,9 @@ impl ThemeColors {
             background: [27, 27, 27],
             foreground: [255, 255, 255],
             editor_foreground: None,
+            button_bg: None, // Use egui default or derived
+            button_fg: None,
+            separator: None,
             panel_background: [37, 37, 37],
             selection_background: [51, 51, 51],
             cursor: [255, 255, 255],
@@ -73,6 +82,9 @@ impl ThemeColors {
             background: [255, 255, 255],
             foreground: [0, 0, 0],
             editor_foreground: None,
+            button_bg: None,
+            button_fg: None,
+            separator: None,
             panel_background: [245, 245, 245],
             selection_background: [173, 214, 255],
             cursor: [0, 0, 0],
@@ -207,9 +219,31 @@ impl Theme {
         // Apply foreground (text) color
         let foreground = self.colors.to_egui_color32(self.colors.foreground);
         visuals.widgets.noninteractive.fg_stroke.color = foreground;
-        visuals.widgets.inactive.fg_stroke.color = foreground;
         visuals.widgets.active.fg_stroke.color = foreground;
         visuals.override_text_color = Some(foreground);
+
+        // Apply Button Colors
+        if let Some(bg) = self.colors.button_bg {
+            let bg_color = self.colors.to_egui_color32(bg);
+            visuals.widgets.inactive.weak_bg_fill = bg_color;
+            visuals.widgets.inactive.bg_fill = bg_color;
+            // Slightly lighten/darken for hover/active?
+            // For now, let's trust egui to handle some state changes, or explicitly set them if we want full control.
+            // But visuals.widgets.hovered/active are derived from inactive usually if not set?
+            // Actually egui has separate defaults. Let's just set the base "inactive" (default) state.
+        }
+        if let Some(fg) = self.colors.button_fg {
+            let fg_color = self.colors.to_egui_color32(fg);
+            visuals.widgets.inactive.fg_stroke.color = fg_color;
+            visuals.widgets.noninteractive.fg_stroke.color = fg_color; // Checkboxes text etc?
+            // We usually want button text to be distinct from main text if button bg is different.
+        }
+
+        // Apply Separator Color
+        if let Some(sep) = self.colors.separator {
+             let sep_color = self.colors.to_egui_color32(sep);
+             visuals.widgets.noninteractive.bg_stroke.color = sep_color; // Used for separators
+        }
 
         ctx.set_visuals(visuals);
     }
@@ -264,5 +298,17 @@ pub fn save_theme(theme: &Theme) -> Result<(), Box<dyn std::error::Error>> {
     let path = themes_dir.join(filename);
     let toml_string = toml::to_string_pretty(theme)?;
     fs::write(path, toml_string)?;
+    Ok(())
+}
+
+/// Delete theme file
+pub fn delete_theme(theme_name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let themes_dir = ensure_themes_dir()?;
+    let filename = format!("{}.toml", theme_name.to_lowercase().replace(' ', "_"));
+    let path = themes_dir.join(filename);
+    
+    if path.exists() {
+        fs::remove_file(path)?;
+    }
     Ok(())
 }

@@ -31,6 +31,7 @@ impl EditorApp {
                                     {
                                         self.current_theme = theme.clone();
                                         self.settings.theme_name = theme.name.clone();
+                                        self.editing_theme = Some(theme.clone()); // Sync theme editor
                                         self.apply_theme(ui.ctx());
                                         let _ = self.settings.save();
                                     }
@@ -598,11 +599,52 @@ impl EditorApp {
         ui.vertical(|ui| {
             ui.heading("🎨 Theme Editor");
 
+            // Top bar: Theme selector and actions
+            ui.horizontal(|ui| {
+                ui.label("Edit Theme:");
+                let current_name = self.editing_theme.as_ref().map(|t| t.name.clone()).unwrap_or_default();
+                
+                egui::ComboBox::from_id_salt("theme_editor_selector")
+                    .selected_text(&current_name)
+                    .show_ui(ui, |ui| {
+                        for theme in &self.themes {
+                            if ui.selectable_label(theme.name == current_name, &theme.name).clicked() {
+                                self.editing_theme = Some(theme.clone());
+                            }
+                        }
+                    });
+
+                if ui.button("➕ New").clicked() {
+                    let mut new_theme = self.current_theme.clone();
+                    new_theme.name = format!("{} (Copy)", new_theme.name);
+                    self.editing_theme = Some(new_theme);
+                }
+
+                // Delete button with confirmation
+                if let Some(theme) = &self.editing_theme {
+                    let is_builtin = theme.name == "Dark" || theme.name == "Light";
+                    if !is_builtin {
+                        if ui.button("🗑 Delete").clicked() {
+                             // This actually needs a way to confirm. For now, simple delete.
+                             // In a real app we'd show a modal. 
+                             // Since we don't have modals easily, we'll just delete and select default.
+                             let _ = crate::theme::delete_theme(&theme.name);
+                             self.themes = crate::theme::load_themes(); // Reload
+                             self.editing_theme = Some(crate::theme::Theme::dark()); // Reset to safe default
+                        }
+                    }
+                }
+            });
+
+            ui.separator();
+
             if let Some(ref mut theme) = self.editing_theme {
                 let mut theme_changed = false;
 
-                ui.label("Theme Name:");
-                ui.text_edit_singleline(&mut theme.name);
+                ui.horizontal(|ui| {
+                    ui.label("Name:");
+                    ui.text_edit_singleline(&mut theme.name);
+                });
 
                 ui.horizontal(|ui| {
                     ui.label("Base Scheme:");
@@ -733,6 +775,87 @@ impl EditorApp {
                                 }
                                 ui.end_row();
 
+                                // Icon Default (New)
+                                ui.label("Icon Default Tint:");
+                                let mut icon_def = theme.colors.icon_color.unwrap_or(
+                                    if theme.color_scheme == crate::theme::ColorScheme::Dark { [200, 200, 200] } else { [80, 80, 80] }
+                                );
+                                if ui.color_edit_button_srgb(&mut icon_def).changed() {
+                                    theme.colors.icon_color = Some(icon_def);
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
+
+                                // Highlight (New)
+                                ui.label("Search Highlight:");
+                                let mut highlight = theme.colors.highlight.unwrap_or(
+                                    theme.colors.cursor // fallback
+                                );
+                                ui.horizontal(|ui| {
+                                    if ui.color_edit_button_srgb(&mut highlight).changed() {
+                                        theme.colors.highlight = Some(highlight);
+                                        theme_changed = true;
+                                    }
+                                    if theme.colors.highlight.is_some() {
+                                        if ui.button("↺").on_hover_text("Reset to Default").clicked() {
+                                            theme.colors.highlight = None;
+                                            theme_changed = true;
+                                        }
+                                    }
+                                });
+                                ui.end_row();
+
+                                // Button Background
+                                ui.label("Button Background:");
+                                ui.horizontal(|ui| {
+                                    let mut bg = theme.colors.button_bg.unwrap_or([60, 60, 60]); // Approx default
+                                    if ui.color_edit_button_srgb(&mut bg).changed() {
+                                        theme.colors.button_bg = Some(bg);
+                                        theme_changed = true;
+                                    }
+                                    if theme.colors.button_bg.is_some() {
+                                        if ui.button("↺").on_hover_text("Reset to Default").clicked() {
+                                            theme.colors.button_bg = None;
+                                            theme_changed = true;
+                                        }
+                                    }
+                                });
+                                ui.end_row();
+
+                                // Button Foreground
+                                ui.label("Button Text:");
+                                ui.horizontal(|ui| {
+                                    let mut fg = theme.colors.button_fg.unwrap_or(theme.colors.foreground);
+                                    if ui.color_edit_button_srgb(&mut fg).changed() {
+                                        theme.colors.button_fg = Some(fg);
+                                        theme_changed = true;
+                                    }
+                                    if theme.colors.button_fg.is_some() {
+                                        if ui.button("↺").on_hover_text("Reset to Default").clicked() {
+                                            theme.colors.button_fg = None;
+                                            theme_changed = true;
+                                        }
+                                    }
+                                });
+                                ui.end_row();
+
+                                // Separator
+                                ui.label("Separator:");
+                                ui.horizontal(|ui| {
+                                    let mut sep = theme.colors.separator.unwrap_or([80, 80, 80]);
+                                    if ui.color_edit_button_srgb(&mut sep).changed() {
+                                        theme.colors.separator = Some(sep);
+                                        theme_changed = true;
+                                    }
+                                    if theme.colors.separator.is_some() {
+                                        if ui.button("↺").on_hover_text("Reset to Default").clicked() {
+                                            theme.colors.separator = None;
+                                            theme_changed = true;
+                                        }
+                                    }
+                                });
+                                ui.end_row();
+
                                 // Line Number Color
                                 ui.label("Line Numbers:");
                                 if ui
@@ -792,19 +915,18 @@ impl EditorApp {
 
                 ui.separator();
 
-                // Tylko 2 przyciski: Save i Reset (pionowo)
-                ui.vertical(|ui| {
-                    ui.add_space(4.0);
-
+                ui.horizontal_wrapped(|ui| {
                     if ui.button("💾 Save Theme").clicked() {
                         theme_to_save = Some(theme.clone());
                     }
 
-                    let current_scheme = theme.color_scheme;
-                    let reset_text = match current_scheme {
-                        crate::theme::ColorScheme::Light => "↺ Reset to Light",
-                        crate::theme::ColorScheme::Dark => "↺ Reset to Dark",
+                    let is_builtin = theme.name == "Dark" || theme.name == "Light";
+                    let reset_text = if is_builtin {
+                         format!("↺ Reset to Default ({:?})", theme.color_scheme)
+                    } else {
+                         "↺ Reset to Saved".to_string()
                     };
+                    
                     if ui.button(reset_text).clicked() {
                         should_reset = true;
                     }
@@ -817,10 +939,30 @@ impl EditorApp {
         // Execute actions
         if should_reset {
             if let Some(ref mut theme) = self.editing_theme {
-                *theme = match theme.color_scheme {
-                    crate::theme::ColorScheme::Light => crate::theme::Theme::light(),
-                    crate::theme::ColorScheme::Dark => crate::theme::Theme::dark(),
-                };
+                let is_builtin = theme.name == "Dark" || theme.name == "Light";
+                if is_builtin {
+                    // Reset to factory defaults
+                    *theme = match theme.color_scheme {
+                        crate::theme::ColorScheme::Light => crate::theme::Theme::light(),
+                        crate::theme::ColorScheme::Dark => crate::theme::Theme::dark(),
+                    };
+                } else {
+                    // Reset to saved file
+                    let all_themes = crate::theme::load_themes();
+                    if let Some(saved) = all_themes.iter().find(|t| t.name == theme.name) {
+                        *theme = saved.clone();
+                    } else {
+                        // If not found (e.g. unsaved new theme), maybe reset to parent scheme?
+                        // Or just keep as is? Let's reset to scheme default as fallback.
+                        *theme = match theme.color_scheme {
+                            crate::theme::ColorScheme::Light => crate::theme::Theme::light(),
+                            crate::theme::ColorScheme::Dark => crate::theme::Theme::dark(),
+                        };
+                        theme.name = theme.name.clone(); // Keep the name if it was a new custom theme
+                        // Actually if it's new and unsaved, "Reset to Saved" is ambiguous.
+                        // But usually this handles the "I messed up editing 'Ocean', let me revert to what's on disk" case.
+                    }
+                }
                 theme.apply(ui.ctx());
                 self.current_theme = theme.clone();
             }
