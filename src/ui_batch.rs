@@ -1,5 +1,7 @@
 use crate::EditorApp;
 use eframe::egui;
+use std::path::{Path, PathBuf};
+use crate::crypto::{encrypt_file, decrypt_file};
 
 
 impl EditorApp {
@@ -109,14 +111,110 @@ impl EditorApp {
                      
                      if ui.add_enabled(enabled, egui::Button::new("🔒 Encrypt All")).clicked() {
                          self.status_message = "Batch encryption started...".to_string();
-                         // TODO: Implement batch encryption logic
                          self.log_info("Batch encryption requested");
+                         
+                         if let Some(keyfile) = self.batch_keyfile.clone() {
+                             let mut success = 0;
+                             let mut failed = 0;
+                             let batch_files = self.batch_files.clone();
+                             let batch_output_dir = self.batch_output_dir.clone();
+                             let total = batch_files.len();
+                             
+                             for file in &batch_files {
+                                 // Determine output directory
+                                 let output_dir = if let Some(d) = &batch_output_dir {
+                                     d.clone()
+                                 } else {
+                                     file.parent().unwrap_or(Path::new(".")).to_path_buf()
+                                 };
+                                 
+                                 // Determine output filename (append .sed)
+                                 let file_name = file.file_name().unwrap_or_default();
+                                 let output_path = output_dir.join(format!("{}.sed", file_name.to_string_lossy()));
+                                 
+                                 // Read content (assuming text)
+                                 match std::fs::read_to_string(file) {
+                                     Ok(content) => {
+                                         // Encrypt
+                                         match encrypt_file(&content, &keyfile, &output_path) {
+                                             Ok(_) => {
+                                                 success += 1;
+                                                 self.log_info(format!("Encrypted: {} -> {}", file.display(), output_path.display()));
+                                             }
+                                             Err(e) => {
+                                                 failed += 1;
+                                                 self.log_error(format!("Failed to encrypt {}: {}", file.display(), e));
+                                             }
+                                         }
+                                     }
+                                     Err(e) => {
+                                         failed += 1;
+                                          self.log_error(format!("Failed to read {}: {}", file.display(), e));
+                                     }
+                                 }
+                             }
+                             
+                             self.status_message = format!("Batch Encrypt: {}/{} succeeded, {} failed", success, total, failed);
+                         }
                      }
                      
                      if ui.add_enabled(enabled, egui::Button::new("🔓 Decrypt All")).clicked() {
                          self.status_message = "Batch decryption started...".to_string();
-                         // TODO: Implement batch decryption logic
                          self.log_info("Batch decryption requested");
+                         
+                         if let Some(keyfile) = self.batch_keyfile.clone() {
+                             let mut success = 0;
+                             let mut failed = 0;
+                             let batch_files = self.batch_files.clone();
+                             let batch_output_dir = self.batch_output_dir.clone();
+                             let total = batch_files.len();
+                             
+                             for file in &batch_files {
+                                 // Determine output directory
+                                 let output_dir = if let Some(d) = &batch_output_dir {
+                                     d.clone()
+                                 } else {
+                                     file.parent().unwrap_or(Path::new(".")).to_path_buf()
+                                 };
+                                 
+                                 // Determine output filename (strip .sed or append .txt)
+                                 let original_name = file.file_name().unwrap_or_default().to_string_lossy();
+                                 let new_name = if original_name.ends_with(".sed") {
+                                     original_name.trim_end_matches(".sed").to_string()
+                                 } else {
+                                     format!("{}.txt", original_name)
+                                 };
+                                 
+                                 // Prevent overwriting source if names clash (e.g. decrypting file.txt to file.txt)
+                                 let mut output_path = output_dir.join(&new_name);
+                                 if output_path == *file {
+                                      output_path = output_dir.join(format!("{}.decrypted", new_name));
+                                 }
+
+                                 // Decrypt
+                                 match decrypt_file(&keyfile, file) {
+                                     Ok(content) => {
+                                         // Write result
+                                         match std::fs::write(&output_path, content) {
+                                             Ok(_) => {
+                                                 success += 1;
+                                                 self.log_info(format!("Decrypted: {} -> {}", file.display(), output_path.display()));
+                                             }
+                                             Err(e) => {
+                                                 failed += 1;
+                                                 self.log_error(format!("Failed to write {}: {}", output_path.display(), e));
+                                             }
+                                         }
+                                     }
+                                     Err(e) => {
+                                         failed += 1;
+                                         self.log_error(format!("Failed to decrypt {}: {}", file.display(), e));
+                                     }
+                                 }
+                             }
+                             
+                             self.status_message = format!("Batch Decrypt: {}/{} succeeded, {} failed", success, total, failed);
+                         }
                      }
                  });
             });
