@@ -10,7 +10,7 @@ impl EditorApp {
         let highlight_line = self.highlighted_line;
 
         // Capture colors
-        let foreground_color = self.current_theme.colors.foreground_color();
+        let foreground_color = self.current_theme.colors.editor_foreground_color();
         let selection_bg = self.current_theme.colors.selection_color();
         let line_number_color = self.current_theme.colors.line_number_color();
         let comment_color = self.current_theme.colors.comment_color();

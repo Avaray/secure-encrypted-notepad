@@ -666,6 +666,29 @@ impl EditorApp {
                                 }
                                 ui.end_row();
 
+                                // Editor Foreground
+                                ui.label("Editor Foreground:");
+                                ui.horizontal(|ui| {
+                                    let mut editor_fg = theme
+                                        .colors
+                                        .editor_foreground
+                                        .unwrap_or(theme.colors.foreground);
+                                    if ui.color_edit_button_srgb(&mut editor_fg).changed() {
+                                        theme.colors.editor_foreground = Some(editor_fg);
+                                        theme_changed = true;
+                                    }
+                                    if theme.colors.editor_foreground.is_some() {
+                                        if ui.button("↺").on_hover_text("Reset to match UI Foreground").clicked() {
+                                            theme.colors.editor_foreground = None;
+                                            theme_changed = true;
+                                        }
+                                    }
+                                    if theme.colors.editor_foreground.is_none() {
+                                         ui.weak("(Same as UI)");
+                                    }
+                                });
+                                ui.end_row();
+
                                 // Panel Background
                                 ui.label("Panel Background:");
                                 if ui

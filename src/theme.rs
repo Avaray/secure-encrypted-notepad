@@ -21,6 +21,8 @@ impl Default for ColorScheme {
 pub struct ThemeColors {
     pub background: [u8; 3],
     pub foreground: [u8; 3],
+    #[serde(default)]
+    pub editor_foreground: Option<[u8; 3]>,
     pub panel_background: [u8; 3],
     pub selection_background: [u8; 3],
     pub cursor: [u8; 3],
@@ -44,6 +46,7 @@ impl ThemeColors {
         Self {
             background: [27, 27, 27],
             foreground: [255, 255, 255],
+            editor_foreground: None, // Use foreground by default
             panel_background: [37, 37, 37],
             selection_background: [51, 51, 51],
             cursor: [255, 255, 255],
@@ -61,6 +64,7 @@ impl ThemeColors {
         Self {
             background: [255, 255, 255],
             foreground: [0, 0, 0],
+            editor_foreground: None, // Use foreground by default
             panel_background: [245, 245, 245],
             selection_background: [173, 214, 255],
             cursor: [0, 0, 0],
@@ -74,8 +78,9 @@ impl ThemeColors {
         }
     }
 
-    pub fn foreground_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgb(self.foreground[0], self.foreground[1], self.foreground[2])
+    pub fn editor_foreground_color(&self) -> egui::Color32 {
+        let c = self.editor_foreground.unwrap_or(self.foreground);
+        egui::Color32::from_rgb(c[0], c[1], c[2])
     }
 
     pub fn to_egui_color32(&self, rgb: [u8; 3]) -> egui::Color32 {
