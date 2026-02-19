@@ -125,9 +125,8 @@ pub struct EditorApp {
     pub(crate) startup_frame_count: usize,
 }
 
-impl Default for EditorApp {
-    fn default() -> Self {
-        let settings = Settings::load();
+impl EditorApp {
+    pub fn from_settings(settings: Settings) -> Self {
         let sensitive_settings = SensitiveSettings::default();
         let themes = load_themes();
         let available_fonts = crate::fonts::get_system_fonts();
@@ -211,9 +210,15 @@ impl Default for EditorApp {
     }
 }
 
+impl Default for EditorApp {
+    fn default() -> Self {
+        Self::from_settings(Settings::load())
+    }
+}
+
 impl EditorApp {
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let mut app = Self::default();
+    pub fn new(cc: &eframe::CreationContext<'_>, settings: Settings) -> Self {
+        let mut app = Self::from_settings(settings);
         app.icons = crate::icons::Icons::load(&cc.egui_ctx);
         app.current_theme.apply(&cc.egui_ctx);
         app.log_info("Application started");
@@ -230,10 +235,6 @@ impl eframe::App for EditorApp {
         // Track window state (maximized, position, size)
         // Wait for a few frames to let the OS apply the initial window state
         if self.startup_frame_count <= 30 {
-            if self.startup_frame_count == 0 {
-                // Force maximize on startup as requested
-                ctx.send_viewport_cmd(egui::ViewportCommand::Maximized(true));
-            }
             self.startup_frame_count += 1;
         }
         

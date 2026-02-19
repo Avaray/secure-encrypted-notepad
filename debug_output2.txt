@@ -1,0 +1,3 @@
+[SED] Settings loaded OK (plaintext): use_global_keyfile=true, global_keyfile=Some("C:\\Users\\DAV\\Desktop\\keyfile"), start_maximized=true, theme=Dark
+[SED] Settings saved OK: use_global_keyfile=true, global_keyfile=Some("C:\\Users\\DAV\\Desktop\\keyfile"), start_maximized=false, theme=Dark
+[SED] Settings saved OK: use_global_keyfile=true, global_keyfile=Some("C:\\Users\\DAV\\Desktop\\keyfile"), start_maximized=true, theme=Dark

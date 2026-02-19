@@ -26,10 +26,10 @@ fn main() -> Result<(), eframe::Error> {
     let mut viewport_builder = eframe::egui::ViewportBuilder::default()
         .with_inner_size([settings.window_width, settings.window_height])
         .with_min_inner_size([800.0, 600.0])
-        .with_maximized(true);
+        .with_maximized(settings.start_maximized);
 
-    // Apply saved position if valid
-    if settings.window_pos_x >= 0.0 && settings.window_pos_y >= 0.0 {
+    // Apply saved position only when NOT starting maximized (they conflict)
+    if !settings.start_maximized && settings.window_pos_x >= 0.0 && settings.window_pos_y >= 0.0 {
         viewport_builder = viewport_builder.with_position(eframe::egui::pos2(
             settings.window_pos_x,
             settings.window_pos_y,
@@ -44,6 +44,6 @@ fn main() -> Result<(), eframe::Error> {
     eframe::run_native(
         "Secure Encrypted Document Editor",
         options,
-        Box::new(|cc| Ok(Box::new(EditorApp::new(cc)))),
+        Box::new(move |cc| Ok(Box::new(EditorApp::new(cc, settings)))),
     )
 }

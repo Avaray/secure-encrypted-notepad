@@ -135,38 +135,58 @@ impl Settings {
         if let Some(config_dir) = dirs::config_dir() {
             let config_path = config_dir.join("sed").join("config.toml");
             if config_path.exists() {
-                if let Ok(content_bytes) = fs::read(&config_path) {
-                    // Check for encryption magic header
-                    if content_bytes.len() > 4 && &content_bytes[0..4] == CONFIG_MAGIC {
-                        // Encrypted content
-                        if let Ok(key_bytes) = Self::get_or_create_config_key() {
-                            if let Ok(secret_key) = aead::SecretKey::from_slice(&key_bytes) {
-                                let encrypted_data = &content_bytes[4..];
-                                if let Ok(plaintext) = aead::open(&secret_key, encrypted_data) {
-                                    if let Ok(settings) = toml::from_str(&String::from_utf8_lossy(&plaintext)) {
+                match fs::read(&config_path) {
+                    Ok(content_bytes) => {
+                        // Check for encryption magic header
+                        if content_bytes.len() > 4 && &content_bytes[0..4] == CONFIG_MAGIC {
+                            // Encrypted content
+                            match Self::get_or_create_config_key() {
+                                Ok(key_bytes) => {
+                                    match aead::SecretKey::from_slice(&key_bytes) {
+                                        Ok(secret_key) => {
+                                            let encrypted_data = &content_bytes[4..];
+                                            match aead::open(&secret_key, encrypted_data) {
+                                                Ok(plaintext) => {
+                                                    match toml::from_str::<Settings>(&String::from_utf8_lossy(&plaintext)) {
+                                                        Ok(settings) => {
+                                                            eprintln!("[SED] Settings loaded OK: use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
+                                                                settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
+                                                            return settings;
+                                                        }
+                                                        Err(e) => eprintln!("[SED] Config TOML parse error: {}", e),
+                                                    }
+                                                }
+                                                Err(e) => eprintln!("[SED] Config decryption failed (key may have changed): {}", e),
+                                            }
+                                        }
+                                        Err(e) => eprintln!("[SED] Invalid config key format: {}", e),
+                                    }
+                                }
+                                Err(e) => eprintln!("[SED] Failed to get config key from keyring: {}", e),
+                            }
+                        } else {
+                            // Plaintext fallback (legacy)
+                            if let Ok(content_str) = String::from_utf8(content_bytes) {
+                                match toml::from_str::<Settings>(&content_str) {
+                                    Ok(settings) => {
+                                        eprintln!("[SED] Settings loaded OK (plaintext): use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
+                                            settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
                                         return settings;
                                     }
+                                    Err(e) => eprintln!("[SED] Config TOML parse error (plaintext): {}", e),
                                 }
                             }
                         }
-                        // Fallback implementation if key or decryption fails?
-                        // Ideally we should log error but we don't have logger here easily.
-                        // Return default.
-                    } else {
-                        // Plaintext fallback (legacy)
-                        if let Ok(content_str) = String::from_utf8(content_bytes) {
-                             if let Ok(settings) = toml::from_str(&content_str) {
-                                return settings;
-                            }
-                        }
                     }
+                    Err(e) => eprintln!("[SED] Failed to read config file: {}", e),
                 }
             }
         }
+        eprintln!("[SED] Using default settings");
         Self::default()
     }
 
-    /// Save settings to file (encrypted)
+    /// Save settings to file (plaintext TOML)
     pub fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(config_dir) = dirs::config_dir() {
             let config_dir = config_dir.join("sed");
@@ -174,20 +194,9 @@ impl Settings {
             let config_path = config_dir.join("config.toml");
             
             let toml_string = toml::to_string_pretty(self)?;
-            
-            // Generate/Get encryption key
-            let key_bytes = Self::get_or_create_config_key()?;
-            let secret_key = aead::SecretKey::from_slice(&key_bytes)?;
-            
-            // Encrypt
-            let ciphertext = aead::seal(&secret_key, toml_string.as_bytes())?;
-            
-            // Prepend magic bytes
-            let mut file_data = Vec::with_capacity(4 + ciphertext.len());
-            file_data.extend_from_slice(CONFIG_MAGIC);
-            file_data.extend_from_slice(&ciphertext);
-            
-            fs::write(&config_path, file_data)?;
+            fs::write(&config_path, toml_string)?;
+            eprintln!("[SED] Settings saved OK: use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
+                self.use_global_keyfile, self.global_keyfile_path, self.start_maximized, self.theme_name);
         }
         Ok(())
     }
