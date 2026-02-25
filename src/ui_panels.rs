@@ -306,6 +306,7 @@ impl EditorApp {
                         }
                         if ui.button("Clear").clicked() {
                             self.settings.global_keyfile_path = None;
+                            self.settings.keyfile_path_encrypted = None;
                             let _ = self.settings.save();
                         }
                     });

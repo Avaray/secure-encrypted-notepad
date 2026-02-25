@@ -12,6 +12,7 @@ mod app;
 mod app_actions;
 mod app_helpers;
 mod app_state;
+mod config_crypto;
 mod ui_dialogs;
 mod ui_editor;
 mod ui_panels;
@@ -23,13 +24,18 @@ use app::EditorApp;
 
 fn main() -> Result<(), eframe::Error> {
     let settings = crate::settings::Settings::load();
+
+    // Always set the last known non-maximized size as fallback geometry.
+    // Do NOT use with_maximized(true) here — it has a race condition on Windows 10/11
+    // where the window doesn't reliably start maximized. Instead, we use the
+    // "first-frame ViewportCommand" trick in EditorApp::update().
     let mut viewport_builder = eframe::egui::ViewportBuilder::default()
         .with_inner_size([settings.window_width, settings.window_height])
-        .with_min_inner_size([800.0, 600.0])
-        .with_maximized(settings.start_maximized);
+        .with_min_inner_size([800.0, 600.0]);
 
-    // Apply saved position only when NOT starting maximized (they conflict)
-    if !settings.start_maximized && settings.window_pos_x >= 0.0 && settings.window_pos_y >= 0.0 {
+    // Always apply saved position (even when start_maximized is true) so the window
+    // has sensible geometry if the user later unmaximizes.
+    if settings.window_pos_x >= 0.0 && settings.window_pos_y >= 0.0 {
         viewport_builder = viewport_builder.with_position(eframe::egui::pos2(
             settings.window_pos_x,
             settings.window_pos_y,

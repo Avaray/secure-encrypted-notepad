@@ -29,7 +29,11 @@ pub struct Settings {
     pub theme_name: String,
     /// Whether to use global keyfile automatically on startup
     pub use_global_keyfile: bool,
-    /// Path to the global keyfile (persisted in plaintext)
+    /// Encrypted keyfile path (serialized to TOML as "<nonce>:<ciphertext>")
+    #[serde(default)]
+    pub keyfile_path_encrypted: Option<String>,
+    /// Path to the global keyfile (memory-only, never serialized to disk)
+    #[serde(skip)]
     pub global_keyfile_path: Option<PathBuf>,
     /// Whether to auto-create snapshot on save when content changes
     pub auto_snapshot_on_save: bool,
@@ -103,6 +107,7 @@ impl Default for Settings {
             editor_font_family: "Monospace".to_string(),
             theme_name: "Dark".to_string(),
             use_global_keyfile: false,
+            keyfile_path_encrypted: None,
             global_keyfile_path: None,
             auto_snapshot_on_save: true,
             show_line_numbers: true,
@@ -148,7 +153,8 @@ impl Settings {
                                             match aead::open(&secret_key, encrypted_data) {
                                                 Ok(plaintext) => {
                                                     match toml::from_str::<Settings>(&String::from_utf8_lossy(&plaintext)) {
-                                                        Ok(settings) => {
+                                                        Ok(mut settings) => {
+                                                            Self::decrypt_keyfile_path_field(&mut settings);
                                                             eprintln!("[SED] Settings loaded OK: use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
                                                                 settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
                                                             return settings;
@@ -168,7 +174,8 @@ impl Settings {
                             // Plaintext fallback (legacy)
                             if let Ok(content_str) = String::from_utf8(content_bytes) {
                                 match toml::from_str::<Settings>(&content_str) {
-                                    Ok(settings) => {
+                                    Ok(mut settings) => {
+                                        Self::decrypt_keyfile_path_field(&mut settings);
                                         eprintln!("[SED] Settings loaded OK (plaintext): use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
                                             settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
                                         return settings;
@@ -186,17 +193,25 @@ impl Settings {
         Self::default()
     }
 
-    /// Save settings to file (plaintext TOML)
+    /// Save settings to file (plaintext TOML).
+    ///
+    /// The global keyfile path is encrypted before serialization.
+    /// The `#[serde(skip)]` on `global_keyfile_path` ensures only the
+    /// encrypted form (`keyfile_path_encrypted`) hits disk.
     pub fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(config_dir) = dirs::config_dir() {
             let config_dir = config_dir.join("sed");
             fs::create_dir_all(&config_dir)?;
             let config_path = config_dir.join("config.toml");
-            
-            let toml_string = toml::to_string_pretty(self)?;
+
+            // Clone to mutate the encrypted field before serialization
+            let mut to_save = self.clone();
+            to_save.encrypt_keyfile_path_field();
+
+            let toml_string = toml::to_string_pretty(&to_save)?;
             fs::write(&config_path, toml_string)?;
-            eprintln!("[SED] Settings saved OK: use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
-                self.use_global_keyfile, self.global_keyfile_path, self.start_maximized, self.theme_name);
+            eprintln!("[SED] Settings saved OK: use_global_keyfile={}, keyfile_encrypted={}, start_maximized={}, theme={}",
+                self.use_global_keyfile, to_save.keyfile_path_encrypted.is_some(), self.start_maximized, self.theme_name);
         }
         Ok(())
     }
@@ -234,6 +249,68 @@ impl Settings {
     pub fn validate_font_sizes(&mut self) {
         self.ui_font_size = self.ui_font_size.clamp(8.0, 32.0);
         self.editor_font_size = self.editor_font_size.clamp(8.0, 32.0);
+    }
+
+    /// Decrypt `keyfile_path_encrypted` into `global_keyfile_path`.
+    /// On any error (keychain unavailable, decryption failure) the path
+    /// is set to None and a warning is logged — never crashes.
+    fn decrypt_keyfile_path_field(settings: &mut Self) {
+        if let Some(ref encrypted) = settings.keyfile_path_encrypted {
+            eprintln!("[SED] Attempting to decrypt keyfile path ({} chars encrypted)", encrypted.len());
+            match crate::config_crypto::get_or_create_config_key() {
+                Ok(key) => {
+                    eprintln!("[SED] Config crypto key retrieved from keychain OK");
+                    match crate::config_crypto::decrypt_keyfile_path(&key, encrypted) {
+                        Ok(path_str) => {
+                            eprintln!("[SED] Keyfile path decrypted OK: {:?}", path_str);
+                            settings.global_keyfile_path = Some(PathBuf::from(path_str));
+                        }
+                        Err(e) => {
+                            eprintln!("[SED] Warning: failed to decrypt keyfile path: {}", e);
+                            settings.global_keyfile_path = None;
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("[SED] Warning: keychain unavailable, cannot decrypt keyfile path: {}", e);
+                    settings.global_keyfile_path = None;
+                }
+            }
+        } else {
+            eprintln!("[SED] No encrypted keyfile path in config");
+        }
+    }
+
+    /// Encrypt `global_keyfile_path` into `keyfile_path_encrypted`.
+    /// On keychain error the encrypted field is left UNCHANGED (preserves
+    /// existing encrypted data) and a warning is logged.
+    /// When `global_keyfile_path` is None, `keyfile_path_encrypted` is NOT
+    /// cleared here — the caller must explicitly set it to None if the
+    /// user intentionally removed the keyfile path.
+    fn encrypt_keyfile_path_field(&mut self) {
+        if let Some(ref path) = self.global_keyfile_path {
+            match crate::config_crypto::get_or_create_config_key() {
+                Ok(key) => {
+                    let path_str = path.to_string_lossy();
+                    match crate::config_crypto::encrypt_keyfile_path(&key, &path_str) {
+                        Ok(encrypted) => {
+                            self.keyfile_path_encrypted = Some(encrypted);
+                        }
+                        Err(e) => {
+                            // Don't erase existing encrypted data on failure
+                            eprintln!("[SED] Warning: failed to encrypt keyfile path: {}", e);
+                        }
+                    }
+                }
+                Err(e) => {
+                    // Don't erase existing encrypted data on keychain failure
+                    eprintln!("[SED] Warning: keychain unavailable, keyfile path will not be saved: {}", e);
+                }
+            }
+        }
+        // When global_keyfile_path is None, leave keyfile_path_encrypted as-is.
+        // This preserves the encrypted value if decryption failed on load,
+        // so a subsequent save() doesn't destroy the data.
     }
 }
 

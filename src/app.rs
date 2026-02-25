@@ -120,9 +120,12 @@ pub struct EditorApp {
     pub(crate) batch_output_dir: Option<PathBuf>,
 
     // Window state tracking
-    // Window state tracking
-    pub(crate) last_known_maximized: bool,
-    pub(crate) startup_frame_count: usize,
+    /// True only for the very first update() call — used for the first-frame maximize trick
+    pub(crate) first_frame: bool,
+    /// Whether the window should start maximized (from saved settings)
+    pub(crate) start_maximized: bool,
+    /// Current maximized state, updated every frame from the OS viewport
+    pub(crate) is_maximized: bool,
 }
 
 impl EditorApp {
@@ -200,8 +203,9 @@ impl EditorApp {
             batch_files: Vec::new(),
             batch_keyfile: None,
             batch_output_dir: None,
-            last_known_maximized: settings.start_maximized,
-            startup_frame_count: 0,
+            first_frame: true,
+            start_maximized: settings.start_maximized,
+            is_maximized: false,
             last_autosave_time: None,
             last_copy_time: None,
             
@@ -232,56 +236,64 @@ impl eframe::App for EditorApp {
         // Update window title dynamically
         self.update_window_title(ctx);
 
-        // Track window state (maximized, position, size)
-        // Wait for a few frames to let the OS apply the initial window state
-        if self.startup_frame_count <= 30 {
-            self.startup_frame_count += 1;
+        // ── Window state tracking ──────────────────────────────────────────
+        // Read the OS-reported maximized state every frame.
+        // This correctly tracks when the user clicks the Windows maximize/restore button.
+        self.is_maximized = ctx.input(|i| i.viewport().maximized.unwrap_or(false));
+
+        // First-frame maximize trick: with_maximized(true) in ViewportBuilder has a
+        // race condition on Windows 10/11.  Instead we send a ViewportCommand on the
+        // very first frame, which fires after the window is fully created.
+        if self.first_frame {
+            self.first_frame = false;
+            if self.start_maximized {
+                ctx.send_viewport_cmd(egui::ViewportCommand::Maximized(true));
+            }
         }
-        
-        if self.startup_frame_count > 30 {
-            ctx.input(|i| {
-            let is_maximized = i.viewport().maximized.unwrap_or(false);
-            
-            // Only save changes to avoid disk spam
+
+        // Persist window geometry changes — only save when something actually changed
+        {
             let mut changed = false;
 
-            if is_maximized != self.last_known_maximized {
-                self.settings.start_maximized = is_maximized;
-                self.last_known_maximized = is_maximized;
+            // Track maximize state changes
+            if self.is_maximized != self.settings.start_maximized {
+                self.settings.start_maximized = self.is_maximized;
                 changed = true;
             }
 
-            // If not maximized, save position and size
-            if !is_maximized {
-                if let Some(rect) = i.viewport().outer_rect {
-                    // Save position if valid (not negative coordinates that might be off-screen/minimized)
-                    if rect.min.x >= 0.0 && rect.min.y >= 0.0 {
-                         if (self.settings.window_pos_x - rect.min.x).abs() > 1.0 {
-                            self.settings.window_pos_x = rect.min.x;
+            // When NOT maximized, save position and size so we preserve the last
+            // known non-maximized geometry.  Never overwrite these while maximized,
+            // because the maximized rect covers the whole screen and would clobber
+            // the user's preferred restored-window position/size.
+            if !self.is_maximized {
+                ctx.input(|i| {
+                    if let Some(rect) = i.viewport().outer_rect {
+                        // Only save valid positions (negative coords = off-screen/minimized)
+                        if rect.min.x >= 0.0 && rect.min.y >= 0.0 {
+                            if (self.settings.window_pos_x - rect.min.x).abs() > 1.0 {
+                                self.settings.window_pos_x = rect.min.x;
+                                changed = true;
+                            }
+                            if (self.settings.window_pos_y - rect.min.y).abs() > 1.0 {
+                                self.settings.window_pos_y = rect.min.y;
+                                changed = true;
+                            }
+                        }
+                        if (self.settings.window_width - rect.width()).abs() > 1.0 {
+                            self.settings.window_width = rect.width();
                             changed = true;
-                         }
-                         if (self.settings.window_pos_y - rect.min.y).abs() > 1.0 {
-                            self.settings.window_pos_y = rect.min.y;
+                        }
+                        if (self.settings.window_height - rect.height()).abs() > 1.0 {
+                            self.settings.window_height = rect.height();
                             changed = true;
-                         }
+                        }
                     }
-
-                    // Save size
-                    if (self.settings.window_width - rect.width()).abs() > 1.0 {
-                        self.settings.window_width = rect.width();
-                        changed = true;
-                    }
-                    if (self.settings.window_height - rect.height()).abs() > 1.0 {
-                        self.settings.window_height = rect.height();
-                        changed = true;
-                    }
-                }
+                });
             }
 
             if changed {
                 let _ = self.settings.save();
             }
-        });
         }
 
         // Perform auto-save check
