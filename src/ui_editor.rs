@@ -1,6 +1,14 @@
 use crate::EditorApp;
 use eframe::egui;
 
+fn char_to_byte_idx(s: &str, char_idx: usize) -> usize {
+    s.char_indices().nth(char_idx).map(|(b, _)| b).unwrap_or(s.len())
+}
+
+fn byte_to_char_idx(s: &str, byte_idx: usize) -> usize {
+    s.get(..byte_idx).map(|sub| sub.chars().count()).unwrap_or_else(|| s.chars().count())
+}
+
 impl EditorApp {
     pub(crate) fn render_editor(&mut self, ui: &mut egui::Ui) {
         let text = &mut self.document.current_content;
@@ -284,7 +292,7 @@ impl EditorApp {
                                 state.cursor.set_char_range(Some(egui::text::CCursorRange {
                                     primary: egui::text::CCursor::new(current_pos),
                                     secondary: egui::text::CCursor::new(
-                                        if current_pos == 0 { text.len() } else { 0 }
+                                        if current_pos == 0 { text.chars().count() } else { 0 }
                                     ),
                                 }));
                                 state.store(ui.ctx(), text_edit_id);
@@ -352,7 +360,7 @@ impl EditorApp {
                         if let Some(pointer_pos) = ui.input(|i| i.pointer.interact_pos()) {
                             if pointer_pos.y > content_bottom && pointer_pos.x >= text_rect.min.x {
                                 // Clicked below content - move cursor to end
-                                let end_pos = text.len();
+                                let end_pos = text.chars().count();
                                 if let Some(mut state) =
                                     egui::TextEdit::load_state(ui.ctx(), text_edit_id)
                                 {
@@ -440,11 +448,11 @@ impl EditorApp {
                     if output.response.has_focus() {
                         if let Some(state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
                             if let Some(cursor_range) = state.cursor.char_range() {
-                                let cursor_pos = cursor_range.primary.index;
+                                let cursor_char_pos = cursor_range.primary.index;
+                                let cursor_byte_pos = char_to_byte_idx(text, cursor_char_pos);
 
                                 // Count '\n' characters before cursor + 1
-                                let clamped_pos = cursor_pos.min(text.len());
-                                let line_num = text[..clamped_pos]
+                                let line_num = text[..cursor_byte_pos]
                                     .as_bytes()
                                     .iter()
                                     .filter(|&&b| b == b'\n')
@@ -453,11 +461,13 @@ impl EditorApp {
 
                                 self.highlighted_line = Some(line_num);
 
-                                let start =
+                                let char_start =
                                     cursor_range.primary.index.min(cursor_range.secondary.index);
-                                let end =
+                                let char_end =
                                     cursor_range.primary.index.max(cursor_range.secondary.index);
-                                self.text_cursor_range = Some(start..end);
+                                let byte_start = char_to_byte_idx(text, char_start);
+                                let byte_end = char_to_byte_idx(text, char_end);
+                                self.text_cursor_range = Some(byte_start..byte_end);
                             }
                         }
                     }
@@ -471,8 +481,9 @@ impl EditorApp {
     fn handle_tab_key(ui: &egui::Ui, id: egui::Id, unindent: bool, text: &mut String, settings: &crate::settings::Settings, is_modified: &mut bool) {
         if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), id) {
             if let Some(range) = state.cursor.char_range() {
-                 let start = range.primary.index.min(range.secondary.index);
-                 let end = range.primary.index.max(range.secondary.index);
+                 let start_char = range.primary.index.min(range.secondary.index);
+                 let end_char = range.primary.index.max(range.secondary.index);
+                 let start_byte = char_to_byte_idx(text, start_char);
                  
                  let tab_str = if settings.use_spaces_for_tabs {
                      " ".repeat(settings.tab_size)
@@ -480,23 +491,24 @@ impl EditorApp {
                      "\t".to_string()
                  };
                  
-                 if start == end && !unindent {
+                 if start_char == end_char && !unindent {
                      // Simple insert at cursor
-                     if start <= text.len() {
-                         text.insert_str(start, &tab_str);
+                     if start_byte <= text.len() {
+                         text.insert_str(start_byte, &tab_str);
+                         let chars_added = tab_str.chars().count();
                          state.cursor.set_char_range(Some(egui::text::CCursorRange::one(
-                             egui::text::CCursor::new(start + tab_str.len())
+                             egui::text::CCursor::new(start_char + chars_added)
                          )));
                          state.store(ui.ctx(), id);
                          *is_modified = true;
                      }
                 } else {
                      // Multi-line indent/unindent or single line unindent
-                     if unindent && start == end {
+                     if unindent && start_char == end_char {
                          let text_ref = &*text;
                          // Find line start/end
-                         let line_start = text_ref[..start].rfind('\n').map(|i| i + 1).unwrap_or(0);
-                         let line_end = text_ref[start..].find('\n').map(|i| start + i).unwrap_or(text.len());
+                         let line_start = text_ref[..start_byte].rfind('\n').map(|i| i + 1).unwrap_or(0);
+                         let line_end = text_ref[start_byte..].find('\n').map(|i| start_byte + i).unwrap_or(text.len());
                          let line = &text_ref[line_start..line_end];
                          
                          let tab_len = if settings.use_spaces_for_tabs { settings.tab_size } else { 1 };
@@ -507,22 +519,25 @@ impl EditorApp {
                          if leading_spaces >= tab_len && settings.use_spaces_for_tabs {
                              // Remove one level of spaces
                              text.replace_range(line_start..line_start + tab_len, "");
-                             let new_cursor = start.saturating_sub(tab_len).max(line_start);
-                             state.cursor.set_char_range(Some(egui::text::CCursorRange::one(egui::text::CCursor::new(new_cursor))));
+                             let new_cursor_byte = start_byte.saturating_sub(tab_len).max(line_start);
+                             let new_cursor_char = byte_to_char_idx(text, new_cursor_byte);
+                             state.cursor.set_char_range(Some(egui::text::CCursorRange::one(egui::text::CCursor::new(new_cursor_char))));
                              state.store(ui.ctx(), id);
                              *is_modified = true;
                          } else if leading_spaces > 0 {
                              // Remove leftover spaces
                              text.replace_range(line_start..line_start + leading_spaces, "");
-                             let new_cursor = start.saturating_sub(leading_spaces).max(line_start);
-                             state.cursor.set_char_range(Some(egui::text::CCursorRange::one(egui::text::CCursor::new(new_cursor))));
+                             let new_cursor_byte = start_byte.saturating_sub(leading_spaces).max(line_start);
+                             let new_cursor_char = byte_to_char_idx(text, new_cursor_byte);
+                             state.cursor.set_char_range(Some(egui::text::CCursorRange::one(egui::text::CCursor::new(new_cursor_char))));
                              state.store(ui.ctx(), id);
                              *is_modified = true;
                          } else if line.starts_with('\t') {
                              // Remove tab
                              text.replace_range(line_start..line_start + 1, "");
-                             let new_cursor = start.saturating_sub(1).max(line_start);
-                             state.cursor.set_char_range(Some(egui::text::CCursorRange::one(egui::text::CCursor::new(new_cursor))));
+                             let new_cursor_byte = start_byte.saturating_sub(1).max(line_start);
+                             let new_cursor_char = byte_to_char_idx(text, new_cursor_byte);
+                             state.cursor.set_char_range(Some(egui::text::CCursorRange::one(egui::text::CCursor::new(new_cursor_char))));
                              state.store(ui.ctx(), id);
                              *is_modified = true;
                          }
@@ -535,12 +550,13 @@ impl EditorApp {
     fn handle_enter_key(ui: &egui::Ui, id: egui::Id, text: &mut String, is_modified: &mut bool) {
         if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), id) {
             if let Some(range) = state.cursor.char_range() {
-                let cursor_idx = range.primary.index;
+                let cursor_char_idx = range.primary.index;
+                let cursor_byte_idx = char_to_byte_idx(text, cursor_char_idx);
                 
                 // Find start of current line to read indentation
                 let text_ref = &*text;
-                let line_start = text_ref[..cursor_idx].rfind('\n').map(|i| i + 1).unwrap_or(0);
-                let current_line = &text_ref[line_start..cursor_idx];
+                let line_start = text_ref[..cursor_byte_idx].rfind('\n').map(|i| i + 1).unwrap_or(0);
+                let current_line = &text_ref[line_start..cursor_byte_idx];
                 
                 // Calculate indentation
                 let indent: String = current_line.chars().take_while(|c| c.is_whitespace()).collect();
@@ -548,15 +564,17 @@ impl EditorApp {
                 let insert_str = format!("\n{}", indent);
                 
                 // Replace selection (if any) or insert
-                let start = range.primary.index.min(range.secondary.index);
-                let end = range.primary.index.max(range.secondary.index);
+                let start_char = range.primary.index.min(range.secondary.index);
+                let end_char = range.primary.index.max(range.secondary.index);
+                let start_byte = char_to_byte_idx(text, start_char);
+                let end_byte = char_to_byte_idx(text, end_char);
                 
-                if start <= text.len() && end <= text.len() {
-                    text.replace_range(start..end, &insert_str);
+                if start_byte <= text.len() && end_byte <= text.len() {
+                    text.replace_range(start_byte..end_byte, &insert_str);
                     
-                    let new_pos = start + insert_str.len();
+                    let new_pos_char = start_char + insert_str.chars().count();
                     state.cursor.set_char_range(Some(egui::text::CCursorRange::one(
-                        egui::text::CCursor::new(new_pos)
+                        egui::text::CCursor::new(new_pos_char)
                     )));
                     state.store(ui.ctx(), id);
                     *is_modified = true;
@@ -568,11 +586,11 @@ impl EditorApp {
     fn handle_copy_key(ui: &egui::Ui, id: egui::Id, text: &str, last_copy_time: &mut Option<std::time::Instant>) {
         if let Some(state) = egui::TextEdit::load_state(ui.ctx(), id) {
             if let Some(range) = state.cursor.char_range() {
-                 let start = range.primary.index.min(range.secondary.index);
-                 let end = range.primary.index.max(range.secondary.index);
+                 let start_byte = char_to_byte_idx(text, range.primary.index.min(range.secondary.index));
+                 let end_byte = char_to_byte_idx(text, range.primary.index.max(range.secondary.index));
                  
-                 if start != end && end <= text.len() {
-                     let selected_text = &text[start..end];
+                 if start_byte != end_byte && end_byte <= text.len() {
+                     let selected_text = &text[start_byte..end_byte];
                      ui.output_mut(|o| o.copied_text = selected_text.to_string());
                      *last_copy_time = Some(std::time::Instant::now());
                  }
@@ -583,21 +601,23 @@ impl EditorApp {
     fn handle_cut_key(ui: &egui::Ui, id: egui::Id, text: &mut String, is_modified: &mut bool, last_copy_time: &mut Option<std::time::Instant>) {
         if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), id) {
             if let Some(range) = state.cursor.char_range() {
-                 let start = range.primary.index.min(range.secondary.index);
-                 let end = range.primary.index.max(range.secondary.index);
+                 let start_char = range.primary.index.min(range.secondary.index);
+                 let end_char = range.primary.index.max(range.secondary.index);
+                 let start_byte = char_to_byte_idx(text, start_char);
+                 let end_byte = char_to_byte_idx(text, end_char);
                  
-                 if start != end && end <= text.len() {
-                     let selected_text = &text[start..end];
+                 if start_byte != end_byte && end_byte <= text.len() {
+                     let selected_text = &text[start_byte..end_byte];
                      ui.output_mut(|o| o.copied_text = selected_text.to_string());
                      *last_copy_time = Some(std::time::Instant::now());
                      
                      // Delete selection
-                     text.replace_range(start..end, "");
+                     text.replace_range(start_byte..end_byte, "");
                      *is_modified = true;
                      
                      // Update cursor
                      state.cursor.set_char_range(Some(egui::text::CCursorRange::one(
-                         egui::text::CCursor::new(start)
+                         egui::text::CCursor::new(start_char)
                      )));
                      state.store(ui.ctx(), id);
                  }
