@@ -111,13 +111,8 @@ impl EditorApp {
                 // Save scroll area rect for auto-scroll during selection
                 let scroll_area_rect = ui.clip_rect();
 
-                // Create clickable area over the FULL height
-                let full_area = ui.available_rect_before_wrap();
-                let sense_rect = ui.interact(
-                    full_area,
-                    ui.id().with("editor_click_area"),
-                    egui::Sense::click(),
-                );
+                // Remove manual clickable area over FULL height.
+                // We will use min_size on the TextEdit instead.
 
                 ui.horizontal_top(|ui| {
                     if show_line_numbers {
@@ -154,7 +149,7 @@ impl EditorApp {
 
                         // Iterate lines, including trailing empty line after final \n
                         let mut lines_iter = text_str.split('\n').peekable();
-                        let mut line_idx = 0;
+                        let mut _line_idx = 0;
                         while let Some(line) = lines_iter.next() {
                             let is_last = lines_iter.peek().is_none();
 
@@ -260,17 +255,13 @@ impl EditorApp {
                                 byte_offset += line.len();
                             }
 
-                            line_idx += 1;
+                            _line_idx += 1;
                         }
 
                         ui.fonts(|f| f.layout_job(layout_job))
                     };
 
-                    // Add invisible blocking layer during middle mouse
-                    if middle_button_active {
-                        let overlay_rect = ui.max_rect();
-                        ui.allocate_rect(overlay_rect, egui::Sense::click_and_drag());
-                    }
+                    // Panning blocking handled by .interactive(!middle_button_active) in TextEdit
 
                     if ui.memory(|mem| mem.has_focus(text_edit_id)) {
                         if ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Tab)) {
@@ -300,18 +291,32 @@ impl EditorApp {
                         }
                     }
 
-                    let available_width = if word_wrap {
-                        ui.available_width()
+                    // Visible viewport width for the text area (excluding line numbers)
+                    let viewport_width = if show_line_numbers {
+                        (full_clip_rect.width() - line_number_width - text_left_padding).max(100.0)
+                    } else {
+                        full_clip_rect.width().max(100.0)
+                    };
+
+                    // desired_width controls text wrapping:
+                    //   word_wrap ON  -> wrap at viewport width
+                    //   word_wrap OFF -> no wrapping (INFINITY)
+                    let desired_width = if word_wrap {
+                        viewport_width
                     } else {
                         f32::INFINITY
                     };
+                    
+                    let min_height = full_clip_rect.height();
 
                     let output = egui::TextEdit::multiline(text)
                         .id(text_edit_id)
                         .font(egui::TextStyle::Monospace)
                         .code_editor()
-                        .desired_width(available_width)
+                        .desired_width(desired_width)
                         .desired_rows(line_count)
+                        // min_size ensures TextEdit fills the visible area but is NEVER infinite
+                        .min_size(egui::vec2(viewport_width, min_height))
                         .frame(false)
                         .lock_focus(true)
                         .interactive(!middle_button_active)
@@ -324,7 +329,7 @@ impl EditorApp {
                     let galley = &output.galley;
 
                     // AUTO-SCROLL during text selection with left button
-                    if pointer.primary_down() && !middle_button_active {
+                    if output.response.dragged() && !middle_button_active {
                         if let Some(pointer_pos) = pointer.latest_pos() {
                             let scroll_speed = 15.0;
                             let scroll_margin = 30.0;
@@ -343,42 +348,19 @@ impl EditorApp {
                                 scroll_state.offset.x += scroll_speed;
                             }
 
+                            let content_rect = galley.rect;
+                            let max_offset_y = (content_rect.height() - scroll_area_rect.height()).max(0.0);
+                            let max_offset_x = (content_rect.width() - scroll_area_rect.width()).max(0.0);
+                            scroll_state.offset.y = scroll_state.offset.y.clamp(0.0, max_offset_y);
+                            scroll_state.offset.x = scroll_state.offset.x.clamp(0.0, max_offset_x);
+
                             scroll_state.store(ui.ctx(), scroll_id);
                         }
                     }
 
-                    // Calculate content height
-                    let content_height = if !galley.rows.is_empty() {
-                        galley.rows.last().unwrap().max_y()
-                    } else {
-                        0.0
-                    };
-                    let content_bottom = text_rect.min.y + content_height;
 
-                    // Detect click in empty space BELOW text (only when not middle mouse)
-                    if sense_rect.clicked() && !middle_button_active {
-                        if let Some(pointer_pos) = ui.input(|i| i.pointer.interact_pos()) {
-                            if pointer_pos.y > content_bottom && pointer_pos.x >= text_rect.min.x {
-                                // Clicked below content - move cursor to end
-                                let end_pos = text.chars().count();
-                                if let Some(mut state) =
-                                    egui::TextEdit::load_state(ui.ctx(), text_edit_id)
-                                {
-                                    state.cursor.set_char_range(Some(
-                                        egui::text::CCursorRange::one(egui::text::CCursor::new(
-                                            end_pos,
-                                        )),
-                                    ));
-                                    state.store(ui.ctx(), text_edit_id);
-                                }
-                                self.highlighted_line = Some(line_count);
-                                ui.memory_mut(|mem| mem.request_focus(text_edit_id));
-                            } else if pointer_pos.y <= content_bottom {
-                                // Clicked within text area - request focus
-                                ui.memory_mut(|mem| mem.request_focus(text_edit_id));
-                            }
-                        }
-                    }
+                    // Removed custom empty-space handling below text, 
+                    // as TextEdit now fills the visual area.
 
                     // Restore full clip rect for drawing line numbers and separator
                     ui.set_clip_rect(full_clip_rect);

@@ -1,6 +1,6 @@
 use crate::EditorApp;
 use eframe::egui;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use crate::crypto::{encrypt_file, decrypt_file};
 
 

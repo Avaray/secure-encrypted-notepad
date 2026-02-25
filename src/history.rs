@@ -236,6 +236,7 @@ impl DocumentWithHistory {
 
     /// Apply deletions - physically remove deleted entries
     /// NOTE: This is NOT used during save anymore - to_file_content() filters automatically
+    #[allow(dead_code)]
     pub fn apply_deletions(&mut self) {
         self.history.retain(|entry| !entry.deleted);
     }

@@ -56,5 +56,6 @@ pub enum PendingAction {
     OpenDirectory,
     Exit,
     OpenFileFromTree(PathBuf),
+    #[allow(dead_code)]
     ChangeDirectory(PathBuf),
 }
