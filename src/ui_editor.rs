@@ -92,6 +92,17 @@ impl EditorApp {
             }
         }
 
+        // Apply pending horizontal scroll reset BEFORE ScrollArea
+        if self.reset_scroll_x_pending {
+            scroll_state.offset.x = 0.0;
+            scroll_state.store(ui.ctx(), scroll_id);
+            self.reset_scroll_x_pending = false;
+        }
+
+        // The user requested the cursor/scroll animation to be 75% faster
+        let original_animation_time = ui.style().animation_time;
+        ui.style_mut().animation_time = original_animation_time * 0.25;
+
         let scroll_output = egui::ScrollArea::both()
             .id_salt("main_editor")
             .auto_shrink(false)
@@ -443,6 +454,20 @@ impl EditorApp {
 
                                 self.highlighted_line = Some(line_num);
 
+                                // Detect if cursor is on an empty or blank line → schedule scroll reset
+                                let line_start = text[..cursor_byte_pos].rfind('\n').map(|i| i + 1).unwrap_or(0);
+                                let line_end = text[cursor_byte_pos..].find('\n').map(|i| cursor_byte_pos + i).unwrap_or(text.len());
+                                let current_line = &text[line_start..line_end];
+                                
+                                // Only reset if the cursor ACTUALLY moved to an empty line
+                                // (don't lock the view to 0 if they try to scroll horizontally while on an empty line)
+                                if self.previous_cursor_byte_pos != Some(cursor_byte_pos) {
+                                    if current_line.trim().is_empty() {
+                                        self.reset_scroll_x_pending = true;
+                                    }
+                                }
+                                self.previous_cursor_byte_pos = Some(cursor_byte_pos);
+
                                 let char_start =
                                     cursor_range.primary.index.min(cursor_range.secondary.index);
                                 let char_end =
@@ -456,8 +481,15 @@ impl EditorApp {
                 });
             });
 
-        // Save final scroll state
-        scroll_output.state.store(ui.ctx(), scroll_id);
+        // Apply horizontal scroll reset for current frame too
+        let mut final_state = scroll_output.state;
+        if self.reset_scroll_x_pending {
+            final_state.offset.x = 0.0;
+        }
+        final_state.store(ui.ctx(), scroll_id);
+
+        // Restore animation time
+        ui.style_mut().animation_time = original_animation_time;
     }
 
     fn handle_tab_key(ui: &egui::Ui, id: egui::Id, unindent: bool, text: &mut String, settings: &crate::settings::Settings, is_modified: &mut bool) {

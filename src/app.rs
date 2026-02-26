@@ -126,6 +126,12 @@ pub struct EditorApp {
     pub(crate) start_maximized: bool,
     /// Current maximized state, updated every frame from the OS viewport
     pub(crate) is_maximized: bool,
+
+    /// Flag to reset horizontal scroll to 0 on next frame (when cursor on empty line)
+    pub(crate) reset_scroll_x_pending: bool,
+
+    /// Previous cursor byte position (to detect navigation)
+    pub(crate) previous_cursor_byte_pos: Option<usize>,
 }
 
 impl EditorApp {
@@ -210,6 +216,8 @@ impl EditorApp {
             last_copy_time: None,
             
             style_dirty: true, // Apply style on startup
+            reset_scroll_x_pending: false,
+            previous_cursor_byte_pos: None,
         }
     }
 }
