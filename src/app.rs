@@ -393,11 +393,18 @@ impl eframe::App for EditorApp {
         // Confirmation dialog
         self.render_confirmation_dialog(ctx);
 
-        // Toolbar
+        // Toolbar — height adapts to icon size
+        let toolbar_height = match self.settings.toolbar_icon_size {
+            1 => 30.0,
+            2 => 36.0,
+            4 => 46.0,
+            5 => 52.0,
+            _ => 40.0, // 3 = Medium
+        };
         egui::TopBottomPanel::top("toolbar")
-            .min_height(50.0)
+            .exact_height(toolbar_height)
             .show(ctx, |ui| {
-                ui.add_space(4.0);
+                ui.add_space(2.0);
                 self.render_toolbar(ui);
             });
             

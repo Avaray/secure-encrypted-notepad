@@ -80,6 +80,9 @@ pub struct Settings {
     pub window_pos_x: f32,
     #[serde(default)]
     pub window_pos_y: f32,
+    /// Toolbar icon size preset (1=XS, 2=S, 3=M, 4=L, 5=XL)
+    #[serde(default = "default_toolbar_icon_size")]
+    pub toolbar_icon_size: u8,
 }
 
 fn default_window_width() -> f32 {
@@ -96,6 +99,10 @@ fn default_ui_font() -> String {
 
 fn default_editor_font() -> String {
     "Monospace".to_string()
+}
+
+fn default_toolbar_icon_size() -> u8 {
+    3
 }
 
 impl Default for Settings {
@@ -129,6 +136,7 @@ impl Default for Settings {
             window_height: 800.0,
             window_pos_x: -1.0, // -1 means "let OS decide" or "center"
             window_pos_y: -1.0,
+            toolbar_icon_size: 3, // Medium
         }
     }
 }

@@ -181,6 +181,19 @@ impl EditorApp {
                         }
                     });
 
+                    // Toolbar icon size
+                    ui.horizontal(|ui| {
+                        ui.label("Icon Size:");
+                        let labels = ["XS", "S", "M", "L", "XL"];
+                        for (i, label) in labels.iter().enumerate() {
+                            let val = (i + 1) as u8;
+                            if ui.selectable_label(self.settings.toolbar_icon_size == val, *label).clicked() {
+                                self.settings.toolbar_icon_size = val;
+                                let _ = self.settings.save();
+                            }
+                        }
+                    });
+
                     ui.separator();
 
                     ui.horizontal(|ui| {
