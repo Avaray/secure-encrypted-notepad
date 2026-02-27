@@ -257,7 +257,7 @@ impl EditorApp {
                             folders.push(FileTreeEntry::Directory(path));
                         } else if path.is_file() {
                             if let Some(ext) = path.extension() {
-                                if ext == "sed" {
+                                if ext == "sen" {
                                     files.push(FileTreeEntry::File(path));
                                 }
                             }
@@ -301,7 +301,7 @@ impl EditorApp {
                         .count();
 
                     self.log_info(format!(
-                        "Found {} folders and {} .sed files",
+                        "Found {} folders and {} .sen files",
                         folder_count, file_count
                     ));
                 }
@@ -319,10 +319,10 @@ impl EditorApp {
         let title = if let Some(path) = &self.current_file_path {
             let filename = path.file_name().unwrap_or_default().to_string_lossy();
             let modified = if self.is_modified { "*" } else { "" };
-            format!("{} {} - SED", filename, modified)
+            format!("{} {} - SEN", filename, modified)
         } else {
             let modified = if self.is_modified { "*" } else { "" };
-            format!("Untitled {} - SED", modified)
+            format!("Untitled {} - SEN", modified)
         };
 
         ctx.send_viewport_cmd(egui::ViewportCommand::Title(title));

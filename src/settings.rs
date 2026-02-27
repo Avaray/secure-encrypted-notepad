@@ -8,8 +8,8 @@ use std::path::PathBuf;
 use zeroize::Zeroizing;
 use keyring::Entry;
 
-const CONFIG_MAGIC: &[u8; 4] = b"SEDC";
-const SERVICE_NAME: &str = "sed-editor";
+const CONFIG_MAGIC: &[u8; 4] = b"SENC";
+const SERVICE_NAME: &str = "sen-notepad";
 const USER_NAME: &str = "config-key";
 
 /// User preferences - persisted between sessions
@@ -138,7 +138,7 @@ impl Settings {
     /// Load settings from file
     pub fn load() -> Self {
         if let Some(config_dir) = dirs::config_dir() {
-            let config_path = config_dir.join("sed").join("config.toml");
+            let config_path = config_dir.join("sen").join("config.toml");
             if config_path.exists() {
                 match fs::read(&config_path) {
                     Ok(content_bytes) => {
@@ -155,20 +155,20 @@ impl Settings {
                                                     match toml::from_str::<Settings>(&String::from_utf8_lossy(&plaintext)) {
                                                         Ok(mut settings) => {
                                                             Self::decrypt_keyfile_path_field(&mut settings);
-                                                            eprintln!("[SED] Settings loaded OK: use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
+                                                            eprintln!("[SEN] Settings loaded OK: use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
                                                                 settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
                                                             return settings;
                                                         }
-                                                        Err(e) => eprintln!("[SED] Config TOML parse error: {}", e),
+                                                        Err(e) => eprintln!("[SEN] Config TOML parse error: {}", e),
                                                     }
                                                 }
-                                                Err(e) => eprintln!("[SED] Config decryption failed (key may have changed): {}", e),
+                                                Err(e) => eprintln!("[SEN] Config decryption failed (key may have changed): {}", e),
                                             }
                                         }
-                                        Err(e) => eprintln!("[SED] Invalid config key format: {}", e),
+                                        Err(e) => eprintln!("[SEN] Invalid config key format: {}", e),
                                     }
                                 }
-                                Err(e) => eprintln!("[SED] Failed to get config key from keyring: {}", e),
+                                Err(e) => eprintln!("[SEN] Failed to get config key from keyring: {}", e),
                             }
                         } else {
                             // Plaintext fallback (legacy)
@@ -176,20 +176,20 @@ impl Settings {
                                 match toml::from_str::<Settings>(&content_str) {
                                     Ok(mut settings) => {
                                         Self::decrypt_keyfile_path_field(&mut settings);
-                                        eprintln!("[SED] Settings loaded OK (plaintext): use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
+                                        eprintln!("[SEN] Settings loaded OK (plaintext): use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
                                             settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
                                         return settings;
                                     }
-                                    Err(e) => eprintln!("[SED] Config TOML parse error (plaintext): {}", e),
+                                    Err(e) => eprintln!("[SEN] Config TOML parse error (plaintext): {}", e),
                                 }
                             }
                         }
                     }
-                    Err(e) => eprintln!("[SED] Failed to read config file: {}", e),
+                    Err(e) => eprintln!("[SEN] Failed to read config file: {}", e),
                 }
             }
         }
-        eprintln!("[SED] Using default settings");
+        eprintln!("[SEN] Using default settings");
         Self::default()
     }
 
@@ -200,7 +200,7 @@ impl Settings {
     /// encrypted form (`keyfile_path_encrypted`) hits disk.
     pub fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(config_dir) = dirs::config_dir() {
-            let config_dir = config_dir.join("sed");
+            let config_dir = config_dir.join("sen");
             fs::create_dir_all(&config_dir)?;
             let config_path = config_dir.join("config.toml");
 
@@ -210,7 +210,7 @@ impl Settings {
 
             let toml_string = toml::to_string_pretty(&to_save)?;
             fs::write(&config_path, toml_string)?;
-            eprintln!("[SED] Settings saved OK: use_global_keyfile={}, keyfile_encrypted={}, start_maximized={}, theme={}",
+            eprintln!("[SEN] Settings saved OK: use_global_keyfile={}, keyfile_encrypted={}, start_maximized={}, theme={}",
                 self.use_global_keyfile, to_save.keyfile_path_encrypted.is_some(), self.start_maximized, self.theme_name);
         }
         Ok(())
@@ -256,28 +256,28 @@ impl Settings {
     /// is set to None and a warning is logged — never crashes.
     fn decrypt_keyfile_path_field(settings: &mut Self) {
         if let Some(ref encrypted) = settings.keyfile_path_encrypted {
-            eprintln!("[SED] Attempting to decrypt keyfile path ({} chars encrypted)", encrypted.len());
+            eprintln!("[SEN] Attempting to decrypt keyfile path ({} chars encrypted)", encrypted.len());
             match crate::config_crypto::get_or_create_config_key() {
                 Ok(key) => {
-                    eprintln!("[SED] Config crypto key retrieved from keychain OK");
+                    eprintln!("[SEN] Config crypto key retrieved from keychain OK");
                     match crate::config_crypto::decrypt_keyfile_path(&key, encrypted) {
                         Ok(path_str) => {
-                            eprintln!("[SED] Keyfile path decrypted OK: {:?}", path_str);
+                            eprintln!("[SEN] Keyfile path decrypted OK: {:?}", path_str);
                             settings.global_keyfile_path = Some(PathBuf::from(path_str));
                         }
                         Err(e) => {
-                            eprintln!("[SED] Warning: failed to decrypt keyfile path: {}", e);
+                            eprintln!("[SEN] Warning: failed to decrypt keyfile path: {}", e);
                             settings.global_keyfile_path = None;
                         }
                     }
                 }
                 Err(e) => {
-                    eprintln!("[SED] Warning: keychain unavailable, cannot decrypt keyfile path: {}", e);
+                    eprintln!("[SEN] Warning: keychain unavailable, cannot decrypt keyfile path: {}", e);
                     settings.global_keyfile_path = None;
                 }
             }
         } else {
-            eprintln!("[SED] No encrypted keyfile path in config");
+            eprintln!("[SEN] No encrypted keyfile path in config");
         }
     }
 
@@ -298,13 +298,13 @@ impl Settings {
                         }
                         Err(e) => {
                             // Don't erase existing encrypted data on failure
-                            eprintln!("[SED] Warning: failed to encrypt keyfile path: {}", e);
+                            eprintln!("[SEN] Warning: failed to encrypt keyfile path: {}", e);
                         }
                     }
                 }
                 Err(e) => {
                     // Don't erase existing encrypted data on keychain failure
-                    eprintln!("[SED] Warning: keychain unavailable, keyfile path will not be saved: {}", e);
+                    eprintln!("[SEN] Warning: keychain unavailable, keyfile path will not be saved: {}", e);
                 }
             }
         }
@@ -339,7 +339,7 @@ impl Default for SensitiveSettings {
 }
 
 /// Magic number for encrypted settings file
-const SETTINGS_MAGIC: &[u8; 4] = b"SEDS";
+const SETTINGS_MAGIC: &[u8; 4] = b"SENS";
 const SETTINGS_SALT_SIZE: usize = 32;
 
 #[allow(dead_code)]
@@ -358,7 +358,7 @@ impl SensitiveSettings {
 
     /// Get encrypted settings file path
     fn encrypted_path() -> Option<PathBuf> {
-        dirs::config_dir().map(|d| d.join("sed").join("sensitive.sed"))
+        dirs::config_dir().map(|d| d.join("sen").join("sensitive.sen"))
     }
 
     /// Save sensitive settings encrypted with master password

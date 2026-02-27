@@ -128,9 +128,9 @@ impl EditorApp {
                                      file.parent().unwrap_or(Path::new(".")).to_path_buf()
                                  };
                                  
-                                 // Determine output filename (append .sed)
+                                 // Determine output filename (append .sen)
                                  let file_name = file.file_name().unwrap_or_default();
-                                 let output_path = output_dir.join(format!("{}.sed", file_name.to_string_lossy()));
+                                 let output_path = output_dir.join(format!("{}.sen", file_name.to_string_lossy()));
                                  
                                  // Read content (assuming text)
                                  match std::fs::read_to_string(file) {
@@ -177,10 +177,10 @@ impl EditorApp {
                                      file.parent().unwrap_or(Path::new(".")).to_path_buf()
                                  };
                                  
-                                 // Determine output filename (strip .sed or append .txt)
+                                 // Determine output filename (strip .sen or append .txt)
                                  let original_name = file.file_name().unwrap_or_default().to_string_lossy();
-                                 let new_name = if original_name.ends_with(".sed") {
-                                     original_name.trim_end_matches(".sed").to_string()
+                                 let new_name = if original_name.ends_with(".sen") {
+                                     original_name.trim_end_matches(".sen").to_string()
                                  } else {
                                      format!("{}.txt", original_name)
                                  };

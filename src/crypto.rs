@@ -6,8 +6,8 @@ use std::fs;
 use std::path::Path;
 use zeroize::{ZeroizeOnDrop, Zeroizing};
 
-/// Magic number for file format verification: "SED3"
-/// SED3 format: keyfile hash is inside encrypted payload (not appended in plaintext)
+/// Magic number for file format verification: "SED3" (kept for backward compatibility)
+/// SEN format (SED3 wire format): keyfile hash is inside encrypted payload (not appended in plaintext)
 const MAGIC_NUMBER: &[u8; 4] = b"SED3";
 
 /// Component sizes in file
@@ -62,7 +62,7 @@ impl std::fmt::Display for CryptoError {
             CryptoError::IoError(e) => write!(f, "IO Error: {}", e),
             CryptoError::EncryptionError(e) => write!(f, "Encryption Error: {}", e),
             CryptoError::InvalidFormat => write!(f, "Invalid file format or corrupted data"),
-            CryptoError::InvalidMagicNumber => write!(f, "Invalid magic number (not a SED file)"),
+            CryptoError::InvalidMagicNumber => write!(f, "Invalid magic number (not a SEN file)"),
             CryptoError::DecryptionFailed => write!(f, "Decryption failed - check your keyfile"),
             CryptoError::KeyfileError(msg) => write!(f, "Keyfile Error: {}", msg),
         }
@@ -115,7 +115,7 @@ pub fn generate_keyfile(output_path: &Path) -> Result<(), CryptoError> {
 }
 
 /// FILE ENCRYPTION
-/// SED3 Structure: [MAGIC 4B] [SALT 32B] [ENCRYPTED DATA]
+/// SEN (SED3) Structure: [MAGIC 4B] [SALT 32B] [ENCRYPTED DATA]
 /// Encrypted payload: [KEYFILE HASH 32B] [CONTENT BYTES]
 /// The keyfile hash is inside the encrypted payload for security
 pub fn encrypt_file(
@@ -152,7 +152,7 @@ pub fn encrypt_file(
 }
 
 /// FILE DECRYPTION
-/// SED3: keyfile hash is verified from inside the encrypted payload
+/// SEN: keyfile hash is verified from inside the encrypted payload
 pub fn decrypt_file(
     keyfile_path: &Path,
     encrypted_file_path: &Path,
@@ -229,19 +229,19 @@ mod tests {
     #[test]
     fn test_encrypt_decrypt_roundtrip() {
         let keyfile = create_random_keyfile("test_roundtrip.key");
-        let output = std::env::temp_dir().join("sed_tests").join("roundtrip.sed");
-        let content = "Hello, SED3! This is a test document.\nLine 2.\n";
+        let output = std::env::temp_dir().join("sen_tests").join("roundtrip.sen");
+        let content = "Hello, SEN! This is a test document.\nLine 2.\n";
 
         encrypt_file(content, &keyfile, &output).expect("Encryption should succeed");
 
         let decrypted = decrypt_file(&keyfile, &output).expect("Decryption should succeed");
         assert_eq!(decrypted, content);
 
-        // Verify SED3 magic
+        // Verify SED3 magic (kept for backward compat)
         let raw = fs::read(&output).unwrap();
         assert_eq!(&raw[0..4], b"SED3");
 
-        // Verify keyfile hash is NOT at the end of the file (SED2 vulnerability)
+        // Verify keyfile hash is NOT at the end of the file (legacy SED2 vulnerability)
         let keyfile_hash = hash_keyfile(&keyfile).unwrap();
         let file_end = &raw[raw.len().saturating_sub(32)..];
         assert_ne!(file_end, keyfile_hash.as_bytes(), "Keyfile hash must NOT be at end of file in plaintext");
@@ -255,7 +255,7 @@ mod tests {
     fn test_wrong_keyfile_fails() {
         let keyfile1 = create_random_keyfile("test_wrong_key1.key");
         let keyfile2 = create_random_keyfile("test_wrong_key2.key");
-        let output = std::env::temp_dir().join("sed_tests").join("wrong_key.sed");
+        let output = std::env::temp_dir().join("sen_tests").join("wrong_key.sen");
 
         encrypt_file("Secret data", &keyfile1, &output).unwrap();
 
@@ -271,7 +271,7 @@ mod tests {
     #[test]
     fn test_invalid_magic_number() {
         let keyfile = create_random_keyfile("test_magic.key");
-        let output = std::env::temp_dir().join("sed_tests").join("bad_magic.sed");
+        let output = std::env::temp_dir().join("sen_tests").join("bad_magic.sen");
 
         // Write a file with wrong magic number
         let mut data = vec![0u8; 100];
@@ -289,7 +289,7 @@ mod tests {
     #[test]
     fn test_corrupted_file_too_short() {
         let keyfile = create_random_keyfile("test_corrupt.key");
-        let output = std::env::temp_dir().join("sed_tests").join("corrupt.sed");
+        let output = std::env::temp_dir().join("sen_tests").join("corrupt.sen");
 
         // Write a file that's too short (just magic + partial salt)
         let mut data = vec![0u8; 10];
@@ -307,7 +307,7 @@ mod tests {
     #[test]
     fn test_empty_keyfile_rejected() {
         let keyfile = create_temp_keyfile("test_empty.key", b"");
-        let output = std::env::temp_dir().join("sed_tests").join("empty_key.sed");
+        let output = std::env::temp_dir().join("sen_tests").join("empty_key.sen");
 
         let result = encrypt_file("test", &keyfile, &output);
         assert!(matches!(result, Err(CryptoError::KeyfileError(_))));
@@ -319,7 +319,7 @@ mod tests {
     #[test]
     fn test_empty_content_roundtrip() {
         let keyfile = create_random_keyfile("test_empty_content.key");
-        let output = std::env::temp_dir().join("sed_tests").join("empty_content.sed");
+        let output = std::env::temp_dir().join("sen_tests").join("empty_content.sen");
 
         encrypt_file("", &keyfile, &output).expect("Encrypting empty content should succeed");
         let decrypted = decrypt_file(&keyfile, &output).expect("Decrypting should succeed");
@@ -333,7 +333,7 @@ mod tests {
     #[test]
     fn test_large_content_roundtrip() {
         let keyfile = create_random_keyfile("test_large.key");
-        let output = std::env::temp_dir().join("sed_tests").join("large.sed");
+        let output = std::env::temp_dir().join("sen_tests").join("large.sen");
         let content = "A".repeat(100_000); // 100KB content
 
         encrypt_file(&content, &keyfile, &output).unwrap();

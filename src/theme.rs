@@ -275,7 +275,7 @@ pub fn load_themes() -> Vec<Theme> {
 
 /// Get themes directory path
 pub fn get_themes_dir() -> Option<PathBuf> {
-    dirs::config_dir().map(|d| d.join("sed").join("themes"))
+    dirs::config_dir().map(|d| d.join("sen").join("themes"))
 }
 
 /// Ensure themes directory exists

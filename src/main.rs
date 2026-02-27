@@ -48,7 +48,7 @@ fn main() -> Result<(), eframe::Error> {
     };
 
     eframe::run_native(
-        "Secure Encrypted Document Editor",
+        "Secure Encrypted Notepad",
         options,
         Box::new(move |cc| Ok(Box::new(EditorApp::new(cc, settings)))),
     )

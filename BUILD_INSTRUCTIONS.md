@@ -1,11 +1,11 @@
-# 🔨 Build Instructions for SED v0.2
+# 🔨 Build Instructions for SEN v0.2
 
 ## 📁 Project Structure
 
 Your project should have this structure:
 
 ```
-sed/
+sen/
 ├── Cargo.toml
 ├── README.md
 ├── BUILD_INSTRUCTIONS.md
@@ -30,8 +30,8 @@ copy** each file.
 ### 1. Create Project
 
 ```bash
-cargo new sed --bin
-cd sed
+cargo new sen --bin
+cd sen
 ```
 
 ### 2. Copy Files from Artifacts
@@ -136,13 +136,13 @@ cargo run
 ### Release
 
 ```bash
-./target/release/sed
+./target/release/sen
 ```
 
 Or on Windows:
 
 ```bash
-.\target\release\sed.exe
+.\target\release\sen.exe
 ```
 
 ---
@@ -170,15 +170,15 @@ Or on Windows:
 ### 4. Save File
 
 - Click **💾** icon (Save)
-- Save as `test.sed`
-- Should see "Saved: test.sed (0 history entries)"
+- Save as `test.sen`
+- Should see "Saved: test.sen (0 history entries)"
 
 ### 5. Close and Reopen
 
 - Close application
 - Run again
 - Click **🔑** icon → Select `test.key`
-- Click **📂** icon → Select `test.sed`
+- Click **📂** icon → Select `test.sen`
 - Your text should appear!
 
 ---
@@ -226,7 +226,7 @@ mod theme;
 
 - ✨ **Keyfile-only** (no passwords)
 - ✨ **Embedded history** (inside encrypted files)
-- ✨ **File tree panel** (browse .sed files)
+- ✨ **File tree panel** (browse .sen files)
 - ✨ **Debug console** (application logs)
 - ✨ **Line numbers** (VS Code style)
 - ✨ **Icon toolbar** (no text labels)
@@ -258,10 +258,10 @@ After building, create a theme:
 
 ```bash
 # Linux/macOS
-mkdir -p ~/.config/sed/themes/
+mkdir -p ~/.config/sen/themes/
 
 # Create theme file
-cat > ~/.config/sed/themes/my_theme.toml << 'EOF'
+cat > ~/.config/sen/themes/my_theme.toml << 'EOF'
 name = "My Theme"
 
 [colors]
@@ -303,7 +303,7 @@ Compiled binary size:
 
 ```bash
 cargo build --release
-strip target/release/sed
+strip target/release/sen
 ```
 
 ### With LTO (slower build, smaller binary)
@@ -331,7 +331,7 @@ strip = true
 
 ## 🆘 Still Having Issues?
 
-1. Delete `sed/` folder completely
+1. Delete `sen/` folder completely
 2. Start fresh from step 1
 3. Copy files **one by one**
 4. Build after each file to check for errors

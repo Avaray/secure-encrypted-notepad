@@ -1,9 +1,9 @@
 [package]
-name = "sed"
+name = "sen"
 version = "0.4.1"
 edition = "2021"
 authors = ["Dawid Wasowski"]
-description = "Secure Encrypted Document editor with keyfile-only auth"
+description = "Secure Encrypted Notepad with keyfile-only auth"
 
 [dependencies]
 # GUI Framework

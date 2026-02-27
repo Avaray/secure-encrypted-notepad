@@ -16,11 +16,11 @@ const KEY_FILENAME: &str = ".keyfile_key";
 /// Retrieve or generate a 256-bit AES key stored in a file.
 ///
 /// On first call the key is generated from `OsRng` and written to
-/// `<config_dir>/sed/.keyfile_key`.  Subsequent calls read the existing key.
+/// `<config_dir>/sen/.keyfile_key`.  Subsequent calls read the existing key.
 pub fn get_or_create_config_key() -> Result<[u8; 32], Box<dyn std::error::Error>> {
     let config_dir = dirs::config_dir()
         .ok_or("Cannot determine config directory")?
-        .join("sed");
+        .join("sen");
     std::fs::create_dir_all(&config_dir)?;
 
     let key_path = config_dir.join(KEY_FILENAME);
@@ -31,11 +31,11 @@ pub fn get_or_create_config_key() -> Result<[u8; 32], Box<dyn std::error::Error>
         if contents.len() == 32 {
             let mut key = [0u8; 32];
             key.copy_from_slice(&contents);
-            eprintln!("[SED] config_crypto: LOADED key from file (fingerprint: {:02x}{:02x}{:02x}{:02x})",
+            eprintln!("[SEN] config_crypto: LOADED key from file (fingerprint: {:02x}{:02x}{:02x}{:02x})",
                 key[0], key[1], key[2], key[3]);
             return Ok(key);
         }
-        eprintln!("[SED] config_crypto: key file has wrong length ({}), regenerating", contents.len());
+        eprintln!("[SEN] config_crypto: key file has wrong length ({}), regenerating", contents.len());
     }
 
     // Generate a fresh random key
@@ -43,7 +43,7 @@ pub fn get_or_create_config_key() -> Result<[u8; 32], Box<dyn std::error::Error>
     let mut key = [0u8; 32];
     key.copy_from_slice(&key_obj);
 
-    eprintln!("[SED] config_crypto: GENERATED NEW key (fingerprint: {:02x}{:02x}{:02x}{:02x})",
+    eprintln!("[SEN] config_crypto: GENERATED NEW key (fingerprint: {:02x}{:02x}{:02x}{:02x})",
         key[0], key[1], key[2], key[3]);
 
     // Write raw bytes to the key file

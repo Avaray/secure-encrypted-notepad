@@ -1,6 +1,6 @@
-# 🔐 SED - Secure Encrypted Document Editor
+# 🔐 SEN - Secure Encrypted Notepad
 
-SED (v0.4.1) is a specialized, local-first text editor designed for absolute security. It uses **keyfile-only authentication** instead of passwords, ensuring that your documents cannot be decrypted without physical access to your unique keyfile.
+SEN (v0.4.1) is a specialized, local-first text editor designed for absolute security. It uses **keyfile-only authentication** instead of passwords, ensuring that your documents cannot be decrypted without physical access to your unique keyfile.
 
 ---
 
@@ -16,7 +16,7 @@ SED (v0.4.1) is a specialized, local-first text editor designed for absolute sec
 
 ### 📝 Seamless Editing
 - **Modern Interface:** Distraction-free text editing with line numbers, custom font sizes, and word wrap.
-- **Auto-Save & Embedded History:** The editor automatically saves your progress. Every `.sed` file contains its own embedded version history (up to 100 snapshots), allowing you to restore or review older versions of the text.
+- **Auto-Save & Embedded History:** The editor automatically saves your progress. Every `.sen` file contains its own embedded version history (up to 100 snapshots), allowing you to restore or review older versions of the text.
 - **Search & Replace:** Built-in powerful text search and replace capabilities.
 - **Batch Converter:** Easily encrypt or decrypt multiple files at once.
 
@@ -28,10 +28,10 @@ SED (v0.4.1) is a specialized, local-first text editor designed for absolute sec
 
 ## 🚀 How It Works
 
-SED encrypts everything into a single `.sed` file. The file format securely bundles your text and your version history:
+SEN encrypts everything into a single `.sen` file. The file format securely bundles your text and your version history:
 
 ```text
-[4-byte magic "SED2"] + [32-byte salt] + [Encrypted Content & History] + [32-byte keyfile hash]
+[4-byte magic "SEN"] + [32-byte salt] + [Encrypted Content & History] + [32-byte keyfile hash]
 ```
 
 To read or write a document, you must provide the exact same keyfile used to create it. You can set a **Global Keyfile** in the settings so you don't have to manually load it every time.

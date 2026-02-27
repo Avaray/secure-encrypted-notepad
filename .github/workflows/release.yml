@@ -76,13 +76,13 @@ jobs:
 
       - name: Rename Binary
         run: |
-          mv target/release/sed.exe target/release/sed-v${{ needs.check-version.outputs.version }}.exe
+          mv target/release/sen.exe target/release/sen-v${{ needs.check-version.outputs.version }}.exe
         shell: bash
 
       - name: Generate Checksum
         run: |
           cd target/release
-          sha256sum sed-v${{ needs.check-version.outputs.version }}.exe > sed-v${{ needs.check-version.outputs.version }}.exe.sha256
+          sha256sum sen-v${{ needs.check-version.outputs.version }}.exe > sen-v${{ needs.check-version.outputs.version }}.exe.sha256
         shell: bash
 
       - name: Create GitHub Release
@@ -91,8 +91,8 @@ jobs:
           tag_name: v${{ needs.check-version.outputs.version }}
           name: v${{ needs.check-version.outputs.version }}
           files: |
-            target/release/sed-v${{ needs.check-version.outputs.version }}.exe
-            target/release/sed-v${{ needs.check-version.outputs.version }}.exe.sha256
+            target/release/sen-v${{ needs.check-version.outputs.version }}.exe
+            target/release/sen-v${{ needs.check-version.outputs.version }}.exe.sha256
           generate_release_notes: true
           draft: false
           prerelease: false
