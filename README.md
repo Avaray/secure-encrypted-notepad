@@ -1,353 +1,62 @@
-# 🔐 SED v0.2 - Secure Encrypted Document Editor
+# 🔐 SED - Secure Encrypted Document Editor
 
-**Keyfile-only** secure document editor with **embedded version control**,
-**file tree**, and **debug console**.
-
----
-
-## ✨ Features
-
-### 🔒 Security
-
-- **Keyfile-only authentication** (no passwords)
-- **XChaCha20-Poly1305 AEAD** encryption
-- **Argon2id KDF** for key derivation
-- **SHA-256 keyfile hashing**
-- **Zero memory leaks** with automatic zeroing
-
-### 📝 Editor
-
-- **Line numbers** (like VS Code/Zed)
-- **Monospace font** for editor
-- **Configurable font sizes** (UI and Editor separately)
-- **No focus border** on text field (only caret)
-
-### 📜 Version Control
-
-- **Embedded history** (inside encrypted file)
-- **Max 100 entries** per file
-- **Auto-snapshot** on save (when content changes)
-- **Load/Delete** any version
-
-### 🎨 Themes
-
-- **Built-in**: Dark & Light
-- **Custom themes** (create your own TOML files)
-- **Auto-refresh** when new themes added
-- **Color emoji support** (if available)
-
-### 🌲 Interface
-
-- **File tree panel** (left) - browse and open .sed files
-- **History panel** (right) - view and manage versions
-- **Debug console** (right) - view app logs
-- **Icon toolbar** (no text labels)
+SED (v0.4.1) is a specialized, local-first text editor designed for absolute security. It uses **keyfile-only authentication** instead of passwords, ensuring that your documents cannot be decrypted without physical access to your unique keyfile.
 
 ---
 
-## 🚀 Quick Start
+## ✨ Core Features
 
-### 1. Build
+### 🔒 Military-Grade Security
+- **Keyfile-Only Auth:** No passwords to remember or crack. Any file (image, binary, text) can act as your keyfile.
+- **XChaCha20-Poly1305:** State-of-the-art authenticated encryption.
+- **Argon2id KDF & SHA-256:** Robust key derivation and hashing.
+- **Encrypted Global Configuration:** Your settings and global keyfile paths are securely encrypted via OS keychain integration.
+- **Automatic Clipboard Clearing:** Sensitive copied text is wiped automatically after a timeout.
+- **Zero Memory Leaks:** Cryptographic operations use `zeroize` to wipe secrets from RAM.
 
+### 📝 Seamless Editing
+- **Modern Interface:** Distraction-free text editing with line numbers, custom font sizes, and word wrap.
+- **Auto-Save & Embedded History:** The editor automatically saves your progress. Every `.sed` file contains its own embedded version history (up to 100 snapshots), allowing you to restore or review older versions of the text.
+- **Search & Replace:** Built-in powerful text search and replace capabilities.
+- **Batch Converter:** Easily encrypt or decrypt multiple files at once.
+
+### 🎨 Fully Customizable
+- **Theme Editor:** Built-in GUI tool to create, edit, and apply custom color themes on the fly.
+- **File Tree & Logs:** Integrated file browser and debug log console for power users.
+
+---
+
+## 🚀 How It Works
+
+SED encrypts everything into a single `.sed` file. The file format securely bundles your text and your version history:
+
+```text
+[4-byte magic "SED2"] + [32-byte salt] + [Encrypted Content & History] + [32-byte keyfile hash]
+```
+
+To read or write a document, you must provide the exact same keyfile used to create it. You can set a **Global Keyfile** in the settings so you don't have to manually load it every time.
+
+---
+
+## 🛠️ Quick Start
+
+### 1. Build and Run
 ```bash
-cargo build --release
+cargo check
+cargo run --release
 ```
 
-### 2. Run
-
-```bash
-./target/release/sed
-```
-
-### 3. First Time Setup
-
-1. **Generate keyfile**: Click ✨ icon → Save as `my.key`
-2. **Create document**: Click 📄 icon (New)
-3. **Type content**
-4. **Save**: Click 💾 icon
-
-### 4. Open Existing File
-
-1. **Load keyfile**: Click 🔑 icon → Select your `.key` file
-2. **Open file**: Click 📂 icon → Select `.sed` file
+### 2. Basic Workflow
+1. **Generate a Keyfile**: Click the ✨ icon in the toolbar, or select an existing file you want to use as a key (🔑). Keep it safe!
+2. **Write**: Create a new document (📄) and type your content.
+3. **Save**: Click 💾. Your document and its history are now securely encrypted.
+4. **Browse History**: Click the 📜 icon to view previous snapshots of your current document.
 
 ---
 
-## 🎯 Interface Overview
-
-```
-┌─────────────────────────────────────────────────────────┐
-│ 📄 📂 📁 💾 📝 | 📜 ⚙ | 🔑 ✨ | 🔐 keyfile   [🌲] [🐛] │ ← Toolbar
-├────┬────────────────────────────────────────────┬────┬──┤
-│🌲  │ 1  fn main() {                            │📜  │🐛│
-│    │ 2      let x = 5;                          │    │  │
-│Files│ 3      println!("{}", x);                 │Hist│Log
-│    │ 4  }                                       │    │  │
-│    │                                            │    │  │
-└────┴────────────────────────────────────────────┴────┴──┘
-```
-
-### Toolbar Icons (left to right):
-
-- **📄** New (Ctrl+N)
-- **📂** Open (Ctrl+O)
-- **📁** Open Directory
-- **💾** Save (Ctrl+S)
-- **📝** Save As
-- **---**
-- **📜** Toggle History
-- **⚙** Settings
-- **---**
-- **🔑** Load Keyfile
-- **✨** Generate Keyfile
-- **---**
-- **🔐 filename** Current keyfile indicator
-- **[🌲]** Toggle File Tree (right side)
-- **[🐛]** Toggle Debug Log (right side)
-
----
-
-## 📂 File Format
-
-### Encrypted .sed file contains:
-
-```
-[Current Document Content]
-<<<SED_HISTORY_START>>>
-[JSON array of history entries - max 100]
-```
-
-Everything is encrypted together with one keyfile!
-
-### Example internal structure:
-
-```json
-[
-  {
-    "timestamp": "2025-12-15T14:30:00+01:00",
-    "content": "Version 3 content here...",
-    "comment": null
-  },
-  {
-    "timestamp": "2025-12-15T14:20:00+01:00",
-    "content": "Version 2 content here...",
-    "comment": "Before refactoring"
-  }
-]
-```
-
----
-
-## ⚙️ Settings
-
-Access via **⚙** icon in toolbar.
-
-### Appearance
-
-- **Theme** - Select from built-in or custom themes
-- **UI Font Size** - 8-32px (for interface)
-- **Editor Font Size** - 8-32px (for text editor)
-
-### Global Keyfile
-
-- **Set global keyfile** - Automatically loaded on startup
-- **Enable/Disable** - Use global keyfile checkbox
-
-### Editor
-
-- **Show line numbers** - Toggle line numbers on/off
-- **Auto-snapshot on save** - Create history entry when saving
-
----
-
-## 🎨 Custom Themes
-
-### Location
-
-Themes are stored in:
-
-- **Linux**: `~/.config/sed/themes/`
-- **Windows**: `%APPDATA%\sed\themes\`
-- **macOS**: `~/Library/Application Support/sed/themes/`
-
-### Create Custom Theme
-
-1. Create file: `my_theme.toml`
-
-```toml
-name = "My Custom Theme"
-
-[colors]
-background = [40, 44, 52]
-foreground = [171, 178, 191]
-panel_background = [33, 37, 43]
-selection_background = [61, 66, 77]
-cursor = [255, 255, 255]
-line_number = [128, 128, 128]
-comment = [92, 99, 112]
-```
-
-2. Save to themes directory
-3. Click **Refresh** in Settings
-4. Select your theme from dropdown
-
----
-
-## 🔑 Keyfile Management
-
-### Best Practices
-
-- ✅ **Generate unique keyfiles** per project
-- ✅ **Backup keyfiles** to secure location
-- ✅ **Never email keyfiles**
-- ⚠️ **Losing keyfile = losing data**
-
-### Keyfile can be:
-
-- Binary file (generated by SED)
-- Text file
-- Image file
-- **Any file** - content is hashed
-
----
-
-## 📜 Version History
-
-### How It Works
-
-1. Edit document
-2. Click Save (💾)
-3. If **Auto-snapshot** enabled → New version created
-4. History stored **inside** encrypted file
-
-### View History
-
-1. Click **📜** icon (Toggle History panel)
-2. See all versions (newest first)
-3. Click **Load** to view old version
-4. Click **Delete** to remove entry
-
-### Limits
-
-- Maximum **100 versions** per file
-- Oldest entries auto-deleted when limit reached
-
----
-
-## 🐛 Debug Console
-
-### Access
-
-Click **🐛** icon in toolbar (right side)
-
-### Log Levels
-
-- **INFO** (white) - Normal operations
-- **WARN** (yellow) - Warnings
-- **ERROR** (red) - Errors
-
-### Use Cases
-
-- Debug encryption issues
-- Track file operations
-- Monitor keyfile loading
-
----
-
-## 🌲 File Tree
-
-### Setup
-
-1. Click **📁** (Open Directory) in toolbar
-2. Select folder containing `.sed` files
-3. File tree shows all `.sed` files
-4. Click filename to open
-
-### Auto-remember
-
-Last opened directory is saved in settings.
-
----
-
-## ⌨️ Keyboard Shortcuts
-
-- **Ctrl+N** - New document
-- **Ctrl+O** - Open file
-- **Ctrl+S** - Save file
-
----
-
-## 🔧 Troubleshooting
-
-### "Wrong keyfile" error
-
-- **Cause**: File encrypted with different keyfile
-- **Fix**: Use correct keyfile
-
-### File tree not showing files
-
-- **Cause**: No `.sed` files in directory
-- **Fix**: Save files with `.sed` extension
-
-### Theme not appearing
-
-- **Cause**: Invalid TOML format
-- **Fix**: Check theme file syntax, click **Refresh**
-
-### Line numbers misaligned
-
-- **Cause**: Different font sizes
-- **Fix**: Restart application
-
----
-
-## 📊 Technical Details
-
-### Encryption
-
-- **Algorithm**: XChaCha20-Poly1305
-- **Key Derivation**: Argon2id (19 MiB, 2 iterations)
-- **Nonce**: Random per file
-- **Salt**: Random per file
-
-### File Format
-
-```
-[4-byte magic "SED2"]
-[32-byte salt]
-[encrypted data]
-[32-byte keyfile hash]
-```
-
----
-
-## 🔮 Planned Features
-
-- [ ] Diff view (compare versions side-by-side)
-- [ ] Syntax highlighting
-- [ ] Multiple tabs
-- [ ] Search & Replace
-- [ ] Compression before encryption
-- [ ] Export history as separate file
-
----
-
-## 📝 License
-
-MIT or Apache-2.0 (your choice)
-
----
-
-## ⚠️ Disclaimer
-
-This is an educational/personal project. For production use:
-
-- ✅ Professional security audit required
-- ✅ Regular backups of keyfiles
-- ✅ Test recovery procedures
-
-**USE AT YOUR OWN RISK**
-
----
-
-**Stay secure! 🔐📝✨**
+## ⚠️ Important Disclaimer
+
+This is a local, decentralized tool for securing text. 
+- **Losing your keyfile means permanently losing access to your data.** There is no "forgot password" feature. 
+- Always back up your keyfiles securely (e.g., on a secure offline USB drive).
+- Use at your own risk.
