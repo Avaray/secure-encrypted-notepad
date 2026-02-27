@@ -207,29 +207,28 @@ impl EditorApp {
                     let size = metadata.len();
                     self.log_info(format!("Keyfile size: {} bytes", size));
 
-                    if size != 256 {
-                        self.status_message =
-                            format!("Error: Invalid keyfile (must be 256 bytes, got {})", size);
-                        self.log_error(format!(
-                            "Invalid keyfile size: {} bytes (expected 256)",
-                            size
-                        ));
+                    if size == 0 {
+                        self.status_message = "Error: Keyfile is empty (0 bytes)".to_string();
+                        self.log_error("Keyfile is empty");
+                        return;
+                    }
+                    const MAX_KEYFILE_SIZE: u64 = 100 * 1024 * 1024; // 100 MB
+                    if size > MAX_KEYFILE_SIZE {
+                        self.status_message = format!(
+                            "Error: Keyfile too large ({:.1} MB, max 100 MB)",
+                            size as f64 / (1024.0 * 1024.0)
+                        );
+                        self.log_error(format!("Keyfile too large: {} bytes", size));
                         return;
                     }
 
                     match std::fs::read(&path) {
-                        Ok(content) => {
-                            if content.len() != 256 {
-                                self.status_message = "Error: Invalid keyfile content".to_string();
-                                self.log_error("Keyfile content length mismatch");
-                                return;
-                            }
-
+                        Ok(_content) => {
                             self.keyfile_path = Some(path.clone());
                             self.status_message =
-                                format!("✓ Valid keyfile loaded: {}", path.display());
+                                format!("Valid keyfile loaded: {}", path.display());
                             self.log_info(format!(
-                                "✓ Valid keyfile loaded successfully: {}",
+                                "Valid keyfile loaded successfully: {}",
                                 path.display()
                             ));
                         }
@@ -390,13 +389,19 @@ impl EditorApp {
             // Validate the new keyfile
             match std::fs::metadata(&new_keyfile_path) {
                 Ok(metadata) => {
-                    if metadata.len() != 256 {
+                    if metadata.len() == 0 {
+                        self.status_message = "Error: New keyfile is empty".to_string();
+                        self.log_error("New keyfile is empty");
+                        return;
+                    }
+                    const MAX_KEYFILE_SIZE: u64 = 100 * 1024 * 1024;
+                    if metadata.len() > MAX_KEYFILE_SIZE {
                         self.status_message = format!(
-                            "Error: New keyfile must be 256 bytes (got {})",
-                            metadata.len()
+                            "Error: New keyfile too large ({:.1} MB, max 100 MB)",
+                            metadata.len() as f64 / (1024.0 * 1024.0)
                         );
                         self.log_error(format!(
-                            "Invalid new keyfile size: {} bytes",
+                            "New keyfile too large: {} bytes",
                             metadata.len()
                         ));
                         return;
