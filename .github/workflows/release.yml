@@ -3,6 +3,12 @@ name: Release
 on:
   push:
     branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 1.2.3)'
+        required: true
+        type: string
 
 concurrency:
   group: release-${{ github.ref }}
@@ -27,9 +33,13 @@ jobs:
       - name: Get version from Cargo.toml
         id: get_version
         run: |
-          # Use cargo metadata for robust version extraction
-          VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
-          echo "Detected version: $VERSION"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            echo "Using manually provided version: $VERSION"
+          else
+            VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+            echo "Detected version from Cargo.toml: $VERSION"
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Check if tag exists
