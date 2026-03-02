@@ -430,6 +430,82 @@ impl EditorApp {
                             scroll_rect.top()..=scroll_rect.bottom(),
                             ui.visuals().widgets.noninteractive.bg_stroke,
                         );
+
+                        // LINE NUMBER CLICK → select entire line
+                        {
+                            let gutter_rect = egui::Rect::from_min_max(
+                                egui::pos2(editor_left_edge, scroll_rect.top()),
+                                egui::pos2(separator_x, scroll_rect.bottom()),
+                            );
+                            let gutter_response = ui.interact(
+                                gutter_rect,
+                                ui.id().with("gutter_click"),
+                                egui::Sense::click(),
+                            );
+
+                            if gutter_response.hovered() {
+                                ui.ctx().set_cursor_icon(egui::CursorIcon::Default);
+                            }
+
+                            if gutter_response.clicked() {
+                                if let Some(click_pos) = gutter_response.interact_pointer_pos() {
+                                    // Determine which logical line was clicked
+                                    let mut clicked_line: Option<usize> = None;
+                                    let mut current_line: usize = 1;
+
+                                    for row in galley.rows.iter() {
+                                        let row_top = text_rect.min.y + row.min_y();
+                                        let row_bottom = text_rect.min.y + row.max_y();
+
+                                        if click_pos.y >= row_top && click_pos.y < row_bottom {
+                                            clicked_line = Some(current_line);
+                                            break;
+                                        }
+
+                                        if row.ends_with_newline {
+                                            current_line += 1;
+                                        }
+                                    }
+
+                                    if let Some(line_num) = clicked_line {
+                                        // Find byte offsets of this line (1-indexed)
+                                        let mut byte_pos = 0usize;
+                                        let mut cur = 1usize;
+                                        while cur < line_num {
+                                            match text[byte_pos..].find('\n') {
+                                                Some(idx) => {
+                                                    byte_pos += idx + 1;
+                                                    cur += 1;
+                                                }
+                                                None => break,
+                                            }
+                                        }
+                                        let start_byte = byte_pos;
+                                        let end_byte = text[start_byte..]
+                                            .find('\n')
+                                            .map(|i| start_byte + i)
+                                            .unwrap_or(text.len());
+
+                                        let start_char = byte_to_char_idx(text, start_byte);
+                                        let end_char = byte_to_char_idx(text, end_byte);
+
+                                        if let Some(mut state) =
+                                            egui::TextEdit::load_state(ui.ctx(), text_edit_id)
+                                        {
+                                            state.cursor.set_char_range(Some(
+                                                egui::text::CCursorRange {
+                                                    primary: egui::text::CCursor::new(end_char),
+                                                    secondary: egui::text::CCursor::new(start_char),
+                                                },
+                                            ));
+                                            state.store(ui.ctx(), text_edit_id);
+                                        }
+                                        ui.memory_mut(|mem| mem.request_focus(text_edit_id));
+                                        self.highlighted_line = Some(line_num);
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     if output.response.changed() {
