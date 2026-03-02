@@ -615,7 +615,6 @@ impl EditorApp {
 
             // Top bar: Theme selector and actions
             ui.horizontal(|ui| {
-                ui.label("Edit Theme:");
                 let current_name = self.editing_theme.as_ref().map(|t| t.name.clone()).unwrap_or_default();
                 
                 egui::ComboBox::from_id_salt("theme_editor_selector")
