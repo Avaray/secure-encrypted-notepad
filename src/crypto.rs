@@ -211,7 +211,7 @@ mod tests {
 
     /// Helper: create a temp keyfile with given content
     fn create_temp_keyfile(name: &str, content: &[u8]) -> PathBuf {
-        let dir = std::env::temp_dir().join("sed_tests");
+        let dir = std::env::temp_dir().join("sen_tests");
         fs::create_dir_all(&dir).unwrap();
         let path = dir.join(name);
         let mut file = fs::File::create(&path).unwrap();
@@ -229,7 +229,9 @@ mod tests {
     #[test]
     fn test_encrypt_decrypt_roundtrip() {
         let keyfile = create_random_keyfile("test_roundtrip.key");
-        let output = std::env::temp_dir().join("sen_tests").join("roundtrip.sen");
+        let dir = std::env::temp_dir().join("sen_tests");
+        fs::create_dir_all(&dir).unwrap();
+        let output = dir.join("roundtrip.sen");
         let content = "Hello, SEN! This is a test document.\nLine 2.\n";
 
         encrypt_file(content, &keyfile, &output).expect("Encryption should succeed");
@@ -255,7 +257,9 @@ mod tests {
     fn test_wrong_keyfile_fails() {
         let keyfile1 = create_random_keyfile("test_wrong_key1.key");
         let keyfile2 = create_random_keyfile("test_wrong_key2.key");
-        let output = std::env::temp_dir().join("sen_tests").join("wrong_key.sen");
+        let dir = std::env::temp_dir().join("sen_tests");
+        fs::create_dir_all(&dir).unwrap();
+        let output = dir.join("wrong_key.sen");
 
         encrypt_file("Secret data", &keyfile1, &output).unwrap();
 
@@ -271,7 +275,9 @@ mod tests {
     #[test]
     fn test_invalid_magic_number() {
         let keyfile = create_random_keyfile("test_magic.key");
-        let output = std::env::temp_dir().join("sen_tests").join("bad_magic.sen");
+        let dir = std::env::temp_dir().join("sen_tests");
+        fs::create_dir_all(&dir).unwrap();
+        let output = dir.join("bad_magic.sen");
 
         // Write a file with wrong magic number
         let mut data = vec![0u8; 100];
@@ -289,7 +295,9 @@ mod tests {
     #[test]
     fn test_corrupted_file_too_short() {
         let keyfile = create_random_keyfile("test_corrupt.key");
-        let output = std::env::temp_dir().join("sen_tests").join("corrupt.sen");
+        let dir = std::env::temp_dir().join("sen_tests");
+        fs::create_dir_all(&dir).unwrap();
+        let output = dir.join("corrupt.sen");
 
         // Write a file that's too short (just magic + partial salt)
         let mut data = vec![0u8; 10];
@@ -307,7 +315,9 @@ mod tests {
     #[test]
     fn test_empty_keyfile_rejected() {
         let keyfile = create_temp_keyfile("test_empty.key", b"");
-        let output = std::env::temp_dir().join("sen_tests").join("empty_key.sen");
+        let dir = std::env::temp_dir().join("sen_tests");
+        fs::create_dir_all(&dir).unwrap();
+        let output = dir.join("empty_key.sen");
 
         let result = encrypt_file("test", &keyfile, &output);
         assert!(matches!(result, Err(CryptoError::KeyfileError(_))));
@@ -319,7 +329,9 @@ mod tests {
     #[test]
     fn test_empty_content_roundtrip() {
         let keyfile = create_random_keyfile("test_empty_content.key");
-        let output = std::env::temp_dir().join("sen_tests").join("empty_content.sen");
+        let dir = std::env::temp_dir().join("sen_tests");
+        fs::create_dir_all(&dir).unwrap();
+        let output = dir.join("empty_content.sen");
 
         encrypt_file("", &keyfile, &output).expect("Encrypting empty content should succeed");
         let decrypted = decrypt_file(&keyfile, &output).expect("Decrypting should succeed");
@@ -333,7 +345,9 @@ mod tests {
     #[test]
     fn test_large_content_roundtrip() {
         let keyfile = create_random_keyfile("test_large.key");
-        let output = std::env::temp_dir().join("sen_tests").join("large.sen");
+        let dir = std::env::temp_dir().join("sen_tests");
+        fs::create_dir_all(&dir).unwrap();
+        let output = dir.join("large.sen");
         let content = "A".repeat(100_000); // 100KB content
 
         encrypt_file(&content, &keyfile, &output).unwrap();
