@@ -46,17 +46,11 @@ cargo check
 cargo run --release
 ```
 
-### 2. Basic Workflow
-1. **Generate a Keyfile**: Click the ✨ icon in the toolbar, or select an existing file you want to use as a key (🔑). Keep it safe!
-2. **Write**: Create a new document (📄) and type your content.
-3. **Save**: Click 💾. Your document and its history are now securely encrypted.
-4. **Browse History**: Click the 📜 icon to view previous snapshots of your current document.
-
 ---
 
 ## ⚠️ Important Disclaimer
 
 This is a local, decentralized tool for securing text. 
 - **Losing your keyfile means permanently losing access to your data.** There is no "forgot password" feature. 
-- Always back up your keyfiles securely (e.g., on a secure offline USB drive).
+- Always back up your keyfiles securely.
 - Use at your own risk.
