@@ -1,6 +1,6 @@
 # 🔐 SEN - Secure Encrypted Notepad
 
-SEN is a local-first text editor designed for security. It uses **keyfile-only authentication** instead of passwords, ensuring that your documents cannot be decrypted without physical access to your unique keyfile.
+**SEN** is a local-first text editor designed for security. It uses **keyfile-only authentication** instead of passwords, ensuring that your documents cannot be decrypted without physical access to your unique keyfile.
 
 ---
 
