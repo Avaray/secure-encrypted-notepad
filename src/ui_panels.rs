@@ -102,7 +102,7 @@ impl EditorApp {
                             .add(
                                 egui::DragValue::new(&mut self.settings.ui_font_size)
                                     .speed(0.5)
-                                    .range(8.0..=32.0),
+                                    .range(8.0..=128.0),
                             )
                             .changed()
                         {
@@ -171,7 +171,7 @@ impl EditorApp {
                             .add(
                                 egui::DragValue::new(&mut self.settings.editor_font_size)
                                     .speed(0.5)
-                                    .range(8.0..=32.0),
+                                    .range(8.0..=128.0),
                             )
                             .changed()
                         {
