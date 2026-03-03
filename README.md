@@ -38,9 +38,8 @@ To read or write a document, you must provide the exact same keyfile used to cre
 
 ---
 
-## 🛠️ Quick Start
+## Development
 
-### 1. Build and Run
 ```bash
 cargo check
 cargo run --release
@@ -50,7 +49,6 @@ cargo run --release
 
 ## ⚠️ Important Disclaimer
 
-This is a local, decentralized tool for securing text. 
-- **Losing your keyfile means permanently losing access to your data.** There is no "forgot password" feature. 
+- **Losing your keyfile means permanently losing access to your data.** 
 - Always back up your keyfiles securely.
 - Use at your own risk.
