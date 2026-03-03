@@ -97,6 +97,12 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
+      - name: Setup Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "."
+          key: ${{ matrix.target }}
+
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -114,15 +120,6 @@ jobs:
             libwayland-dev \
             libxkbcommon-dev \
             pkg-config
-
-      - name: Cache cargo registry
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run Tests
         run: cargo test --release --verbose
