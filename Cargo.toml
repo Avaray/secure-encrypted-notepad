@@ -4,6 +4,7 @@ version = "0.4.4"
 edition = "2021"
 authors = ["Dawid Wasowski"]
 description = "Secure Encrypted Notepad with keyfile-only auth"
+license = "MIT"
 
 [dependencies]
 # GUI Framework
