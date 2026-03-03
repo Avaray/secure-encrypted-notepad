@@ -196,6 +196,17 @@ impl EditorApp {
                         }
                     });
 
+                    ui.horizontal(|ui| {
+                        ui.label("Toolbar Position:");
+                        let mut changed = false;
+                        changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Top, "Top").changed();
+                        changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Left, "Left").changed();
+                        changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Right, "Right").changed();
+                        if changed {
+                            let _ = self.settings.save();
+                        }
+                    });
+
                     ui.separator();
 
                     ui.horizontal(|ui| {

@@ -393,14 +393,34 @@ impl eframe::App for EditorApp {
         // Confirmation dialog
         self.render_confirmation_dialog(ctx);
 
-        // Toolbar — height adapts to icon size
-        let toolbar_height = self.settings.toolbar_icon_size + 16.0;
-        egui::TopBottomPanel::top("toolbar")
-            .exact_height(toolbar_height)
-            .show(ctx, |ui| {
-                ui.add_space(2.0);
-                self.render_toolbar(ui);
-            });
+        // Toolbar — height/width adapts to icon size
+        let toolbar_size = self.settings.toolbar_icon_size + 16.0;
+        match self.settings.toolbar_position {
+            crate::settings::ToolbarPosition::Top => {
+                egui::TopBottomPanel::top("toolbar")
+                    .exact_height(toolbar_size)
+                    .show(ctx, |ui| {
+                        ui.add_space(2.0);
+                        self.render_toolbar(ui);
+                    });
+            }
+            crate::settings::ToolbarPosition::Left => {
+                egui::SidePanel::left("toolbar")
+                    .exact_width(toolbar_size)
+                    .show(ctx, |ui| {
+                        ui.add_space(2.0);
+                        self.render_toolbar(ui);
+                    });
+            }
+            crate::settings::ToolbarPosition::Right => {
+                egui::SidePanel::right("toolbar")
+                    .exact_width(toolbar_size)
+                    .show(ctx, |ui| {
+                        ui.add_space(2.0);
+                        self.render_toolbar(ui);
+                    });
+            }
+        }
             
         // Batch Converter Window
         if self.show_batch_converter {

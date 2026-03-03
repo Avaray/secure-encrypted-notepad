@@ -12,6 +12,19 @@ const CONFIG_MAGIC: &[u8; 4] = b"SENC";
 const SERVICE_NAME: &str = "sen-notepad";
 const USER_NAME: &str = "config-key";
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ToolbarPosition {
+    Top,
+    Left,
+    Right,
+}
+
+impl Default for ToolbarPosition {
+    fn default() -> Self {
+        Self::Top
+    }
+}
+
 /// User preferences - persisted between sessions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
@@ -86,6 +99,9 @@ pub struct Settings {
     /// Toolbar icon size in pixels (e.g. 16 to 64)
     #[serde(default = "default_toolbar_icon_size")]
     pub toolbar_icon_size: f32,
+    /// Toolbar position
+    #[serde(default)]
+    pub toolbar_position: ToolbarPosition,
 }
 
 fn default_window_width() -> f32 {
@@ -141,6 +157,7 @@ impl Default for Settings {
             window_pos_x: -1.0, // -1 means "let OS decide" or "center"
             window_pos_y: -1.0,
             toolbar_icon_size: 24.0, // Default 24px icon
+            toolbar_position: ToolbarPosition::Top,
         }
     }
 }
