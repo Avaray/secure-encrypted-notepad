@@ -26,7 +26,7 @@ jobs:
       created: ${{ steps.check_tag.outputs.created }}
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Install Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -45,7 +45,6 @@ jobs:
       - name: Check if tag exists
         id: check_tag
         run: |
-          # Check if tag v{version} already exists in remote
           if git ls-remote --exit-code --tags origin "v${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
             echo "Tag v${{ steps.get_version.outputs.version }} already exists. Skipping release."
             echo "created=false" >> $GITHUB_OUTPUT
@@ -55,19 +54,48 @@ jobs:
           fi
 
   build-and-release:
-    name: Build & Release (Windows)
+    name: Build & Release (${{ matrix.os-name }})
     needs: check-version
     if: needs.check-version.outputs.created == 'true'
-    runs-on: windows-latest
     permissions:
       contents: write
+
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            os-name: Windows
+            target: x86_64-pc-windows-msvc
+            binary: sen.exe
+            artifact: sen-v${{ needs.check-version.outputs.version }}-windows.exe
+
+          - os: ubuntu-latest
+            os-name: Linux
+            target: x86_64-unknown-linux-gnu
+            binary: sen
+            artifact: sen-v${{ needs.check-version.outputs.version }}-linux
+
+          - os: macos-latest
+            os-name: macOS
+            target: x86_64-apple-darwin
+            binary: sen
+            artifact: sen-v${{ needs.check-version.outputs.version }}-macos
+
+          - os: macos-latest
+            os-name: macOS ARM64
+            target: aarch64-apple-darwin
+            binary: sen
+            artifact: sen-v${{ needs.check-version.outputs.version }}-macos-arm64
+
+    runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-pc-windows-msvc
+          targets: ${{ matrix.target }}
 
       - name: Cache cargo registry
         uses: actions/cache@v5
@@ -76,23 +104,22 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run Tests
         run: cargo test --release --verbose
 
       - name: Build Release Binary
-        run: cargo build --release --verbose
+        run: cargo build --release --target ${{ matrix.target }} --verbose
 
       - name: Rename Binary
-        run: |
-          mv target/release/sen.exe target/release/sen-v${{ needs.check-version.outputs.version }}.exe
+        run: mv target/${{ matrix.target }}/release/${{ matrix.binary }} target/${{ matrix.target }}/release/${{ matrix.artifact }}
         shell: bash
 
       - name: Generate Checksum
         run: |
-          cd target/release
-          sha256sum sen-v${{ needs.check-version.outputs.version }}.exe > sen-v${{ needs.check-version.outputs.version }}.exe.sha256
+          cd target/${{ matrix.target }}/release
+          sha256sum ${{ matrix.artifact }} > ${{ matrix.artifact }}.sha256
         shell: bash
 
       - name: Create GitHub Release
@@ -101,8 +128,8 @@ jobs:
           tag_name: v${{ needs.check-version.outputs.version }}
           name: v${{ needs.check-version.outputs.version }}
           files: |
-            target/release/sen-v${{ needs.check-version.outputs.version }}.exe
-            target/release/sen-v${{ needs.check-version.outputs.version }}.exe.sha256
+            target/${{ matrix.target }}/release/${{ matrix.artifact }}
+            target/${{ matrix.target }}/release/${{ matrix.artifact }}.sha256
           generate_release_notes: true
           draft: false
           prerelease: false
