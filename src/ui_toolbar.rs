@@ -6,14 +6,9 @@ impl EditorApp {
     pub(crate) fn render_toolbar(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             ui.spacing_mut().item_spacing.x = 4.0;
-            // Icon sizes based on setting (1=XS, 2=S, 3=M, 4=L, 5=XL)
-            let (btn_s, ico_s) = match self.settings.toolbar_icon_size {
-                1 => (22.0, 16.0),
-                2 => (28.0, 20.0),
-                4 => (38.0, 28.0),
-                5 => (44.0, 34.0),
-                _ => (32.0, 24.0), // 3 = Medium (default)
-            };
+            // Icon sizes based on setting directly
+            let ico_s = self.settings.toolbar_icon_size;
+            let btn_s = ico_s + 8.0; // padding around the icon
             let button_size = egui::vec2(btn_s, btn_s);
             let icon_size = egui::vec2(ico_s, ico_s);
             let hover_tint = self.current_theme.colors.icon_hover_color();
@@ -84,13 +79,8 @@ impl EditorApp {
             ui.separator();
 
             // Small icon buttons for keyfile operations
-            let (sm_btn_s, sm_ico_s) = match self.settings.toolbar_icon_size {
-                1 => (18.0, 14.0),
-                2 => (22.0, 16.0),
-                4 => (32.0, 24.0),
-                5 => (38.0, 28.0),
-                _ => (28.0, 20.0), // 3 = Medium (default)
-            };
+            let sm_ico_s = self.settings.toolbar_icon_size * 0.8; // slightly smaller
+            let sm_btn_s = sm_ico_s + 4.0;
             let small_icon_size = egui::vec2(sm_ico_s, sm_ico_s);
             let small_button_size = egui::vec2(sm_btn_s, sm_btn_s);
 

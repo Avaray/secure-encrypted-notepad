@@ -112,7 +112,7 @@ impl Icons {
     }
 
     fn load_svg(ctx: &Context, svg_bytes: &[u8], name: &str) -> TextureHandle {
-        let image = Self::render_svg(svg_bytes, 32, 32);
+        let image = Self::render_svg(svg_bytes, 128, 128); // Increased from 32x32 for sharp large icons
         ctx.load_texture(name, image, egui::TextureOptions::LINEAR)
     }
 

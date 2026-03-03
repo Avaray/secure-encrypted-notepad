@@ -183,14 +183,16 @@ impl EditorApp {
 
                     // Toolbar icon size
                     ui.horizontal(|ui| {
-                        ui.label("Icon Size:");
-                        let labels = ["XS", "S", "M", "L", "XL"];
-                        for (i, label) in labels.iter().enumerate() {
-                            let val = (i + 1) as u8;
-                            if ui.selectable_label(self.settings.toolbar_icon_size == val, *label).clicked() {
-                                self.settings.toolbar_icon_size = val;
-                                let _ = self.settings.save();
-                            }
+                        ui.label("Toolbar Icon Size:");
+                        if ui
+                            .add(
+                                egui::DragValue::new(&mut self.settings.toolbar_icon_size)
+                                    .speed(1.0)
+                                    .range(12.0..=64.0),
+                            )
+                            .changed()
+                        {
+                            let _ = self.settings.save();
                         }
                     });
 
