@@ -40,7 +40,20 @@ To read or write a document, you must provide the exact same keyfile used to cre
 
 ---
 
-## Development
+## 🖥️ Platform Support
+
+| Platform | Architecture | Target | Keychain Backend |
+|----------|-------------|--------|-----------------|
+| Windows | x86_64 | `x86_64-pc-windows-msvc` | Windows Credential Manager |
+| Linux | x86_64 | `x86_64-unknown-linux-gnu` | libsecret / KWallet |
+| macOS | x86_64 (Intel) | `x86_64-apple-darwin` | Keychain Access |
+| macOS | ARM64 (Apple Silicon) | `aarch64-apple-darwin` | Keychain Access |
+
+> **Linux note:** Requires a running secret service daemon (e.g. `gnome-keyring` or `kwallet`). Headless environments are not supported.
+
+---
+
+## 🔧 Development
 
 ```bash
 cargo check
