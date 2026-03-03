@@ -324,7 +324,7 @@ impl EditorApp {
                         }
                     });
 
-                    if ui.checkbox(&mut self.settings.show_keyfile_path, "Show keyfile path in status bar").changed() {
+                    if ui.checkbox(&mut self.settings.show_keyfile_path, "Show keyfile name in status bar").changed() {
                         let _ = self.settings.save();
                     }
 
