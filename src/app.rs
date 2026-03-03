@@ -449,11 +449,14 @@ impl eframe::App for EditorApp {
                                 icon_tint,
                             );
 
+                            let status_text = if self.settings.show_keyfile_path {
+                                format!("🔑 {}", path.file_name().unwrap_or_default().to_string_lossy())
+                            } else {
+                                "🔑 Secured".to_string()
+                            };
+
                             ui.label(
-                                egui::RichText::new(format!(
-                                    "🔑 {}",
-                                    path.file_name().unwrap_or_default().to_string_lossy()
-                                ))
+                                egui::RichText::new(status_text)
                                 .color(icon_tint),
                             );
                         } else {

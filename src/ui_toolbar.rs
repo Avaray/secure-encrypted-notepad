@@ -77,6 +77,9 @@ impl EditorApp {
                 self.save_file_as();
             }
 
+                self.export_plaintext();
+            }
+
             ui.separator();
 
             // Small icon buttons for keyfile operations
