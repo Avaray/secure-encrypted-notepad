@@ -77,6 +77,7 @@ impl EditorApp {
                 self.save_file_as();
             }
 
+            if ui.button("📤 Export").on_hover_text("Export to Plaintext (.txt)").clicked() {
                 self.export_plaintext();
             }
 
