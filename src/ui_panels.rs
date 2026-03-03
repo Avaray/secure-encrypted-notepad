@@ -627,6 +627,10 @@ impl EditorApp {
                         for theme in &self.themes {
                             if ui.selectable_label(theme.name == current_name, &theme.name).clicked() {
                                 self.editing_theme = Some(theme.clone());
+                                self.current_theme = theme.clone();
+                                self.settings.theme_name = theme.name.clone();
+                                self.apply_theme(ui.ctx());
+                                let _ = self.settings.save();
                             }
                         }
                     });
