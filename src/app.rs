@@ -229,8 +229,29 @@ impl Default for EditorApp {
 }
 
 impl EditorApp {
-    pub fn new(cc: &eframe::CreationContext<'_>, settings: Settings) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>, mut settings: Settings) -> Self {
+        let mut system_log = None;
+        // On first run, detect system theme preference
+        if settings.is_first_run {
+            let is_dark = cc.egui_ctx.style().visuals.dark_mode;
+            if !is_dark {
+                settings.theme_name = "Light".to_string();
+                let msg = "First run: System detected Light mode, setting theme to Light";
+                eprintln!("[SEN] {}", msg);
+                system_log = Some(msg.to_string());
+            } else {
+                let msg = "First run: System detected Dark mode (default theme)";
+                eprintln!("[SEN] {}", msg);
+                system_log = Some(msg.to_string());
+            }
+        }
+
         let mut app = Self::from_settings(settings);
+        
+        if let Some(msg) = system_log {
+            app.log_info(msg);
+        }
+
         app.icons = crate::icons::Icons::load(&cc.egui_ctx);
         app.current_theme.apply(&cc.egui_ctx);
         app.log_info("Application started");

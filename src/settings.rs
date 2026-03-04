@@ -102,6 +102,10 @@ pub struct Settings {
     /// Toolbar position
     #[serde(default)]
     pub toolbar_position: ToolbarPosition,
+
+    /// Volatile flag to indicate if this is the first run (no config file existed)
+    #[serde(skip)]
+    pub is_first_run: bool,
 }
 
 fn default_window_width() -> f32 {
@@ -158,6 +162,7 @@ impl Default for Settings {
             window_pos_y: -1.0,
             toolbar_icon_size: 24.0, // Default 24px icon
             toolbar_position: ToolbarPosition::Top,
+            is_first_run: false,
         }
     }
 }
@@ -218,8 +223,10 @@ impl Settings {
                 }
             }
         }
-        eprintln!("[SEN] Using default settings");
-        Self::default()
+        eprintln!("[SEN] Using default settings (possible first run)");
+        let mut settings = Self::default();
+        settings.is_first_run = true;
+        settings
     }
 
     /// Save settings to file (plaintext TOML).
