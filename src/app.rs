@@ -99,8 +99,7 @@ pub struct EditorApp {
     // Auto-save state
     pub last_autosave_time: Option<Instant>,
 
-    // Clipboard security state
-    pub last_copy_time: Option<Instant>,
+
 
     // Style dirty flag
     pub(crate) style_dirty: bool,
@@ -214,7 +213,7 @@ impl EditorApp {
             start_maximized: settings.start_maximized,
             is_maximized: false,
             last_autosave_time: None,
-            last_copy_time: None,
+
             
             style_dirty: true, // Apply style on startup
             reset_scroll_x_pending: false,
@@ -329,8 +328,7 @@ impl eframe::App for EditorApp {
         // Perform auto-save check
         self.perform_autosave();
 
-        // Check clipboard timeout
-        self.check_clipboard_timeout(ctx);
+
 
         // Handle close request
         if ctx.input(|i| i.viewport().close_requested()) {
@@ -593,19 +591,4 @@ impl eframe::App for EditorApp {
     }
 }
 
-impl EditorApp {
-    fn check_clipboard_timeout(&mut self, ctx: &egui::Context) {
-        if !self.settings.clipboard_security_enabled {
-            return;
-        }
 
-        if let Some(last_time) = self.last_copy_time {
-            if last_time.elapsed().as_secs() >= self.settings.clipboard_clear_timeout_secs {
-                // Clear clipboard
-                ctx.output_mut(|o| o.copied_text = String::new());
-                self.last_copy_time = None;
-                self.log_info("Clipboard cleared for security");
-            }
-        }
-    }
-}

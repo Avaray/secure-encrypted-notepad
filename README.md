@@ -13,7 +13,7 @@
 - **XChaCha20-Poly1305:** State-of-the-art authenticated encryption.
 - **Argon2id KDF & SHA-256:** Robust key derivation and hashing.
 - **Encrypted Global Configuration:** Your settings and global keyfile paths are securely encrypted via OS keychain integration.
-- **Automatic Clipboard Clearing:** Sensitive copied text is wiped automatically after a timeout.
+
 - **Zero Memory Leaks:** Cryptographic operations use `zeroize` to wipe secrets from RAM.
 
 ### 📝 Seamless Editing

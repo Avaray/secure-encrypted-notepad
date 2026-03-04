@@ -269,33 +269,7 @@ impl EditorApp {
 
                     ui.add_space(4.0);
 
-                    ui.group(|ui| {
-                        ui.label("Clipboard Security");
-                        if ui
-                            .checkbox(
-                                &mut self.settings.clipboard_security_enabled,
-                                "Clear clipboard after timeout",
-                            )
-                            .changed()
-                        {
-                            let _ = self.settings.save();
-                        }
 
-                        ui.horizontal(|ui| {
-                            ui.label("Timeout (seconds):");
-                            if ui
-                                .add(
-                                    egui::DragValue::new(
-                                        &mut self.settings.clipboard_clear_timeout_secs,
-                                    )
-                                    .range(5..=300),
-                                )
-                                .changed()
-                            {
-                                let _ = self.settings.save();
-                            }
-                        });
-                    });
 
                     ui.separator();
                     ui.heading("Keyfile");

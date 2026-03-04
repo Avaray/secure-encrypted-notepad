@@ -282,9 +282,9 @@ impl EditorApp {
                         } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Enter)) {
                             Self::handle_enter_key(ui, text_edit_id, text, &mut self.is_modified);
                         } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::C)) {
-                            Self::handle_copy_key(ui, text_edit_id, text, &mut self.last_copy_time);
+                            Self::handle_copy_key(ui, text_edit_id, text);
                         } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::X)) {
-                            Self::handle_cut_key(ui, text_edit_id, text, &mut self.is_modified, &mut self.last_copy_time);
+                            Self::handle_cut_key(ui, text_edit_id, text, &mut self.is_modified);
                         } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::A)) {
                             // Select all without scrolling view to end
                             if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
@@ -673,7 +673,7 @@ impl EditorApp {
         }
     }
     
-    fn handle_copy_key(ui: &egui::Ui, id: egui::Id, text: &str, last_copy_time: &mut Option<std::time::Instant>) {
+    fn handle_copy_key(ui: &egui::Ui, id: egui::Id, text: &str) {
         if let Some(state) = egui::TextEdit::load_state(ui.ctx(), id) {
             if let Some(range) = state.cursor.char_range() {
                  let start_byte = char_to_byte_idx(text, range.primary.index.min(range.secondary.index));
@@ -682,13 +682,13 @@ impl EditorApp {
                  if start_byte != end_byte && end_byte <= text.len() {
                      let selected_text = &text[start_byte..end_byte];
                      ui.output_mut(|o| o.copied_text = selected_text.to_string());
-                     *last_copy_time = Some(std::time::Instant::now());
+
                  }
             }
         }
     }
 
-    fn handle_cut_key(ui: &egui::Ui, id: egui::Id, text: &mut String, is_modified: &mut bool, last_copy_time: &mut Option<std::time::Instant>) {
+    fn handle_cut_key(ui: &egui::Ui, id: egui::Id, text: &mut String, is_modified: &mut bool) {
         if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), id) {
             if let Some(range) = state.cursor.char_range() {
                  let start_char = range.primary.index.min(range.secondary.index);
@@ -699,7 +699,7 @@ impl EditorApp {
                  if start_byte != end_byte && end_byte <= text.len() {
                      let selected_text = &text[start_byte..end_byte];
                      ui.output_mut(|o| o.copied_text = selected_text.to_string());
-                     *last_copy_time = Some(std::time::Instant::now());
+
                      
                      // Delete selection
                      text.replace_range(start_byte..end_byte, "");

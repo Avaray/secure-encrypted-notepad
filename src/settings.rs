@@ -72,9 +72,7 @@ pub struct Settings {
     /// Auto-save interval in seconds
     pub auto_save_interval_secs: u64,
 
-    /// Clipboard Security
-    pub clipboard_security_enabled: bool,
-    pub clipboard_clear_timeout_secs: u64,
+
 
     /// Show debug panel
     pub show_debug_panel: bool,
@@ -156,8 +154,7 @@ impl Default for Settings {
             word_wrap: false,
             auto_save_enabled: true,
             auto_save_interval_secs: 60,
-            clipboard_security_enabled: true,
-            clipboard_clear_timeout_secs: 30,
+
             show_debug_panel: false,
             file_tree_width: 200.0,
             show_subfolders: true,
