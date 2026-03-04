@@ -50,8 +50,7 @@ To read or write a document, you must provide the exact same keyfile used to cre
 | macOS | ARM64 (Apple Silicon) | `aarch64-apple-darwin` | Keychain Access |
 
 > **Portable:** SEN is a single self-contained binary — no installation required. Just download and run.
->
-> **Linux note:** Requires a running secret service daemon (e.g. `gnome-keyring` or `kwallet`). Headless environments are not supported.
+> **Linux note:** Requires a running secret service daemon (e.g. `gnome-keyring` or `kwallet`).
 
 ---
 
