@@ -13,8 +13,7 @@ pub struct Icons {
     pub debug: TextureHandle,
     pub file_tree: TextureHandle,
     pub theme: TextureHandle,
-    pub secured: TextureHandle,
-    pub unsecured: TextureHandle,
+
     pub export: TextureHandle,
     pub rotate: TextureHandle,
     pub batch_convert: TextureHandle,
@@ -82,16 +81,6 @@ impl Icons {
                 ctx,
                 include_bytes!("../assets/StreamlineUltimateColorPalette.svg"),
                 "icon_theme",
-            ),
-            secured: Self::load_svg(
-                ctx,
-                include_bytes!("../assets/MdiShieldCheck.svg"),
-                "icon_secured",
-            ),
-            unsecured: Self::load_svg(
-                ctx,
-                include_bytes!("../assets/MdiShield.svg"),
-                "icon_unsecured",
             ),
             export: Self::load_svg(
                 ctx,

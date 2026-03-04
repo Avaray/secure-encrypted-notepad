@@ -261,7 +261,10 @@ pub fn load_themes() -> Vec<Theme> {
                     if path.extension().and_then(|s| s.to_str()) == Some("toml") {
                         if let Ok(content) = fs::read_to_string(&path) {
                             if let Ok(theme) = toml::from_str::<Theme>(&content) {
-                                themes.push(theme);
+                                // Only add if a theme with this name doesn't exist yet
+                                if !themes.iter().any(|t| t.name == theme.name) {
+                                    themes.push(theme);
+                                }
                             }
                         }
                     }

@@ -465,22 +465,11 @@ impl eframe::App for EditorApp {
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         // Keyfile indicator with icon
-                        let small_icon_size = egui::vec2(16.0, 16.0);
+
 
                         if let Some(path) = &self.keyfile_path {
                             let icon_tint = self.current_theme.colors.success_color();
-                            let icon_rect = ui.allocate_space(small_icon_size).1;
-
-                            ui.painter().image(
-                                self.icons.secured.id(),
-                                icon_rect,
-                                egui::Rect::from_min_max(
-                                    egui::pos2(0.0, 0.0),
-                                    egui::pos2(1.0, 1.0),
-                                ),
-                                icon_tint,
-                            );
-
+                            
                             let status_text = if self.settings.show_keyfile_path {
                                 format!("🔑 {}", path.file_name().unwrap_or_default().to_string_lossy())
                             } else {
@@ -493,18 +482,6 @@ impl eframe::App for EditorApp {
                             );
                         } else {
                             let icon_tint = self.current_theme.colors.warning_color();
-                            let icon_rect = ui.allocate_space(small_icon_size).1;
-
-                            ui.painter().image(
-                                self.icons.unsecured.id(),
-                                icon_rect,
-                                egui::Rect::from_min_max(
-                                    egui::pos2(0.0, 0.0),
-                                    egui::pos2(1.0, 1.0),
-                                ),
-                                icon_tint,
-                            );
-
                             ui.label(egui::RichText::new("No keyfile").color(icon_tint));
                         }
 
