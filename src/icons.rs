@@ -80,7 +80,7 @@ impl Icons {
             ),
             theme: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/StreamlineUltimateColorColorPalette.svg"),
+                include_bytes!("../assets/StreamlineUltimateColorPalette.svg"),
                 "icon_theme",
             ),
             secured: Self::load_svg(
