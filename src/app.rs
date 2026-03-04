@@ -528,13 +528,20 @@ impl eframe::App for EditorApp {
 
         // File tree (left)
         if self.show_file_tree {
-            egui::SidePanel::left("file_tree")
+            let panel_res = egui::SidePanel::left("file_tree")
                 .resizable(true)
                 .default_width(self.settings.file_tree_width)
                 .width_range(150.0..=f32::INFINITY)
                 .show(ctx, |ui| {
                     self.render_file_tree(ui);
                 });
+
+            // Persist panel width when user resizes it
+            let actual_width = panel_res.response.rect.width();
+            if (actual_width - self.settings.file_tree_width).abs() > 1.0 {
+                self.settings.file_tree_width = actual_width;
+                let _ = self.settings.save();
+            }
         }
 
         // Theme Editor panel (right)
