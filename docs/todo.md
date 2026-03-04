@@ -25,6 +25,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
     - Hide scrollbars when content fits within the panel.
 - [ ] **Scroll Animation Timing**: Shorten the animation time when scrolling from the end of a long line to the beginning of the next one.
 - [ ] **Duplicate "Dark" Theme**: Fix the issue where "Dark" theme appears twice in the theme selection list.
+- [ ] **Toolbar Icon Overlap**: Prevent icons on the left and right sides of the top menu from overlapping when the window is narrow or there are too many icons.
 
 ---
 
