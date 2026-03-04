@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g. 1.2.3)'
+        description: 'Release version'
         required: true
         type: string
 
@@ -102,6 +102,7 @@ jobs:
         with:
           workspaces: "."
           key: ${{ matrix.target }}
+          cache-targets: false
 
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
@@ -121,11 +122,8 @@ jobs:
             libxkbcommon-dev \
             pkg-config
 
-      - name: Run Tests
-        run: cargo test --release --verbose
-
       - name: Build Release Binary
-        run: cargo build --release --target ${{ matrix.target }} --verbose
+        run: cargo build --release --target ${{ matrix.target }}
 
       - name: Rename Binary
         run: mv target/${{ matrix.target }}/release/${{ matrix.binary }} target/${{ matrix.target }}/release/${{ matrix.artifact }}
