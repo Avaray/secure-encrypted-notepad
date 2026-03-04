@@ -4,7 +4,7 @@ use std::time::Instant;
 
 use crate::app_state::{FileTreeEntry, LogEntry, PendingAction};
 use crate::history::DocumentWithHistory;
-use crate::settings::{Settings, SensitiveSettings};
+use crate::settings::Settings;
 use crate::theme::{load_themes, Theme};
 
 /// Application state
@@ -24,8 +24,7 @@ pub struct EditorApp {
     /// User preferences (non-sensitive, saved as plaintext TOML)
     pub(crate) settings: Settings,
 
-    /// Sensitive settings (keyfile path, last directory) - memory only or encrypted
-    pub(crate) sensitive_settings: SensitiveSettings,
+
 
     /// Available themes
     pub(crate) themes: Vec<Theme>,
@@ -135,7 +134,7 @@ pub struct EditorApp {
 
 impl EditorApp {
     pub fn from_settings(settings: Settings) -> Self {
-        let sensitive_settings = SensitiveSettings::default();
+
         let themes = load_themes();
         let available_fonts = crate::fonts::get_system_fonts();
 
@@ -166,8 +165,7 @@ impl EditorApp {
             "Ready - Load or generate a keyfile".to_string()
         };
 
-        let file_tree_dir = settings.file_tree_starting_dir.clone()
-            .or_else(|| sensitive_settings.last_directory.clone());
+        let file_tree_dir = settings.file_tree_starting_dir.clone();
 
         Self {
             document: DocumentWithHistory::default(),
@@ -175,7 +173,7 @@ impl EditorApp {
             current_file_path: None,
             status_message: status,
             settings: settings.clone(),
-            sensitive_settings,
+
             themes,
             current_theme,
             show_settings_panel: false,

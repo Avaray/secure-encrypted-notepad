@@ -1,11 +1,10 @@
 use orion::aead;
-use orion::kdf;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
+
 use std::fs;
 use std::path::PathBuf;
-use zeroize::Zeroizing;
+
 use keyring::Entry;
 
 const CONFIG_MAGIC: &[u8; 4] = b"SENC";
@@ -82,9 +81,7 @@ pub struct Settings {
     pub show_subfolders: bool,
     /// Max history length
     pub max_history_length: usize,
-    /// Whether master password protection is enabled for sensitive settings
-    #[serde(default)]
-    pub master_password_enabled: bool,
+
     /// Whether to show full keyfile path in status bar
     #[serde(default)]
     pub show_keyfile_path: bool,
@@ -159,7 +156,7 @@ impl Default for Settings {
             file_tree_width: 200.0,
             show_subfolders: true,
             max_history_length: 100,
-            master_password_enabled: false,
+
             show_keyfile_path: false,
             start_maximized: false,
             window_width: 1200.0,
@@ -407,148 +404,4 @@ impl Settings {
     }
 }
 
-// =============================================================================
-// SENSITIVE SETTINGS - stored encrypted or in memory only
-// =============================================================================
 
-/// Sensitive settings that should never be stored in plaintext.
-/// When master_password is enabled, these are encrypted and persisted.
-/// When disabled, these exist only in memory during the session.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SensitiveSettings {
-    /// Path to global default keyfile
-    pub global_keyfile_path: Option<PathBuf>,
-    /// Last opened directory for file tree
-    pub last_directory: Option<PathBuf>,
-}
-
-impl Default for SensitiveSettings {
-    fn default() -> Self {
-        Self {
-            global_keyfile_path: None,
-            last_directory: None,
-        }
-    }
-}
-
-/// Magic number for encrypted settings file
-const SETTINGS_MAGIC: &[u8; 4] = b"SENS";
-const SETTINGS_SALT_SIZE: usize = 32;
-
-#[allow(dead_code)]
-impl SensitiveSettings {
-    /// Derive encryption key from master password
-    fn derive_key(password: &str, salt: &[u8]) -> Result<aead::SecretKey, Box<dyn std::error::Error>> {
-        let password_bytes = Zeroizing::new(password.as_bytes().to_vec());
-        let kdf_password = kdf::Password::from_slice(&password_bytes)?;
-        let kdf_salt = kdf::Salt::from_slice(salt)?;
-
-        // Derive 32-byte key using Argon2id
-        let derived_key = kdf::derive_key(&kdf_password, &kdf_salt, 3, 19456, 32)?;
-        let secret_key = aead::SecretKey::from_slice(derived_key.unprotected_as_bytes())?;
-        Ok(secret_key)
-    }
-
-    /// Get encrypted settings file path
-    fn encrypted_path() -> Option<PathBuf> {
-        dirs::config_dir().map(|d| d.join("sen").join("sensitive.sen"))
-    }
-
-    /// Save sensitive settings encrypted with master password
-    pub fn save_encrypted(&self, master_password: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let path = Self::encrypted_path()
-            .ok_or_else(|| "Cannot find config directory".to_string())?;
-
-        // Ensure directory exists
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)?;
-        }
-
-        // Generate salt
-        let mut salt = [0u8; SETTINGS_SALT_SIZE];
-        rand::thread_rng().fill_bytes(&mut salt);
-
-        // Derive key
-        let secret_key = Self::derive_key(master_password, &salt)?;
-
-        // Serialize to JSON
-        let json = Zeroizing::new(serde_json::to_string(self)?.into_bytes());
-
-        // Encrypt
-        let ciphertext = aead::seal(&secret_key, &json)?;
-
-        // Password verification hash (SHA-256 of password + salt)
-        let mut hasher = Sha256::new();
-        hasher.update(master_password.as_bytes());
-        hasher.update(&salt);
-        let password_hash = hasher.finalize();
-
-        // Assemble: [MAGIC 4B] [SALT 32B] [PASSWORD_HASH 32B] [ENCRYPTED DATA]
-        let mut file_data = Vec::new();
-        file_data.extend_from_slice(SETTINGS_MAGIC);
-        file_data.extend_from_slice(&salt);
-        file_data.extend_from_slice(&password_hash);
-        file_data.extend_from_slice(&ciphertext);
-
-        fs::write(&path, file_data)?;
-        Ok(())
-    }
-
-    /// Load sensitive settings decrypted with master password
-    pub fn load_encrypted(master_password: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        let path = Self::encrypted_path()
-            .ok_or_else(|| "Cannot find config directory".to_string())?;
-
-        let file_data = fs::read(&path)?;
-
-        // Validate minimum size: magic + salt + password_hash + some data
-        if file_data.len() < 4 + SETTINGS_SALT_SIZE + 32 + 1 {
-            return Err("Invalid encrypted settings file".into());
-        }
-
-        // Validate magic
-        if &file_data[0..4] != SETTINGS_MAGIC {
-            return Err("Not an encrypted settings file".into());
-        }
-
-        // Extract components
-        let salt = &file_data[4..4 + SETTINGS_SALT_SIZE];
-        let stored_hash = &file_data[4 + SETTINGS_SALT_SIZE..4 + SETTINGS_SALT_SIZE + 32];
-        let encrypted_data = &file_data[4 + SETTINGS_SALT_SIZE + 32..];
-
-        // Verify password before expensive decryption
-        let mut hasher = Sha256::new();
-        hasher.update(master_password.as_bytes());
-        hasher.update(salt);
-        let computed_hash = hasher.finalize();
-        if computed_hash.as_slice() != stored_hash {
-            return Err("Wrong master password".into());
-        }
-
-        // Derive key and decrypt
-        let secret_key = Self::derive_key(master_password, salt)?;
-        let plaintext = aead::open(&secret_key, encrypted_data)
-            .map_err(|_| "Decryption failed")?;
-
-        // Parse JSON
-        let settings: SensitiveSettings = serde_json::from_slice(&plaintext)?;
-        Ok(settings)
-    }
-
-    /// Check if encrypted settings file exists
-    pub fn encrypted_file_exists() -> bool {
-        Self::encrypted_path()
-            .map(|p| p.exists())
-            .unwrap_or(false)
-    }
-
-    /// Delete encrypted settings file
-    pub fn delete_encrypted() -> Result<(), std::io::Error> {
-        if let Some(path) = Self::encrypted_path() {
-            if path.exists() {
-                fs::remove_file(&path)?;
-            }
-        }
-        Ok(())
-    }
-}

@@ -96,7 +96,7 @@ impl EditorApp {
         if let Some(path) = rfd::FileDialog::new().pick_folder() {
             self.log_info(format!("Opening directory: {}", path.display()));
             self.file_tree_dir = Some(path.clone());
-            self.sensitive_settings.last_directory = Some(path);
+
             self.show_file_tree = true;
             self.settings.show_file_tree = true;
             let _ = self.settings.save();
@@ -108,7 +108,7 @@ impl EditorApp {
     pub(crate) fn perform_change_directory(&mut self, path: PathBuf) {
         self.log_info(format!("Changing to directory: {}", path.display()));
         self.file_tree_dir = Some(path.clone());
-        self.sensitive_settings.last_directory = Some(path);
+
         let _ = self.settings.save();
         self.refresh_file_tree();
     }
