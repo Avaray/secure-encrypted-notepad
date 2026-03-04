@@ -8,8 +8,9 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 
 *Items in this section represent new functionality or enhancements planned for future releases.*
 
-- [ ] **Feature Item 1**: *Description of the feature to be implemented.*
-- [ ] **Improvement Item 1**: *Description of the improvement.*
+- [ ] **Internationalization (I18n)**: Add support for multiple application languages.
+- [ ] **Icon Refresh**: Replace current temporary icons with higher-quality, professionally designed ones.
+- [ ] **Editor Comfort**: Increase the right margin in the text editor to improve readability and user comfort.
 
 ---
 
@@ -17,8 +18,13 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 
 *Items in this section represent confirmed issues or glitches that need to be addressed.*
 
-- [ ] **Bug Item 1**: *Description of the bug and steps to reproduce (if known).*
-- [ ] **UI Glitch 1**: *Description of the UI-related issue.*
+- [ ] **Navbar Visuals (Side Position)**: Fix black bars and disable edge-grabbing/resizing when the toolbar is positioned on the left or right.
+- [ ] **Remove Legacy Icons**: Delete the shield icon in the bottom-right corner (previously related to clipboard security).
+- [ ] **Editor Panning & Scrollbars**: 
+    - Disable middle-mouse panning when the document is empty.
+    - Hide scrollbars when content fits within the panel.
+- [ ] **Scroll Animation Timing**: Shorten the animation time when scrolling from the end of a long line to the beginning of the next one.
+- [ ] **Duplicate "Dark" Theme**: Fix the issue where "Dark" theme appears twice in the theme selection list.
 
 ---
 
