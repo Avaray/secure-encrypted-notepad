@@ -15,6 +15,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Theme System Refactoring**: Refactor the color system to allow customization of more editor components.
 - [ ] **History View Modes (Simple / Detailed)**: Add a toggle to switch between a Detailed view (current) and a Simple view (clean, one-line-per-entry list with exact date/time).
 - [ ] **Logo & App Icon**: Create a new professional logo for SEN and replace the current application icon.
+- [ ] **Persistent Panel Widths**: Make the Debug, History, Settings, and Theme Editor panels remember their widths when resized by the user, similar to the File Tree.
 
 ---
 
