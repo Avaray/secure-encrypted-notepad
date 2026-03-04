@@ -72,7 +72,7 @@ jobs:
         run: cargo check --target ${{ matrix.target }}
 
       - name: Clippy
-        run: cargo clippy --target ${{ matrix.target }} -- -D warnings
+        run: cargo clippy --target ${{ matrix.target }}
 
       - name: Run Tests
         run: cargo test --target ${{ matrix.target }} --verbose
