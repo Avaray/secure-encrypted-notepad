@@ -167,7 +167,8 @@ impl EditorApp {
             "Ready - Load or generate a keyfile".to_string()
         };
 
-        let file_tree_dir = sensitive_settings.last_directory.clone();
+        let file_tree_dir = settings.file_tree_starting_dir.clone()
+            .or_else(|| sensitive_settings.last_directory.clone());
 
         Self {
             document: DocumentWithHistory::default(),

@@ -180,7 +180,8 @@ impl EditorApp {
 
                 // Cleanup autosave file
                 let file_name = path.file_name().unwrap_or_default().to_string_lossy();
-                let autosave_name = format!("{}.autosave.sen", file_name);
+                let base_name = file_name.strip_suffix(".sen").unwrap_or(&file_name);
+                let autosave_name = format!("{}.autosave.sen", base_name);
                 let autosave_path = path.with_file_name(autosave_name);
                 if autosave_path.exists() {
                      if let Err(e) = std::fs::remove_file(&autosave_path) {
@@ -478,7 +479,8 @@ impl EditorApp {
         let original_path = self.current_file_path.as_ref().unwrap();
         // Construct autosave path: filename.autosave.sen
         let file_name = original_path.file_name().unwrap_or_default().to_string_lossy();
-        let autosave_name = format!("{}.autosave.sen", file_name);
+        let base_name = file_name.strip_suffix(".sen").unwrap_or(&file_name);
+        let autosave_name = format!("{}.autosave.sen", base_name);
         let autosave_path = original_path.with_file_name(autosave_name);
         
         let keyfile = self.keyfile_path.clone().unwrap();

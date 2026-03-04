@@ -397,6 +397,38 @@ impl EditorApp {
                         self.refresh_file_tree();
                     }
 
+                    // Starting directory setting
+                    ui.add_space(4.0);
+                    ui.label("Starting directory:");
+                    if let Some(ref dir) = self.settings.file_tree_starting_dir {
+                        ui.label(
+                            egui::RichText::new(dir.display().to_string())
+                                .small()
+                                .weak(),
+                        );
+                    } else {
+                        ui.label(egui::RichText::new("Not set (uses last opened)").small().weak());
+                    }
+                    ui.horizontal(|ui| {
+                        if ui.button("📁 Browse").clicked() {
+                            if let Some(dir) = rfd::FileDialog::new().pick_folder() {
+                                self.settings.file_tree_starting_dir = Some(dir.clone());
+                                self.file_tree_dir = Some(dir);
+                                let _ = self.settings.save();
+                                self.refresh_file_tree();
+                                self.log_info("Starting directory set");
+                            }
+                        }
+                        if self.settings.file_tree_starting_dir.is_some() {
+                            if ui.button("✕ Clear").clicked() {
+                                self.settings.file_tree_starting_dir = None;
+                                self.settings.file_tree_dir_encrypted = None;
+                                let _ = self.settings.save();
+                                self.log_info("Starting directory cleared");
+                            }
+                        }
+                    });
+
                     ui.separator();
                     ui.add_space(4.0);
                 });

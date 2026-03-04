@@ -48,6 +48,13 @@ pub struct Settings {
     /// Path to the global keyfile (memory-only, never serialized to disk)
     #[serde(skip)]
     pub global_keyfile_path: Option<PathBuf>,
+
+    /// Encrypted file tree starting directory (serialized the same way as keyfile_path_encrypted)
+    #[serde(default)]
+    pub file_tree_dir_encrypted: Option<String>,
+    /// File tree starting directory (memory-only, never serialized to disk)
+    #[serde(skip)]
+    pub file_tree_starting_dir: Option<PathBuf>,
     /// Whether to auto-create snapshot on save when content changes
     pub auto_snapshot_on_save: bool,
     /// Show line numbers in editor
@@ -139,6 +146,8 @@ impl Default for Settings {
             use_global_keyfile: false,
             keyfile_path_encrypted: None,
             global_keyfile_path: None,
+            file_tree_dir_encrypted: None,
+            file_tree_starting_dir: None,
             auto_snapshot_on_save: true,
             show_line_numbers: true,
             show_file_tree: true,
@@ -189,6 +198,7 @@ impl Settings {
                                                     match toml::from_str::<Settings>(&String::from_utf8_lossy(&plaintext)) {
                                                         Ok(mut settings) => {
                                                             Self::decrypt_keyfile_path_field(&mut settings);
+                                                            Self::decrypt_file_tree_dir_field(&mut settings);
                                                             eprintln!("[SEN] Settings loaded OK: use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
                                                                 settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
                                                             return settings;
@@ -210,6 +220,7 @@ impl Settings {
                                 match toml::from_str::<Settings>(&content_str) {
                                     Ok(mut settings) => {
                                         Self::decrypt_keyfile_path_field(&mut settings);
+                                        Self::decrypt_file_tree_dir_field(&mut settings);
                                         eprintln!("[SEN] Settings loaded OK (plaintext): use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
                                             settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
                                         return settings;
@@ -243,6 +254,7 @@ impl Settings {
             // Clone to mutate the encrypted field before serialization
             let mut to_save = self.clone();
             to_save.encrypt_keyfile_path_field();
+            to_save.encrypt_file_tree_dir_field();
 
             let toml_string = toml::to_string_pretty(&to_save)?;
             fs::write(&config_path, toml_string)?;
@@ -347,6 +359,54 @@ impl Settings {
         // When global_keyfile_path is None, leave keyfile_path_encrypted as-is.
         // This preserves the encrypted value if decryption failed on load,
         // so a subsequent save() doesn't destroy the data.
+    }
+
+    /// Decrypt `file_tree_dir_encrypted` into `file_tree_starting_dir`.
+    /// Mirrors the keyfile path decryption pattern.
+    fn decrypt_file_tree_dir_field(settings: &mut Self) {
+        if let Some(ref encrypted) = settings.file_tree_dir_encrypted {
+            match crate::config_crypto::get_or_create_config_key() {
+                Ok(key) => {
+                    match crate::config_crypto::decrypt_keyfile_path(&key, encrypted) {
+                        Ok(path_str) => {
+                            eprintln!("[SEN] File tree dir decrypted OK: {:?}", path_str);
+                            settings.file_tree_starting_dir = Some(PathBuf::from(path_str));
+                        }
+                        Err(e) => {
+                            eprintln!("[SEN] Warning: failed to decrypt file tree dir: {}", e);
+                            settings.file_tree_starting_dir = None;
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("[SEN] Warning: keychain unavailable for file tree dir: {}", e);
+                    settings.file_tree_starting_dir = None;
+                }
+            }
+        }
+    }
+
+    /// Encrypt `file_tree_starting_dir` into `file_tree_dir_encrypted`.
+    /// Mirrors the keyfile path encryption pattern.
+    fn encrypt_file_tree_dir_field(&mut self) {
+        if let Some(ref path) = self.file_tree_starting_dir {
+            match crate::config_crypto::get_or_create_config_key() {
+                Ok(key) => {
+                    let path_str = path.to_string_lossy();
+                    match crate::config_crypto::encrypt_keyfile_path(&key, &path_str) {
+                        Ok(encrypted) => {
+                            self.file_tree_dir_encrypted = Some(encrypted);
+                        }
+                        Err(e) => {
+                            eprintln!("[SEN] Warning: failed to encrypt file tree dir: {}", e);
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("[SEN] Warning: keychain unavailable for file tree dir: {}", e);
+                }
+            }
+        }
     }
 }
 
