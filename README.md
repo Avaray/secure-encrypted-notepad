@@ -28,6 +28,15 @@
 
 ---
 
+## 📚 Documentation
+
+For more detailed information, check out the following guides in the `/docs` directory:
+- [Encryption Architecture](docs/encryption_architecture.md) – Technical details on how your data is protected.
+- [Development Guide](docs/development.md) – Instructions on how to set up the environment and build the project.
+- [Project TODO](docs/todo.md) – A list of planned features and known issues.
+
+---
+
 ## 🚀 How It Works
 
 SEN encrypts everything into a single `.sen` file. The file format securely bundles your text and your version history:
