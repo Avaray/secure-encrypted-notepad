@@ -12,7 +12,7 @@ The primary purpose of SEN is to keep your documents secure using keyfile-only a
 
 ### File Structure
 ```text
-[4-byte Magic: "SED3"]
+[4-byte Magic: "SEN1"]
 [32-byte Random Salt]
 [Encrypted Payload (Nonce + Ciphertext + Tag)]
   - Inside Encrypted Payload: [32-byte Keyfile Hash] + [Actual Text Content]

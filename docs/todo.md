@@ -16,7 +16,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **History View Modes (Simple / Detailed)**: Add a toggle to switch between a Detailed view (current) and a Simple view (clean, one-line-per-entry list with exact date/time).
 - [ ] **Logo & App Icon**: Create a new professional logo for SEN and replace the current application icon.
 - [ ] **Persistent Panel Widths**: Make the Debug, History, Settings, and Theme Editor panels remember their widths when resized by the user, similar to the File Tree.
-- [ ] **File Format Migration (SED3 to SEN1)**: Update the file magic header from `SED3` to `SEN1` to reflect the project's rebranding. Backward compatibility for SED3 is not required.
+- [x] **File Format Migration (SED3 to SEN1)**: Update the file magic header from `SED3` to `SEN1` to reflect the project's rebranding. Backward compatibility for SED3 is not required.
 
 ---
 

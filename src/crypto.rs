@@ -6,9 +6,9 @@ use std::fs;
 use std::path::Path;
 use zeroize::{ZeroizeOnDrop, Zeroizing};
 
-/// Magic number for file format verification: "SED3" (kept for backward compatibility)
-/// SEN format (SED3 wire format): keyfile hash is inside encrypted payload (not appended in plaintext)
-const MAGIC_NUMBER: &[u8; 4] = b"SED3";
+/// Magic number for file format verification: "SEN1"
+/// SEN format: keyfile hash is inside encrypted payload (not appended in plaintext)
+const MAGIC_NUMBER: &[u8; 4] = b"SEN1";
 
 /// Component sizes in file
 const MAGIC_SIZE: usize = 4;
@@ -115,7 +115,7 @@ pub fn generate_keyfile(output_path: &Path) -> Result<(), CryptoError> {
 }
 
 /// FILE ENCRYPTION
-/// SEN (SED3) Structure: [MAGIC 4B] [SALT 32B] [ENCRYPTED DATA]
+/// SEN1 Structure: [MAGIC 4B] [SALT 32B] [ENCRYPTED DATA]
 /// Encrypted payload: [KEYFILE HASH 32B] [CONTENT BYTES]
 /// The keyfile hash is inside the encrypted payload for security
 pub fn encrypt_file(
@@ -239,9 +239,9 @@ mod tests {
         let decrypted = decrypt_file(&keyfile, &output).expect("Decryption should succeed");
         assert_eq!(decrypted, content);
 
-        // Verify SED3 magic (kept for backward compat)
+        // Verify SEN1 magic
         let raw = fs::read(&output).unwrap();
-        assert_eq!(&raw[0..4], b"SED3");
+        assert_eq!(&raw[0..4], MAGIC_NUMBER);
 
         // Verify keyfile hash is NOT at the end of the file (legacy SED2 vulnerability)
         let keyfile_hash = hash_keyfile(&keyfile).unwrap();
@@ -301,7 +301,7 @@ mod tests {
 
         // Write a file that's too short (just magic + partial salt)
         let mut data = vec![0u8; 10];
-        data[0..4].copy_from_slice(b"SED3");
+        data[0..4].copy_from_slice(MAGIC_NUMBER);
         fs::write(&output, &data).unwrap();
 
         let result = decrypt_file(&keyfile, &output);
