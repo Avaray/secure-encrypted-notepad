@@ -37,6 +37,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Scroll Animation Timing**: Shorten the animation time when scrolling from the end of a long line to the beginning of the next one.
 - [x] **Duplicate "Dark" Theme**: Fix the issue where "Dark" theme appears twice in the theme selection list.
 - [ ] **Toolbar Icon Overlap**: Prevent icons on the left and right sides of the top menu from overlapping when the window is narrow or there are too many icons.
+- [ ] **Status Message Glitch**: Remove unsupported character appearing at the end of "Ready with global keyfile loaded" message.
 
 ---
 
