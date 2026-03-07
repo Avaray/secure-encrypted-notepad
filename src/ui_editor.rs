@@ -340,6 +340,20 @@ impl EditorApp {
                     })
                     .show(ui);
 
+                if output.response.has_focus() {
+                    if let Some(cursor_range) = output.cursor_range {
+                        let cursor_rect = output.galley.pos_from_cursor(&cursor_range.primary);
+                        // Convert cursor rect to screen space using the galley position
+                        let screen_cursor_rect = cursor_rect.translate(output.galley_pos.to_vec2());
+                        
+                        // Expand the rect slightly so we don't just see the exact pixel edge of cursor
+                        let padded_rect = screen_cursor_rect.expand(4.0);
+                        
+                        // Use None to scroll only as much as necessary, avoiding jerky centering
+                        ui.scroll_to_rect(padded_rect, None);
+                    }
+                }
+
                 let text_rect = output.response.rect;
                 let galley = &output.galley;
 
