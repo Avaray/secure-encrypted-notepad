@@ -35,17 +35,22 @@ impl EditorApp {
         let search_active = !self.search_query.is_empty() && !search_matches.is_empty();
         let highlight_color = self.current_theme.colors.highlight_color();
 
-        // Symmetric padding around line numbers
-        let line_number_side_padding = 10.0;
+        // Optical adjustment: line numbers are right-aligned, which often makes the left padding 
+        // appear larger due to monospace font side-bearings and smaller numbers.
+        // We use asymmetric padding to make it visually balanced.
+        let line_number_left_padding = 4.0;
+        let line_number_right_padding = 10.0;
         let text_left_padding = 10.0;
 
         // Calculate precise width for line numbers
         let line_number_width = if show_line_numbers {
             let font_id = egui::FontId::monospace(editor_font_size);
             let max_line_text = format!("{}", line_count);
-            let text_width =
-                ui.fonts(|f| f.glyph_width(&font_id, ' ') * max_line_text.len() as f32);
-            line_number_side_padding + text_width + line_number_side_padding
+            let text_width = ui.painter()
+                .layout_no_wrap(max_line_text, font_id, egui::Color32::WHITE)
+                .rect
+                .width();
+            line_number_left_padding + text_width + line_number_right_padding
         } else {
             0.0
         };
@@ -55,13 +60,17 @@ impl EditorApp {
 
         // Save fixed position for line numbers (left edge of view)
         let editor_left_edge = ui.cursor().left();
-        let line_numbers_x = if show_line_numbers {
-            editor_left_edge + line_number_width - line_number_side_padding
+        
+        // Separator is at the very right edge of the entire line number block
+        let separator_x = if show_line_numbers {
+            editor_left_edge + line_number_width
         } else {
             0.0
         };
-        let separator_x = if show_line_numbers {
-            editor_left_edge + line_number_width
+        
+        // Line numbers are drawn right-aligned starting exactly right-padding pixels before the separator
+        let line_numbers_x = if show_line_numbers {
+            separator_x - line_number_right_padding
         } else {
             0.0
         };
