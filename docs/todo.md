@@ -10,7 +10,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 
 - [ ] **Internationalization (I18n)**: Add support for multiple application languages.
 - [ ] **Icon Refresh**: Replace current temporary icons with higher-quality, professionally designed ones.
-- [ ] **Editor Comfort (Phase 2)**: Increase the right margin in the main editor further to ensure text never touches the edge, especially when typing spaces (ensuring space at the end of lines).
+- [x] **Editor Comfort (Phase 2)**: Increase the right margin in the main editor further to ensure text never touches the edge, especially when typing spaces (ensuring space at the end of lines).
 - [ ] **Theme Editor Hover Colors**: Add ability to customize the background color of menu buttons when hovered.
 - [ ] **Theme System Refactoring**: Refactor the color system to allow customization of more editor components.
 - [ ] **History Capacity**: Increase the maximum allowed file history entries from 100 to 1000.

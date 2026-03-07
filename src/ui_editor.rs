@@ -302,7 +302,8 @@ impl EditorApp {
                 let scrollbar_outer_margin = ui.style().spacing.scroll.bar_outer_margin
                     + ui.style().spacing.scroll.bar_width
                     + ui.style().spacing.scroll.bar_inner_margin;
-                let text_right_padding = 20.0;
+                // Added more right margin so text doesn't touch the edge (Editor Comfort Phase 2)
+                let text_right_padding = 120.0;
                 let viewport_width = (text_area_rect.width() - scrollbar_outer_margin - text_right_padding).max(100.0);
 
                 // desired_width controls text wrapping:
@@ -324,6 +325,8 @@ impl EditorApp {
                     .desired_rows(line_count)
                     // min_size ensures TextEdit fills the visible area but is NEVER infinite
                     .min_size(egui::vec2(viewport_width, min_height))
+                    // Add explicit margin so text physically cannot touch the scrollbar
+                    .margin(egui::Margin { left: 0.0, right: text_right_padding, top: 0.0, bottom: 0.0 })
                     .frame(false)
                     .lock_focus(true)
                     .interactive(!middle_button_active)
