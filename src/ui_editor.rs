@@ -325,8 +325,13 @@ impl EditorApp {
                     .desired_rows(line_count)
                     // min_size ensures TextEdit fills the visible area but is NEVER infinite
                     .min_size(egui::vec2(viewport_width, min_height))
-                    // Add explicit margin so text physically cannot touch the scrollbar
-                    .margin(egui::Margin { left: 0.0, right: text_right_padding, top: 0.0, bottom: 0.0 })
+                    // Add explicit margin so text is comfortable by the edges
+                    .margin(egui::Margin { 
+                        left: 0.0, 
+                        right: text_right_padding, 
+                        top: 8.0, 
+                        bottom: 8.0 
+                    })
                     .frame(false)
                     .lock_focus(true)
                     .interactive(!middle_button_active)
