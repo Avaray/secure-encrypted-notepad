@@ -80,7 +80,7 @@ impl EditorApp {
                     history_count
                 );
                 self.log_info(format!(
-                    "✓ File opened successfully with {} history entries",
+                    "OK: File opened successfully with {} history entries",
                     history_count
                 ));
             }
@@ -175,7 +175,7 @@ impl EditorApp {
                     path.display(),
                     history_count
                 );
-                self.log_info("✓ File saved successfully");
+                self.log_info("OK: File saved successfully");
                 self.refresh_file_tree();
 
                 // Cleanup autosave file
@@ -255,9 +255,9 @@ impl EditorApp {
             match generate_keyfile(&path) {
                 Ok(_) => {
                     self.keyfile_path = Some(path.clone());
-                    self.status_message = format!("✓ Keyfile generated: {}", path.display());
+                    self.status_message = format!("OK: Keyfile generated: {}", path.display());
                     self.log_info(format!(
-                        "✓ Keyfile generated successfully (256 bytes): {}",
+                        "OK: Keyfile generated successfully (256 bytes): {}",
                         path.display()
                     ));
                 }
@@ -349,9 +349,9 @@ impl EditorApp {
             match std::fs::write(&path, &content) {
                 Ok(_) => {
                     self.status_message =
-                        format!("✓ Exported as plaintext: {}", path.display());
+                        format!("OK: Exported as plaintext: {}", path.display());
                     self.log_info(format!(
-                        "✓ Exported {} bytes to {}",
+                        "OK: Exported {} bytes to {}",
                         content.len(),
                         path.display()
                     ));
@@ -432,7 +432,7 @@ impl EditorApp {
                     self.is_modified = false;
 
                     self.status_message = format!(
-                        "✓ Keyfile rotated: {} → {}",
+                        "OK: Keyfile rotated: {} → {}",
                         old_name,
                         new_keyfile_path
                             .file_name()
@@ -440,7 +440,7 @@ impl EditorApp {
                             .to_string_lossy()
                     );
                     self.log_info(format!(
-                        "✓ Keyfile rotated successfully for {}",
+                        "OK: Keyfile rotated successfully for {}",
                         file_path.display()
                     ));
                 }

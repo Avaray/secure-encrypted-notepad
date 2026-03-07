@@ -460,7 +460,7 @@ impl eframe::App for EditorApp {
                     ui.label(&self.status_message);
 
                     if self.is_modified {
-                        ui.label(egui::RichText::new(" ●").color(egui::Color32::YELLOW));
+                        ui.label(egui::RichText::new(" *").color(egui::Color32::YELLOW));
                     }
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -471,9 +471,9 @@ impl eframe::App for EditorApp {
                             let icon_tint = self.current_theme.colors.success_color();
                             
                             let status_text = if self.settings.show_keyfile_path {
-                                format!("🔑 {}", path.file_name().unwrap_or_default().to_string_lossy())
+                                format!("[K] {}", path.file_name().unwrap_or_default().to_string_lossy())
                             } else {
-                                "🔑 Secured".to_string()
+                                "[K] Secured".to_string()
                             };
 
                             ui.label(
@@ -490,11 +490,11 @@ impl eframe::App for EditorApp {
                         // File indicator
                         if let Some(path) = &self.current_file_path {
                             ui.label(format!(
-                                "📄 {}",
+                                "[F] {}",
                                 path.file_name().unwrap_or_default().to_string_lossy()
                             ));
                         } else {
-                            ui.label("📄 Unsaved document");
+                            ui.label("[F] Unsaved document");
                         }
                     });
                 });
@@ -565,5 +565,3 @@ impl eframe::App for EditorApp {
         });
     }
 }
-
-

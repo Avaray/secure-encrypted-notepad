@@ -1015,7 +1015,7 @@ impl EditorApp {
                     self.settings.theme_name = theme.name.clone();
                     let _ = self.settings.save();
                     self.themes = crate::theme::load_themes();
-                    self.status_message = format!("✓ Theme saved: {}", theme.name);
+                    self.status_message = format!("OK: Theme saved: {}", theme.name);
                     self.log_info(format!("Theme saved successfully: {}", theme.name));
                 }
                 Err(e) => {
