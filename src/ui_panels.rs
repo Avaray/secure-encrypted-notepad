@@ -70,9 +70,24 @@ impl EditorApp {
                                     .max_height(300.0)
                                     .auto_shrink([false, false])
                                     .show(ui, |ui| {
+                                        let current_time = ui.input(|i| i.time);
+                                        let is_first_frame = ui.ctx().data_mut(|d| {
+                                            let last_time = d.get_temp::<f64>(ui.id());
+                                            d.insert_temp(ui.id(), current_time);
+                                            match last_time {
+                                                Some(last) => current_time > last + 0.1,
+                                                None => true,
+                                            }
+                                        });
+
                                         for (idx, font) in self.available_fonts.iter().enumerate() {
                                             let is_selected = idx == self.ui_font_index;
                                             let response = ui.selectable_label(is_selected, font);
+                                            
+                                            if is_selected && is_first_frame {
+                                                response.scroll_to_me(Some(egui::Align::Center));
+                                            }
+                                            
                                             if response.clicked() {
                                                 self.ui_font_index = idx;
                                                 changed = true;
@@ -139,9 +154,24 @@ impl EditorApp {
                                     .max_height(300.0)
                                     .auto_shrink([false, false])
                                     .show(ui, |ui| {
+                                        let current_time = ui.input(|i| i.time);
+                                        let is_first_frame = ui.ctx().data_mut(|d| {
+                                            let last_time = d.get_temp::<f64>(ui.id());
+                                            d.insert_temp(ui.id(), current_time);
+                                            match last_time {
+                                                Some(last) => current_time > last + 0.1,
+                                                None => true,
+                                            }
+                                        });
+
                                         for (idx, font) in self.available_fonts.iter().enumerate() {
                                             let is_selected = idx == self.editor_font_index;
                                             let response = ui.selectable_label(is_selected, font);
+                                            
+                                            if is_selected && is_first_frame {
+                                                response.scroll_to_me(Some(egui::Align::Center));
+                                            }
+                                            
                                             if response.clicked() {
                                                 self.editor_font_index = idx;
                                                 changed = true;
