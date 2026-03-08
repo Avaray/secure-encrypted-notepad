@@ -317,7 +317,11 @@ impl EditorApp {
                     ui.horizontal(|ui| {
                         ui.label("Current:");
                         if let Some(path) = &self.settings.global_keyfile_path {
-                            ui.label(path.file_name().unwrap_or_default().to_string_lossy());
+                            if self.settings.show_keyfile_path {
+                                ui.label(path.file_name().unwrap_or_default().to_string_lossy());
+                            } else {
+                                ui.label("Secured");
+                            }
                         } else {
                             ui.label("None");
                         }
@@ -341,7 +345,7 @@ impl EditorApp {
                         }
                     });
 
-                    if ui.checkbox(&mut self.settings.show_keyfile_path, "Show keyfile name in status bar").changed() {
+                    if ui.checkbox(&mut self.settings.show_keyfile_path, "Show keyfile paths globally").changed() {
                         let _ = self.settings.save();
                     }
 

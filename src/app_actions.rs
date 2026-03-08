@@ -64,7 +64,7 @@ impl EditorApp {
 
         let keyfile = self.keyfile_path.clone().unwrap();
         self.log_info(format!("Opening file: {}", path.display()));
-        self.log_info(format!("Using keyfile: {}", keyfile.display()));
+        self.log_info(format!("Using keyfile: {}", self.mask_keyfile_path(&keyfile)));
 
         match decrypt_file(&keyfile, &path) {
             Ok(content) => {
@@ -226,11 +226,12 @@ impl EditorApp {
                     match std::fs::read(&path) {
                         Ok(_content) => {
                             self.keyfile_path = Some(path.clone());
+                            let masked = self.mask_keyfile_path(&path);
                             self.status_message =
-                                format!("Valid keyfile loaded: {}", path.display());
+                                format!("Valid keyfile loaded: {}", masked);
                             self.log_info(format!(
                                 "Valid keyfile loaded successfully: {}",
-                                path.display()
+                                masked
                             ));
                         }
                         Err(e) => {
@@ -255,10 +256,11 @@ impl EditorApp {
             match generate_keyfile(&path) {
                 Ok(_) => {
                     self.keyfile_path = Some(path.clone());
-                    self.status_message = format!("OK: Keyfile generated: {}", path.display());
+                    let masked = self.mask_keyfile_path(&path);
+                    self.status_message = format!("OK: Keyfile generated: {}", masked);
                     self.log_info(format!(
                         "OK: Keyfile generated successfully (256 bytes): {}",
-                        path.display()
+                        masked
                     ));
                 }
                 Err(e) => {
@@ -424,20 +426,17 @@ impl EditorApp {
                     let old_name = self
                         .keyfile_path
                         .as_ref()
-                        .and_then(|p| p.file_name())
-                        .map(|n| n.to_string_lossy().to_string())
+                        .map(|p| self.mask_keyfile_path(p))
                         .unwrap_or_else(|| "unknown".to_string());
 
                     self.keyfile_path = Some(new_keyfile_path.clone());
                     self.is_modified = false;
 
+                    let new_masked = self.mask_keyfile_path(&new_keyfile_path);
                     self.status_message = format!(
                         "OK: Keyfile rotated: {} → {}",
                         old_name,
-                        new_keyfile_path
-                            .file_name()
-                            .unwrap_or_default()
-                            .to_string_lossy()
+                        new_masked
                     );
                     self.log_info(format!(
                         "OK: Keyfile rotated successfully for {}",
@@ -498,6 +497,4 @@ impl EditorApp {
             }
         }
     }
-
-
 }

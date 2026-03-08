@@ -218,6 +218,15 @@ impl EditorApp {
             previous_cursor_byte_pos: None,
         }
     }
+
+    /// Get displayable keyfile path/name based on settings
+    pub(crate) fn mask_keyfile_path(&self, path: &std::path::Path) -> String {
+        if self.settings.show_keyfile_path {
+            path.display().to_string()
+        } else {
+            "Secured".to_string()
+        }
+    }
 }
 
 impl Default for EditorApp {
@@ -489,11 +498,7 @@ impl eframe::App for EditorApp {
                         if let Some(path) = &self.keyfile_path {
                             let icon_tint = self.current_theme.colors.success_color();
                             
-                            let status_text = if self.settings.show_keyfile_path {
-                                format!("[K] {}", path.file_name().unwrap_or_default().to_string_lossy())
-                            } else {
-                                "[K] Secured".to_string()
-                            };
+                            let status_text = format!("[K] {}", self.mask_keyfile_path(path));
 
                             ui.label(
                                 egui::RichText::new(status_text)

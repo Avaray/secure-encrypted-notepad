@@ -23,7 +23,12 @@ impl EditorApp {
                 ui.heading("1. Keyfile");
                 ui.horizontal(|ui| {
                     if let Some(path) = &self.batch_keyfile {
-                         ui.label(egui::RichText::new(format!("🔑 {}", path.display())).color(self.current_theme.colors.success_color()));
+                        let display_name = if self.settings.show_keyfile_path {
+                            path.display().to_string()
+                        } else {
+                            "Secured".to_string()
+                        };
+                         ui.label(egui::RichText::new(format!("🔑 {}", display_name)).color(self.current_theme.colors.success_color()));
                     } else {
                          ui.label(egui::RichText::new("No keyfile selected").color(self.current_theme.colors.warning_color()));
                     }
