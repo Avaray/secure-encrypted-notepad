@@ -459,11 +459,12 @@ impl EditorApp {
                 // Return data needed for line number rendering outside ScrollArea
                 let galley_clone = output.galley.clone();
                 let separator_stroke = ui.visuals().widgets.noninteractive.bg_stroke;
-                (galley_clone, text_rect, scroll_area_rect, separator_stroke)
+                let galley_pos = output.galley_pos;
+                (galley_clone, text_rect, galley_pos, scroll_area_rect, separator_stroke)
             });
 
         // Extract data returned from inside ScrollArea
-        let (galley_data, text_rect_data, _scroll_area_rect_data, separator_stroke_data) = scroll_output.inner;
+        let (galley_data, _text_rect_data, galley_pos_data, _scroll_area_rect_data, separator_stroke_data) = scroll_output.inner;
 
         // Apply horizontal scroll reset for current frame too
         let mut final_state = scroll_output.state;
@@ -501,7 +502,7 @@ impl EditorApp {
             let mut is_continuation = false;
 
             for row in galley_data.rows.iter() {
-                let line_y = text_rect_data.min.y + row.min_y();
+                let line_y = galley_pos_data.y + row.min_y();
 
                 // Only draw if visible in the viewport
                 if line_y >= full_clip_rect.top() - editor_font_size
@@ -554,8 +555,8 @@ impl EditorApp {
                         let mut current_line: usize = 1;
 
                         for row in galley_data.rows.iter() {
-                            let row_top = text_rect_data.min.y + row.min_y();
-                            let row_bottom = text_rect_data.min.y + row.max_y();
+                            let row_top = galley_pos_data.y + row.min_y();
+                            let row_bottom = galley_pos_data.y + row.max_y();
 
                             if click_pos.y >= row_top && click_pos.y < row_bottom {
                                 clicked_line = Some(current_line);
