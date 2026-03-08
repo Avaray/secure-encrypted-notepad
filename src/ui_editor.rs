@@ -292,11 +292,25 @@ impl EditorApp {
                         // Select all
                         if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
                             let total_chars = text.chars().count();
+                            let current_pos = state.cursor.char_range().map(|r| r.primary.index).unwrap_or(0);
+                            
+                            // Select everything, but set the primary cursor to the end that is closer
+                            // to the current position. This minimizes visual jump and disorientation.
+                            let (primary, secondary) = if current_pos < total_chars / 2 {
+                                (0, total_chars)
+                            } else {
+                                (total_chars, 0)
+                            };
+
                             state.cursor.set_char_range(Some(egui::text::CCursorRange {
-                                primary: egui::text::CCursor::new(total_chars),
-                                secondary: egui::text::CCursor::new(0),
+                                primary: egui::text::CCursor::new(primary),
+                                secondary: egui::text::CCursor::new(secondary),
                             }));
                             state.store(ui.ctx(), text_edit_id);
+                            
+                            // Mark the cursor as "moved" to this position already so the manual 
+                            // scroll-to-cursor logic later in the frame doesn't trigger a jump.
+                            self.previous_cursor_byte_pos = Some(char_to_byte_idx(text, primary));
                         }
                     }
                 }
