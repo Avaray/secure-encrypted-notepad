@@ -53,13 +53,11 @@ jobs:
             echo "created=true" >> $GITHUB_OUTPUT
           fi
 
-  build-and-release:
-    name: Build & Release (${{ matrix.os-name }})
+  build:
+    name: Build (${{ matrix.os-name }})
     needs: check-version
     if: needs.check-version.outputs.created == 'true'
-    permissions:
-      contents: write
-
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
@@ -86,8 +84,6 @@ jobs:
             target: aarch64-apple-darwin
             binary: sen
             artifact: sen-v${{ needs.check-version.outputs.version }}-macos-arm64
-
-    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
@@ -135,14 +131,36 @@ jobs:
           sha256sum ${{ matrix.artifact }} > ${{ matrix.artifact }}.sha256
         shell: bash
 
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.target }}
+          path: |
+            target/${{ matrix.target }}/release/${{ matrix.artifact }}
+            target/${{ matrix.target }}/release/${{ matrix.artifact }}.sha256
+          retention-days: 1
+
+  create-release:
+    name: Create GitHub Release
+    needs: [check-version, build]
+    if: needs.check-version.outputs.created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release_files
+          pattern: binaries-*
+          merge-multiple: true
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.check-version.outputs.version }}
           name: v${{ needs.check-version.outputs.version }}
-          files: |
-            target/${{ matrix.target }}/release/${{ matrix.artifact }}
-            target/${{ matrix.target }}/release/${{ matrix.artifact }}.sha256
+          files: release_files/*
           generate_release_notes: true
           draft: false
           prerelease: false
