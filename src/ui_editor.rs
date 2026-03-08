@@ -349,19 +349,7 @@ impl EditorApp {
                     })
                     .show(ui);
 
-                if output.response.has_focus() {
-                    if let Some(cursor_range) = output.cursor_range {
-                        let cursor_rect = output.galley.pos_from_cursor(&cursor_range.primary);
-                        // Convert cursor rect to screen space using the galley position
-                        let screen_cursor_rect = cursor_rect.translate(output.galley_pos.to_vec2());
-                        
-                        // Expand the rect slightly so we don't just see the exact pixel edge of cursor
-                        let padded_rect = screen_cursor_rect.expand(4.0);
-                        
-                        // Use None to scroll only as much as necessary, avoiding jerky centering
-                        ui.scroll_to_rect(padded_rect, None);
-                    }
-                }
+                // Removed unconditionally frame-based cursor scroll here to prevent fighting manual mouse scrolling.
 
                 let text_rect = output.response.rect;
                 let galley = &output.galley;
@@ -423,10 +411,18 @@ impl EditorApp {
                             let line_end = text[cursor_byte_pos..].find('\n').map(|i| cursor_byte_pos + i).unwrap_or(text.len());
                             let current_line = &text[line_start..line_end];
                             
-                            // Only reset if the cursor ACTUALLY moved to an empty line
+                            // Only act if the cursor ACTUALLY moved
                             if self.previous_cursor_byte_pos != Some(cursor_byte_pos) {
                                 if current_line.trim().is_empty() {
                                     self.reset_scroll_x_pending = true;
+                                }
+                                
+                                // Scroll to newly moved cursor position so it doesn't fight mouse wheel scrolling
+                                if let Some(cursor_range) = output.cursor_range {
+                                    let cursor_rect = output.galley.pos_from_cursor(&cursor_range.primary);
+                                    let screen_cursor_rect = cursor_rect.translate(output.galley_pos.to_vec2());
+                                    let padded_rect = screen_cursor_rect.expand(4.0);
+                                    ui.scroll_to_rect(padded_rect, None);
                                 }
                             }
                             self.previous_cursor_byte_pos = Some(cursor_byte_pos);
