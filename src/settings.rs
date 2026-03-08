@@ -290,7 +290,7 @@ impl Settings {
         
         // Generate new key
         let mut key = [0u8; 32];
-        rand::thread_rng().fill_bytes(&mut key);
+        rand::rng().fill_bytes(&mut key);
         let key_hex = hex::encode(key);
         
         // Store in keyring

@@ -424,8 +424,8 @@ impl eframe::App for EditorApp {
         let toolbar_size = self.settings.toolbar_icon_size + 16.0;
         let mut panel_frame = egui::Frame::side_top_panel(&ctx.style());
         panel_frame.stroke = egui::Stroke::NONE;
-        panel_frame.inner_margin.left = 4.0;
-        panel_frame.inner_margin.right = 4.0;
+        panel_frame.inner_margin.left = 4;
+        panel_frame.inner_margin.right = 4;
 
         match self.settings.toolbar_position {
             crate::settings::ToolbarPosition::Top => {

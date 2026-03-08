@@ -160,7 +160,7 @@ impl EditorApp {
                                 ..Default::default()
                             },
                         );
-                        return ui.fonts(|f| f.layout_job(layout_job));
+                        return ui.fonts_mut(|f| f.layout_job(layout_job));
                     }
 
                     // Iterate lines, including trailing empty line after final \n
@@ -274,7 +274,7 @@ impl EditorApp {
                         _line_idx += 1;
                     }
 
-                    ui.fonts(|f| f.layout_job(layout_job))
+                    ui.fonts_mut(|f| f.layout_job(layout_job))
                 };
 
                 // Panning blocking handled by .interactive(!middle_button_active) in TextEdit
@@ -305,6 +305,7 @@ impl EditorApp {
                             state.cursor.set_char_range(Some(egui::text::CCursorRange {
                                 primary: egui::text::CCursor::new(primary),
                                 secondary: egui::text::CCursor::new(secondary),
+                                h_pos: None,
                             }));
                             state.store(ui.ctx(), text_edit_id);
                             
@@ -344,16 +345,16 @@ impl EditorApp {
                     .min_size(egui::vec2(viewport_width, min_height))
                     // Add explicit margin so text is comfortable by the edges
                     .margin(egui::Margin { 
-                        left: 0.0, 
-                        right: text_right_padding, 
-                        top: 8.0, 
-                        bottom: 8.0 
+                        left: 0, 
+                        right: text_right_padding as i8, 
+                        top: 8, 
+                        bottom: 8 
                     })
                     .frame(false)
                     .lock_focus(true)
                     .interactive(!middle_button_active)
-                    .layouter(&mut |ui, text_str, wrap_width| {
-                        layouter(ui, text_str, wrap_width)
+                    .layouter(&mut |ui, text_str: &dyn egui::TextBuffer, wrap_width| {
+                        layouter(ui, text_str.as_str(), wrap_width)
                     })
                     .show(ui);
 
@@ -436,7 +437,7 @@ impl EditorApp {
                                 
                                 // Scroll to newly moved cursor position so it doesn't fight mouse wheel scrolling
                                 if let Some(cursor_range) = output.cursor_range {
-                                    let cursor_rect = output.galley.pos_from_cursor(&cursor_range.primary);
+                                    let cursor_rect = output.galley.pos_from_cursor(cursor_range.primary);
                                     let screen_cursor_rect = cursor_rect.translate(output.galley_pos.to_vec2());
                                     let padded_rect = screen_cursor_rect.expand(4.0);
                                     ui.scroll_to_rect(padded_rect, None);
@@ -594,6 +595,7 @@ impl EditorApp {
                                     egui::text::CCursorRange {
                                         primary: egui::text::CCursor::new(end_char),
                                         secondary: egui::text::CCursor::new(start_char),
+                                        h_pos: None,
                                     },
                                 ));
                                 state.store(ui.ctx(), text_edit_id);
@@ -688,7 +690,7 @@ impl EditorApp {
                  
                  if start_byte != end_byte && end_byte <= text.len() {
                      let selected_text = &text[start_byte..end_byte];
-                     ui.output_mut(|o| o.copied_text = selected_text.to_string());
+                     ui.ctx().copy_text(selected_text.to_string());
 
                  }
             }
@@ -705,7 +707,7 @@ impl EditorApp {
                  
                  if start_byte != end_byte && end_byte <= text.len() {
                      let selected_text = &text[start_byte..end_byte];
-                     ui.output_mut(|o| o.copied_text = selected_text.to_string());
+                     ui.ctx().copy_text(selected_text.to_string());
 
                      
                      // Delete selection

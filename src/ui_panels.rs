@@ -509,7 +509,7 @@ impl EditorApp {
                         let is_loaded = self.loaded_history_index == Some(*original_index);
 
                         let frame = if is_loaded {
-                            egui::Frame::none()
+                            egui::Frame::NONE
                                 .fill(
                                     self.current_theme
                                         .colors
@@ -520,10 +520,10 @@ impl EditorApp {
                                     2.0,
                                     self.current_theme.colors.cursor_color(),
                                 ))
-                                .inner_margin(8.0)
-                                .rounding(4.0)
+                                .inner_margin(8)
+                                .corner_radius(4.0)
                         } else {
-                            egui::Frame::none().inner_margin(4.0)
+                            egui::Frame::NONE.inner_margin(4)
                         };
 
                         frame.show(ui, |ui| {

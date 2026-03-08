@@ -106,7 +106,7 @@ fn derive_key_from_keyfile(
 /// GENERATE RANDOM KEYFILE
 pub fn generate_keyfile(output_path: &Path) -> Result<(), CryptoError> {
     let mut keyfile_data = Zeroizing::new(vec![0u8; 256]);
-    rand::thread_rng().fill_bytes(&mut keyfile_data);
+    rand::rng().fill_bytes(&mut keyfile_data);
 
     fs::write(output_path, &*keyfile_data)
         .map_err(|e| CryptoError::KeyfileError(format!("Cannot write keyfile: {}", e)))?;
@@ -125,7 +125,7 @@ pub fn encrypt_file(
 ) -> Result<(), CryptoError> {
     // 1. Generate Salt
     let mut salt = [0u8; SALT_SIZE];
-    rand::thread_rng().fill_bytes(&mut salt);
+    rand::rng().fill_bytes(&mut salt);
 
     // 2. Hash Keyfile & Derive Key
     let keyfile_hash = hash_keyfile(keyfile_path)?;

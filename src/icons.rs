@@ -133,6 +133,7 @@ impl Icons {
         ColorImage {
             size: [width as usize, height as usize],
             pixels,
+            source_size: egui::Vec2::new(width as f32, height as f32),
         }
     }
 }

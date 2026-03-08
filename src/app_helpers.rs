@@ -122,7 +122,7 @@ impl EditorApp {
             style.spacing.interact_size.y = self.settings.ui_font_size + 8.0;
 
             // Opcjonalnie: window padding
-            style.spacing.window_margin = egui::Margin::same(8.0);
+            style.spacing.window_margin = egui::Margin::same(8);
             style.spacing.item_spacing.y = 6.0; // spacing między elementami
         });
     }
