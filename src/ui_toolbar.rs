@@ -8,7 +8,9 @@ impl EditorApp {
             || self.settings.toolbar_position == crate::settings::ToolbarPosition::Right;
 
         if is_vertical {
-            ui.vertical(|ui| self.render_toolbar_content(ui, is_vertical));
+            ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                self.render_toolbar_content(ui, is_vertical);
+            });
         } else {
             ui.horizontal(|ui| self.render_toolbar_content(ui, is_vertical));
         }

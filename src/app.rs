@@ -413,6 +413,11 @@ impl eframe::App for EditorApp {
 
         // Toolbar — height/width adapts to icon size
         let toolbar_size = self.settings.toolbar_icon_size + 16.0;
+        let mut panel_frame = egui::Frame::side_top_panel(&ctx.style());
+        panel_frame.stroke = egui::Stroke::NONE;
+        panel_frame.inner_margin.left = 4.0;
+        panel_frame.inner_margin.right = 4.0;
+
         match self.settings.toolbar_position {
             crate::settings::ToolbarPosition::Top => {
                 egui::TopBottomPanel::top("toolbar")
@@ -423,20 +428,34 @@ impl eframe::App for EditorApp {
                     });
             }
             crate::settings::ToolbarPosition::Left => {
+                let original_spacing = ctx.style().spacing.item_spacing.x;
+                ctx.style_mut(|s| s.spacing.item_spacing.x = 1.0); // 1px for the solid boundary line
+
                 egui::SidePanel::left("toolbar")
+                    .resizable(false)
                     .exact_width(toolbar_size)
+                    .frame(panel_frame.clone())
                     .show(ctx, |ui| {
                         ui.add_space(2.0);
                         self.render_toolbar(ui);
                     });
+                
+                ctx.style_mut(|s| s.spacing.item_spacing.x = original_spacing);
             }
             crate::settings::ToolbarPosition::Right => {
+                let original_spacing = ctx.style().spacing.item_spacing.x;
+                ctx.style_mut(|s| s.spacing.item_spacing.x = 1.0); // 1px for the solid boundary line
+
                 egui::SidePanel::right("toolbar")
+                    .resizable(false)
                     .exact_width(toolbar_size)
+                    .frame(panel_frame)
                     .show(ctx, |ui| {
                         ui.add_space(2.0);
                         self.render_toolbar(ui);
                     });
+                
+                ctx.style_mut(|s| s.spacing.item_spacing.x = original_spacing);
             }
         }
             

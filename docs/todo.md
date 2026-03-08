@@ -28,7 +28,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 
 *Items in this section represent confirmed issues or glitches that need to be addressed.*
 
-- [ ] **Navbar Visuals (Side Position)**: Fix black bars and disable edge-grabbing/resizing when the toolbar is positioned on the left or right.
+- [x] **Navbar Visuals (Side Position)**: Fix black bars and disable edge-grabbing/resizing when the toolbar is positioned on the left or right.
 - [x] **Remove Legacy Icons**: Delete the shield icon in the bottom-right corner (previously related to clipboard security).
 - [ ] **Status Bar Keyfile Visibility**: When "Show keyfile path" is disabled in settings, do not show any trace of the keyfile path/indicator in the status bar at all.
 - [x] **Editor Panning & Scrollbars**: 
