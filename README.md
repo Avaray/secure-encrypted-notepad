@@ -63,15 +63,6 @@ To read or write a document, you must provide the exact same keyfile used to cre
 
 ---
 
-## 🔧 Development
-
-```bash
-cargo check
-cargo run --release
-```
-
----
-
 ## ⚠️ Important Disclaimer
 
 - **Losing your keyfile means permanently losing access to your data.** 
