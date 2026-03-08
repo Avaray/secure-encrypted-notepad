@@ -119,11 +119,11 @@ fn default_window_height() -> f32 {
 }
 
 fn default_ui_font() -> String {
-    "Proportional".to_string()
+    "Proportional (Default)".to_string()
 }
 
 fn default_editor_font() -> String {
-    "Monospace".to_string()
+    "Monospace (Default)".to_string()
 }
 
 fn default_toolbar_icon_size() -> f32 {
@@ -135,8 +135,8 @@ impl Default for Settings {
         Self {
             ui_font_size: 16.0,
             editor_font_size: 14.0,
-            ui_font_family: "Proportional".to_string(),
-            editor_font_family: "Monospace".to_string(),
+            ui_font_family: "Proportional (Default)".to_string(),
+            editor_font_family: "Monospace (Default)".to_string(),
             theme_name: "Dark".to_string(),
             use_global_keyfile: false,
             keyfile_path_encrypted: None,
@@ -193,6 +193,7 @@ impl Settings {
                                                         Ok(mut settings) => {
                                                             Self::decrypt_keyfile_path_field(&mut settings);
                                                             Self::decrypt_file_tree_dir_field(&mut settings);
+                                                            Self::migrate_legacy_fonts(&mut settings);
                                                             eprintln!("[SEN] Settings loaded OK: use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
                                                                 settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
                                                             return settings;
@@ -215,6 +216,7 @@ impl Settings {
                                     Ok(mut settings) => {
                                         Self::decrypt_keyfile_path_field(&mut settings);
                                         Self::decrypt_file_tree_dir_field(&mut settings);
+                                        Self::migrate_legacy_fonts(&mut settings);
                                         eprintln!("[SEN] Settings loaded OK (plaintext): use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
                                             settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
                                         return settings;
@@ -232,6 +234,16 @@ impl Settings {
         let mut settings = Self::default();
         settings.is_first_run = true;
         settings
+    }
+
+    /// Migrates legacy font names without the "(Default)" suffix.
+    fn migrate_legacy_fonts(settings: &mut Settings) {
+        if settings.ui_font_family == "Proportional" {
+            settings.ui_font_family = "Proportional (Default)".to_string();
+        }
+        if settings.editor_font_family == "Monospace" {
+            settings.editor_font_family = "Monospace (Default)".to_string();
+        }
     }
 
     /// Save settings to file (plaintext TOML).
