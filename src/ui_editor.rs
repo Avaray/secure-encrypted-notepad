@@ -609,6 +609,84 @@ impl EditorApp {
             }
         }
 
+        // ═══════════════════════════════════════════════════════════════════
+        // DRAW WHITESPACE CHARACTERS (SPACES, TABS, RETURNS)
+        // ═══════════════════════════════════════════════════════════════════
+        if self.settings.show_whitespace {
+            let mut clip_rect = full_clip_rect;
+            if show_line_numbers {
+                clip_rect.min.x = separator_x;
+            }
+            let painter = ui.painter_at(clip_rect);
+            let whitespace_color = self
+                .current_theme
+                .colors
+                .comment_color()
+                .linear_multiply(0.4);
+            let font_id = egui::FontId::monospace(editor_font_size);
+
+            let start_y = full_clip_rect.top() - galley_pos_data.y;
+            let end_y = full_clip_rect.bottom() - galley_pos_data.y;
+            
+            // Get visible character range with generous padding
+            let start_cursor = galley_data.cursor_from_pos(egui::vec2(0.0, start_y));
+            let end_cursor = galley_data.cursor_from_pos(egui::vec2(full_clip_rect.width(), end_y));
+            
+            let total_chars = text.chars().count();
+            let start_char_idx = start_cursor.index.saturating_sub(100);
+            let end_char_idx = (end_cursor.index.saturating_add(200)).min(total_chars);
+            
+            let byte_start = char_to_byte_idx(text, start_char_idx);
+            let byte_end = char_to_byte_idx(text, end_char_idx);
+
+            let mut current_char_idx = start_char_idx;
+            for (_byte_offset, chr) in text[byte_start..byte_end].char_indices() {
+                if chr == ' ' || chr == '\t' || chr == '\n' {
+                    let cursor_rect1 = galley_data.pos_from_cursor(egui::text::CCursor::new(current_char_idx));
+                    let cursor_rect2 = galley_data.pos_from_cursor(egui::text::CCursor::new(current_char_idx + 1));
+                    
+                    let mut char_width = cursor_rect2.left() - cursor_rect1.left();
+                    // If it wraps to next line or is a newline itself, just use a fallback width
+                    if char_width < 0.0 || chr == '\n' {
+                        char_width = 8.0;
+                    }
+                    
+                    let char_rect = egui::Rect::from_min_size(
+                        cursor_rect1.left_top(),
+                        egui::vec2(char_width, cursor_rect1.height()),
+                    );
+                    
+                    let screen_rect = char_rect.translate(galley_pos_data.to_vec2());
+                    
+                    if screen_rect.bottom() >= full_clip_rect.top() && screen_rect.top() <= full_clip_rect.bottom() {
+                        if chr == ' ' {
+                            let center = screen_rect.center();
+                            painter.circle_filled(center, 1.5, whitespace_color);
+                        } else if chr == '\t' {
+                            let y = screen_rect.center().y;
+                            let px1 = screen_rect.left() + 2.0;
+                            let px2 = (screen_rect.right() - 2.0).max(px1 + 8.0);
+                            
+                            painter.line_segment([egui::pos2(px1, y), egui::pos2(px2, y)], egui::Stroke::new(1.0, whitespace_color));
+                            let a = 3.0;
+                            painter.line_segment([egui::pos2(px2 - a, y - a), egui::pos2(px2, y)], egui::Stroke::new(1.0, whitespace_color));
+                            painter.line_segment([egui::pos2(px2 - a, y + a), egui::pos2(px2, y)], egui::Stroke::new(1.0, whitespace_color));
+                        } else if chr == '\n' {
+                            // Shift slightly layout upwards to compensate for font baseline of the return symbol
+                            let center_y = screen_rect.center().y - 2.5;
+                            painter.text(
+                                egui::pos2(screen_rect.left(), center_y),
+                                egui::Align2::LEFT_CENTER,
+                                "↵",
+                                font_id.clone(),
+                                whitespace_color,
+                            );
+                        }
+                    }
+                }
+                current_char_idx += 1;
+            }
+        }
         // Restore animation time
         ui.style_mut().animation_time = original_animation_time;
     }

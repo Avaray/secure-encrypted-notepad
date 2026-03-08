@@ -361,6 +361,14 @@ impl EditorApp {
                     }
 
                     if ui
+                        .checkbox(&mut self.settings.show_whitespace, "Show special symbols")
+                        .on_hover_text("Displays spaces as dots, tabs as arrows, and returns as a return arrow.")
+                        .changed()
+                    {
+                        let _ = self.settings.save();
+                    }
+
+                    if ui
                         .checkbox(
                             &mut self.settings.auto_snapshot_on_save,
                             "Auto-snapshot on save",

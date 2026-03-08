@@ -60,6 +60,9 @@ pub struct Settings {
     pub show_line_numbers: bool,
     /// Show file tree panel
     pub show_file_tree: bool,
+    /// Show special symbols (spaces, tabs, returns)
+    #[serde(default)]
+    pub show_whitespace: bool,
 
     /// Editor settings
     pub tab_size: usize,
@@ -146,6 +149,7 @@ impl Default for Settings {
             auto_snapshot_on_save: true,
             show_line_numbers: true,
             show_file_tree: true,
+            show_whitespace: false,
             tab_size: 4,
             use_spaces_for_tabs: true,
             word_wrap: false,
