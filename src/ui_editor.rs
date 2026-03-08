@@ -284,8 +284,6 @@ impl EditorApp {
                         Self::handle_tab_key(ui, text_edit_id, false, text, &self.settings, &mut self.is_modified);
                     } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, egui::Key::Tab)) {
                         Self::handle_tab_key(ui, text_edit_id, true, text, &self.settings, &mut self.is_modified);
-                    } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Enter)) {
-                        Self::handle_enter_key(ui, text_edit_id, text, &mut self.is_modified);
                     } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::C)) {
                         Self::handle_copy_key(ui, text_edit_id, text);
                     } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::X)) {
@@ -662,42 +660,7 @@ impl EditorApp {
         }
     }
 
-    fn handle_enter_key(ui: &egui::Ui, id: egui::Id, text: &mut String, is_modified: &mut bool) {
-        if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), id) {
-            if let Some(range) = state.cursor.char_range() {
-                let cursor_char_idx = range.primary.index;
-                let cursor_byte_idx = char_to_byte_idx(text, cursor_char_idx);
-                
-                // Find start of current line to read indentation
-                let text_ref = &*text;
-                let line_start = text_ref[..cursor_byte_idx].rfind('\n').map(|i| i + 1).unwrap_or(0);
-                let current_line = &text_ref[line_start..cursor_byte_idx];
-                
-                // Calculate indentation
-                let indent: String = current_line.chars().take_while(|c| c.is_whitespace()).collect();
-                
-                let insert_str = format!("\n{}", indent);
-                
-                // Replace selection (if any) or insert
-                let start_char = range.primary.index.min(range.secondary.index);
-                let end_char = range.primary.index.max(range.secondary.index);
-                let start_byte = char_to_byte_idx(text, start_char);
-                let end_byte = char_to_byte_idx(text, end_char);
-                
-                if start_byte <= text.len() && end_byte <= text.len() {
-                    text.replace_range(start_byte..end_byte, &insert_str);
-                    
-                    let new_pos_char = start_char + insert_str.chars().count();
-                    state.cursor.set_char_range(Some(egui::text::CCursorRange::one(
-                        egui::text::CCursor::new(new_pos_char)
-                    )));
-                    state.store(ui.ctx(), id);
-                    *is_modified = true;
-                }
-            }
-        }
-    }
-    
+
     fn handle_copy_key(ui: &egui::Ui, id: egui::Id, text: &str) {
         if let Some(state) = egui::TextEdit::load_state(ui.ctx(), id) {
             if let Some(range) = state.cursor.char_range() {
