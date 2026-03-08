@@ -289,16 +289,12 @@ impl EditorApp {
                     } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::X)) {
                         Self::handle_cut_key(ui, text_edit_id, text, &mut self.is_modified);
                     } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::A)) {
-                        // Select all without scrolling view to end
+                        // Select all
                         if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
-                            let current_pos = state.cursor.char_range()
-                                .map(|r| r.primary.index)
-                                .unwrap_or(0);
+                            let total_chars = text.chars().count();
                             state.cursor.set_char_range(Some(egui::text::CCursorRange {
-                                primary: egui::text::CCursor::new(current_pos),
-                                secondary: egui::text::CCursor::new(
-                                    if current_pos == 0 { text.chars().count() } else { 0 }
-                                ),
+                                primary: egui::text::CCursor::new(total_chars),
+                                secondary: egui::text::CCursor::new(0),
                             }));
                             state.store(ui.ctx(), text_edit_id);
                         }
@@ -346,6 +342,15 @@ impl EditorApp {
                         layouter(ui, text_str, wrap_width)
                     })
                     .show(ui);
+
+                // Keep focus when interaction happens within the editor (e.g. scrollbars)
+                // but not on other focusable widgets.
+                if output.response.lost_focus() && ui.memory(|mem| mem.focused().is_none()) {
+                    let pointer_pos = ui.input(|i| i.pointer.latest_pos()).unwrap_or(egui::pos2(-1.0, -1.0));
+                    if full_clip_rect.contains(pointer_pos) {
+                        ui.memory_mut(|mem| mem.request_focus(text_edit_id));
+                    }
+                }
 
                 // Removed unconditionally frame-based cursor scroll here to prevent fighting manual mouse scrolling.
 
