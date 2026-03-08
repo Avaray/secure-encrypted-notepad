@@ -45,6 +45,9 @@ pub struct ThemeColors {
     pub info: [u8; 3],
     pub warning: [u8; 3],
     pub error: [u8; 3],
+    /// Color for whitespace symbols (spaces, tabs, returns)
+    #[serde(default)]
+    pub whitespace_symbols: Option<[u8; 3]>,
 }
 
 impl Default for ThemeColors {
@@ -74,6 +77,7 @@ impl ThemeColors {
             info: [33, 150, 243],
             warning: [255, 152, 0],
             error: [244, 67, 54],
+            whitespace_symbols: None,
         }
     }
 
@@ -97,6 +101,7 @@ impl ThemeColors {
             info: [13, 71, 161],
             warning: [230, 81, 0],
             error: [198, 40, 40],
+            whitespace_symbols: None,
         }
     }
 
@@ -152,6 +157,14 @@ impl ThemeColors {
 
     pub fn comment_color(&self) -> egui::Color32 {
         egui::Color32::from_rgb(self.comment[0], self.comment[1], self.comment[2])
+    }
+
+    pub fn whitespace_symbols_color(&self) -> egui::Color32 {
+        if let Some(c) = self.whitespace_symbols {
+            egui::Color32::from_rgb(c[0], c[1], c[2])
+        } else {
+            self.comment_color().linear_multiply(0.4)
+        }
     }
 
     pub fn success_color(&self) -> egui::Color32 {

@@ -618,11 +618,7 @@ impl EditorApp {
                 clip_rect.min.x = separator_x;
             }
             let painter = ui.painter_at(clip_rect);
-            let whitespace_color = self
-                .current_theme
-                .colors
-                .comment_color()
-                .linear_multiply(0.4);
+            let whitespace_color = self.current_theme.colors.whitespace_symbols_color();
             let font_id = egui::FontId::monospace(editor_font_size);
 
             let start_y = full_clip_rect.top() - galley_pos_data.y;

@@ -13,6 +13,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [x] **Editor Comfort (Phase 2)**: Increase the right margin in the main editor further to ensure text never touches the edge, especially when typing spaces (ensuring space at the end of lines).
 - [ ] **Theme Editor Hover Colors**: Add ability to customize the background color of menu buttons when hovered.
 - [ ] **Theme System Refactoring**: Refactor the color system to allow customization of more editor components.
+- [x] **Whitespace Symbols Color**: Add ability to customize the color of whitespace symbols (spaces, tabs, returns) within the theme editor.
 - [ ] **History Capacity**: Increase the maximum allowed file history entries from 100 to 1000.
 - [ ] **Global History Limit**: Add a global (default) setting to control the maximum number of history entries retained per file.
 - [ ] **Line Limit**: Implement a 9999 line limit per file/entry to maintain performance and keep the focus on note-taking rather than large databases.

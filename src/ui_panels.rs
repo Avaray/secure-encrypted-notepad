@@ -958,6 +958,26 @@ impl EditorApp {
                                 }
                                 ui.end_row();
 
+                                // Whitespace Symbols Color
+                                ui.label("Whitespace Symbols:");
+                                ui.horizontal(|ui| {
+                                    let mut ws = theme.colors.whitespace_symbols.unwrap_or_else(|| {
+                                        let c = theme.colors.comment;
+                                        [(c[0] as f32 * 0.4) as u8, (c[1] as f32 * 0.4) as u8, (c[2] as f32 * 0.4) as u8]
+                                    });
+                                    if ui.color_edit_button_srgb(&mut ws).changed() {
+                                        theme.colors.whitespace_symbols = Some(ws);
+                                        theme_changed = true;
+                                    }
+                                    if theme.colors.whitespace_symbols.is_some() {
+                                        if ui.button("↺").on_hover_text("Reset to Default").clicked() {
+                                            theme.colors.whitespace_symbols = None;
+                                            theme_changed = true;
+                                        }
+                                    }
+                                });
+                                ui.end_row();
+
                                 ui.label("");
                                 ui.label("");
                                 ui.end_row();
