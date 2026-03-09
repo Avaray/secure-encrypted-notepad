@@ -1172,6 +1172,15 @@ impl EditorApp {
                                 }
                                 ui.end_row();
 
+                                ui.label("Info Color:");
+                                if ui
+                                    .color_edit_button_srgb(&mut theme.colors.info)
+                                    .changed()
+                                {
+                                    theme_changed = true;
+                                }
+                                ui.end_row();
+
                                 ui.label("Warning Color:");
                                 if ui
                                     .color_edit_button_srgb(&mut theme.colors.warning)
