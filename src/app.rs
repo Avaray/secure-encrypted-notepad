@@ -546,9 +546,9 @@ impl eframe::App for EditorApp {
 
         // Status bar
         egui::TopBottomPanel::bottom("status_bar")
-            .min_height(28.0)
+            .min_height(24.0)
             .show(ctx, |ui| {
-                ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                ui.horizontal(|ui| {
                     ui.label(&self.status_message);
 
                     if self.is_modified {
@@ -556,17 +556,11 @@ impl eframe::App for EditorApp {
                     }
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        // Keyfile indicator with icon
-
+                        // Keyfile indicator
                         if let Some(path) = &self.keyfile_path {
                             let icon_tint = self.current_theme.colors.success_color();
-                            
                             let status_text = format!("[K] {}", self.mask_keyfile_path(path));
-
-                            ui.label(
-                                egui::RichText::new(status_text)
-                                .color(icon_tint),
-                            );
+                            ui.label(egui::RichText::new(status_text).color(icon_tint));
                         } else {
                             let icon_tint = self.current_theme.colors.warning_color();
                             ui.label(egui::RichText::new("No keyfile").color(icon_tint));
