@@ -386,7 +386,9 @@ impl EditorApp {
                         }
                     });
 
-                    if ui.checkbox(&mut self.settings.show_keyfile_path, "Show keyfile paths globally").changed() {
+                    if ui.checkbox(&mut self.settings.show_keyfile_path, "Show keyfile paths globally")
+                        .on_hover_text("When disabled, full paths to sensitive files are masked as 'Secured' or hidden entirely in the Status Bar, Settings, Batch Converter, and Debug Logs for maximum privacy.")
+                        .changed() {
                         let _ = self.settings.save();
                     }
 
