@@ -317,9 +317,11 @@ impl EditorApp {
                 
                 let min_height = (text_area_rect.height() - scrollbar_outer_margin).max(100.0);
 
-                // HACK: Hide default cursor to draw our own
+                // HACK: Hide default cursor and selection to draw our own
                 let original_cursor_color = ui.visuals().text_cursor.stroke.color;
+                let original_selection_color = ui.visuals().selection.bg_fill;
                 ui.visuals_mut().text_cursor.stroke.color = egui::Color32::TRANSPARENT;
+                ui.visuals_mut().selection.bg_fill = egui::Color32::TRANSPARENT;
 
                 let output = egui::TextEdit::multiline(text_ptr)
                     .id(text_edit_id)
@@ -344,10 +346,11 @@ impl EditorApp {
                     })
                     .show(ui);
 
-                // Restore cursor color for other widgets if needed (though ui is local)
+                // Restore colors for other widgets
                 ui.visuals_mut().text_cursor.stroke.color = original_cursor_color;
+                ui.visuals_mut().selection.bg_fill = original_selection_color;
 
-                // Draw Custom Cursor
+                // Draw Custom Cursor and Selection
                 if ui.memory(|mem| mem.has_focus(text_edit_id)) {
                     if let Some(cursor_range) = output.cursor_range {
                         let cursor_pos = cursor_range.primary;
@@ -357,10 +360,8 @@ impl EditorApp {
                         let cursor_rect = galley.pos_from_cursor(cursor_pos);
                         
                         // pos_from_cursor returns a rect spanning the full row height
-                        // (row.min_y to row.max_y). When line_height > 1.0 the row is taller
-                        // than the font, but egui renders text at the TOP of the row 
-                        // (starting at font_impl_ascent). We must shrink the cursor to 
-                        // font_size height and keep it at the top of the row to match text.
+                        // (row.min_y to row.max_y). Since text is at the TOP of the row
+                        // (starting at font_impl_ascent), we shrink the cursor to font_h.
                         let font_h = editor_font_size;
                         let row_top_screen = cursor_rect.min.y + output.galley_pos.y;
                         let painter_rect = egui::Rect::from_min_max(
@@ -370,7 +371,6 @@ impl EditorApp {
                         
                         // Check blink state
                         let is_visible = if self.settings.cursor_blink {
-                            // Use simple math for blink (0.5s intervals)
                             (ui.input(|i| i.time) * 2.0) as i32 % 2 == 0
                         } else {
                             true
@@ -386,7 +386,6 @@ impl EditorApp {
                                     );
                                 }
                                 crate::settings::CursorShape::Block => {
-                                    // Block cursor: a rectangle covering the character width
                                     let char_width = editor_font_size * 0.6; 
                                     let block_rect = egui::Rect::from_min_size(
                                         painter_rect.min,
@@ -402,6 +401,37 @@ impl EditorApp {
                                         egui::Stroke::new(2.0, color),
                                     );
                                 }
+                            }
+                        }
+                        
+                        // Draw manual selection highlights
+                        if cursor_range.primary != cursor_range.secondary {
+                            let (min_idx, max_idx) = if cursor_range.primary.index < cursor_range.secondary.index {
+                                (cursor_range.primary.index, cursor_range.secondary.index)
+                            } else {
+                                (cursor_range.secondary.index, cursor_range.primary.index)
+                            };
+
+                            let mut current_char_idx = 0;
+                            for row in &galley.rows {
+                                let row_char_count = row.char_count_including_newline();
+                                let row_end_idx = current_char_idx + row_char_count;
+
+                                if row_end_idx > min_idx && current_char_idx < max_idx {
+                                    let local_min = if min_idx > current_char_idx { min_idx - current_char_idx } else { 0 };
+                                    let local_max = if max_idx < row_end_idx { max_idx - current_char_idx } else { row_char_count };
+                                    
+                                    let x_min = row.x_offset(local_min);
+                                    let x_max = row.x_offset(local_max);
+                                    
+                                    let rect = egui::Rect::from_min_max(
+                                        egui::pos2(x_min + output.galley_pos.x, row.min_y() + output.galley_pos.y),
+                                        egui::pos2(x_max + output.galley_pos.x, row.min_y() + output.galley_pos.y + font_h),
+                                    );
+                                    
+                                    ui.painter().rect_filled(rect, 0.0, selection_bg.linear_multiply(0.7));
+                                }
+                                current_char_idx = row_end_idx;
                             }
                         }
                     }
