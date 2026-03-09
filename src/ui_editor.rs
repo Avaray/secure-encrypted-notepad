@@ -789,11 +789,16 @@ impl EditorApp {
                     let screen_rect = char_rect.translate(galley_pos_data.to_vec2());
                     
                     if screen_rect.bottom() >= full_clip_rect.top() && screen_rect.top() <= full_clip_rect.bottom() {
+                        // The screen_rect's height spans the full row. Text is rendered at the top.
+                        // We center our symbols within the *font* height rather than the full *row* height.
+                        let font_h = editor_font_size;
+                        let text_center_y = screen_rect.top() + font_h / 2.0;
+
                         if chr == ' ' {
-                            let center = screen_rect.center();
-                            painter.circle_filled(center, 1.5, whitespace_color);
+                            let center_x = screen_rect.center().x;
+                            painter.circle_filled(egui::pos2(center_x, text_center_y), 1.5, whitespace_color);
                         } else if chr == '\t' {
-                            let y = screen_rect.center().y;
+                            let y = text_center_y;
                             let px1 = screen_rect.left() + 2.0;
                             let px2 = (screen_rect.right() - 2.0).max(px1 + 8.0);
                             
@@ -802,10 +807,10 @@ impl EditorApp {
                             painter.line_segment([egui::pos2(px2 - a, y - a), egui::pos2(px2, y)], egui::Stroke::new(1.0, whitespace_color));
                             painter.line_segment([egui::pos2(px2 - a, y + a), egui::pos2(px2, y)], egui::Stroke::new(1.0, whitespace_color));
                         } else if chr == '\n' {
-                            // Shift slightly layout upwards to compensate for font baseline of the return symbol
-                            let center_y = screen_rect.center().y - 2.5;
+                            // Shift slightly upwards to compensate for font baseline of the return symbol
+                            let y = text_center_y - 2.5;
                             painter.text(
-                                egui::pos2(screen_rect.left(), center_y),
+                                egui::pos2(screen_rect.left(), y),
                                 egui::Align2::LEFT_CENTER,
                                 "↵",
                                 font_id.clone(),
