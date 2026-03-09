@@ -161,6 +161,7 @@ impl EditorApp {
                                 font_id: font_id.clone(),
                                 color: foreground_color,
                                 line_height,
+                                valign: egui::Align::Center,
                                 ..Default::default()
                             },
                         );
@@ -216,6 +217,7 @@ impl EditorApp {
                                              font_id: font_id.clone(),
                                              color: content_color,
                                              line_height,
+                                             valign: egui::Align::Center,
                                              ..Default::default()
                                          },
                                      );
@@ -229,6 +231,7 @@ impl EditorApp {
                                              font_id: font_id.clone(),
                                              color: content_color,
                                              line_height,
+                                             valign: egui::Align::Center,
                                              background: highlight_color,
                                              ..Default::default()
                                          },
@@ -245,6 +248,7 @@ impl EditorApp {
                                          font_id: font_id.clone(),
                                          color: content_color,
                                          line_height,
+                                         valign: egui::Align::Center,
                                          ..Default::default()
                                      },
                                  );
@@ -259,6 +263,7 @@ impl EditorApp {
                                      font_id: font_id.clone(),
                                      color: content_color,
                                      line_height,
+                                     valign: egui::Align::Center,
                                      ..Default::default()
                                  },
                              );
@@ -272,6 +277,7 @@ impl EditorApp {
                                  egui::TextFormat {
                                      font_id: font_id.clone(),
                                      line_height,
+                                     valign: egui::Align::Center,
                                      ..Default::default()
                                  },
                              );
@@ -350,8 +356,17 @@ impl EditorApp {
                         // Get cursor position relative to galley
                         let cursor_rect = galley.pos_from_cursor(cursor_pos);
                         
-                        // Screen-space rect for the cursor
-                        let painter_rect = cursor_rect.translate(output.galley_pos.to_vec2());
+                        // pos_from_cursor returns a rect spanning the full row height
+                        // (row.min_y to row.max_y). When line_height > 1.0 the row is taller
+                        // than the font, but egui renders text at the TOP of the row 
+                        // (starting at font_impl_ascent). We must shrink the cursor to 
+                        // font_size height and keep it at the top of the row to match text.
+                        let font_h = editor_font_size;
+                        let row_top_screen = cursor_rect.min.y + output.galley_pos.y;
+                        let painter_rect = egui::Rect::from_min_max(
+                            egui::pos2(cursor_rect.min.x + output.galley_pos.x, row_top_screen),
+                            egui::pos2(cursor_rect.max.x + output.galley_pos.x, row_top_screen + font_h),
+                        );
                         
                         // Check blink state
                         let is_visible = if self.settings.cursor_blink {
