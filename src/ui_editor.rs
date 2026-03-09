@@ -11,11 +11,10 @@ fn byte_to_char_idx(s: &str, byte_idx: usize) -> usize {
 
 impl EditorApp {
     pub(crate) fn render_editor(&mut self, ui: &mut egui::Ui) {
-        let text = &mut self.document.current_content;
-        let line_count = if text.is_empty() {
+        let line_count = if self.document.current_content.is_empty() {
             1
         } else {
-            text.lines().count() + if text.ends_with('\n') { 1 } else { 0 }
+            self.document.current_content.lines().count() + if self.document.current_content.ends_with('\n') { 1 } else { 0 }
         };
         let editor_font_size = self.settings.editor_font_size;
         let show_line_numbers = self.settings.show_line_numbers;
@@ -85,7 +84,7 @@ impl EditorApp {
 
         // MIDDLE MOUSE BUTTON PANNING
         let pointer = ui.input(|i| i.pointer.clone());
-        let middle_button_active = pointer.middle_down() && !text.is_empty();
+        let middle_button_active = pointer.middle_down() && !self.document.current_content.is_empty();
 
         if middle_button_active {
             if let Some(pos) = pointer.latest_pos() {
@@ -133,6 +132,7 @@ impl EditorApp {
             .auto_shrink(false)
             .scroll_offset(scroll_state.offset.into())
             .show(&mut text_ui, |ui| {
+                let text_ptr = &mut self.document.current_content;
                 let scroll_area_rect = ui.clip_rect();
 
                 let layouter = |ui: &egui::Ui, text_str: &str, wrap_width: f32| {
@@ -280,40 +280,7 @@ impl EditorApp {
                 // Panning blocking handled by .interactive(!middle_button_active) in TextEdit
 
                 if ui.memory(|mem| mem.has_focus(text_edit_id)) {
-                    if ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Tab)) {
-                        Self::handle_tab_key(ui, text_edit_id, false, text, &self.settings, &mut self.is_modified);
-                    } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, egui::Key::Tab)) {
-                        Self::handle_tab_key(ui, text_edit_id, true, text, &self.settings, &mut self.is_modified);
-                    } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::C)) {
-                        Self::handle_copy_key(ui, text_edit_id, text);
-                    } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::X)) {
-                        Self::handle_cut_key(ui, text_edit_id, text, &mut self.is_modified);
-                    } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::A)) {
-                        // Select all
-                        if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
-                            let total_chars = text.chars().count();
-                            let current_pos = state.cursor.char_range().map(|r| r.primary.index).unwrap_or(0);
-                            
-                            // Select everything, but set the primary cursor to the end that is closer
-                            // to the current position. This minimizes visual jump and disorientation.
-                            let (primary, secondary) = if current_pos < total_chars / 2 {
-                                (0, total_chars)
-                            } else {
-                                (total_chars, 0)
-                            };
-
-                            state.cursor.set_char_range(Some(egui::text::CCursorRange {
-                                primary: egui::text::CCursor::new(primary),
-                                secondary: egui::text::CCursor::new(secondary),
-                                h_pos: None,
-                            }));
-                            state.store(ui.ctx(), text_edit_id);
-                            
-                            // Mark the cursor as "moved" to this position already so the manual 
-                            // scroll-to-cursor logic later in the frame doesn't trigger a jump.
-                            self.previous_cursor_byte_pos = Some(char_to_byte_idx(text, primary));
-                        }
-                    }
+                    // We will handle Tab/Copy/Cut/SelectAll OUTSIDE the ScrollArea to avoid borrow checker issues
                 }
 
                 // Viewport width is now simply the text_area width (the ScrollArea's own width)
@@ -335,7 +302,7 @@ impl EditorApp {
                 
                 let min_height = (text_area_rect.height() - scrollbar_outer_margin).max(100.0);
 
-                let output = egui::TextEdit::multiline(text)
+                let output = egui::TextEdit::multiline(text_ptr)
                     .id(text_edit_id)
                     .font(egui::TextStyle::Monospace)
                     .code_editor()
@@ -369,7 +336,7 @@ impl EditorApp {
 
                 // Removed unconditionally frame-based cursor scroll here to prevent fighting manual mouse scrolling.
 
-                let text_rect = output.response.rect;
+                let _text_rect = output.response.rect;
                 let galley = &output.galley;
 
                 // AUTO-SCROLL during text selection with left button
@@ -403,68 +370,122 @@ impl EditorApp {
                 }
 
                 if output.response.changed() {
-                    self.is_modified = true;
-                    self.loaded_history_index = None;
+                    // Logic moved outside
                 }
 
                 // UPDATE HIGHLIGHTING EVERY FRAME when TextEdit has focus
                 if output.response.has_focus() {
                     if let Some(state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
-                        if let Some(cursor_range) = state.cursor.char_range() {
-                            let cursor_char_pos = cursor_range.primary.index;
-                            let cursor_byte_pos = char_to_byte_idx(text, cursor_char_pos);
-
-                            // Count '\n' characters before cursor + 1
-                            let line_num = text[..cursor_byte_pos]
-                                .as_bytes()
-                                .iter()
-                                .filter(|&&b| b == b'\n')
-                                .count()
-                                + 1;
-
-                            self.highlighted_line = Some(line_num);
+                        if let Some(cursor_range_state) = state.cursor.char_range() {
+                            let cursor_char_pos = cursor_range_state.primary.index;
+                            let _cursor_byte_pos = char_to_byte_idx(text_ptr, cursor_char_pos);
 
                             // Detect if cursor is on an empty or blank line → schedule scroll reset
-                            let line_start = text[..cursor_byte_pos].rfind('\n').map(|i| i + 1).unwrap_or(0);
-                            let line_end = text[cursor_byte_pos..].find('\n').map(|i| cursor_byte_pos + i).unwrap_or(text.len());
-                            let current_line = &text[line_start..line_end];
-                            
-                            // Only act if the cursor ACTUALLY moved
-                            if self.previous_cursor_byte_pos != Some(cursor_byte_pos) {
-                                if current_line.trim().is_empty() {
-                                    self.reset_scroll_x_pending = true;
-                                }
-                                
-                                // Scroll to newly moved cursor position so it doesn't fight mouse wheel scrolling
-                                if let Some(cursor_range) = output.cursor_range {
-                                    let cursor_rect = output.galley.pos_from_cursor(cursor_range.primary);
-                                    let screen_cursor_rect = cursor_rect.translate(output.galley_pos.to_vec2());
-                                    let padded_rect = screen_cursor_rect.expand(4.0);
-                                    ui.scroll_to_rect(padded_rect, None);
-                                }
+                            if let Some(cursor_range_galley) = output.cursor_range {
+                                let cursor_rect = output.galley.pos_from_cursor(cursor_range_galley.primary);
+                                let screen_cursor_rect = cursor_rect.translate(output.galley_pos.to_vec2());
+                                let padded_rect = screen_cursor_rect.expand(4.0);
+                                ui.scroll_to_rect(padded_rect, None);
                             }
-                            self.previous_cursor_byte_pos = Some(cursor_byte_pos);
-
-                            let char_start =
-                                cursor_range.primary.index.min(cursor_range.secondary.index);
-                            let char_end =
-                                cursor_range.primary.index.max(cursor_range.secondary.index);
-                            let byte_start = char_to_byte_idx(text, char_start);
-                            let byte_end = char_to_byte_idx(text, char_end);
-                            self.text_cursor_range = Some(byte_start..byte_end);
                         }
                     }
                 }
 
-                // Return data needed for line number rendering outside ScrollArea
                 let galley_clone = output.galley.clone();
                 let separator_stroke = ui.visuals().widgets.noninteractive.bg_stroke;
                 let galley_pos = output.galley_pos;
-                (galley_clone, text_rect, galley_pos, scroll_area_rect, separator_stroke)
+                (output, scroll_area_rect, galley_clone, galley_pos, separator_stroke)
             });
 
-        // Extract data returned from inside ScrollArea
-        let (galley_data, _text_rect_data, galley_pos_data, _scroll_area_rect_data, separator_stroke_data) = scroll_output.inner;
+        // --- POST-PROCESSING OUTSIDE CLOSURE ---
+        let (output, _scroll_area_rect, galley_data, galley_pos_data, separator_stroke_data) = scroll_output.inner;
+        let mut status_update = None;
+        let mut warning_log = None;
+
+        {
+            let text = &mut self.document.current_content;
+            
+            // Handle focus-based shortcuts
+            if ui.memory(|mem| mem.has_focus(text_edit_id)) {
+                if ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Tab)) {
+                    Self::handle_tab_key(ui, text_edit_id, false, text, &self.settings, &mut self.is_modified);
+                } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, egui::Key::Tab)) {
+                    Self::handle_tab_key(ui, text_edit_id, true, text, &self.settings, &mut self.is_modified);
+                } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::C)) {
+                    Self::handle_copy_key(ui, text_edit_id, text);
+                } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::X)) {
+                    Self::handle_cut_key(ui, text_edit_id, text, &mut self.is_modified);
+                } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::A)) {
+                    if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
+                        let total_chars = text.chars().count();
+                        let current_pos = state.cursor.char_range().map(|r| r.primary.index).unwrap_or(0);
+                        let (primary, secondary) = if current_pos < total_chars / 2 { (0, total_chars) } else { (total_chars, 0) };
+                        state.cursor.set_char_range(Some(egui::text::CCursorRange {
+                            primary: egui::text::CCursor::new(primary),
+                            secondary: egui::text::CCursor::new(secondary),
+                            h_pos: None,
+                        }));
+                        state.store(ui.ctx(), text_edit_id);
+                        self.previous_cursor_byte_pos = Some(char_to_byte_idx(text, primary));
+                    }
+                }
+            }
+
+            if output.response.changed() {
+                self.is_modified = true;
+                self.loaded_history_index = None;
+                
+                // Enforce max lines limit
+                if self.settings.max_lines > 0 {
+                    let current_lines = text.lines().count();
+                    if current_lines > self.settings.max_lines {
+                        let mut lines = text.lines().take(self.settings.max_lines).collect::<Vec<_>>().join("\n");
+                        if text.ends_with('\n') { lines.push('\n'); }
+                        *text = lines;
+                        status_update = Some(format!("⚠️ Line limit of {} reached!", self.settings.max_lines));
+                        warning_log = Some(format!("Line limit ({}) exceeded and content truncated.", self.settings.max_lines));
+                    }
+                }
+            }
+        }
+
+        if let Some(msg) = status_update {
+            self.status_message = msg;
+        }
+        if let Some(log) = warning_log {
+            self.log_warning(log);
+        }
+
+        // Highlight line and cursor tracking
+        if output.response.has_focus() {
+            let text = &self.document.current_content;
+            if let Some(state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
+                if let Some(cursor_range) = state.cursor.char_range() {
+                    let cursor_char_pos = cursor_range.primary.index;
+                    let cursor_byte_pos = char_to_byte_idx(text, cursor_char_pos);
+                    
+                    let line_num = text[..cursor_byte_pos].as_bytes().iter().filter(|&&b| b == b'\n').count() + 1;
+                    self.highlighted_line = Some(line_num);
+
+                    let line_start = text[..cursor_byte_pos].rfind('\n').map(|i| i + 1).unwrap_or(0);
+                    let line_end = text[cursor_byte_pos..].find('\n').map(|i| cursor_byte_pos + i).unwrap_or(text.len());
+                    let current_line_text = &text[line_start..line_end];
+                    
+                    if self.previous_cursor_byte_pos != Some(cursor_byte_pos) {
+                        if current_line_text.trim().is_empty() {
+                            self.reset_scroll_x_pending = true;
+                        }
+                    }
+                    self.previous_cursor_byte_pos = Some(cursor_byte_pos);
+
+                    let char_start = cursor_range.primary.index.min(cursor_range.secondary.index);
+                    let char_end = cursor_range.primary.index.max(cursor_range.secondary.index);
+                    let byte_start = char_to_byte_idx(text, char_start);
+                    let byte_end = char_to_byte_idx(text, char_end);
+                    self.text_cursor_range = Some(byte_start..byte_end);
+                }
+            }
+        }
 
         // Apply horizontal scroll reset for current frame too
         let mut final_state = scroll_output.state;
@@ -478,6 +499,7 @@ impl EditorApp {
         // Everything below renders AFTER the ScrollArea, so it paints
         // on a layer above the scrollbar tracks.
         // ═══════════════════════════════════════════════════════════════════
+        let text = &self.document.current_content;
         if show_line_numbers {
             let painter = ui.painter();
             let font_id = egui::FontId::monospace(editor_font_size);

@@ -587,43 +587,67 @@ impl eframe::App for EditorApp {
 
         // Theme Editor panel (right)
         if self.show_theme_editor {
-            egui::SidePanel::right("theme_editor")
+            let panel_res = egui::SidePanel::right("theme_editor")
                 .resizable(true)
-                .default_width(270.0)
+                .default_width(self.settings.theme_editor_width)
                 .show(ctx, |ui| {
                     self.render_theme_editor_panel(ui);
                 });
+                
+            let actual_width = panel_res.response.rect.width();
+            if (actual_width - self.settings.theme_editor_width).abs() > 1.0 {
+                self.settings.theme_editor_width = actual_width;
+                let _ = self.settings.save();
+            }
         }
 
         // Settings panel (right)
         if self.show_settings_panel {
-            egui::SidePanel::right("settings_panel")
+            let panel_res = egui::SidePanel::right("settings_panel")
                 .resizable(true)
-                .default_width(350.0)
+                .default_width(self.settings.settings_panel_width)
                 .min_width(300.0)
                 .show(ctx, |ui| {
                     self.render_settings_panel(ui);
                 });
+                
+            let actual_width = panel_res.response.rect.width();
+            if (actual_width - self.settings.settings_panel_width).abs() > 1.0 {
+                self.settings.settings_panel_width = actual_width;
+                let _ = self.settings.save();
+            }
         }
 
         // History panel (right)
         if self.show_history_panel {
-            egui::SidePanel::right("history")
+            let panel_res = egui::SidePanel::right("history")
                 .resizable(true)
-                .default_width(250.0)
+                .default_width(self.settings.history_panel_width)
                 .show(ctx, |ui| {
                     self.render_history_panel(ui);
                 });
+                
+            let actual_width = panel_res.response.rect.width();
+            if (actual_width - self.settings.history_panel_width).abs() > 1.0 {
+                self.settings.history_panel_width = actual_width;
+                let _ = self.settings.save();
+            }
         }
 
         // Debug panel (right, below history if both shown)
         if self.show_debug_panel {
-            egui::SidePanel::right("debug")
+            let panel_res = egui::SidePanel::right("debug")
                 .resizable(true)
-                .default_width(250.0)
+                .default_width(self.settings.debug_panel_width)
                 .show(ctx, |ui| {
                     self.render_debug_panel(ui);
                 });
+                
+            let actual_width = panel_res.response.rect.width();
+            if (actual_width - self.settings.debug_panel_width).abs() > 1.0 {
+                self.settings.debug_panel_width = actual_width;
+                let _ = self.settings.save();
+            }
         }
 
         // Central editor

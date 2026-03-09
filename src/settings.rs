@@ -80,10 +80,32 @@ pub struct Settings {
     pub show_debug_panel: bool,
     /// File tree panel width
     pub file_tree_width: f32,
+    
+    /// Theme editor panel width
+    #[serde(default = "default_panel_width_270")]
+    pub theme_editor_width: f32,
+    
+    /// Settings panel width
+    #[serde(default = "default_panel_width_350")]
+    pub settings_panel_width: f32,
+    
+    /// History panel width
+    #[serde(default = "default_panel_width_250")]
+    pub history_panel_width: f32,
+    
+    /// Debug panel width
+    #[serde(default = "default_panel_width_250")]
+    pub debug_panel_width: f32,
+
     /// Show subfolders in file tree
     pub show_subfolders: bool,
+    
     /// Max history length
     pub max_history_length: usize,
+    
+    /// Editor line limit (0 means disabled)
+    #[serde(default = "default_max_lines")]
+    pub max_lines: usize,
 
     /// Whether to show full keyfile path in status bar
     #[serde(default)]
@@ -133,6 +155,22 @@ fn default_toolbar_icon_size() -> f32 {
     24.0
 }
 
+fn default_panel_width_250() -> f32 {
+    250.0
+}
+
+fn default_panel_width_270() -> f32 {
+    270.0
+}
+
+fn default_panel_width_350() -> f32 {
+    350.0
+}
+
+fn default_max_lines() -> usize {
+    1000
+}
+
 impl Default for Settings {
     fn default() -> Self {
         Self {
@@ -158,8 +196,13 @@ impl Default for Settings {
 
             show_debug_panel: false,
             file_tree_width: 200.0,
+            theme_editor_width: default_panel_width_270(),
+            settings_panel_width: default_panel_width_350(),
+            history_panel_width: default_panel_width_250(),
+            debug_panel_width: default_panel_width_250(),
             show_subfolders: true,
             max_history_length: 100,
+            max_lines: default_max_lines(),
 
             show_keyfile_path: false,
             start_maximized: false,

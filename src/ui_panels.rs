@@ -88,12 +88,11 @@ impl EditorApp {
                                                 response.scroll_to_me(Some(egui::Align::Center));
                                             }
                                             
-                                            if response.clicked() {
+                                            if response.clicked() || (is_selected && ui.input(|i| i.key_pressed(egui::Key::Enter))) {
                                                 self.ui_font_index = idx;
                                                 changed = true;
+                                                ui.close_menu();
                                             }
-
-
                                         }
                                     });
 
@@ -172,12 +171,11 @@ impl EditorApp {
                                                 response.scroll_to_me(Some(egui::Align::Center));
                                             }
                                             
-                                            if response.clicked() {
+                                            if response.clicked() || (is_selected && ui.input(|i| i.key_pressed(egui::Key::Enter))) {
                                                 self.editor_font_index = idx;
                                                 changed = true;
+                                                ui.close_menu();
                                             }
-
-
                                         }
                                     });
 
@@ -377,7 +375,29 @@ impl EditorApp {
                     {
                         let _ = self.settings.save();
                     }
+                    // Max lines
+                    ui.horizontal(|ui| {
+                        ui.label("Max Lines Limit:");
+                        let mut limit_val = self.settings.max_lines;
+                        if ui
+                            .add(
+                                egui::DragValue::new(&mut limit_val)
+                                    .speed(10.0)
+                                    .range(0..=1000000),
+                            )
+                            .changed()
+                        {
+                            self.settings.max_lines = limit_val;
+                            let _ = self.settings.save();
+                        }
+                        if self.settings.max_lines == 0 {
+                            ui.label(egui::RichText::new("(No limit)").italics().weak());
+                        }
+                    })
+                    .response
+                    .on_hover_text("Maximum number of lines allowed in the editor. Set to 0 to disable the limit.");
 
+                    // History capacity
                     ui.horizontal(|ui| {
                         ui.label("Default history limit:");
                         if ui

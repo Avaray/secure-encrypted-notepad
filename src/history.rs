@@ -48,7 +48,7 @@ pub struct DocumentWithHistory {
 }
 
 fn default_max_history() -> usize {
-    100
+    1000
 }
 
 impl Default for DocumentWithHistory {
@@ -56,7 +56,7 @@ impl Default for DocumentWithHistory {
         Self {
             current_content: String::new(),
             history: Vec::new(),
-            max_history_length: 100,
+            max_history_length: 1000,
         }
     }
 }
@@ -98,7 +98,7 @@ impl DocumentWithHistory {
                 Self {
                     current_content,
                     history,
-                    max_history_length: 100,
+                    max_history_length: 1000,
                 }
             }
         } else {
@@ -106,7 +106,7 @@ impl DocumentWithHistory {
             Self {
                 current_content: file_content.to_string(),
                 history: Vec::new(),
-                max_history_length: 100,
+                max_history_length: 1000,
             }
         }
     }
