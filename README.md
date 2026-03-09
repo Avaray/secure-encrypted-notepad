@@ -24,6 +24,7 @@
 - **Batch Converter:** Easily encrypt or decrypt multiple files at once.
 
 ### 🎨 Fully Customizable
+
 - **Theme Editor:** Built-in GUI tool to create, edit, and apply custom color themes on the fly.
 - **File Tree & Logs:** Integrated file browser and debug log console for power users.
 
