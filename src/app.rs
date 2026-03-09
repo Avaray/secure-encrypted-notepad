@@ -167,6 +167,8 @@ impl EditorApp {
 
         let file_tree_dir = settings.file_tree_starting_dir.clone();
 
+        let restore_all = settings.preserve_all_panels;
+
         Self {
             document: DocumentWithHistory::default(),
             keyfile_path,
@@ -176,16 +178,16 @@ impl EditorApp {
 
             themes,
             current_theme,
-            show_settings_panel: settings.show_settings_panel,
-            show_history_panel: settings.show_history_panel,
-            show_debug_panel: settings.show_debug_panel,
+            show_settings_panel: if restore_all { settings.show_settings_panel } else { false },
+            show_history_panel: if restore_all { settings.show_history_panel } else { false },
+            show_debug_panel: if restore_all { settings.show_debug_panel } else { false },
             show_file_tree: settings.show_file_tree,
             is_modified: false,
             debug_log: Vec::new(),
             file_tree_dir,
             file_tree_entries: Vec::new(),
             icons: crate::icons::Icons::load(&egui::Context::default()),
-            show_theme_editor: settings.show_theme_editor,
+            show_theme_editor: if restore_all { settings.show_theme_editor } else { false },
             editing_theme: None,
             highlighted_line: None,
             show_goto_line: false,
@@ -197,7 +199,7 @@ impl EditorApp {
             available_fonts,
             ui_font_index,
             editor_font_index,
-            show_search_panel: settings.show_search_panel,
+            show_search_panel: if restore_all { settings.show_search_panel } else { false },
             search_query: String::new(),
             replace_query: String::new(),
             search_case_sensitive: false,

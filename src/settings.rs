@@ -103,6 +103,9 @@ pub struct Settings {
     /// Show search panel
     #[serde(default)]
     pub show_search_panel: bool,
+    /// Whether to restore all open panels from last session
+    #[serde(default)]
+    pub preserve_all_panels: bool,
     /// File tree panel width
     pub file_tree_width: f32,
     
@@ -231,6 +234,7 @@ impl Default for Settings {
             show_history_panel: false,
             show_theme_editor: false,
             show_search_panel: false,
+            preserve_all_panels: false,
             file_tree_width: 200.0,
             theme_editor_width: default_panel_width_270(),
             settings_panel_width: default_panel_width_350(),

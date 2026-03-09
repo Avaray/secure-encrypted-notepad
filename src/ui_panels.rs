@@ -255,6 +255,14 @@ impl EditorApp {
                         }
                     });
 
+                    if ui
+                        .checkbox(&mut self.settings.preserve_all_panels, "Preserve all panels at launch")
+                        .on_hover_text("If enabled, all open panels (Settings, History, etc.) will be restored on next launch.")
+                        .changed()
+                    {
+                        let _ = self.settings.save();
+                    }
+
                     ui.separator();
 
                     ui.horizontal(|ui| {
