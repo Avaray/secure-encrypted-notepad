@@ -267,7 +267,7 @@ impl EditorApp {
 
         app.icons = crate::icons::Icons::load(&cc.egui_ctx);
         app.current_theme.apply(&cc.egui_ctx);
-        app.log_info("Application started");
+        app.log_info(format!("Application started (v{})", env!("CARGO_PKG_VERSION")));
         app.refresh_file_tree();
         app
     }
