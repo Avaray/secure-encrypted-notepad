@@ -44,6 +44,9 @@ pub struct Settings {
     pub ui_font_size: f32,
     /// Editor font size (8-32 px)
     pub editor_font_size: f32,
+    /// Editor line height multiplier (1.0 - 2.0)
+    #[serde(default = "default_line_height")]
+    pub line_height: f32,
     /// UI font family
     #[serde(default = "default_ui_font")]
     pub ui_font_family: String,
@@ -202,6 +205,10 @@ fn default_panel_width_350() -> f32 {
     350.0
 }
 
+fn default_line_height() -> f32 {
+    1.2
+}
+
 fn default_max_lines() -> usize {
     1000
 }
@@ -211,6 +218,7 @@ impl Default for Settings {
         Self {
             ui_font_size: 16.0,
             editor_font_size: 14.0,
+            line_height: 1.2,
             ui_font_family: "Proportional (Default)".to_string(),
             editor_font_family: "Monospace (Default)".to_string(),
             theme_name: "Dark".to_string(),

@@ -229,6 +229,21 @@ impl EditorApp {
                         }
                     });
 
+                    // Line height multiplier
+                    ui.horizontal(|ui| {
+                        ui.label("Line Height:");
+                        if ui
+                            .add(
+                                egui::Slider::new(&mut self.settings.line_height, 1.0..=2.5)
+                                    .step_by(0.05)
+                                    .text("x"),
+                            )
+                            .changed()
+                        {
+                            let _ = self.settings.save();
+                        }
+                    });
+
                     // Toolbar icon size
                     ui.horizontal(|ui| {
                         ui.label("Toolbar Icon Size:");

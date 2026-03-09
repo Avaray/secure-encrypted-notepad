@@ -107,6 +107,8 @@ impl EditorApp {
             self.reset_scroll_x_pending = false;
         }
 
+        let line_height_multiplier = self.settings.line_height;
+
         // The user requested the cursor/scroll animation to be 75% faster
         let original_animation_time = ui.style().animation_time;
         ui.style_mut().animation_time = original_animation_time * 0.25;
@@ -138,6 +140,7 @@ impl EditorApp {
                 let layouter = |ui: &egui::Ui, text_str: &str, wrap_width: f32| {
                     let mut layout_job = egui::text::LayoutJob::default();
                     let font_id = egui::FontId::monospace(editor_font_size);
+                    let line_height = Some(editor_font_size * line_height_multiplier);
 
                     // Set wrapping
                     if word_wrap {
@@ -157,6 +160,7 @@ impl EditorApp {
                             egui::TextFormat {
                                 font_id: font_id.clone(),
                                 color: foreground_color,
+                                line_height,
                                 ..Default::default()
                             },
                         );
@@ -167,111 +171,116 @@ impl EditorApp {
                     let mut lines_iter = text_str.split('\n').peekable();
                     let mut _line_idx = 0;
                     while let Some(line) = lines_iter.next() {
-                        let is_last = lines_iter.peek().is_none();
-
-                        // Determine colors
-                        let trimmed = line.trim_start();
-                        let is_comment = trimmed.starts_with("//");
-                        let content_color = if is_comment {
-                            comment_color
-                        } else {
-                            foreground_color
-                        };
-
-                        // Add the line content with search highlighting
-                        if search_active && !line.is_empty() {
-                            // Render line with search match highlighting
-                            let line_start_byte = byte_offset;
-                            let line_end_byte = byte_offset + line.len();
-                            let mut pos = 0usize; // position within the line
-
-                            for &match_start in &search_matches {
-                                let match_end = match_start + search_query_len;
-                                // Check if this match overlaps with current line
-                                if match_end <= line_start_byte || match_start >= line_end_byte {
-                                    continue;
-                                }
-                                // Clamp to line boundaries
-                                let local_start = if match_start > line_start_byte {
-                                    match_start - line_start_byte
-                                } else {
-                                    0
-                                };
-                                let local_end = if match_end < line_end_byte {
-                                    match_end - line_start_byte
-                                } else {
-                                    line.len()
-                                };
-
-                                // Append text before match
-                                if local_start > pos {
-                                    layout_job.append(
-                                        &line[pos..local_start],
-                                        if pos == 0 { 0.0 } else { 0.0 },
-                                        egui::TextFormat {
-                                            font_id: font_id.clone(),
-                                            color: content_color,
-                                            ..Default::default()
-                                        },
-                                    );
-                                }
-                                // Append matched text with highlight background
-                                if local_end > local_start {
-                                    layout_job.append(
-                                        &line[local_start..local_end],
-                                        0.0,
-                                        egui::TextFormat {
-                                            font_id: font_id.clone(),
-                                            color: content_color,
-                                            background: highlight_color,
-                                            ..Default::default()
-                                        },
-                                    );
-                                }
-                                pos = local_end;
-                            }
-                            // Append remaining text after last match
-                            if pos < line.len() {
-                                layout_job.append(
-                                    &line[pos..],
-                                    if pos == 0 { 0.0 } else { 0.0 },
-                                    egui::TextFormat {
-                                        font_id: font_id.clone(),
-                                        color: content_color,
-                                        ..Default::default()
-                                    },
-                                );
-                            }
-                            // Handle empty line edge case (pos == 0 and line is empty)
-                        } else {
-                            // No search highlighting - simple append
-                            layout_job.append(
-                                line,
-                                0.0,
-                                egui::TextFormat {
-                                    font_id: font_id.clone(),
-                                    color: content_color,
-                                    ..Default::default()
-                                },
-                            );
-                        }
-
-                        // Add newline separator (except after the very last segment if text doesn't end with \n)
-                        if !is_last {
-                            layout_job.append(
-                                "\n",
-                                0.0,
-                                egui::TextFormat {
-                                    font_id: font_id.clone(),
-                                    ..Default::default()
-                                },
-                            );
-                            byte_offset += line.len() + 1; // +1 for '\n'
-                        } else {
-                            byte_offset += line.len();
-                        }
-
-                        _line_idx += 1;
+                         let is_last = lines_iter.peek().is_none();
+ 
+                         // Determine colors
+                         let trimmed = line.trim_start();
+                         let is_comment = trimmed.starts_with("//");
+                         let content_color = if is_comment {
+                             comment_color
+                         } else {
+                             foreground_color
+                         };
+ 
+                         // Add the line content with search highlighting
+                         if search_active && !line.is_empty() {
+                             // Render line with search match highlighting
+                             let line_start_byte = byte_offset;
+                             let line_end_byte = byte_offset + line.len();
+                             let mut pos = 0usize; // position within the line
+ 
+                             for &match_start in &search_matches {
+                                 let match_end = match_start + search_query_len;
+                                 // Check if this match overlaps with current line
+                                 if match_end <= line_start_byte || match_start >= line_end_byte {
+                                     continue;
+                                 }
+                                 // Clamp to line boundaries
+                                 let local_start = if match_start > line_start_byte {
+                                     match_start - line_start_byte
+                                 } else {
+                                     0
+                                 };
+                                 let local_end = if match_end < line_end_byte {
+                                     match_end - line_start_byte
+                                 } else {
+                                     line.len()
+                                 };
+ 
+                                 // Append text before match
+                                 if local_start > pos {
+                                     layout_job.append(
+                                         &line[pos..local_start],
+                                         0.0,
+                                         egui::TextFormat {
+                                             font_id: font_id.clone(),
+                                             color: content_color,
+                                             line_height,
+                                             ..Default::default()
+                                         },
+                                     );
+                                 }
+                                 // Append matched text with highlight background
+                                 if local_end > local_start {
+                                     layout_job.append(
+                                         &line[local_start..local_end],
+                                         0.0,
+                                         egui::TextFormat {
+                                             font_id: font_id.clone(),
+                                             color: content_color,
+                                             line_height,
+                                             background: highlight_color,
+                                             ..Default::default()
+                                         },
+                                     );
+                                 }
+                                 pos = local_end;
+                             }
+                             // Append remaining text after last match
+                             if pos < line.len() {
+                                 layout_job.append(
+                                     &line[pos..],
+                                     0.0,
+                                     egui::TextFormat {
+                                         font_id: font_id.clone(),
+                                         color: content_color,
+                                         line_height,
+                                         ..Default::default()
+                                     },
+                                 );
+                             }
+                             // Handle empty line edge case (pos == 0 and line is empty)
+                         } else {
+                             // No search highlighting - simple append
+                             layout_job.append(
+                                 line,
+                                 0.0,
+                                 egui::TextFormat {
+                                     font_id: font_id.clone(),
+                                     color: content_color,
+                                     line_height,
+                                     ..Default::default()
+                                 },
+                             );
+                         }
+ 
+                         // Add newline separator (except after the very last segment if text doesn't end with \n)
+                         if !is_last {
+                             layout_job.append(
+                                 "\n",
+                                 0.0,
+                                 egui::TextFormat {
+                                     font_id: font_id.clone(),
+                                     line_height,
+                                     ..Default::default()
+                                 },
+                             );
+                             byte_offset += line.len() + 1; // +1 for '\n'
+                         } else {
+                             byte_offset += line.len();
+                         }
+ 
+                         _line_idx += 1;
                     }
 
                     ui.fonts_mut(|f| f.layout_job(layout_job))
