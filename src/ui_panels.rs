@@ -91,7 +91,7 @@ impl EditorApp {
                                             if response.clicked() || (is_selected && ui.input(|i| i.key_pressed(egui::Key::Enter))) {
                                                 self.ui_font_index = idx;
                                                 changed = true;
-                                                ui.close_menu();
+                                                ui.close_kind(egui::UiKind::Menu);
                                             }
                                         }
                                     });
@@ -174,7 +174,7 @@ impl EditorApp {
                                             if response.clicked() || (is_selected && ui.input(|i| i.key_pressed(egui::Key::Enter))) {
                                                 self.editor_font_index = idx;
                                                 changed = true;
-                                                ui.close_menu();
+                                                ui.close_kind(egui::UiKind::Menu);
                                             }
                                         }
                                     });
@@ -373,6 +373,28 @@ impl EditorApp {
                         )
                         .changed()
                     {
+                        let _ = self.settings.save();
+                    }
+
+                    // Cursor settings
+                    ui.horizontal(|ui| {
+                        ui.label("Cursor Shape:");
+                        egui::ComboBox::from_id_salt("cursor_shape_combo")
+                            .selected_text(format!("{:?}", self.settings.cursor_shape))
+                            .show_ui(ui, |ui| {
+                                if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Bar, "Bar").changed() {
+                                    let _ = self.settings.save();
+                                }
+                                if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Block, "Block").changed() {
+                                    let _ = self.settings.save();
+                                }
+                                if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Underscore, "Underscore").changed() {
+                                    let _ = self.settings.save();
+                                }
+                            });
+                    });
+
+                    if ui.checkbox(&mut self.settings.cursor_blink, "Cursor blinking").changed() {
                         let _ = self.settings.save();
                     }
                     // Max lines
@@ -918,6 +940,40 @@ impl EditorApp {
                                     if theme.colors.button_bg.is_some() {
                                         if ui.button("↺").on_hover_text("Reset to Default").clicked() {
                                             theme.colors.button_bg = None;
+                                            theme_changed = true;
+                                        }
+                                    }
+                                });
+                                ui.end_row();
+
+                                // Button Hover Background
+                                ui.label("Button Hover:");
+                                ui.horizontal(|ui| {
+                                    let mut h_bg = theme.colors.button_hover_bg.unwrap_or(theme.colors.background); // Fallback
+                                    if ui.color_edit_button_srgb(&mut h_bg).changed() {
+                                        theme.colors.button_hover_bg = Some(h_bg);
+                                        theme_changed = true;
+                                    }
+                                    if theme.colors.button_hover_bg.is_some() {
+                                        if ui.button("↺").on_hover_text("Reset to Default").clicked() {
+                                            theme.colors.button_hover_bg = None;
+                                            theme_changed = true;
+                                        }
+                                    }
+                                });
+                                ui.end_row();
+
+                                // Button Active Background
+                                ui.label("Button Active:");
+                                ui.horizontal(|ui| {
+                                    let mut a_bg = theme.colors.button_active_bg.unwrap_or(theme.colors.background);
+                                    if ui.color_edit_button_srgb(&mut a_bg).changed() {
+                                        theme.colors.button_active_bg = Some(a_bg);
+                                        theme_changed = true;
+                                    }
+                                    if theme.colors.button_active_bg.is_some() {
+                                        if ui.button("↺").on_hover_text("Reset to Default").clicked() {
+                                            theme.colors.button_active_bg = None;
                                             theme_changed = true;
                                         }
                                     }

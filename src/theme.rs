@@ -29,6 +29,10 @@ pub struct ThemeColors {
     pub button_fg: Option<[u8; 3]>,
     #[serde(default)]
     pub separator: Option<[u8; 3]>,
+    #[serde(default)]
+    pub button_hover_bg: Option<[u8; 3]>,
+    #[serde(default)]
+    pub button_active_bg: Option<[u8; 3]>,
     pub panel_background: [u8; 3],
     pub selection_background: [u8; 3],
     pub cursor: [u8; 3],
@@ -65,6 +69,8 @@ impl ThemeColors {
             button_bg: None, // Use egui default or derived
             button_fg: None,
             separator: None,
+            button_hover_bg: None, // Derived usually which is good
+            button_active_bg: None,
             panel_background: [37, 37, 37],
             selection_background: [51, 51, 51],
             cursor: [255, 255, 255],
@@ -89,6 +95,8 @@ impl ThemeColors {
             button_bg: None,
             button_fg: None,
             separator: None,
+            button_hover_bg: None,
+            button_active_bg: None,
             panel_background: [245, 245, 245],
             selection_background: [173, 214, 255],
             cursor: [0, 0, 0],
@@ -240,10 +248,21 @@ impl Theme {
             let bg_color = self.colors.to_egui_color32(bg);
             visuals.widgets.inactive.weak_bg_fill = bg_color;
             visuals.widgets.inactive.bg_fill = bg_color;
-            // Slightly lighten/darken for hover/active?
-            // For now, let's trust egui to handle some state changes, or explicitly set them if we want full control.
-            // But visuals.widgets.hovered/active are derived from inactive usually if not set?
-            // Actually egui has separate defaults. Let's just set the base "inactive" (default) state.
+            
+            // If hover/active not explicitly set, they will use egui defaults or be derived.
+            // But we can set them to stay consistent if desired.
+        }
+        
+        if let Some(hover_bg) = self.colors.button_hover_bg {
+            let color = self.colors.to_egui_color32(hover_bg);
+            visuals.widgets.hovered.weak_bg_fill = color;
+            visuals.widgets.hovered.bg_fill = color;
+        }
+        
+        if let Some(active_bg) = self.colors.button_active_bg {
+            let color = self.colors.to_egui_color32(active_bg);
+            visuals.widgets.active.weak_bg_fill = color;
+            visuals.widgets.active.bg_fill = color;
         }
         if let Some(fg) = self.colors.button_fg {
             let fg_color = self.colors.to_egui_color32(fg);

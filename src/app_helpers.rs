@@ -121,6 +121,14 @@ impl EditorApp {
             // Interact size - wysokość interaktywnych elementów
             style.spacing.interact_size.y = self.settings.ui_font_size + 8.0;
 
+            // Text cursor settings
+            style.visuals.text_cursor.blink = self.settings.cursor_blink;
+            style.visuals.text_cursor.stroke.width = match self.settings.cursor_shape {
+                crate::settings::CursorShape::Bar => 2.0,
+                crate::settings::CursorShape::Block => self.settings.editor_font_size * 0.6, // Roughly character width
+                crate::settings::CursorShape::Underscore => 2.0, // Fallback for now, maybe custom draw later
+            };
+
             // Opcjonalnie: window padding
             style.spacing.window_margin = egui::Margin::same(8);
             style.spacing.item_spacing.y = 6.0; // spacing między elementami

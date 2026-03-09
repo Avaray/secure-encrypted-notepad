@@ -11,7 +11,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Internationalization (I18n)**: Add support for multiple application languages.
 - [ ] **Icon Refresh**: Replace current temporary icons with higher-quality, professionally designed ones.
 - [x] **Editor Comfort (Phase 2)**: Increase the right margin in the main editor further to ensure text never touches the edge, especially when typing spaces (ensuring space at the end of lines).
-- [ ] **Theme Editor Hover Colors**: Add ability to customize the background color of menu buttons when hovered.
+- [x] **Theme Editor Hover Colors**: Add ability to customize the background color of menu buttons when hovered.
 - [ ] **Theme System Refactoring**: Refactor the color system to allow customization of more editor components.
 - [x] **Whitespace Symbols Color**: Add ability to customize the color of whitespace symbols (spaces, tabs, returns) within the theme editor.
 - [x] **History Capacity**: Increase the maximum allowed file history entries from 100 to 1000.
@@ -23,7 +23,8 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [x] **Font Selection Confirmation**: Allow confirming UI and Editor font selection with the Enter key.
 - [x] **Quick Font Scaling**: Add support for Ctrl+Scroll and Ctrl++/Ctrl+- to quickly resize editor font.
 - [ ] **Line Height Adjustment**: Add setting to adjust the vertical spacing (line height) between rows in the text editor.
-- [ ] **Customizable Text Cursor**: Add option to change the text editor cursor shape (e.g., vertical bar, block, underscore).
+- [x] **Scroll Animation Timing**: Shorten the animation time when scrolling from the end of a long line to the beginning of the next one.
+- [x] **Customizable Text Cursor**: Add option to change the text editor cursor shape (e.g., vertical bar, block, underscore).
 - [ ] **Auto-Backup on Save**: Add option to automatically copy encrypted .sen files to multiple backup folders on save.
 - [x] **Additional Keyboard Shortcuts**: Implement missing shortcuts, such as for "Open Directory".
 - [x] **Smart Directory Opening**: Prevent save prompts when opening a directory in the file tree, as it doesn't close or modify the current file.
@@ -42,7 +43,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [x] **Editor Panning & Scrollbars**: 
     - Disable middle-mouse panning when the document is empty.
     - Hide scrollbars when content fits within the panel.
-- [ ] **Scroll Animation Timing**: Shorten the animation time when scrolling from the end of a long line to the beginning of the next one.
+- [x] **Scroll Animation Timing**: Shorten the animation time when scrolling from the end of a long line to the beginning of the next one.
 - [x] **Duplicate "Dark" Theme**: Fix the issue where "Dark" theme appears twice in the theme selection list.
 - [ ] **Toolbar Icon Overlap**: Prevent icons on the left and right sides of the top menu from overlapping when the window is narrow or there are too many icons.
 - [x] **Status Message Glitch**: Remove unsupported character appearing at the end of "Ready with global keyfile loaded" message.

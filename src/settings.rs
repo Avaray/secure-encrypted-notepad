@@ -18,6 +18,19 @@ pub enum ToolbarPosition {
     Right,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum CursorShape {
+    Bar,
+    Block,
+    Underscore,
+}
+
+impl Default for CursorShape {
+    fn default() -> Self {
+        Self::Bar
+    }
+}
+
 impl Default for ToolbarPosition {
     fn default() -> Self {
         Self::Top
@@ -129,6 +142,13 @@ pub struct Settings {
     /// Toolbar position
     #[serde(default)]
     pub toolbar_position: ToolbarPosition,
+    
+    /// Text cursor shape
+    #[serde(default)]
+    pub cursor_shape: CursorShape,
+    /// Whether the cursor blinks
+    #[serde(default = "default_true")]
+    pub cursor_blink: bool,
 
     /// Volatile flag to indicate if this is the first run (no config file existed)
     #[serde(skip)]
@@ -212,9 +232,15 @@ impl Default for Settings {
             window_pos_y: -1.0,
             toolbar_icon_size: 24.0, // Default 24px icon
             toolbar_position: ToolbarPosition::Top,
+            cursor_shape: CursorShape::Bar,
+            cursor_blink: true,
             is_first_run: false,
         }
     }
+}
+
+fn default_true() -> bool {
+    true
 }
 
 
