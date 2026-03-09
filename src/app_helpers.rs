@@ -1,4 +1,4 @@
-use crate::app_state::{FileTreeEntry, LogEntry, LogLevel};
+use crate::app_state::{FileTreeEntry, LogEntry, LogLevel, KeyStatus};
 use crate::EditorApp;
 
 impl EditorApp {
@@ -312,6 +312,9 @@ impl EditorApp {
                         "Found {} folders and {} .sen files",
                         folder_count, file_count
                     ));
+
+                    // Refresh access status for the newly loaded tree
+                    self.refresh_file_access_status();
                 }
                 Err(e) => {
                     self.log_error(format!("Failed to read directory: {}", e));
@@ -319,6 +322,92 @@ impl EditorApp {
             }
         } else {
             self.log_warning("No directory selected for file tree");
+        }
+    }
+
+    /// Refresh access status for all SEN files in the tree (ASYNCHRONOUS)
+    pub(crate) fn refresh_file_access_status(&mut self) {
+        // 1. Update/validate current key hash
+        let mut new_hash = None;
+        if let Some(kp) = &self.keyfile_path {
+            if let Ok(hash) = crate::crypto::get_keyfile_hash(kp) {
+                new_hash = Some(hash);
+            }
+        }
+
+        let key_changed = new_hash != self.current_key_hash;
+        if key_changed {
+            self.current_key_hash = new_hash;
+            self.file_access_cache.clear();
+            self.log_info("Keyfile changed, clearing access cache");
+        }
+
+        let key_hash = match self.current_key_hash {
+            Some(h) => h,
+            None => {
+                self.file_access_cache.clear();
+                return;
+            }
+        };
+
+        // 2. Identify files that need checking
+        let mut paths_to_check = Vec::new();
+        for entry in &self.file_tree_entries {
+            if let FileTreeEntry::File(path) = entry {
+                if path.extension().and_then(|s| s.to_str()) == Some("sen") {
+                    if !self.file_access_cache.contains_key(path) {
+                        paths_to_check.push(path.clone());
+                    }
+                }
+            }
+        }
+
+        if paths_to_check.is_empty() {
+            return;
+        }
+
+        self.log_info(format!("Checking access for {} files in background...", paths_to_check.len()));
+
+        // 3. Spawn background checking thread
+        let (tx, rx) = std::sync::mpsc::channel();
+        self.access_check_receiver = Some(rx);
+        
+        // We'll use a thread to check these files one by one. 
+        // For very large trees, we might want a pool, but this is simple and doesn't block UI.
+        std::thread::spawn(move || {
+            for path in paths_to_check {
+                let status = match crate::crypto::check_key_compatibility(&key_hash, &path) {
+                    Ok(true) => KeyStatus::Decryptable,
+                    Ok(false) => KeyStatus::WrongKey,
+                    Err(e) => {
+                        match e {
+                            crate::crypto::CryptoError::InvalidMagicNumber => KeyStatus::NotSen,
+                            _ => KeyStatus::WrongKey,
+                        }
+                    }
+                };
+                let _ = tx.send((path, status));
+            }
+        });
+    }
+
+    /// Process results from background file access checks (call every frame)
+    pub(crate) fn process_access_check_results(&mut self, ctx: &egui::Context) {
+        if let Some(rx) = &self.access_check_receiver {
+            let mut got_any = false;
+            // Drain as many results as possible in one frame (non-blocking)
+            while let Ok((path, status)) = rx.try_recv() {
+                self.file_access_cache.insert(path, status);
+                got_any = true;
+            }
+            
+            // If we got results, we need a repaint to show them
+            if got_any {
+                ctx.request_repaint();
+                // Optionally log some progress or remove receiver if empty and thread finished
+                // Wait, mpsc channel doesn't tell us if it's "finished" easily unless we check for hung tx.
+                // But try_recv will error on empty.
+            }
         }
     }
 

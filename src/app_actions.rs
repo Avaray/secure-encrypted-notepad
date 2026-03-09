@@ -229,6 +229,7 @@ impl EditorApp {
                     match std::fs::read(&path) {
                         Ok(_content) => {
                             self.keyfile_path = Some(path.clone());
+                            self.refresh_file_access_status();
                             let masked = self.mask_keyfile_path(&path);
                             self.status_message =
                                 format!("Valid keyfile loaded: {}", masked);
@@ -259,6 +260,7 @@ impl EditorApp {
             match generate_keyfile(&path) {
                 Ok(_) => {
                     self.keyfile_path = Some(path.clone());
+                    self.refresh_file_access_status();
                     let masked = self.mask_keyfile_path(&path);
                     self.status_message = format!("OK: Keyfile generated: {}", masked);
                     self.log_info(format!(
@@ -433,6 +435,7 @@ impl EditorApp {
                         .unwrap_or_else(|| "unknown".to_string());
 
                     self.keyfile_path = Some(new_keyfile_path.clone());
+                    self.refresh_file_access_status();
                     self.is_modified = false;
 
                     let new_masked = self.mask_keyfile_path(&new_keyfile_path);

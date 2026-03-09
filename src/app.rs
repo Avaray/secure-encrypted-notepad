@@ -1,8 +1,9 @@
 use eframe::egui;
 use std::path::PathBuf;
 use std::time::Instant;
+use std::collections::HashMap;
 
-use crate::app_state::{FileTreeEntry, LogEntry, PendingAction};
+use crate::app_state::{FileTreeEntry, LogEntry, PendingAction, KeyStatus};
 use crate::history::DocumentWithHistory;
 use crate::settings::Settings;
 use crate::theme::{load_themes, Theme};
@@ -14,6 +15,15 @@ pub struct EditorApp {
 
     /// Path to keyfile
     pub(crate) keyfile_path: Option<PathBuf>,
+
+    /// Cached hash of the current keyfile to avoid re-reading/re-hashing
+    pub(crate) current_key_hash: Option<[u8; 32]>,
+
+    /// Cache for file accessibility status in the file tree
+    pub(crate) file_access_cache: HashMap<PathBuf, KeyStatus>,
+
+    /// Receiver for background file access checks
+    pub(crate) access_check_receiver: Option<std::sync::mpsc::Receiver<(PathBuf, KeyStatus)>>,
 
     /// Path to currently open file
     pub(crate) current_file_path: Option<PathBuf>,
@@ -172,6 +182,9 @@ impl EditorApp {
         Self {
             document: DocumentWithHistory::default(),
             keyfile_path,
+            current_key_hash: None,
+            file_access_cache: HashMap::new(),
+            access_check_receiver: None,
             current_file_path: None,
             status_message: status,
             settings: settings.clone(),
@@ -275,6 +288,9 @@ impl EditorApp {
 
 impl eframe::App for EditorApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Process results from background file access checks
+        self.process_access_check_results(ctx);
+
         // Update window title dynamically
         self.update_window_title(ctx);
 

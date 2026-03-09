@@ -11,6 +11,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Internationalization (I18n)**: Add support for multiple application languages.
 - [ ] **Icon Refresh**: Replace current temporary icons with higher-quality, professionally designed ones.
 - [x] **Editor Comfort (Phase 2)**: Increase the right margin in the main editor further to ensure text never touches the edge, especially when typing spaces (ensuring space at the end of lines).
+- [x] **File Tree Key Icons & Access Status**: Replace document icons with color-coded key icons in the file tree to indicate if the current keyfile can decrypt the .sen files (asynchronous/background check for performance).
 - [x] **Theme Editor Hover Colors**: Add ability to customize the background color of menu buttons when hovered.
 - [ ] **Theme System Refactoring**: Refactor the color system to allow customization of more editor components.
 - [x] **Whitespace Symbols Color**: Add ability to customize the color of whitespace symbols (spaces, tabs, returns) within the theme editor.

@@ -1,4 +1,4 @@
-use crate::app_state::{FileTreeEntry, LogLevel};
+use crate::app_state::{FileTreeEntry, LogLevel, KeyStatus};
 use crate::history::HistoryEntry;
 use crate::EditorApp;
 use eframe::egui;
@@ -741,9 +741,30 @@ impl EditorApp {
                                 FileTreeEntry::File(path) => {
                                     let filename =
                                         path.file_name().unwrap_or_default().to_string_lossy();
-                                    if ui.button(format!("📄 {}", filename)).clicked() {
-                                        self.open_file(path.clone());
-                                    }
+                                    
+                                    ui.horizontal(|ui| {
+                                        ui.spacing_mut().item_spacing.x = 4.0;
+                                        
+                                        if filename.ends_with(".sen") {
+                                            // Get access status from cache
+                                            let status = self.file_access_cache.get(path).cloned().unwrap_or(KeyStatus::Unknown);
+                                            
+                                            let icon_color = match status {
+                                                KeyStatus::Decryptable => self.current_theme.colors.success_color(),
+                                                KeyStatus::WrongKey => self.current_theme.colors.error_color(),
+                                                _ => ui.visuals().text_color(),
+                                            };
+                                            
+                                            let icon_size = ui.text_style_height(&egui::TextStyle::Body);
+                                            ui.add(egui::Image::new(&self.icons.key).tint(icon_color).max_width(icon_size));
+                                        } else {
+                                            ui.label("📄");
+                                        }
+
+                                        if ui.button(filename).clicked() {
+                                            self.open_file(path.clone());
+                                        }
+                                    });
                                 }
                             }
                         }
