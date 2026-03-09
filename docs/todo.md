@@ -20,6 +20,11 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **History View Modes (Simple / Detailed)**: Add a toggle to switch between a Detailed view (current) and a Simple view (clean, one-line-per-entry list with exact date/time).
 - [ ] **Logo & App Icon**: Create a new professional logo for SEN and replace the current application icon.
 - [ ] **Persistent Panel Widths**: Make the Debug, History, Settings, and Theme Editor panels remember their widths when resized by the user, similar to the File Tree.
+- [ ] **Font Selection Confirmation**: Allow confirming UI and Editor font selection with the Enter key.
+- [ ] **Quick Font Scaling**: Add support for Ctrl+Scroll and Ctrl++/Ctrl+- to quickly resize editor font.
+- [ ] **Auto-Backup on Save**: Add option to automatically copy encrypted .sen files to multiple backup folders on save.
+- [ ] **Additional Keyboard Shortcuts**: Implement missing shortcuts, such as for "Open Directory".
+- [ ] **Smart Directory Opening**: Prevent save prompts when opening a directory in the file tree, as it doesn't close or modify the current file.
 - [x] **File Format Migration (SED3 to SEN1)**: Update the file magic header from `SED3` to `SEN1` to reflect the project's rebranding. Backward compatibility for SED3 is not required.
 - [x] **Editor Comfort (Phase 1)**: Increase the right margin in the text editor to improve readability and user comfort.
 
