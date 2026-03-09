@@ -935,6 +935,40 @@ impl EditorApp {
                                 }
                                 ui.end_row();
 
+                                // Surface
+                                ui.label("Surface:");
+                                ui.horizontal(|ui| {
+                                    let mut surf = theme.colors.surface.unwrap_or(theme.colors.panel_background);
+                                    if ui.color_edit_button_srgb(&mut surf).changed() {
+                                        theme.colors.surface = Some(surf);
+                                        theme_changed = true;
+                                    }
+                                    if theme.colors.surface.is_some() {
+                                        if ui.button("↺").on_hover_text("Reset to Default").clicked() {
+                                            theme.colors.surface = None;
+                                            theme_changed = true;
+                                        }
+                                    }
+                                });
+                                ui.end_row();
+
+                                // Surface Highlight
+                                ui.label("Surface Highlight:");
+                                ui.horizontal(|ui| {
+                                    let mut surf_h = theme.colors.surface_highlight.unwrap_or_else(|| theme.colors.surface.unwrap_or(theme.colors.panel_background));
+                                    if ui.color_edit_button_srgb(&mut surf_h).changed() {
+                                        theme.colors.surface_highlight = Some(surf_h);
+                                        theme_changed = true;
+                                    }
+                                    if theme.colors.surface_highlight.is_some() {
+                                        if ui.button("↺").on_hover_text("Reset to Default").clicked() {
+                                            theme.colors.surface_highlight = None;
+                                            theme_changed = true;
+                                        }
+                                    }
+                                });
+                                ui.end_row();
+
                                 ui.label("");
                                 ui.label("");
                                 ui.end_row();

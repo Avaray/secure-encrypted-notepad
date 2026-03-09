@@ -52,6 +52,12 @@ pub struct ThemeColors {
     /// Color for whitespace symbols (spaces, tabs, returns)
     #[serde(default)]
     pub whitespace_symbols: Option<[u8; 3]>,
+    /// Background color for elements like cards or secondary areas
+    #[serde(default)]
+    pub surface: Option<[u8; 3]>,
+    /// Highlight color for surface elements
+    #[serde(default)]
+    pub surface_highlight: Option<[u8; 3]>,
 }
 
 impl Default for ThemeColors {
@@ -84,6 +90,8 @@ impl ThemeColors {
             warning: [255, 152, 0],
             error: [244, 67, 54],
             whitespace_symbols: None,
+            surface: Some([45, 45, 45]),
+            surface_highlight: Some([60, 60, 60]),
         }
     }
 
@@ -110,6 +118,8 @@ impl ThemeColors {
             warning: [230, 81, 0],
             error: [198, 40, 40],
             whitespace_symbols: None,
+            surface: Some([230, 230, 230]),
+            surface_highlight: Some([210, 210, 210]),
         }
     }
 
@@ -191,6 +201,18 @@ impl ThemeColors {
     #[allow(dead_code)]
     pub fn error_color(&self) -> egui::Color32 {
         egui::Color32::from_rgb(self.error[0], self.error[1], self.error[2])
+    }
+
+    #[allow(dead_code)]
+    pub fn surface_color(&self) -> egui::Color32 {
+        let c = self.surface.unwrap_or(self.panel_background);
+        egui::Color32::from_rgb(c[0], c[1], c[2])
+    }
+
+    #[allow(dead_code)]
+    pub fn surface_highlight_color(&self) -> egui::Color32 {
+        let c = self.surface_highlight.unwrap_or_else(|| self.surface.unwrap_or(self.panel_background));
+        egui::Color32::from_rgb(c[0], c[1], c[2])
     }
 }
 
