@@ -487,6 +487,10 @@ impl Settings {
             }
         }
     }
+
+    pub fn get_config_dir() -> Option<std::path::PathBuf> {
+        dirs::config_dir().map(|d| d.join("sen"))
+    }
 }
 
 

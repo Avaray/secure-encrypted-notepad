@@ -7,7 +7,27 @@ impl EditorApp {
     /// Render settings panel
     pub(crate) fn render_settings_panel(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
-            ui.heading("⚙ Settings");
+            ui.horizontal(|ui| {
+                ui.heading("⚙ Settings");
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.button("📁").on_hover_text("Open settings folder").clicked() {
+                        if let Some(path) = crate::settings::Settings::get_config_dir() {
+                            #[cfg(target_os = "windows")]
+                            {
+                                let _ = std::process::Command::new("explorer").arg(path).spawn();
+                            }
+                            #[cfg(target_os = "linux")]
+                            {
+                                let _ = std::process::Command::new("xdg-open").arg(path).spawn();
+                            }
+                            #[cfg(target_os = "macos")]
+                            {
+                                let _ = std::process::Command::new("open").arg(path).spawn();
+                            }
+                        }
+                    }
+                });
+            });
 
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
