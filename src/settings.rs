@@ -91,6 +91,18 @@ pub struct Settings {
 
     /// Show debug panel
     pub show_debug_panel: bool,
+    /// Show settings panel
+    #[serde(default)]
+    pub show_settings_panel: bool,
+    /// Show history panel
+    #[serde(default)]
+    pub show_history_panel: bool,
+    /// Show theme editor panel
+    #[serde(default)]
+    pub show_theme_editor: bool,
+    /// Show search panel
+    #[serde(default)]
+    pub show_search_panel: bool,
     /// File tree panel width
     pub file_tree_width: f32,
     
@@ -215,6 +227,10 @@ impl Default for Settings {
             auto_save_interval_secs: 60,
 
             show_debug_panel: false,
+            show_settings_panel: false,
+            show_history_panel: false,
+            show_theme_editor: false,
+            show_search_panel: false,
             file_tree_width: 200.0,
             theme_editor_width: default_panel_width_270(),
             settings_panel_width: default_panel_width_350(),

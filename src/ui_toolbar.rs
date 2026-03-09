@@ -173,6 +173,8 @@ impl EditorApp {
             .clicked()
             {
                 self.show_theme_editor = !self.show_theme_editor;
+                self.settings.show_theme_editor = self.show_theme_editor;
+                let _ = self.settings.save();
                 // Jeśli otwieramy, ustaw editing_theme
                 if self.show_theme_editor {
                     self.editing_theme = Some(self.current_theme.clone());
@@ -189,6 +191,8 @@ impl EditorApp {
             .clicked()
             {
                 self.show_settings_panel = !self.show_settings_panel;
+                self.settings.show_settings_panel = self.show_settings_panel;
+                let _ = self.settings.save();
             }
 
             ui.separator();
@@ -210,6 +214,8 @@ impl EditorApp {
             .clicked()
             {
                 self.show_history_panel = !self.show_history_panel;
+                self.settings.show_history_panel = self.show_history_panel;
+                let _ = self.settings.save();
             }
 
             if icon_button(
