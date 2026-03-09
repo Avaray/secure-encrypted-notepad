@@ -404,18 +404,22 @@ impl EditorApp {
                             .show_ui(ui, |ui| {
                                 if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Bar, "Bar").changed() {
                                     let _ = self.settings.save();
+                                    self.style_dirty = true;
                                 }
                                 if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Block, "Block").changed() {
                                     let _ = self.settings.save();
+                                    self.style_dirty = true;
                                 }
                                 if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Underscore, "Underscore").changed() {
                                     let _ = self.settings.save();
+                                    self.style_dirty = true;
                                 }
                             });
                     });
 
                     if ui.checkbox(&mut self.settings.cursor_blink, "Cursor blinking").changed() {
                         let _ = self.settings.save();
+                        self.style_dirty = true;
                     }
                     // Max lines
                     ui.horizontal(|ui| {

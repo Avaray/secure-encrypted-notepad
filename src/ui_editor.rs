@@ -302,6 +302,10 @@ impl EditorApp {
                 
                 let min_height = (text_area_rect.height() - scrollbar_outer_margin).max(100.0);
 
+                // HACK: Hide default cursor to draw our own
+                let original_cursor_color = ui.visuals().text_cursor.stroke.color;
+                ui.visuals_mut().text_cursor.stroke.color = egui::Color32::TRANSPARENT;
+
                 let output = egui::TextEdit::multiline(text_ptr)
                     .id(text_edit_id)
                     .font(egui::TextStyle::Monospace)
@@ -324,6 +328,60 @@ impl EditorApp {
                         layouter(ui, text_str.as_str(), wrap_width)
                     })
                     .show(ui);
+
+                // Restore cursor color for other widgets if needed (though ui is local)
+                ui.visuals_mut().text_cursor.stroke.color = original_cursor_color;
+
+                // Draw Custom Cursor
+                if ui.memory(|mem| mem.has_focus(text_edit_id)) {
+                    if let Some(cursor_range) = output.cursor_range {
+                        let cursor_pos = cursor_range.primary;
+                        let galley = &output.galley;
+                        
+                        // Get cursor position relative to galley
+                        let cursor_rect = galley.pos_from_cursor(cursor_pos);
+                        
+                        // Screen-space rect for the cursor
+                        let painter_rect = cursor_rect.translate(output.galley_pos.to_vec2());
+                        
+                        // Check blink state
+                        let is_visible = if self.settings.cursor_blink {
+                            // Use simple math for blink (0.5s intervals)
+                            (ui.input(|i| i.time) * 2.0) as i32 % 2 == 0
+                        } else {
+                            true
+                        };
+
+                        if is_visible {
+                            let color = original_cursor_color;
+                            match self.settings.cursor_shape {
+                                crate::settings::CursorShape::Bar => {
+                                    ui.painter().line_segment(
+                                        [painter_rect.left_top(), painter_rect.left_bottom()],
+                                        egui::Stroke::new(2.0, color),
+                                    );
+                                }
+                                crate::settings::CursorShape::Block => {
+                                    // Block cursor: a rectangle covering the character width
+                                    let char_width = editor_font_size * 0.6; 
+                                    let block_rect = egui::Rect::from_min_size(
+                                        painter_rect.min,
+                                        egui::vec2(char_width, painter_rect.height())
+                                    );
+                                    ui.painter().rect_filled(block_rect, 0.0, color.linear_multiply(0.7));
+                                }
+                                crate::settings::CursorShape::Underscore => {
+                                    let char_width = editor_font_size * 0.6;
+                                    let line_y = painter_rect.bottom() - 1.0;
+                                    ui.painter().line_segment(
+                                        [egui::pos2(painter_rect.left(), line_y), egui::pos2(painter_rect.left() + char_width, line_y)],
+                                        egui::Stroke::new(2.0, color),
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
 
                 // Keep focus when interaction happens within the editor (e.g. scrollbars)
                 // but not on other focusable widgets.
