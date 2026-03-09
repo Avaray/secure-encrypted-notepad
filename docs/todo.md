@@ -23,7 +23,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [x] **Persistent Panel Widths**: Make the Debug, History, Settings, and Theme Editor panels remember their widths when resized by the user, similar to the File Tree.
 - [x] **Font Selection Confirmation**: Allow confirming UI and Editor font selection with the Enter key.
 - [x] **Quick Font Scaling**: Add support for Ctrl+Scroll and Ctrl++/Ctrl+- to quickly resize editor font.
-- [ ] **Line Height Adjustment**: Add setting to adjust the vertical spacing (line height) between rows in the text editor.
+- [x] **Line Height Adjustment**: Add setting to adjust the vertical spacing (line height) between rows in the text editor.
 - [x] **Scroll Animation Timing**: Shorten the animation time when scrolling from the end of a long line to the beginning of the next one.
 - [x] **Customizable Text Cursor**: Add option to change the text editor cursor shape (e.g., vertical bar, block, underscore).
 - [ ] **Auto-Backup on Save**: Add option to automatically copy encrypted .sen files to multiple backup folders on save.
