@@ -546,10 +546,9 @@ impl eframe::App for EditorApp {
 
         // Status bar
         egui::TopBottomPanel::bottom("status_bar")
-            .min_height(32.0)
+            .min_height(28.0)
             .show(ctx, |ui| {
-                ui.add_space(3.0);
-                ui.horizontal(|ui| {
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                     ui.label(&self.status_message);
 
                     if self.is_modified {
@@ -558,7 +557,6 @@ impl eframe::App for EditorApp {
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         // Keyfile indicator with icon
-
 
                         if let Some(path) = &self.keyfile_path {
                             let icon_tint = self.current_theme.colors.success_color();
