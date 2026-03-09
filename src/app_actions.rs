@@ -7,7 +7,10 @@ use std::path::PathBuf;
 impl EditorApp {
     /// Check for unsaved changes before action
     pub(crate) fn check_changes_before_action(&mut self, action: PendingAction) {
-        if self.is_modified {
+        // Skip check for certain actions that don't close the current file
+        let skip_check = matches!(action, PendingAction::OpenDirectory | PendingAction::ChangeDirectory(_));
+
+        if self.is_modified && !skip_check {
             self.pending_action = action;
             self.show_close_confirmation = true;
         } else {

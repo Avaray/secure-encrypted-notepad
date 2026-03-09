@@ -363,12 +363,41 @@ impl eframe::App for EditorApp {
                 self.save_file();
             }
 
+            // Ctrl+Shift+O: Open Directory
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL | egui::Modifiers::SHIFT,
+                egui::Key::O,
+            )) {
+                self.open_directory();
+            }
+
             // Ctrl+O: Open
             if i.consume_shortcut(&egui::KeyboardShortcut::new(
                 egui::Modifiers::CTRL,
                 egui::Key::O,
             )) {
                 self.open_file_dialog();
+            }
+
+            // Ctrl+Plus: Increase Font
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL,
+                egui::Key::Plus,
+            )) || i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL,
+                egui::Key::Equals,
+            )) {
+               self.settings.editor_font_size = (self.settings.editor_font_size + 1.0).clamp(8.0, 128.0);
+               let _ = self.settings.save();
+            }
+
+            // Ctrl+Minus: Decrease Font
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL,
+                egui::Key::Minus,
+            )) {
+               self.settings.editor_font_size = (self.settings.editor_font_size - 1.0).clamp(8.0, 128.0);
+               let _ = self.settings.save();
             }
 
             // Ctrl+N: New Document
@@ -411,6 +440,20 @@ impl eframe::App for EditorApp {
             )) {
                 self.show_search_panel = true;
                 // TODO: set focus to replace field
+            }
+
+            // Ctrl+Scroll: Zoom Font
+            if i.modifiers.command && (i.raw_scroll_delta.y != 0.0 || i.smooth_scroll_delta.y != 0.0) {
+                let scroll_y = i.raw_scroll_delta.y + i.smooth_scroll_delta.y;
+                let zoom_speed = 0.05;
+                let delta = scroll_y * zoom_speed;
+                
+                self.settings.editor_font_size = (self.settings.editor_font_size + delta).clamp(8.0, 128.0);
+                let _ = self.settings.save();
+                
+                // Consume the scroll so it doesn't move the document
+                i.raw_scroll_delta = egui::Vec2::ZERO;
+                i.smooth_scroll_delta = egui::Vec2::ZERO;
             }
         });
 
