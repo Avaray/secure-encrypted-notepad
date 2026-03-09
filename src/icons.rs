@@ -136,4 +136,29 @@ impl Icons {
             source_size: egui::Vec2::new(width as f32, height as f32),
         }
     }
+
+    /// Load application icon as IconData for window/taskbar (all platforms)
+    pub fn load_app_icon() -> egui::IconData {
+        let svg_data = include_bytes!("../assets/app_icon.svg");
+        let size: u32 = 256;
+
+        let opt = usvg::Options::default();
+        let tree = usvg::Tree::from_data(svg_data, &opt).expect("Failed to parse app icon SVG");
+
+        let mut pixmap = tiny_skia::Pixmap::new(size, size).expect("Failed to create pixmap");
+
+        let tree_size = tree.size();
+        let transform = tiny_skia::Transform::from_scale(
+            size as f32 / tree_size.width(),
+            size as f32 / tree_size.height(),
+        );
+
+        resvg::render(&tree, transform, &mut pixmap.as_mut());
+
+        egui::IconData {
+            rgba: pixmap.data().to_vec(),
+            width: size,
+            height: size,
+        }
+    }
 }

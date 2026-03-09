@@ -29,8 +29,12 @@ fn main() -> Result<(), eframe::Error> {
     // Do NOT use with_maximized(true) here — it has a race condition on Windows 10/11
     // where the window doesn't reliably start maximized. Instead, we use the
     // "first-frame ViewportCommand" trick in EditorApp::update().
+    // Load application icon for window/taskbar
+    let app_icon = crate::icons::Icons::load_app_icon();
+
     let mut viewport_builder = eframe::egui::ViewportBuilder::default()
         .with_inner_size([settings.window_width, settings.window_height])
+        .with_icon(app_icon)
         .with_min_inner_size([800.0, 600.0]);
 
     // Always apply saved position (even when start_maximized is true) so the window
