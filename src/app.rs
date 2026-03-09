@@ -177,7 +177,7 @@ impl EditorApp {
             settings: settings.clone(),
 
             themes,
-            current_theme,
+            current_theme: current_theme.clone(),
             show_settings_panel: if restore_all { settings.show_settings_panel } else { false },
             show_history_panel: if restore_all { settings.show_history_panel } else { false },
             show_debug_panel: if restore_all { settings.show_debug_panel } else { false },
@@ -188,7 +188,11 @@ impl EditorApp {
             file_tree_entries: Vec::new(),
             icons: crate::icons::Icons::load(&egui::Context::default()),
             show_theme_editor: if restore_all { settings.show_theme_editor } else { false },
-            editing_theme: None,
+            editing_theme: if restore_all && settings.show_theme_editor {
+                Some(current_theme.clone())
+            } else {
+                None
+            },
             highlighted_line: None,
             show_goto_line: false,
             goto_line_input: String::new(),
