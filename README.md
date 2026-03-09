@@ -9,14 +9,15 @@
 ## ✨ Core Features
 
 ### 🔒 Security
+
 - **Keyfile-Only Auth:** No passwords to remember or crack. Any file (image, binary, text) can act as your keyfile.
 - **XChaCha20-Poly1305:** State-of-the-art authenticated encryption.
 - **Argon2id KDF & SHA-256:** Robust key derivation and hashing.
 - **Encrypted Global Configuration:** Your settings and global keyfile paths are securely encrypted via OS keychain integration.
-
 - **Zero Memory Leaks:** Cryptographic operations use `zeroize` to wipe secrets from RAM.
 
 ### 📝 Seamless Editing
+
 - **Modern Interface:** Distraction-free text editing with line numbers, custom font sizes, and word wrap.
 - **Auto-Save & Embedded History:** The editor automatically saves your progress. Every `.sen` file contains its own embedded version history (up to 100 snapshots), allowing you to restore or review older versions of the text.
 - **Search & Replace:** Built-in powerful text search and replace capabilities.
