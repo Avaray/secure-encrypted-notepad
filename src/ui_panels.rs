@@ -489,16 +489,6 @@ impl EditorApp {
                         }
                     });
 
-                    ui.label(
-                        egui::RichText::new(format!(
-                            "Current document: {}/{} entries",
-                            self.document.get_history().len(),
-                            self.settings.max_history_length
-                        ))
-                        .small()
-                        .weak(),
-                    );
-
                     ui.separator();
                     ui.heading("File Tree");
 
