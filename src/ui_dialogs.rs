@@ -5,6 +5,7 @@ use eframe::egui;
 impl EditorApp {
     /// Render confirmation dialog for unsaved changes
     pub(crate) fn render_confirmation_dialog(&mut self, ctx: &egui::Context) {
+        // Unsaved changes dialog
         if self.show_close_confirmation {
             egui::Window::new("Unsaved Changes")
                 .collapsible(false)
@@ -48,6 +49,44 @@ impl EditorApp {
                         if ui.button("Cancel").clicked() {
                             self.show_close_confirmation = false;
                             self.pending_action = PendingAction::None;
+                        }
+                    });
+                });
+        }
+
+        // Settings reset dialog
+        if self.show_reset_confirmation {
+            egui::Window::new("Reset All Settings")
+                .collapsible(false)
+                .resizable(false)
+                .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+                .show(ctx, |ui| {
+                    ui.set_max_width(300.0);
+                    ui.label("This will restore all settings to their factory defaults. This action cannot be undone.");
+                    ui.add_space(8.0);
+                    
+                    ui.horizontal(|ui| {
+                        ui.label("Slide to the right to confirm:");
+                        ui.add(egui::Slider::new(&mut self.reset_slider_val, 0.0..=1.0).show_value(false));
+                    });
+                    ui.add_space(8.0);
+
+                    // Only enable OK if slider is fully to the right
+                    let is_confirmed = self.reset_slider_val >= 0.99;
+                    
+                    ui.horizontal(|ui| {
+                        ui.add_enabled_ui(is_confirmed, |ui| {
+                            if ui.button("OK").clicked() {
+                                self.settings = crate::settings::Settings::default();
+                                let _ = self.settings.save();
+                                self.show_reset_confirmation = false;
+                                self.style_dirty = true; // Apply default fonts/sizes
+                                self.log_warning("All settings have been reset to factory defaults");
+                            }
+                        });
+                        
+                        if ui.button("Cancel").clicked() {
+                            self.show_reset_confirmation = false;
                         }
                     });
                 });

@@ -142,6 +142,15 @@ pub struct EditorApp {
     pub(crate) previous_cursor_byte_pos: Option<usize>,
     /// Flag to trigger focus on search field
     pub(crate) focus_search: bool,
+    /// Track actual window focus to trigger auto-save on focus loss
+    pub(crate) focused: bool,
+
+    // Settings Reset State
+    pub(crate) show_reset_confirmation: bool,
+    pub(crate) reset_slider_val: f32,
+
+    // Global Keyfile Clear Confirmation State
+    pub(crate) show_clear_keyfile_confirmation: bool,
 }
 
 impl EditorApp {
@@ -238,6 +247,10 @@ impl EditorApp {
             reset_scroll_x_pending: false,
             previous_cursor_byte_pos: None,
             focus_search: false,
+            focused: true, // Default to focused on start
+            show_reset_confirmation: false,
+            reset_slider_val: 0.0,
+            show_clear_keyfile_confirmation: false,
         }
     }
 
@@ -300,6 +313,15 @@ impl EditorApp {
 
 impl eframe::App for EditorApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Detect focus loss
+        let is_focused = ctx.input(|i| i.focused);
+        if self.focused && !is_focused {
+            // Focus lost: trigger immediate auto-save
+            crate::sen_debug!("Focus lost: triggering auto-save");
+            self.perform_autosave();
+        }
+        self.focused = is_focused;
+
         // Process results from background file access checks
         self.process_access_check_results(ctx);
 

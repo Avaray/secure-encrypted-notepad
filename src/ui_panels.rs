@@ -9,7 +9,7 @@ impl EditorApp {
         ui.vertical(|ui| {
             if !self.settings.hide_panel_headers {
                 ui.horizontal(|ui| {
-                    ui.heading("⚙ Settings");
+                    ui.heading("Settings");
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if ui.button("📁").on_hover_text("Open settings folder").clicked() {
                             if let Some(path) = crate::settings::Settings::get_config_dir() {
@@ -376,21 +376,36 @@ impl EditorApp {
                     ui.heading("Global keyfile");
 
                     ui.horizontal(|ui| {
-                        if ui.button("Set Global Keyfile").clicked() {
-                            if let Some(path) = rfd::FileDialog::new().pick_file() {
-                                self.settings.global_keyfile_path = Some(path.clone());
-                                if self.settings.use_global_keyfile {
-                                    self.keyfile_path = Some(path);
+                            if ui.button("Set Global Keyfile").clicked() {
+                                if let Some(path) = rfd::FileDialog::new().pick_file() {
+                                    self.settings.global_keyfile_path = Some(path.clone());
+                                    if self.settings.use_global_keyfile {
+                                        self.keyfile_path = Some(path);
+                                    }
+                                    let _ = self.settings.save();
+                                    self.log_info("Global keyfile set");
                                 }
-                                let _ = self.settings.save();
-                                self.log_info("Global keyfile set");
                             }
-                        }
-                        if ui.button("Clear").clicked() {
-                            self.settings.global_keyfile_path = None;
-                            self.settings.keyfile_path_encrypted = None;
-                            let _ = self.settings.save();
-                        }
+                            
+                            if !self.show_clear_keyfile_confirmation {
+                                if ui.button("Clear").clicked() {
+                                    self.show_clear_keyfile_confirmation = true;
+                                }
+                            } else {
+                                ui.horizontal(|ui| {
+                                    ui.label(egui::RichText::new("Sure? ").color(self.current_theme.colors.error_color()));
+                                    if ui.button("Yes").clicked() {
+                                        self.settings.global_keyfile_path = None;
+                                        self.settings.keyfile_path_encrypted = None;
+                                        let _ = self.settings.save();
+                                        self.show_clear_keyfile_confirmation = false;
+                                        self.log_info("Global keyfile cleared");
+                                    }
+                                    if ui.button("No").clicked() {
+                                        self.show_clear_keyfile_confirmation = false;
+                                    }
+                                });
+                            }
                     });
 
                     ui.horizontal(|ui| {
@@ -574,6 +589,14 @@ impl EditorApp {
                     });
 
                     ui.add_space(4.0);
+                    ui.separator();
+                    ui.add_space(8.0);
+                    
+                    if ui.button("Reset All Settings").on_hover_text("Restore all settings to factory defaults.").clicked() {
+                        self.show_reset_confirmation = true;
+                        self.reset_slider_val = 0.0;
+                    }
+                    ui.add_space(8.0);
                 });
 
         });
