@@ -495,54 +495,47 @@ impl eframe::App for EditorApp {
         self.render_confirmation_dialog(ctx);
 
         // Toolbar — height/width adapts to icon size
-        let toolbar_size = self.settings.toolbar_icon_size + 16.0;
-        let mut panel_frame = egui::Frame::side_top_panel(&ctx.style());
-        panel_frame.stroke = egui::Stroke::NONE;
-        panel_frame.inner_margin = egui::Margin {
+        // Custom frame for toolbar to allow shrinking (no top/bottom margins)
+        let mut toolbar_frame = egui::Frame::side_top_panel(&ctx.style());
+        toolbar_frame.stroke = egui::Stroke::NONE;
+        toolbar_frame.inner_margin = egui::Margin {
             left: 2,
             right: 2,
             top: 0,
             bottom: 0,
         };
 
+        // Standard frame for all content panels (side panels, central, search, status)
+        let mut content_frame = egui::Frame::side_top_panel(&ctx.style());
+        content_frame.stroke = egui::Stroke::NONE;
+        content_frame.inner_margin = egui::Margin::same(12);
+
+        let toolbar_size = self.settings.toolbar_icon_size + 8.0;
+
         match self.settings.toolbar_position {
             crate::settings::ToolbarPosition::Top => {
                 egui::TopBottomPanel::top("toolbar")
-                    .frame(panel_frame.clone())
+                    .frame(toolbar_frame.clone())
                     .min_height(0.0)
                     .show(ctx, |ui| {
                         self.render_toolbar(ui);
                     });
             }
             crate::settings::ToolbarPosition::Left => {
-                let original_spacing = ctx.style().spacing.item_spacing.x;
-                ctx.style_mut(|s| s.spacing.item_spacing.x = 1.0); // 1px for the solid boundary line
-
                 egui::SidePanel::left("toolbar")
-                    .resizable(false)
+                    .frame(toolbar_frame.clone())
                     .exact_width(toolbar_size)
-                    .frame(panel_frame.clone())
                     .show(ctx, |ui| {
-                        ui.add_space(2.0);
                         self.render_toolbar(ui);
                     });
-                
-                ctx.style_mut(|s| s.spacing.item_spacing.x = original_spacing);
             }
             crate::settings::ToolbarPosition::Right => {
-                let original_spacing = ctx.style().spacing.item_spacing.x;
-                ctx.style_mut(|s| s.spacing.item_spacing.x = 1.0); // 1px for the solid boundary line
-
                 egui::SidePanel::right("toolbar")
-                    .resizable(false)
+                    .frame(toolbar_frame.clone())
                     .exact_width(toolbar_size)
-                    .frame(panel_frame)
                     .show(ctx, |ui| {
-                        ui.add_space(2.0);
                         self.render_toolbar(ui);
                     });
-                
-                ctx.style_mut(|s| s.spacing.item_spacing.x = original_spacing);
             }
         }
             
@@ -553,12 +546,14 @@ impl eframe::App for EditorApp {
 
         // Search panel (below toolbar)
         egui::TopBottomPanel::top("search_panel")
+            .frame(content_frame.clone())
             .show_animated(ctx, self.show_search_panel, |ui| {
                 self.render_search_panel(ui);
             });
 
         // Status bar
         egui::TopBottomPanel::bottom("status_bar")
+            .frame(content_frame.clone())
             .min_height(24.0)
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
@@ -597,6 +592,7 @@ impl eframe::App for EditorApp {
         // File tree (left)
         if self.show_file_tree {
             let panel_res = egui::SidePanel::left("file_tree")
+                .frame(content_frame.clone())
                 .resizable(true)
                 .default_width(self.settings.file_tree_width)
                 .width_range(150.0..=f32::INFINITY)
@@ -615,6 +611,7 @@ impl eframe::App for EditorApp {
         // Theme Editor panel (right)
         if self.show_theme_editor {
             let panel_res = egui::SidePanel::right("theme_editor")
+                .frame(content_frame.clone())
                 .resizable(true)
                 .default_width(self.settings.theme_editor_width)
                 .show(ctx, |ui| {
@@ -631,6 +628,7 @@ impl eframe::App for EditorApp {
         // Settings panel (right)
         if self.show_settings_panel {
             let panel_res = egui::SidePanel::right("settings_panel")
+                .frame(content_frame.clone())
                 .resizable(true)
                 .default_width(self.settings.settings_panel_width)
                 .min_width(300.0)
@@ -648,6 +646,7 @@ impl eframe::App for EditorApp {
         // History panel (right)
         if self.show_history_panel {
             let panel_res = egui::SidePanel::right("history")
+                .frame(content_frame.clone())
                 .resizable(true)
                 .default_width(self.settings.history_panel_width)
                 .show(ctx, |ui| {
@@ -664,6 +663,7 @@ impl eframe::App for EditorApp {
         // Debug panel (right, below history if both shown)
         if self.show_debug_panel {
             let panel_res = egui::SidePanel::right("debug")
+                .frame(content_frame.clone())
                 .resizable(true)
                 .default_width(self.settings.debug_panel_width)
                 .show(ctx, |ui| {
@@ -678,8 +678,10 @@ impl eframe::App for EditorApp {
         }
 
         // Central editor
-        egui::CentralPanel::default().show(ctx, |ui| {
-            self.render_editor(ui);
-        });
+        egui::CentralPanel::default()
+            .frame(content_frame.clone())
+            .show(ctx, |ui| {
+                self.render_editor(ui);
+            });
     }
 }
