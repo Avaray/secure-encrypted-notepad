@@ -315,10 +315,10 @@ impl eframe::App for EditorApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // Detect focus loss
         let is_focused = ctx.input(|i| i.focused);
-        if self.focused && !is_focused {
+        if self.focused && !is_focused && self.settings.auto_save_on_focus_loss {
             // Focus lost: trigger immediate auto-save
             crate::sen_debug!("Focus lost: triggering auto-save");
-            self.perform_autosave();
+            self.perform_autosave(true);
         }
         self.focused = is_focused;
 
@@ -389,7 +389,7 @@ impl eframe::App for EditorApp {
         }
 
         // Perform auto-save check
-        self.perform_autosave();
+        self.perform_autosave(false);
 
 
 

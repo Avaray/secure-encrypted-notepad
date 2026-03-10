@@ -339,7 +339,15 @@ impl EditorApp {
                     ui.group(|ui| {
                         ui.label("Auto Save");
                         if ui
-                            .checkbox(&mut self.settings.auto_save_enabled, "Enable Auto-save")
+                            .checkbox(&mut self.settings.auto_save_on_focus_loss, "Auto-save on focus loss")
+                            .on_hover_text("Automatically saves to .autosave.sen when application loses focus.")
+                            .changed()
+                        {
+                            let _ = self.settings.save();
+                        }
+
+                        if ui
+                            .checkbox(&mut self.settings.auto_save_enabled, "Enable timed Auto-save")
                             .changed()
                         {
                             let _ = self.settings.save();
@@ -364,7 +372,7 @@ impl EditorApp {
 
 
                     ui.separator();
-                    ui.heading("Global keyfile");
+                    ui.heading("Security");
 
                     ui.horizontal(|ui| {
                             if ui.button("Set Global Keyfile").clicked() {
@@ -403,7 +411,7 @@ impl EditorApp {
                         ui.label("Current:");
                         if let Some(path) = &self.settings.global_keyfile_path {
                             if self.settings.show_keyfile_paths {
-                                ui.label(path.file_name().unwrap_or_default().to_string_lossy());
+                                ui.label(path.to_string_lossy());
                             } else {
                                 ui.label("Secured");
                             }
@@ -452,15 +460,6 @@ impl EditorApp {
                         let _ = self.settings.save();
                     }
 
-                    if ui
-                        .checkbox(
-                            &mut self.settings.auto_snapshot_on_save,
-                            "Auto-snapshot on save",
-                        )
-                        .changed()
-                    {
-                        let _ = self.settings.save();
-                    }
 
                     // Cursor settings
                     ui.horizontal(|ui| {

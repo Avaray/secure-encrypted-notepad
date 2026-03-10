@@ -163,8 +163,8 @@ impl EditorApp {
         let keyfile = self.keyfile_path.clone().unwrap();
         self.log_info(format!("Saving file: {}", self.mask_directory_path(&path)));
 
-        // Auto-snapshot if enabled
-        if self.settings.auto_snapshot_on_save && self.is_modified {
+        // Save current state to history (snapshot) if modified
+        if self.is_modified {
             self.document.add_snapshot(None);
             self.log_info("Snapshot created automatically");
         }
@@ -464,9 +464,9 @@ impl EditorApp {
         }
     }
 
-    /// Perform auto-save if needed
-    pub(crate) fn perform_autosave(&mut self) {
-        if !self.settings.auto_save_enabled {
+    /// Perform auto-save if needed. If `immediate` is true, bypass interval check.
+    pub(crate) fn perform_autosave(&mut self, immediate: bool) {
+        if !self.settings.auto_save_enabled && !immediate {
             return;
         }
 
@@ -476,14 +476,16 @@ impl EditorApp {
         }
 
         let now = std::time::Instant::now();
-        if let Some(last_time) = self.last_autosave_time {
-            if now.duration_since(last_time).as_secs() < self.settings.auto_save_interval_secs {
-                return;
+        if !immediate {
+            if let Some(last_time) = self.last_autosave_time {
+                if now.duration_since(last_time).as_secs() < self.settings.auto_save_interval_secs {
+                    return;
+                }
+            } else {
+                 // Initialize timer if not set (wait for first interval)
+                 self.last_autosave_time = Some(now);
+                 return;
             }
-        } else {
-             // Initialize timer if not set (wait for first interval)
-             self.last_autosave_time = Some(now);
-             return;
         }
 
         let original_path = self.current_file_path.as_ref().unwrap();

@@ -70,8 +70,6 @@ pub struct Settings {
     /// File tree starting directory (memory-only, never serialized to disk)
     #[serde(skip)]
     pub file_tree_starting_dir: Option<PathBuf>,
-    /// Whether to auto-create snapshot on save when content changes
-    pub auto_snapshot_on_save: bool,
     /// Show line numbers in editor
     pub show_line_numbers: bool,
     /// Show file tree panel
@@ -89,6 +87,9 @@ pub struct Settings {
     pub auto_save_enabled: bool,
     /// Auto-save interval in seconds
     pub auto_save_interval_secs: u64,
+    /// Auto-save on focus loss
+    #[serde(default = "default_true")]
+    pub auto_save_on_focus_loss: bool,
 
 
 
@@ -235,7 +236,6 @@ impl Default for Settings {
             global_keyfile_path: None,
             file_tree_dir_encrypted: None,
             file_tree_starting_dir: None,
-            auto_snapshot_on_save: true,
             show_line_numbers: true,
             show_file_tree: true,
             show_whitespace: false,
@@ -244,6 +244,7 @@ impl Default for Settings {
             word_wrap: false,
             auto_save_enabled: true,
             auto_save_interval_secs: 60,
+            auto_save_on_focus_loss: true,
 
             show_debug_panel: false,
             show_settings_panel: false,
