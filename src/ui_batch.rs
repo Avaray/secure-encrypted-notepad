@@ -11,8 +11,11 @@ impl EditorApp {
         egui::Window::new("Batch Converter")
             .open(&mut open)
             .resizable(true)
+            .collapsible(false)
             .default_width(600.0)
             .default_height(400.0)
+            .pivot(egui::Align2::CENTER_CENTER)
+            .default_pos(ctx.available_rect().center())
             .show(ctx, |ui| {
                 ui.heading("Batch Encryption / Decryption");
                 ui.label("Convert multiple files at once using a keyfile.");
