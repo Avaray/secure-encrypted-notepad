@@ -510,8 +510,8 @@ impl eframe::App for EditorApp {
         bar_frame.inner_margin = egui::Margin {
             left: 12,
             right: 12,
-            top: 2,
-            bottom: 2,
+            top: 6,
+            bottom: 6,
         };
 
         // Standard frame for all full-content panels (side panels, central editor)
