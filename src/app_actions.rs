@@ -142,11 +142,16 @@ impl EditorApp {
         }
 
         self.log_info("Opening save as dialog");
-        if let Some(path) = rfd::FileDialog::new()
+        let mut dialog = rfd::FileDialog::new()
             .add_filter("SEN Files", &["sen"])
-            .set_file_name("document.sen")
-            .save_file()
-        {
+            .set_file_name("document.sen");
+
+        // If a directory is open in the file tree, use it as default
+        if let Some(dir) = &self.file_tree_dir {
+            dialog = dialog.set_directory(dir);
+        }
+
+        if let Some(path) = dialog.save_file() {
             self.perform_save(path);
         } else {
             self.log_info("Save as dialog cancelled");
