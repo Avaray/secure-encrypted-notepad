@@ -398,7 +398,6 @@ impl EditorApp {
                     }
 
                     ui.separator();
-                    ui.separator();
                     ui.heading("Editor");
 
                     if ui
@@ -543,7 +542,6 @@ impl EditorApp {
                         }
                     });
 
-                    ui.separator();
                     ui.add_space(4.0);
                 });
 
