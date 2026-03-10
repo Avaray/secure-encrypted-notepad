@@ -149,6 +149,9 @@ pub struct Settings {
     /// Start window in maximized mode
     #[serde(default)]
     pub start_maximized: bool,
+    /// Hide panel headers (Settings, History, etc.)
+    #[serde(default)]
+    pub hide_panel_headers: bool,
     
     /// Window dimensions and position
     #[serde(default = "default_window_width")]
@@ -255,6 +258,7 @@ impl Default for Settings {
             debug_panel_width: default_panel_width_250(),
             show_subfolders: true,
             hide_sen_extension: false,
+            hide_panel_headers: false,
             max_history_length: 100,
             max_lines: default_max_lines(),
 

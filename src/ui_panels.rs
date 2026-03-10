@@ -7,27 +7,50 @@ impl EditorApp {
     /// Render settings panel
     pub(crate) fn render_settings_panel(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
-            ui.horizontal(|ui| {
-                ui.heading("⚙ Settings");
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.button("📁").on_hover_text("Open settings folder").clicked() {
-                        if let Some(path) = crate::settings::Settings::get_config_dir() {
-                            #[cfg(target_os = "windows")]
-                            {
-                                let _ = std::process::Command::new("explorer").arg(path).spawn();
-                            }
-                            #[cfg(target_os = "linux")]
-                            {
-                                let _ = std::process::Command::new("xdg-open").arg(path).spawn();
-                            }
-                            #[cfg(target_os = "macos")]
-                            {
-                                let _ = std::process::Command::new("open").arg(path).spawn();
+            if !self.settings.hide_panel_headers {
+                ui.horizontal(|ui| {
+                    ui.heading("⚙ Settings");
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button("📁").on_hover_text("Open settings folder").clicked() {
+                            if let Some(path) = crate::settings::Settings::get_config_dir() {
+                                #[cfg(target_os = "windows")]
+                                {
+                                    let _ = std::process::Command::new("explorer").arg(path).spawn();
+                                }
+                                #[cfg(target_os = "linux")]
+                                {
+                                    let _ = std::process::Command::new("xdg-open").arg(path).spawn();
+                                }
+                                #[cfg(target_os = "macos")]
+                                {
+                                    let _ = std::process::Command::new("open").arg(path).spawn();
+                                }
                             }
                         }
-                    }
+                    });
                 });
-            });
+            } else {
+                ui.horizontal(|ui| {
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button("📁").on_hover_text("Open settings folder").clicked() {
+                            if let Some(path) = crate::settings::Settings::get_config_dir() {
+                                #[cfg(target_os = "windows")]
+                                {
+                                    let _ = std::process::Command::new("explorer").arg(path).spawn();
+                                }
+                                #[cfg(target_os = "linux")]
+                                {
+                                    let _ = std::process::Command::new("xdg-open").arg(path).spawn();
+                                }
+                                #[cfg(target_os = "macos")]
+                                {
+                                    let _ = std::process::Command::new("open").arg(path).spawn();
+                                }
+                            }
+                        }
+                    });
+                });
+            }
 
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
@@ -268,6 +291,14 @@ impl EditorApp {
                             let _ = self.settings.save();
                         }
                     });
+
+                    if ui
+                        .checkbox(&mut self.settings.hide_panel_headers, "Hide panel headers")
+                        .on_hover_text("If enabled, panel titles (like 'Settings', 'Files', etc.) will be hidden for a cleaner look.")
+                        .changed()
+                    {
+                        let _ = self.settings.save();
+                    }
 
                     if ui
                         .checkbox(&mut self.settings.preserve_all_panels, "Preserve all panels at launch")
@@ -562,7 +593,9 @@ impl EditorApp {
         let doc_max_limit = self.document.get_max_history_length();
 
         ui.vertical(|ui| {
-            ui.heading("📜 History");
+            if !self.settings.hide_panel_headers {
+                ui.heading("📜 History");
+            }
 
             ui.horizontal(|ui| {
                 ui.label("Max History for this file:");
@@ -656,7 +689,9 @@ impl EditorApp {
     /// Render debug panel
     pub(crate) fn render_debug_panel(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
-            ui.heading("Debug Log");
+            if !self.settings.hide_panel_headers {
+                ui.heading("Debug Log");
+            }
 
             ui.horizontal(|ui| {
                 if ui.button("Clear").clicked() {
@@ -685,7 +720,9 @@ impl EditorApp {
     /// Render file tree panel
     pub(crate) fn render_file_tree(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
-            ui.heading("Files");
+            if !self.settings.hide_panel_headers {
+                ui.heading("Files");
+            }
 
             if let Some(dir) = &self.file_tree_dir {
                 if self.settings.show_directory_paths {
@@ -785,7 +822,9 @@ impl EditorApp {
         let mut should_reset = false;
 
         ui.vertical(|ui| {
-            ui.heading("🎨 Theme Editor");
+            if !self.settings.hide_panel_headers {
+                ui.heading("🎨 Theme Editor");
+            }
 
             // Top bar: Theme selector and actions
             ui.horizontal(|ui| {
