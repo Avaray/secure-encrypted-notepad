@@ -142,7 +142,7 @@ impl EditorApp {
                                          match encrypt_file(&content, &keyfile, &output_path) {
                                              Ok(_) => {
                                                  success += 1;
-                                                 self.log_info(format!("Encrypted: {} -> {}", self.mask_directory_path(file), self.mask_directory_path(&output_path)));
+                                                  self.log_success(format!("Encrypted: {} -> {}", self.mask_directory_path(file), self.mask_directory_path(&output_path)));
                                              }
                                              Err(e) => {
                                                  failed += 1;
@@ -201,7 +201,7 @@ impl EditorApp {
                                          match std::fs::write(&output_path, content) {
                                              Ok(_) => {
                                                  success += 1;
-                                                 self.log_info(format!("Decrypted: {} -> {}", self.mask_directory_path(file), self.mask_directory_path(&output_path)));
+                                                  self.log_success(format!("Decrypted: {} -> {}", self.mask_directory_path(file), self.mask_directory_path(&output_path)));
                                              }
                                              Err(e) => {
                                                  failed += 1;

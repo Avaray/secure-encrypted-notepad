@@ -12,6 +12,7 @@ pub struct LogEntry {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum LogLevel {
     Info,
+    Success,
     Warning,
     Error,
 }
@@ -28,6 +29,7 @@ impl LogEntry {
     pub fn display(&self) -> String {
         let level_str = match self.level {
             LogLevel::Info => "INFO",
+            LogLevel::Success => "SUCCESS",
             LogLevel::Warning => "WARN",
             LogLevel::Error => "ERROR",
         };

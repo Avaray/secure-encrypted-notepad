@@ -11,6 +11,11 @@ impl EditorApp {
         }
     }
 
+    pub(crate) fn log_success(&mut self, message: impl Into<String>) {
+        self.debug_log
+            .push(LogEntry::new(LogLevel::Success, message.into()));
+    }
+
     pub(crate) fn log_warning(&mut self, message: impl Into<String>) {
         self.debug_log
             .push(LogEntry::new(LogLevel::Warning, message.into()));

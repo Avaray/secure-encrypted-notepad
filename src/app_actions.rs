@@ -183,7 +183,7 @@ impl EditorApp {
                     self.mask_directory_path(&path),
                     history_count
                 );
-                self.log_info("OK: File saved successfully");
+                self.log_success("OK: File saved successfully");
                 self.refresh_file_tree();
 
                 // Cleanup autosave file
@@ -286,7 +286,7 @@ impl EditorApp {
         if self.document.load_version(index) {
             self.is_modified = true;
             self.status_message = "Version loaded from history".to_string();
-            self.log_info(format!("Loaded history version #{}", index));
+            self.log_success(format!("Loaded history version #{}", index));
         }
     }
 
@@ -449,7 +449,7 @@ impl EditorApp {
                         old_name,
                         new_masked
                     );
-                    self.log_info(format!(
+                    self.log_success(format!(
                         "OK: Keyfile rotated successfully for {}",
                         self.mask_directory_path(&file_path)
                     ));

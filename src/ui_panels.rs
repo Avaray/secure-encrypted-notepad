@@ -707,9 +707,10 @@ impl EditorApp {
                 .show(ui, |ui| {
                     for entry in &self.debug_log {
                         let color = match entry.level {
-                            LogLevel::Info => ui.style().visuals.text_color(),
-                            LogLevel::Warning => egui::Color32::from_rgb(255, 200, 0),
-                            LogLevel::Error => egui::Color32::from_rgb(255, 80, 80),
+                            LogLevel::Info => self.current_theme.colors.info_color(),
+                            LogLevel::Success => self.current_theme.colors.success_color(),
+                            LogLevel::Warning => self.current_theme.colors.warning_color(),
+                            LogLevel::Error => self.current_theme.colors.error_color(),
                         };
                         ui.colored_label(color, entry.display());
                     }
