@@ -4,6 +4,11 @@ use eframe::egui;
 impl EditorApp {
     /// Render icon toolbar with hover colors
     pub(crate) fn render_toolbar(&mut self, ui: &mut egui::Ui) {
+        // Set tight spacing for the toolbar to allow it to shrink
+        ui.spacing_mut().button_padding = egui::vec2(2.0, 2.0);
+        ui.spacing_mut().interact_size.y = 0.0;
+        ui.spacing_mut().item_spacing = egui::vec2(4.0, 4.0);
+
         let is_vertical = self.settings.toolbar_position == crate::settings::ToolbarPosition::Left
             || self.settings.toolbar_position == crate::settings::ToolbarPosition::Right;
 
@@ -12,19 +17,17 @@ impl EditorApp {
                 self.render_toolbar_content(ui, is_vertical);
             });
         } else {
-            ui.horizontal(|ui| self.render_toolbar_content(ui, is_vertical));
+            ui.horizontal_wrapped(|ui| {
+                self.render_toolbar_content(ui, is_vertical);
+            });
         }
     }
 
     fn render_toolbar_content(&mut self, ui: &mut egui::Ui, is_vertical: bool) {
-        if is_vertical {
-            ui.spacing_mut().item_spacing.y = 4.0;
-        } else {
-            ui.spacing_mut().item_spacing.x = 4.0;
-        }
+        // Spacing already set in render_toolbar
         // Icon sizes based on setting directly
         let ico_s = self.settings.toolbar_icon_size;
-        let btn_s = ico_s + 8.0; // padding around the icon
+        let btn_s = ico_s + 4.0; // tighter padding around the icon
         let button_size = egui::vec2(btn_s, btn_s);
         let icon_size = egui::vec2(ico_s, ico_s);
         let hover_tint = self.current_theme.colors.icon_hover_color();
