@@ -31,7 +31,6 @@ impl EditorApp {
 
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
-                .max_height(ui.available_height() - 60.0)
                 .show(ui, |ui| {
                     ui.heading("Appearance");
 
@@ -548,9 +547,6 @@ impl EditorApp {
                     ui.add_space(4.0);
                 });
 
-            if ui.button("Close").clicked() {
-                self.show_settings_panel = false;
-            }
         });
     }
 
