@@ -67,23 +67,23 @@ jobs:
             binary: sen.exe
             artifact: sen-v${{ needs.check-version.outputs.version }}-windows.exe
 
-          - os: ubuntu-latest
-            os-name: Linux
-            target: x86_64-unknown-linux-gnu
-            binary: sen
-            artifact: sen-v${{ needs.check-version.outputs.version }}-linux
-
-          - os: macos-latest
-            os-name: macOS
-            target: x86_64-apple-darwin
-            binary: sen
-            artifact: sen-v${{ needs.check-version.outputs.version }}-macos
-
-          - os: macos-latest
-            os-name: macOS ARM64
-            target: aarch64-apple-darwin
-            binary: sen
-            artifact: sen-v${{ needs.check-version.outputs.version }}-macos-arm64
+#           - os: ubuntu-latest
+#             os-name: Linux
+#             target: x86_64-unknown-linux-gnu
+#             binary: sen
+#             artifact: sen-v${{ needs.check-version.outputs.version }}-linux
+# 
+#           - os: macos-latest
+#             os-name: macOS
+#             target: x86_64-apple-darwin
+#             binary: sen
+#             artifact: sen-v${{ needs.check-version.outputs.version }}-macos
+# 
+#           - os: macos-latest
+#             os-name: macOS ARM64
+#             target: aarch64-apple-darwin
+#             binary: sen
+#             artifact: sen-v${{ needs.check-version.outputs.version }}-macos-arm64
 
     steps:
       - uses: actions/checkout@v4
