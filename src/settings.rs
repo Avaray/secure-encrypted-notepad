@@ -260,7 +260,7 @@ impl Default for Settings {
             window_pos_y: -1.0,
             toolbar_icon_size: 24.0, // Default 24px icon
             toolbar_position: ToolbarPosition::Top,
-            cursor_shape: CursorShape::Bar,
+            cursor_shape: crate::settings::CursorShape::Bar,
             cursor_blink: true,
             is_first_run: false,
         }

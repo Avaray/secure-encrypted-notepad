@@ -603,66 +603,48 @@ impl EditorApp {
                 if history_len == 0 {
                     ui.label("No history");
                 } else {
-                    // Iteruj po sklonowanych danych
                     for (original_index, entry) in visible_history.iter().rev() {
                         let is_loaded = self.loaded_history_index == Some(*original_index);
 
-                        let frame = if is_loaded {
-                            egui::Frame::NONE
-                                .fill(
-                                    self.current_theme
-                                        .colors
-                                        .selection_color()
-                                        .linear_multiply(0.3),
-                                )
-                                .stroke(egui::Stroke::new(
-                                    2.0,
-                                    self.current_theme.colors.cursor_color(),
-                                ))
-                                .inner_margin(8)
-                                .corner_radius(4.0)
-                        } else {
-                            egui::Frame::NONE.inner_margin(4)
-                        };
+                        // ONE LINE COMPACT VIEW
+                        ui.horizontal(|ui| {
+                            ui.spacing_mut().item_spacing.x = 4.0;
+                            
+                            if is_loaded {
+                                ui.label(egui::RichText::new("▶").color(self.current_theme.colors.cursor_color()));
+                            } else {
+                                ui.add_space(8.0);
+                            }
 
-                        frame.show(ui, |ui| {
-                            ui.group(|ui| {
-                                if is_loaded {
-                                    ui.label(
-                                        egui::RichText::new("▶ LOADED")
-                                            .color(self.current_theme.colors.cursor_color())
-                                            .strong(),
-                                    );
-                                }
-
-                                ui.label(format!("📅 {}", entry.display_timestamp()));
-                                ui.label(format!("💾 {}", entry.display_size()));
-
+                            let text = format!(
+                                "{} - {}",
+                                entry.display_timestamp(),
+                                entry.display_size()
+                            );
+                            
+                            let label_res = ui.selectable_label(is_loaded, text);
+                            if label_res.clicked() {
+                                self.load_history_version(*original_index);
+                                self.loaded_history_index = Some(*original_index);
+                            }
+                            
+                            label_res.on_hover_ui(|ui| {
+                                ui.label(format!("Full date: {}", entry.timestamp.format("%Y-%m-%d %H:%M:%S")));
                                 if let Some(ref comment) = entry.comment {
-                                    ui.label(
-                                        egui::RichText::new(format!("💬 {}", comment))
-                                            .italics()
-                                            .weak(),
-                                    );
+                                    ui.label(format!("Comment: {}", comment));
                                 }
+                            });
 
-                                ui.horizontal(|ui| {
-                                    if ui.button("📂 Load").clicked() {
-                                        self.load_history_version(*original_index);
-                                        self.loaded_history_index = Some(*original_index);
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                if ui.button("🗑").on_hover_text("Delete").clicked() {
+                                    self.delete_history_entry(*original_index);
+                                    if self.loaded_history_index == Some(*original_index) {
+                                        self.loaded_history_index = None;
                                     }
-
-                                    if ui.button("🗑 Delete").clicked() {
-                                        self.delete_history_entry(*original_index);
-                                        if self.loaded_history_index == Some(*original_index) {
-                                            self.loaded_history_index = None;
-                                        }
-                                    }
-                                });
+                                }
                             });
                         });
-
-                        ui.add_space(4.0);
+                        ui.add_space(2.0);
                     }
                 }
             });
