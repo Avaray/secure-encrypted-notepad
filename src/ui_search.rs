@@ -18,7 +18,7 @@ impl EditorApp {
             ui.label("Find:");
             let response = ui.add(
                 egui::TextEdit::singleline(&mut self.search_query)
-                    .desired_width(180.0)
+                    .desired_width(200.0)
                     .hint_text("Search..."),
             );
 
@@ -62,12 +62,12 @@ impl EditorApp {
             ui.separator();
             
             ui.label("Replace:");
-            ui.add(egui::TextEdit::singleline(&mut self.replace_query).desired_width(120.0).hint_text("Text"));
+            ui.add(egui::TextEdit::singleline(&mut self.replace_query).desired_width(200.0).hint_text("Text"));
             
-            if ui.button("Replace").clicked() {
+            if ui.button("Replace one").clicked() {
                  self.replace_current();
             }
-            if ui.button("All").clicked() {
+            if ui.button("Replace all").clicked() {
                  self.replace_all();
             }
         });
