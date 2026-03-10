@@ -494,18 +494,27 @@ impl eframe::App for EditorApp {
         // Confirmation dialog
         self.render_confirmation_dialog(ctx);
 
-        // Toolbar — height/width adapts to icon size
-        // Custom frame for toolbar to allow shrinking (no top/bottom margins)
-        let mut toolbar_frame = egui::Frame::side_top_panel(&ctx.style());
-        toolbar_frame.stroke = egui::Stroke::NONE;
-        toolbar_frame.inner_margin = egui::Margin {
+        // Custom frame for toolbar (vertical positions)
+        let mut vertical_toolbar_frame = egui::Frame::side_top_panel(&ctx.style());
+        vertical_toolbar_frame.stroke = egui::Stroke::NONE;
+        vertical_toolbar_frame.inner_margin = egui::Margin {
             left: 2,
             right: 2,
-            top: 0,
-            bottom: 0,
+            top: 2,
+            bottom: 2,
         };
 
-        // Standard frame for all content panels (side panels, central, search, status)
+        // Frame for horizontal bars (top toolbar, search, status) - slim vertical, wide horizontal
+        let mut bar_frame = egui::Frame::side_top_panel(&ctx.style());
+        bar_frame.stroke = egui::Stroke::NONE;
+        bar_frame.inner_margin = egui::Margin {
+            left: 12,
+            right: 12,
+            top: 2,
+            bottom: 2,
+        };
+
+        // Standard frame for all full-content panels (side panels, central editor)
         let mut content_frame = egui::Frame::side_top_panel(&ctx.style());
         content_frame.stroke = egui::Stroke::NONE;
         content_frame.inner_margin = egui::Margin::same(12);
@@ -515,7 +524,7 @@ impl eframe::App for EditorApp {
         match self.settings.toolbar_position {
             crate::settings::ToolbarPosition::Top => {
                 egui::TopBottomPanel::top("toolbar")
-                    .frame(toolbar_frame.clone())
+                    .frame(bar_frame.clone())
                     .min_height(0.0)
                     .show(ctx, |ui| {
                         self.render_toolbar(ui);
@@ -523,7 +532,7 @@ impl eframe::App for EditorApp {
             }
             crate::settings::ToolbarPosition::Left => {
                 egui::SidePanel::left("toolbar")
-                    .frame(toolbar_frame.clone())
+                    .frame(vertical_toolbar_frame.clone())
                     .exact_width(toolbar_size)
                     .show(ctx, |ui| {
                         self.render_toolbar(ui);
@@ -531,7 +540,7 @@ impl eframe::App for EditorApp {
             }
             crate::settings::ToolbarPosition::Right => {
                 egui::SidePanel::right("toolbar")
-                    .frame(toolbar_frame.clone())
+                    .frame(vertical_toolbar_frame.clone())
                     .exact_width(toolbar_size)
                     .show(ctx, |ui| {
                         self.render_toolbar(ui);
@@ -546,14 +555,14 @@ impl eframe::App for EditorApp {
 
         // Search panel (below toolbar)
         egui::TopBottomPanel::top("search_panel")
-            .frame(content_frame.clone())
+            .frame(bar_frame.clone())
             .show_animated(ctx, self.show_search_panel, |ui| {
                 self.render_search_panel(ui);
             });
 
         // Status bar
         egui::TopBottomPanel::bottom("status_bar")
-            .frame(content_frame.clone())
+            .frame(bar_frame.clone())
             .min_height(24.0)
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
