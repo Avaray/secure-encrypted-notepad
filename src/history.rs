@@ -193,10 +193,6 @@ impl DocumentWithHistory {
         self.max_history_length
     }
 
-    /// Get reference to ALL history (including deleted)
-    pub fn get_history(&self) -> &Vec<HistoryEntry> {
-        &self.history
-    }
 
     /// Get only visible (non-deleted) history for UI display
     pub fn get_visible_history(&self) -> Vec<(usize, &HistoryEntry)> {
@@ -233,14 +229,8 @@ impl DocumentWithHistory {
             entry.deleted = true;
         }
     }
-
-    /// Apply deletions - physically remove deleted entries
-    /// NOTE: This is NOT used during save anymore - to_file_content() filters automatically
-    #[allow(dead_code)]
-    pub fn apply_deletions(&mut self) {
-        self.history.retain(|entry| !entry.deleted);
-    }
 }
+
 
 #[cfg(test)]
 mod tests {

@@ -687,13 +687,10 @@ impl EditorApp {
             ui.heading("Files");
 
             if let Some(dir) = &self.file_tree_dir {
-                let display_path = if self.settings.show_directory_paths {
-                    dir.display().to_string()
-                } else {
-                    "Secured".to_string()
-                };
-                ui.label(egui::RichText::new(display_path).small());
-                ui.separator();
+                if self.settings.show_directory_paths {
+                    ui.label(egui::RichText::new(dir.display().to_string()).small());
+                    ui.separator();
+                }
 
                 let available_width = ui.available_width();
 
