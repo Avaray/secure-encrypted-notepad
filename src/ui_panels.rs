@@ -343,30 +343,7 @@ impl EditorApp {
 
 
                     ui.separator();
-                    ui.heading("Keyfile");
-
-                    if ui
-                        .checkbox(
-                            &mut self.settings.use_global_keyfile,
-                            "Use global keyfile on startup",
-                        )
-                        .changed()
-                    {
-                        let _ = self.settings.save();
-                    }
-
-                    ui.horizontal(|ui| {
-                        ui.label("Current:");
-                        if let Some(path) = &self.settings.global_keyfile_path {
-                            if self.settings.show_keyfile_path {
-                                ui.label(path.file_name().unwrap_or_default().to_string_lossy());
-                            } else {
-                                ui.label("Secured");
-                            }
-                        } else {
-                            ui.label("None");
-                        }
-                    });
+                    ui.heading("Global keyfile");
 
                     ui.horizontal(|ui| {
                         if ui.button("Set Global Keyfile").clicked() {
@@ -385,6 +362,29 @@ impl EditorApp {
                             let _ = self.settings.save();
                         }
                     });
+
+                    ui.horizontal(|ui| {
+                        ui.label("Current:");
+                        if let Some(path) = &self.settings.global_keyfile_path {
+                            if self.settings.show_keyfile_path {
+                                ui.label(path.file_name().unwrap_or_default().to_string_lossy());
+                            } else {
+                                ui.label("Secured");
+                            }
+                        } else {
+                            ui.label("None");
+                        }
+                    });
+
+                    if ui
+                        .checkbox(
+                            &mut self.settings.use_global_keyfile,
+                            "Use global keyfile on startup",
+                        )
+                        .changed()
+                    {
+                        let _ = self.settings.save();
+                    }
 
                     if ui.checkbox(&mut self.settings.show_keyfile_path, "Show keyfile paths globally")
                         .on_hover_text("When disabled, full paths to sensitive files are masked as 'Secured' or hidden entirely in the Status Bar, Settings, Batch Converter, and Debug Logs for maximum privacy.")
