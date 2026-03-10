@@ -10,51 +10,42 @@ impl EditorApp {
             if !self.settings.hide_panel_headers {
                 ui.horizontal(|ui| {
                     ui.heading("Settings");
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button("📁").on_hover_text("Open settings folder").clicked() {
-                            if let Some(path) = crate::settings::Settings::get_config_dir() {
-                                #[cfg(target_os = "windows")]
-                                {
-                                    let _ = std::process::Command::new("explorer").arg(path).spawn();
-                                }
-                                #[cfg(target_os = "linux")]
-                                {
-                                    let _ = std::process::Command::new("xdg-open").arg(path).spawn();
-                                }
-                                #[cfg(target_os = "macos")]
-                                {
-                                    let _ = std::process::Command::new("open").arg(path).spawn();
-                                }
-                            }
-                        }
-                    });
-                });
-            } else {
-                ui.horizontal(|ui| {
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button("📁").on_hover_text("Open settings folder").clicked() {
-                            if let Some(path) = crate::settings::Settings::get_config_dir() {
-                                #[cfg(target_os = "windows")]
-                                {
-                                    let _ = std::process::Command::new("explorer").arg(path).spawn();
-                                }
-                                #[cfg(target_os = "linux")]
-                                {
-                                    let _ = std::process::Command::new("xdg-open").arg(path).spawn();
-                                }
-                                #[cfg(target_os = "macos")]
-                                {
-                                    let _ = std::process::Command::new("open").arg(path).spawn();
-                                }
-                            }
-                        }
-                    });
                 });
             }
 
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        if ui.button("Open Folder").on_hover_text("Open settings folder").clicked() {
+                            if let Some(path) = crate::settings::Settings::get_config_dir() {
+                                #[cfg(target_os = "windows")]
+                                {
+                                    let _ = std::process::Command::new("explorer").arg(path).spawn();
+                                }
+                                #[cfg(target_os = "linux")]
+                                {
+                                    let _ = std::process::Command::new("xdg-open").arg(path).spawn();
+                                }
+                                #[cfg(target_os = "macos")]
+                                {
+                                    let _ = std::process::Command::new("open").arg(path).spawn();
+                                }
+                            }
+                        }
+                        
+                        ui.separator();
+
+                        if ui.button("Reset All").on_hover_text("Restore all settings to factory defaults.").clicked() {
+                            self.show_reset_confirmation = true;
+                            self.reset_slider_val = 0.0;
+                        }
+                    });
+
+                    ui.add_space(8.0);
+                    ui.separator();
+                    ui.add_space(8.0);
+
                     ui.heading("Appearance");
 
                     // Theme selection
@@ -589,14 +580,6 @@ impl EditorApp {
                     });
 
                     ui.add_space(4.0);
-                    ui.separator();
-                    ui.add_space(8.0);
-                    
-                    if ui.button("Reset All Settings").on_hover_text("Restore all settings to factory defaults.").clicked() {
-                        self.show_reset_confirmation = true;
-                        self.reset_slider_val = 0.0;
-                    }
-                    ui.add_space(8.0);
                 });
 
         });
