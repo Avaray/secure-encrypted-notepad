@@ -7,69 +7,67 @@ impl EditorApp {
             return;
         }
 
-        ui.horizontal(|ui| {
-            if ui.button("X").clicked() {
-                self.show_search_panel = false;
-                self.search_query.clear();
-                self.search_matches.clear();
-                self.current_match_index = None;
-            }
-
-            ui.label("Find:");
-            let response = ui.add(
-                egui::TextEdit::singleline(&mut self.search_query)
-                    .desired_width(200.0)
-                    .hint_text("Type to search..."),
-            );
-
-            if response.changed() {
-                self.perform_search();
-            }
-
-            // Enter to find next
-            if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                self.find_next();
-                response.request_focus(); // Keep focus for repeated searching
-            }
-            
-            // Checkbox for case sensitivity
-            if ui.checkbox(&mut self.search_case_sensitive, "Aa").changed() {
-                 self.perform_search();
-            }
-
-            if ui.button("<").clicked() {
-                self.find_prev();
-            }
-            if ui.button(">").clicked() {
-                self.find_next();
-            }
-
-            // Match count
-            if !self.search_matches.is_empty() {
-                if let Some(idx) = self.current_match_index {
-                    ui.label(format!("{} of {}", idx + 1, self.search_matches.len()));
-                } else {
-                    ui.label(format!("{} matches", self.search_matches.len()));
+        ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+            ui.horizontal(|ui| {
+                if ui.button("X").clicked() {
+                    self.show_search_panel = false;
+                    self.search_query.clear();
+                    self.search_matches.clear();
+                    self.current_match_index = None;
                 }
-            } else if !self.search_query.is_empty() {
-                ui.label("No matches");
-            }
-            
-            ui.separator();
-            
-            // Replace UI (placeholder for now)
-            ui.label("Replace:");
-            ui.add(egui::TextEdit::singleline(&mut self.replace_query).desired_width(150.0).hint_text("Replacement text"));
-            
-            if ui.button("Replace").clicked() {
-                 self.replace_current();
-            }
-            if ui.button("All").clicked() {
-                 self.replace_all();
-            }
+
+                ui.label("Find:");
+                let response = ui.add(
+                    egui::TextEdit::singleline(&mut self.search_query)
+                        .desired_width(180.0) // slightly narrower
+                        .hint_text("Search..."),
+                );
+
+                if response.changed() {
+                    self.perform_search();
+                }
+
+                // Enter to find next
+                if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                    self.find_next();
+                    response.request_focus();
+                }
+                
+                if ui.checkbox(&mut self.search_case_sensitive, "Aa").changed() {
+                     self.perform_search();
+                }
+
+                if ui.button("<").clicked() {
+                    self.find_prev();
+                }
+                if ui.button(">").clicked() {
+                    self.find_next();
+                }
+
+                // Match count
+                if !self.search_matches.is_empty() {
+                    if let Some(idx) = self.current_match_index {
+                        ui.label(format!("{} of {}", idx + 1, self.search_matches.len()));
+                    } else {
+                        ui.label(format!("{} matches", self.search_matches.len()));
+                    }
+                } else if !self.search_query.is_empty() {
+                    ui.label("No matches");
+                }
+                
+                ui.separator();
+                
+                ui.label("Replace:");
+                ui.add(egui::TextEdit::singleline(&mut self.replace_query).desired_width(120.0).hint_text("Text"));
+                
+                if ui.button("Replace").clicked() {
+                     self.replace_current();
+                }
+                if ui.button("All").clicked() {
+                     self.replace_all();
+                }
+            });
         });
-        
-        ui.separator();
     }
 
     /// Perform full text search and populate matches
