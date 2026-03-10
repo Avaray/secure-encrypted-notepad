@@ -683,9 +683,6 @@ impl EditorApp {
     /// Render file tree panel
     pub(crate) fn render_file_tree(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
-            // Ensure panel has width to be grabbed
-            ui.set_min_width(ui.available_width());
-            
             ui.heading("Files");
 
             if let Some(dir) = &self.file_tree_dir {
@@ -718,7 +715,11 @@ impl EditorApp {
                                         )
                                     };
 
-                                    if ui.button(display_name).clicked() {
+                                    if ui
+                                        .add(egui::Button::new(&display_name).truncate())
+                                        .on_hover_text(&display_name)
+                                        .clicked()
+                                    {
                                         self.change_directory(path.clone());
                                     }
                                 }
@@ -745,7 +746,11 @@ impl EditorApp {
                                             ui.label("📄");
                                         }
 
-                                        if ui.button(filename).clicked() {
+                                        if ui
+                                            .add(egui::Button::new(&*filename).truncate())
+                                            .on_hover_text(&*filename)
+                                            .clicked()
+                                        {
                                             self.open_file(path.clone());
                                         }
                                     });
