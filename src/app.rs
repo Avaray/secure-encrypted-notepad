@@ -275,11 +275,11 @@ impl EditorApp {
             if !is_dark {
                 settings.theme_name = "Light".to_string();
                 let msg = "First run: System detected Light mode, setting theme to Light";
-                eprintln!("[SEN] {}", msg);
+                crate::sen_debug!("{}", msg);
                 system_log = Some(msg.to_string());
             } else {
                 let msg = "First run: System detected Dark mode (default theme)";
-                eprintln!("[SEN] {}", msg);
+                crate::sen_debug!("{}", msg);
                 system_log = Some(msg.to_string());
             }
         }

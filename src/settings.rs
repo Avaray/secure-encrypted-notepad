@@ -306,20 +306,20 @@ impl Settings {
                                                             Self::decrypt_keyfile_path_field(&mut settings);
                                                             Self::decrypt_file_tree_dir_field(&mut settings);
                                                             Self::migrate_legacy_fonts(&mut settings);
-                                                            eprintln!("[SEN] Settings loaded OK: use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
+                                                            sen_debug!("Settings loaded OK: use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
                                                                 settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
                                                             return settings;
                                                         }
-                                                        Err(e) => eprintln!("[SEN] Config TOML parse error: {}", e),
+                                                        Err(e) => sen_debug!("Config TOML parse error: {}", e),
                                                     }
                                                 }
-                                                Err(e) => eprintln!("[SEN] Config decryption failed (key may have changed): {}", e),
+                                                Err(e) => sen_debug!("Config decryption failed (key may have changed): {}", e),
                                             }
                                         }
-                                        Err(e) => eprintln!("[SEN] Invalid config key format: {}", e),
+                                        Err(e) => sen_debug!("Invalid config key format: {}", e),
                                     }
                                 }
-                                Err(e) => eprintln!("[SEN] Failed to get config key from keyring: {}", e),
+                                Err(e) => sen_debug!("Failed to get config key from keyring: {}", e),
                             }
                         } else {
                             // Plaintext fallback (legacy)
@@ -329,20 +329,20 @@ impl Settings {
                                         Self::decrypt_keyfile_path_field(&mut settings);
                                         Self::decrypt_file_tree_dir_field(&mut settings);
                                         Self::migrate_legacy_fonts(&mut settings);
-                                        eprintln!("[SEN] Settings loaded OK (plaintext): use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
+                                        sen_debug!("Settings loaded OK (plaintext): use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
                                             settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
                                         return settings;
                                     }
-                                    Err(e) => eprintln!("[SEN] Config TOML parse error (plaintext): {}", e),
+                                    Err(e) => sen_debug!("Config TOML parse error (plaintext): {}", e),
                                 }
                             }
                         }
                     }
-                    Err(e) => eprintln!("[SEN] Failed to read config file: {}", e),
+                    Err(e) => sen_debug!("Failed to read config file: {}", e),
                 }
             }
         }
-        eprintln!("[SEN] Using default settings (possible first run)");
+        sen_debug!("Using default settings (possible first run)");
         let mut settings = Self::default();
         settings.is_first_run = true;
         settings
@@ -376,7 +376,7 @@ impl Settings {
 
             let toml_string = toml::to_string_pretty(&to_save)?;
             fs::write(&config_path, toml_string)?;
-            eprintln!("[SEN] Settings saved OK: use_global_keyfile={}, keyfile_encrypted={}, start_maximized={}, theme={}",
+            sen_debug!("Settings saved OK: use_global_keyfile={}, keyfile_encrypted={}, start_maximized={}, theme={}",
                 self.use_global_keyfile, to_save.keyfile_path_encrypted.is_some(), self.start_maximized, self.theme_name);
         }
         Ok(())
@@ -422,28 +422,28 @@ impl Settings {
     /// is set to None and a warning is logged — never crashes.
     fn decrypt_keyfile_path_field(settings: &mut Self) {
         if let Some(ref encrypted) = settings.keyfile_path_encrypted {
-            eprintln!("[SEN] Attempting to decrypt keyfile path ({} chars encrypted)", encrypted.len());
+            sen_debug!("Attempting to decrypt keyfile path ({} chars encrypted)", encrypted.len());
             match crate::config_crypto::get_or_create_config_key() {
                 Ok(key) => {
-                    eprintln!("[SEN] Config crypto key retrieved from keychain OK");
+                    sen_debug!("Config crypto key retrieved from keychain OK");
                     match crate::config_crypto::decrypt_keyfile_path(&key, encrypted) {
                         Ok(path_str) => {
-                            eprintln!("[SEN] Keyfile path decrypted OK: {:?}", path_str);
+                            sen_debug!("Keyfile path decrypted OK: {:?}", path_str);
                             settings.global_keyfile_path = Some(PathBuf::from(path_str));
                         }
                         Err(e) => {
-                            eprintln!("[SEN] Warning: failed to decrypt keyfile path: {}", e);
+                            sen_debug!("Warning: failed to decrypt keyfile path: {}", e);
                             settings.global_keyfile_path = None;
                         }
                     }
                 }
                 Err(e) => {
-                    eprintln!("[SEN] Warning: keychain unavailable, cannot decrypt keyfile path: {}", e);
+                    sen_debug!("Warning: keychain unavailable, cannot decrypt keyfile path: {}", e);
                     settings.global_keyfile_path = None;
                 }
             }
         } else {
-            eprintln!("[SEN] No encrypted keyfile path in config");
+            sen_debug!("No encrypted keyfile path in config");
         }
     }
 
@@ -464,13 +464,13 @@ impl Settings {
                         }
                         Err(e) => {
                             // Don't erase existing encrypted data on failure
-                            eprintln!("[SEN] Warning: failed to encrypt keyfile path: {}", e);
+                            sen_debug!("Warning: failed to encrypt keyfile path: {}", e);
                         }
                     }
                 }
                 Err(e) => {
                     // Don't erase existing encrypted data on keychain failure
-                    eprintln!("[SEN] Warning: keychain unavailable, keyfile path will not be saved: {}", e);
+                    sen_debug!("Warning: keychain unavailable, keyfile path will not be saved: {}", e);
                 }
             }
         }
@@ -487,17 +487,17 @@ impl Settings {
                 Ok(key) => {
                     match crate::config_crypto::decrypt_keyfile_path(&key, encrypted) {
                         Ok(path_str) => {
-                            eprintln!("[SEN] File tree dir decrypted OK: {:?}", path_str);
+                            sen_debug!("File tree dir decrypted OK: {:?}", path_str);
                             settings.file_tree_starting_dir = Some(PathBuf::from(path_str));
                         }
                         Err(e) => {
-                            eprintln!("[SEN] Warning: failed to decrypt file tree dir: {}", e);
+                            sen_debug!("Warning: failed to decrypt file tree dir: {}", e);
                             settings.file_tree_starting_dir = None;
                         }
                     }
                 }
                 Err(e) => {
-                    eprintln!("[SEN] Warning: keychain unavailable for file tree dir: {}", e);
+                    sen_debug!("Warning: keychain unavailable for file tree dir: {}", e);
                     settings.file_tree_starting_dir = None;
                 }
             }
@@ -516,12 +516,12 @@ impl Settings {
                             self.file_tree_dir_encrypted = Some(encrypted);
                         }
                         Err(e) => {
-                            eprintln!("[SEN] Warning: failed to encrypt file tree dir: {}", e);
+                            sen_debug!("Warning: failed to encrypt file tree dir: {}", e);
                         }
                     }
                 }
                 Err(e) => {
-                    eprintln!("[SEN] Warning: keychain unavailable for file tree dir: {}", e);
+                    sen_debug!("Warning: keychain unavailable for file tree dir: {}", e);
                 }
             }
         }

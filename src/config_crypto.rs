@@ -31,11 +31,11 @@ pub fn get_or_create_config_key() -> Result<[u8; 32], Box<dyn std::error::Error>
         if contents.len() == 32 {
             let mut key = [0u8; 32];
             key.copy_from_slice(&contents);
-            eprintln!("[SEN] config_crypto: LOADED key from file (fingerprint: {:02x}{:02x}{:02x}{:02x})",
+            crate::sen_debug!("config_crypto: LOADED key from file (fingerprint: {:02x}{:02x}{:02x}{:02x})",
                 key[0], key[1], key[2], key[3]);
             return Ok(key);
         }
-        eprintln!("[SEN] config_crypto: key file has wrong length ({}), regenerating", contents.len());
+        crate::sen_debug!("config_crypto: key file has wrong length ({}), regenerating", contents.len());
     }
 
     // Generate a fresh random key
@@ -43,7 +43,7 @@ pub fn get_or_create_config_key() -> Result<[u8; 32], Box<dyn std::error::Error>
     let mut key = [0u8; 32];
     key.copy_from_slice(&key_obj);
 
-    eprintln!("[SEN] config_crypto: GENERATED NEW key (fingerprint: {:02x}{:02x}{:02x}{:02x})",
+    crate::sen_debug!("config_crypto: GENERATED NEW key (fingerprint: {:02x}{:02x}{:02x}{:02x})",
         key[0], key[1], key[2], key[3]);
 
     // Write raw bytes to the key file

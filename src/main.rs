@@ -1,5 +1,24 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+/// Custom debug logging macro that only prints to console in debug builds.
+/// This prevents sensitive data leakage in release versions.
+#[allow(unused_macros)]
+macro_rules! sen_debug {
+    ($($arg:tt)*) => {
+        {
+            #[cfg(debug_assertions)]
+            eprintln!("[SEN] {}", format!($($arg)*));
+
+            #[cfg(not(debug_assertions))]
+            if false {
+                let _ = format_args!($($arg)*);
+            }
+        }
+    };
+}
+
+pub(crate) use sen_debug;
+
 mod crypto;
 mod fonts;
 mod history;
