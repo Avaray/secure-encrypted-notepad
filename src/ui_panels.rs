@@ -366,7 +366,7 @@ impl EditorApp {
                     ui.horizontal(|ui| {
                         ui.label("Current:");
                         if let Some(path) = &self.settings.global_keyfile_path {
-                            if self.settings.show_keyfile_path {
+                            if self.settings.show_keyfile_paths {
                                 ui.label(path.file_name().unwrap_or_default().to_string_lossy());
                             } else {
                                 ui.label("Secured");
@@ -386,8 +386,14 @@ impl EditorApp {
                         let _ = self.settings.save();
                     }
 
-                    if ui.checkbox(&mut self.settings.show_keyfile_path, "Show keyfile paths globally")
-                        .on_hover_text("When disabled, full paths to sensitive files are masked as 'Secured' or hidden entirely in the Status Bar, Settings, Batch Converter, and Debug Logs for maximum privacy.")
+                    if ui.checkbox(&mut self.settings.show_keyfile_paths, "Show full keyfile paths")
+                        .on_hover_text("When disabled, full paths to keyfiles are masked as 'Secured' for privacy.")
+                        .changed() {
+                        let _ = self.settings.save();
+                    }
+
+                    if ui.checkbox(&mut self.settings.show_directory_paths, "Show full directory paths")
+                        .on_hover_text("When disabled, full directory paths (starting dir, file tree header) are masked as 'Secured'.")
                         .changed() {
                         let _ = self.settings.save();
                     }
@@ -508,8 +514,13 @@ impl EditorApp {
                     ui.add_space(4.0);
                     ui.label("Starting directory:");
                     if let Some(ref dir) = self.settings.file_tree_starting_dir {
+                        let display_path = if self.settings.show_directory_paths {
+                            dir.display().to_string()
+                        } else {
+                            "Secured".to_string()
+                        };
                         ui.label(
-                            egui::RichText::new(dir.display().to_string())
+                            egui::RichText::new(display_path)
                                 .small()
                                 .weak(),
                         );
@@ -686,7 +697,12 @@ impl EditorApp {
             ui.heading("Files");
 
             if let Some(dir) = &self.file_tree_dir {
-                ui.label(egui::RichText::new(dir.display().to_string()).small());
+                let display_path = if self.settings.show_directory_paths {
+                    dir.display().to_string()
+                } else {
+                    "Secured".to_string()
+                };
+                ui.label(egui::RichText::new(display_path).small());
                 ui.separator();
 
                 let available_width = ui.available_width();

@@ -240,7 +240,16 @@ impl EditorApp {
 
     /// Get displayable keyfile path/name based on settings
     pub(crate) fn mask_keyfile_path(&self, path: &std::path::Path) -> String {
-        if self.settings.show_keyfile_path {
+        if self.settings.show_keyfile_paths {
+            path.display().to_string()
+        } else {
+            "Secured".to_string()
+        }
+    }
+
+    /// Get displayable directory path/name based on settings
+    pub(crate) fn mask_directory_path(&self, path: &std::path::Path) -> String {
+        if self.settings.show_directory_paths {
             path.display().to_string()
         } else {
             "Secured".to_string()

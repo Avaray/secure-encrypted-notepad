@@ -138,9 +138,12 @@ pub struct Settings {
     #[serde(default = "default_max_lines")]
     pub max_lines: usize,
 
-    /// Whether to show full keyfile path in status bar
+    /// Whether to show full keyfile paths
     #[serde(default)]
-    pub show_keyfile_path: bool,
+    pub show_keyfile_paths: bool,
+    /// Whether to show full directory paths
+    #[serde(default)]
+    pub show_directory_paths: bool,
     /// Start window in maximized mode
     #[serde(default)]
     pub start_maximized: bool,
@@ -252,7 +255,8 @@ impl Default for Settings {
             max_history_length: 100,
             max_lines: default_max_lines(),
 
-            show_keyfile_path: false,
+            show_keyfile_paths: false,
+            show_directory_paths: false,
             start_maximized: false,
             window_width: 1200.0,
             window_height: 800.0,

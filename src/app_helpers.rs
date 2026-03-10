@@ -253,7 +253,7 @@ impl EditorApp {
         let dir_opt = self.file_tree_dir.clone();
 
         if let Some(dir) = dir_opt {
-            self.log_info(format!("Refreshing file tree for: {}", dir.display()));
+            self.log_info(format!("Refreshing file tree for: {}", self.mask_directory_path(&dir)));
             match std::fs::read_dir(&dir) {
                 Ok(entries) => {
                     let mut folders = Vec::new();

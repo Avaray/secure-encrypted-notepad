@@ -23,12 +23,7 @@ impl EditorApp {
                 ui.heading("1. Keyfile");
                 ui.horizontal(|ui| {
                     if let Some(path) = &self.batch_keyfile {
-                        let display_name = if self.settings.show_keyfile_path {
-                            path.display().to_string()
-                        } else {
-                            "Secured".to_string()
-                        };
-                         ui.label(egui::RichText::new(format!("🔑 {}", display_name)).color(self.current_theme.colors.success_color()));
+                         ui.label(egui::RichText::new(format!("🔑 {}", self.mask_keyfile_path(path))).color(self.current_theme.colors.success_color()));
                     } else {
                          ui.label(egui::RichText::new("No keyfile selected").color(self.current_theme.colors.warning_color()));
                     }
@@ -90,7 +85,7 @@ impl EditorApp {
                  ui.heading("3. Output Directory");
                  ui.horizontal(|ui| {
                      if let Some(path) = &self.batch_output_dir {
-                         ui.label(format!("📁 {}", path.display()));
+                         ui.label(format!("📁 {}", self.mask_directory_path(path)));
                      } else {
                          ui.label("Same as input files (default)");
                      }
@@ -144,17 +139,17 @@ impl EditorApp {
                                          match encrypt_file(&content, &keyfile, &output_path) {
                                              Ok(_) => {
                                                  success += 1;
-                                                 self.log_info(format!("Encrypted: {} -> {}", file.display(), output_path.display()));
+                                                 self.log_info(format!("Encrypted: {} -> {}", self.mask_directory_path(file), self.mask_directory_path(&output_path)));
                                              }
                                              Err(e) => {
                                                  failed += 1;
-                                                 self.log_error(format!("Failed to encrypt {}: {}", file.display(), e));
+                                                 self.log_error(format!("Failed to encrypt {}: {}", self.mask_directory_path(file), e));
                                              }
                                          }
                                      }
                                      Err(e) => {
                                          failed += 1;
-                                          self.log_error(format!("Failed to read {}: {}", file.display(), e));
+                                          self.log_error(format!("Failed to read {}: {}", self.mask_directory_path(file), e));
                                      }
                                  }
                              }
@@ -203,17 +198,17 @@ impl EditorApp {
                                          match std::fs::write(&output_path, content) {
                                              Ok(_) => {
                                                  success += 1;
-                                                 self.log_info(format!("Decrypted: {} -> {}", file.display(), output_path.display()));
+                                                 self.log_info(format!("Decrypted: {} -> {}", self.mask_directory_path(file), self.mask_directory_path(&output_path)));
                                              }
                                              Err(e) => {
                                                  failed += 1;
-                                                 self.log_error(format!("Failed to write {}: {}", output_path.display(), e));
+                                                 self.log_error(format!("Failed to write {}: {}", self.mask_directory_path(&output_path), e));
                                              }
                                          }
                                      }
                                      Err(e) => {
                                          failed += 1;
-                                         self.log_error(format!("Failed to decrypt {}: {}", file.display(), e));
+                                         self.log_error(format!("Failed to decrypt {}: {}", self.mask_directory_path(file), e));
                                      }
                                  }
                              }
