@@ -500,6 +500,13 @@ impl EditorApp {
                         self.refresh_file_tree();
                     }
 
+                    if ui
+                        .checkbox(&mut self.settings.hide_sen_extension, "Hide .sen extensions")
+                        .changed()
+                    {
+                        let _ = self.settings.save();
+                    }
+
                     // Starting directory setting
                     ui.add_space(4.0);
                     ui.label("Starting directory:");
@@ -749,8 +756,14 @@ impl EditorApp {
                                             ui.label("📄");
                                         }
 
+                                        let display_name = if self.settings.hide_sen_extension && filename.to_lowercase().ends_with(".sen") {
+                                            filename[..filename.len() - 4].to_string()
+                                        } else {
+                                            filename.to_string()
+                                        };
+
                                         if ui
-                                            .add(egui::Button::new(&*filename).truncate())
+                                            .add(egui::Button::new(&display_name).truncate())
                                             .on_hover_text(&*filename)
                                             .clicked()
                                         {

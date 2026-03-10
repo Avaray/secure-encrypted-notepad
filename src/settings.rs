@@ -130,7 +130,9 @@ pub struct Settings {
 
     /// Show subfolders in file tree
     pub show_subfolders: bool,
-    
+    /// Hide .sen extension in file tree
+    #[serde(default)]
+    pub hide_sen_extension: bool,
     /// Max history length
     pub max_history_length: usize,
     
@@ -252,6 +254,7 @@ impl Default for Settings {
             history_panel_width: default_panel_width_250(),
             debug_panel_width: default_panel_width_250(),
             show_subfolders: true,
+            hide_sen_extension: false,
             max_history_length: 100,
             max_lines: default_max_lines(),
 
