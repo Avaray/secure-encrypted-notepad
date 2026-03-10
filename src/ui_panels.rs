@@ -1150,18 +1150,18 @@ impl EditorApp {
                                 ui.end_row();
 
                                 // Status colors section
-                                ui.label("Success Color:");
+                                ui.label("Info Color:");
                                 if ui
-                                    .color_edit_button_srgb(&mut theme.colors.success)
+                                    .color_edit_button_srgb(&mut theme.colors.info)
                                     .changed()
                                 {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
 
-                                ui.label("Info Color:");
+                                ui.label("Success Color:");
                                 if ui
-                                    .color_edit_button_srgb(&mut theme.colors.info)
+                                    .color_edit_button_srgb(&mut theme.colors.success)
                                     .changed()
                                 {
                                     theme_changed = true;
