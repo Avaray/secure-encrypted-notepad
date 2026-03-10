@@ -6,7 +6,7 @@ fn main() {
     let svg_data = std::fs::read("assets/app_icon.svg").expect("Cannot read assets/app_icon.svg");
 
     // Sizes to include in the ICO (standard Windows icon sizes)
-    let sizes: &[u32] = &[16, 32, 48, 256];
+    let sizes: &[u32] = &[16, 32, 48, 64, 96, 128, 256];
 
     let mut png_entries: Vec<(u32, Vec<u8>)> = Vec::new();
 
