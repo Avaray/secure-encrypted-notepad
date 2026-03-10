@@ -140,6 +140,8 @@ pub struct EditorApp {
 
     /// Previous cursor byte position (to detect navigation)
     pub(crate) previous_cursor_byte_pos: Option<usize>,
+    /// Flag to trigger focus on search field
+    pub(crate) focus_search: bool,
 }
 
 impl EditorApp {
@@ -235,6 +237,7 @@ impl EditorApp {
             style_dirty: true, // Apply style on startup
             reset_scroll_x_pending: false,
             previous_cursor_byte_pos: None,
+            focus_search: false,
         }
     }
 
@@ -460,8 +463,10 @@ impl eframe::App for EditorApp {
                 egui::Modifiers::CTRL,
                 egui::Key::F,
             )) {
-                self.show_search_panel = true;
-                // Focus logic will be added later or handled by egui if possible
+                self.show_search_panel = !self.show_search_panel;
+                if self.show_search_panel {
+                    self.focus_search = true;
+                }
             }
 
             // Ctrl+H: Replace
@@ -554,11 +559,13 @@ impl eframe::App for EditorApp {
         }
 
         // Search panel (below toolbar)
-        egui::TopBottomPanel::top("search_panel")
-            .frame(bar_frame.clone())
-            .show_animated(ctx, self.show_search_panel, |ui| {
-                self.render_search_panel(ui);
-            });
+        if self.show_search_panel {
+            egui::TopBottomPanel::top("search_panel")
+                .frame(bar_frame.clone())
+                .show(ctx, |ui| {
+                    self.render_search_panel(ui);
+                });
+        }
 
         // Status bar
         egui::TopBottomPanel::bottom("status_bar")

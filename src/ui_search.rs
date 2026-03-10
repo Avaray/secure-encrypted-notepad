@@ -22,6 +22,11 @@ impl EditorApp {
                     .hint_text("Search..."),
             );
 
+            if self.focus_search {
+                response.request_focus();
+                self.focus_search = false;
+            }
+
             if response.changed() {
                 self.perform_search();
             }
