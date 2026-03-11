@@ -89,7 +89,7 @@ impl Icons {
             ),
             rotate: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/MaterialSymbolsKeyRotation.svg"),
+                include_bytes!("../assets/LucideLabCoinsExchange.svg"),
                 "icon_rotate",
             ),
             batch_convert: Self::load_svg(
