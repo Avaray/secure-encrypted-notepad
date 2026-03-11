@@ -730,17 +730,17 @@ impl EditorApp {
                 ui.heading("Files");
             }
 
-            if let Some(dir) = &self.file_tree_dir {
-                if self.settings.show_directory_paths {
-                    ui.label(egui::RichText::new(dir.display().to_string()).small());
-                    ui.separator();
-                }
+            egui::ScrollArea::vertical()
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    if let Some(dir) = &self.file_tree_dir {
+                        if self.settings.show_directory_paths {
+                            ui.label(egui::RichText::new(dir.display().to_string()).small());
+                            ui.separator();
+                        }
 
-                let available_width = ui.available_width();
+                        let available_width = ui.available_width();
 
-                egui::ScrollArea::vertical()
-                    .auto_shrink([false, false])
-                    .show(ui, |ui| {
                         ui.set_max_width(available_width);
 
                         for entry in &self.file_tree_entries.clone() {
@@ -773,27 +773,42 @@ impl EditorApp {
                                 FileTreeEntry::File(path) => {
                                     let filename =
                                         path.file_name().unwrap_or_default().to_string_lossy();
-                                    
+
                                     ui.horizontal(|ui| {
                                         ui.spacing_mut().item_spacing.x = 4.0;
-                                        
+
                                         if filename.ends_with(".sen") {
                                             // Get access status from cache
-                                            let status = self.file_access_cache.get(path).cloned().unwrap_or(KeyStatus::Unknown);
-                                            
+                                            let status = self
+                                                .file_access_cache
+                                                .get(path)
+                                                .cloned()
+                                                .unwrap_or(KeyStatus::Unknown);
+
                                             let icon_color = match status {
-                                                KeyStatus::Decryptable => self.current_theme.colors.success_color(),
-                                                KeyStatus::WrongKey => self.current_theme.colors.error_color(),
+                                                KeyStatus::Decryptable => {
+                                                    self.current_theme.colors.success_color()
+                                                }
+                                                KeyStatus::WrongKey => {
+                                                    self.current_theme.colors.error_color()
+                                                }
                                                 _ => ui.visuals().text_color(),
                                             };
-                                            
-                                            let icon_size = ui.text_style_height(&egui::TextStyle::Body);
-                                            ui.add(egui::Image::new(&self.icons.key).tint(icon_color).max_width(icon_size));
+
+                                            let icon_size =
+                                                ui.text_style_height(&egui::TextStyle::Body);
+                                            ui.add(
+                                                egui::Image::new(&self.icons.key)
+                                                    .tint(icon_color)
+                                                    .max_width(icon_size),
+                                            );
                                         } else {
                                             ui.label("📄");
                                         }
 
-                                        let display_name = if self.settings.hide_sen_extension && filename.to_lowercase().ends_with(".sen") {
+                                        let display_name = if self.settings.hide_sen_extension
+                                            && filename.to_lowercase().ends_with(".sen")
+                                        {
                                             filename[..filename.len() - 4].to_string()
                                         } else {
                                             filename.to_string()
@@ -810,13 +825,13 @@ impl EditorApp {
                                 }
                             }
                         }
-                    });
-            } else {
-                ui.label("No directory opened");
-                if ui.button("Open Directory").clicked() {
-                    self.open_directory();
-                }
-            }
+                    } else {
+                        ui.label("No directory opened");
+                        if ui.button("Open Directory").clicked() {
+                            self.open_directory();
+                        }
+                    }
+                });
         });
     }
 
