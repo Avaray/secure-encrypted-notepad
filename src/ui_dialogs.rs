@@ -82,6 +82,7 @@ impl EditorApp {
                                 let _ = self.settings.save();
                                 self.show_reset_confirmation = false;
                                 self.style_dirty = true; // Apply default fonts/sizes
+                                self.status_message = "All settings have been reset to factory defaults".to_string();
                                 self.log_warning("All settings have been reset to factory defaults");
                             }
                         });
