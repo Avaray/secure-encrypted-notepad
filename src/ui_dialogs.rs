@@ -61,8 +61,9 @@ impl EditorApp {
                 .resizable(false)
                 .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
                 .show(ctx, |ui| {
-                    ui.set_max_width(300.0);
-                    ui.label("This will restore all settings to their factory defaults. This action cannot be undone.");
+                    ui.set_max_width(400.0);
+                    ui.add(egui::Label::new("This will restore all settings to their factory defaults.").wrap_mode(egui::TextWrapMode::Extend));
+                    ui.add(egui::Label::new("This action cannot be undone.").wrap_mode(egui::TextWrapMode::Extend));
                     ui.add_space(8.0);
                     
                     ui.horizontal(|ui| {
