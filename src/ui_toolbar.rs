@@ -33,16 +33,15 @@ impl EditorApp {
         let panel_h = ui.available_height();
 
         let ico_s = self.settings.toolbar_icon_size;
-        let btn_h  = ico_s + 4.0 + 4.0; // button height + item_spacing
-        let sm_btn_h = ico_s * 0.8 + 4.0 + 4.0;
-        let sep_h  = 10.0; // approximate separator height
+        let btn_h = ico_s + 4.0 + 4.0; // button height + item_spacing
+        let sep_h = 10.0; // approximate separator height
 
         // Rough content-height estimate for all three groups + their separators.
         //   File group:     6 buttons
-        //   Keyfile group:  4 small buttons
-        //   Settings group: separator + 2 buttons + separator + 3 buttons
+        //   Keyfile group:  4 buttons
+        //   Settings group: separator + 2 buttons + separator + 2 buttons + 1 button (total 5)
         let file_h     = 6.0 * btn_h;
-        let keyfile_h  = 4.0 * sm_btn_h;
+        let keyfile_h  = 4.0 * btn_h; // used same size as file_h
         let settings_h = 5.0 * btn_h + 2.0 * sep_h;
         let dividers_h = 2.0 * sep_h; // the two separators between groups
         let total_content_h = file_h + keyfile_h + settings_h + dividers_h;
@@ -162,12 +161,11 @@ impl EditorApp {
     }
 
     /// Keyfile operations: Generate, Load, Rotate, Batch Convert.
-    /// Rendered slightly smaller than the file-group buttons.
     /// NOTE: the duplicate "Export as Plaintext" that was here has been removed.
     fn render_toolbar_keyfile_group(&mut self, ui: &mut egui::Ui) {
-        let sm_ico_s = self.settings.toolbar_icon_size * 0.8;
-        let bs = egui::vec2(sm_ico_s + 4.0, sm_ico_s + 4.0);
-        let is = egui::vec2(sm_ico_s, sm_ico_s);
+        let ico_s = self.settings.toolbar_icon_size;
+        let bs = egui::vec2(ico_s + 4.0, ico_s + 4.0);
+        let is = egui::vec2(ico_s, ico_s);
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
