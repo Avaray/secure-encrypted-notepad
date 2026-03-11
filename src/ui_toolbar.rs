@@ -208,8 +208,6 @@ impl EditorApp {
             let _ = self.settings.save();
         }
 
-        ui.separator();
-
         if Self::icon_btn(ui, &self.icons.debug, "Toggle Debug", self.show_debug_panel, bs, is, ht, dt).clicked() {
             self.show_debug_panel = !self.show_debug_panel;
             self.settings.show_debug_panel = self.show_debug_panel;
@@ -255,8 +253,6 @@ impl EditorApp {
             self.settings.show_debug_panel = self.show_debug_panel;
             let _ = self.settings.save();
         }
-
-        ui.separator();
 
         if Self::icon_btn(ui, &self.icons.settings, "Toggle Settings", self.show_settings_panel, bs, is, ht, dt).clicked() {
             self.show_settings_panel = !self.show_settings_panel;

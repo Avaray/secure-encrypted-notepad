@@ -584,6 +584,7 @@ impl eframe::App for EditorApp {
         if self.show_search_panel {
             egui::TopBottomPanel::top("search_panel")
                 .frame(bar_frame.clone())
+                .min_height(0.0)
                 .show(ctx, |ui| {
                     self.render_search_panel(ui);
                 });
