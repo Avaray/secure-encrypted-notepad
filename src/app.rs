@@ -598,8 +598,12 @@ impl eframe::App for EditorApp {
         }
 
         // Status bar
+        let mut status_bar_frame = bar_frame.clone();
+        status_bar_frame.inner_margin.left = 12;
+        status_bar_frame.inner_margin.right = 12;
+
         egui::TopBottomPanel::bottom("status_bar")
-            .frame(bar_frame.clone())
+            .frame(status_bar_frame)
             .min_height(24.0)
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
