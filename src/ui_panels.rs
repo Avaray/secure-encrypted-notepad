@@ -46,6 +46,295 @@ impl EditorApp {
                     ui.separator();
                     ui.add_space(8.0);
 
+                    // =========================================================================
+                    // 1. SECURITY
+                    // =========================================================================
+                    ui.heading("Security");
+
+                    ui.horizontal(|ui| {
+                            if ui.button("Set Global Keyfile").clicked() {
+                                if let Some(path) = rfd::FileDialog::new().pick_file() {
+                                    self.settings.global_keyfile_path = Some(path.clone());
+                                    if self.settings.use_global_keyfile {
+                                        self.keyfile_path = Some(path);
+                                    }
+                                    let _ = self.settings.save();
+                                    self.refresh_file_tree(); // Refresh after setting
+                                    self.log_info("Global keyfile set");
+                                }
+                            }
+                            
+                            if !self.show_clear_keyfile_confirmation {
+                                if ui.button("Clear").clicked() {
+                                    self.show_clear_keyfile_confirmation = true;
+                                }
+                            } else {
+                                ui.label(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color()));
+                                if ui.button("Yes").clicked() {
+                                    self.settings.global_keyfile_path = None;
+                                    self.settings.keyfile_path_encrypted = None;
+                                    let _ = self.settings.save();
+                                    self.refresh_file_tree(); // Refresh after clearing
+                                    self.show_clear_keyfile_confirmation = false;
+                                    self.log_info("Global keyfile cleared");
+                                }
+                                if ui.button("No").clicked() {
+                                    self.show_clear_keyfile_confirmation = false;
+                                }
+                            }
+                    });
+
+                    ui.horizontal(|ui| {
+                        ui.label("Current:");
+                        if let Some(path) = &self.settings.global_keyfile_path {
+                            if self.settings.show_keyfile_paths {
+                                ui.label(path.to_string_lossy());
+                            } else {
+                                ui.label("Secured");
+                            }
+                        } else {
+                            ui.label("None");
+                        }
+                    });
+
+                    if ui
+                        .checkbox(
+                            &mut self.settings.use_global_keyfile,
+                            "Use global keyfile on startup",
+                        )
+                        .changed()
+                    {
+                        let _ = self.settings.save();
+                    }
+
+                    if ui.checkbox(&mut self.settings.show_keyfile_paths, "Show full keyfile paths")
+                        .on_hover_text("When disabled, full paths to keyfiles are masked as 'Secured' for privacy.")
+                        .changed() {
+                        let _ = self.settings.save();
+                    }
+
+                    if ui.checkbox(&mut self.settings.show_directory_paths, "Show full directory paths")
+                        .on_hover_text("When disabled, full directory paths (starting dir, file tree header) are masked as 'Secured'.")
+                        .changed() {
+                        let _ = self.settings.save();
+                    }
+
+                    ui.add_space(8.0);
+                    ui.separator();
+                    ui.add_space(8.0);
+
+                    // =========================================================================
+                    // 2. WORKSPACE / FILE TREE
+                    // =========================================================================
+                    ui.heading("Workspace / File Tree");
+
+                    // Starting directory setting
+                    ui.add_space(4.0);
+                    ui.label("Starting directory:");
+                    if let Some(ref dir) = self.settings.file_tree_starting_dir {
+                        let display_path = if self.settings.show_directory_paths {
+                            dir.display().to_string()
+                        } else {
+                            "Secured".to_string()
+                        };
+                        ui.label(
+                            egui::RichText::new(display_path)
+                                .small()
+                                .weak(),
+                        );
+                    } else {
+                        ui.label(egui::RichText::new("Not set (uses last opened)").small().weak());
+                    }
+                    ui.horizontal(|ui| {
+                        if ui.button("📁 Browse").clicked() {
+                            if let Some(dir) = rfd::FileDialog::new().pick_folder() {
+                                self.settings.file_tree_starting_dir = Some(dir.clone());
+                                self.file_tree_dir = Some(dir);
+                                let _ = self.settings.save();
+                                self.refresh_file_tree();
+                                self.log_info("Starting directory set");
+                            }
+                        }
+                        if self.settings.file_tree_starting_dir.is_some() {
+                            if ui.button("✕ Clear").clicked() {
+                                self.settings.file_tree_starting_dir = None;
+                                self.settings.file_tree_dir_encrypted = None;
+                                let _ = self.settings.save();
+                                self.log_info("Starting directory cleared");
+                            }
+                        }
+                    });
+
+                    if ui
+                        .checkbox(&mut self.settings.show_subfolders, "Show subfolders")
+                        .changed()
+                    {
+                        let _ = self.settings.save();
+                        self.refresh_file_tree();
+                    }
+
+                    if ui
+                        .checkbox(&mut self.settings.hide_sen_extension, "Hide .sen extensions")
+                        .changed()
+                    {
+                        let _ = self.settings.save();
+                    }
+
+                    ui.add_space(8.0);
+                    ui.separator();
+                    ui.add_space(8.0);
+
+                    // =========================================================================
+                    // 3. EDITOR
+                    // =========================================================================
+                    ui.heading("Editor");
+
+                    if ui
+                        .checkbox(&mut self.settings.show_line_numbers, "Show line numbers")
+                        .changed()
+                    {
+                        let _ = self.settings.save();
+                    }
+
+                    if ui
+                        .checkbox(&mut self.settings.show_whitespace, "Show special symbols")
+                        .on_hover_text("Displays spaces as dots, tabs as arrows, and returns as a return arrow.")
+                        .changed()
+                    {
+                        let _ = self.settings.save();
+                    }
+
+                    // Cursor settings
+                    ui.horizontal(|ui| {
+                        ui.label("Cursor Shape:");
+                        egui::ComboBox::from_id_salt("cursor_shape_combo")
+                            .selected_text(format!("{:?}", self.settings.cursor_shape))
+                            .show_ui(ui, |ui| {
+                                if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Bar, "Bar").changed() {
+                                    let _ = self.settings.save();
+                                    self.style_dirty = true;
+                                }
+                                if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Block, "Block").changed() {
+                                    let _ = self.settings.save();
+                                    self.style_dirty = true;
+                                }
+                                if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Underscore, "Underscore").changed() {
+                                    let _ = self.settings.save();
+                                    self.style_dirty = true;
+                                }
+                            });
+                    });
+
+                    if ui.checkbox(&mut self.settings.cursor_blink, "Cursor blinking").changed() {
+                        let _ = self.settings.save();
+                        self.style_dirty = true;
+                    }
+
+                    if ui.checkbox(&mut self.settings.word_wrap, "Word wrap").changed() {
+                        let _ = self.settings.save();
+                    }
+
+                    ui.horizontal(|ui| {
+                        ui.label("Tab Size:");
+                        if ui
+                            .add(egui::DragValue::new(&mut self.settings.tab_size).range(2..=8))
+                            .changed()
+                        {
+                            let _ = self.settings.save();
+                        }
+                    });
+
+                    if ui
+                        .checkbox(&mut self.settings.use_spaces_for_tabs, "Use spaces for tabs")
+                        .changed()
+                    {
+                        let _ = self.settings.save();
+                    }
+
+                    // Max lines
+                    ui.horizontal(|ui| {
+                        ui.label("Max Lines Limit:");
+                        let mut limit_val = self.settings.max_lines;
+                        if ui
+                            .add(
+                                egui::DragValue::new(&mut limit_val)
+                                    .speed(10.0)
+                                    .range(0..=1000000),
+                            )
+                            .changed()
+                        {
+                            self.settings.max_lines = limit_val;
+                            let _ = self.settings.save();
+                        }
+                        if self.settings.max_lines == 0 {
+                            ui.label(egui::RichText::new("(No limit)").italics().weak());
+                        }
+                    })
+                    .response
+                    .on_hover_text("Maximum number of lines allowed in the editor. Set to 0 to disable the limit.");
+
+                    // History capacity
+                    ui.horizontal(|ui| {
+                        ui.label("Default history limit:");
+                        if ui
+                            .add(
+                                egui::DragValue::new(&mut self.settings.max_history_length)
+                                    .speed(1.0)
+                                    .range(1..=1000),
+                            )
+                            .changed()
+                        {
+                            let _ = self.settings.save();
+                        }
+                    });
+
+                    ui.add_space(8.0);
+                    ui.separator();
+                    ui.add_space(8.0);
+
+                    // =========================================================================
+                    // 4. RELIABILITY
+                    // =========================================================================
+                    ui.heading("Reliability");
+
+                    ui.group(|ui| {
+                        ui.label("Auto Save");
+                        if ui
+                            .checkbox(&mut self.settings.auto_save_on_focus_loss, "Auto-save on focus loss")
+                            .on_hover_text("Automatically saves to .autosave.sen when application loses focus.")
+                            .changed()
+                        {
+                            let _ = self.settings.save();
+                        }
+
+                        if ui
+                            .checkbox(&mut self.settings.auto_save_enabled, "Enable timed Auto-save")
+                            .changed()
+                        {
+                            let _ = self.settings.save();
+                        }
+
+                        ui.horizontal(|ui| {
+                            ui.label("Interval (seconds):");
+                            if ui
+                                .add(
+                                    egui::DragValue::new(&mut self.settings.auto_save_interval_secs)
+                                        .range(5..=3600),
+                                )
+                                .changed()
+                            {
+                                let _ = self.settings.save();
+                            }
+                        });
+                    });
+
+                    ui.add_space(8.0);
+                    ui.separator();
+                    ui.add_space(8.0);
+
+                    // =========================================================================
+                    // 5. APPEARANCE
+                    // =========================================================================
                     ui.heading("Appearance");
 
                     // Theme selection
@@ -299,29 +588,6 @@ impl EditorApp {
                         let _ = self.settings.save();
                     }
 
-                    ui.separator();
-
-                    ui.horizontal(|ui| {
-                        ui.label("Tab Size:");
-                        if ui
-                            .add(egui::DragValue::new(&mut self.settings.tab_size).range(2..=8))
-                            .changed()
-                        {
-                            let _ = self.settings.save();
-                        }
-                    });
-
-                    if ui
-                        .checkbox(&mut self.settings.use_spaces_for_tabs, "Use spaces for tabs")
-                        .changed()
-                    {
-                        let _ = self.settings.save();
-                    }
-
-                    if ui.checkbox(&mut self.settings.word_wrap, "Word wrap").changed() {
-                        let _ = self.settings.save();
-                    }
-
                     if ui
                         .checkbox(&mut self.settings.start_maximized, "Start Maximized")
                         .changed()
@@ -333,253 +599,9 @@ impl EditorApp {
                         let _ = self.settings.save();
                     }
 
-                    ui.separator();
-                    ui.heading("Reliability");
-
-                    ui.group(|ui| {
-                        ui.label("Auto Save");
-                        if ui
-                            .checkbox(&mut self.settings.auto_save_on_focus_loss, "Auto-save on focus loss")
-                            .on_hover_text("Automatically saves to .autosave.sen when application loses focus.")
-                            .changed()
-                        {
-                            let _ = self.settings.save();
-                        }
-
-                        if ui
-                            .checkbox(&mut self.settings.auto_save_enabled, "Enable timed Auto-save")
-                            .changed()
-                        {
-                            let _ = self.settings.save();
-                        }
-
-                        ui.horizontal(|ui| {
-                            ui.label("Interval (seconds):");
-                            if ui
-                                .add(
-                                    egui::DragValue::new(&mut self.settings.auto_save_interval_secs)
-                                        .range(5..=3600),
-                                )
-                                .changed()
-                            {
-                                let _ = self.settings.save();
-                            }
-                        });
-                    });
-
-                    ui.add_space(4.0);
-
-
-
-                    ui.separator();
-                    ui.heading("Security");
-
-                    ui.horizontal(|ui| {
-                            if ui.button("Set Global Keyfile").clicked() {
-                                if let Some(path) = rfd::FileDialog::new().pick_file() {
-                                    self.settings.global_keyfile_path = Some(path.clone());
-                                    if self.settings.use_global_keyfile {
-                                        self.keyfile_path = Some(path);
-                                    }
-                                    let _ = self.settings.save();
-                                    self.refresh_file_tree(); // Refresh after setting
-                                    self.log_info("Global keyfile set");
-                                }
-                            }
-                            
-                            if !self.show_clear_keyfile_confirmation {
-                                if ui.button("Clear").clicked() {
-                                    self.show_clear_keyfile_confirmation = true;
-                                }
-                            } else {
-                                ui.label(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color()));
-                                if ui.button("Yes").clicked() {
-                                    self.settings.global_keyfile_path = None;
-                                    self.settings.keyfile_path_encrypted = None;
-                                    let _ = self.settings.save();
-                                    self.refresh_file_tree(); // Refresh after clearing
-                                    self.show_clear_keyfile_confirmation = false;
-                                    self.log_info("Global keyfile cleared");
-                                }
-                                if ui.button("No").clicked() {
-                                    self.show_clear_keyfile_confirmation = false;
-                                }
-                            }
-                    });
-
-                    ui.horizontal(|ui| {
-                        ui.label("Current:");
-                        if let Some(path) = &self.settings.global_keyfile_path {
-                            if self.settings.show_keyfile_paths {
-                                ui.label(path.to_string_lossy());
-                            } else {
-                                ui.label("Secured");
-                            }
-                        } else {
-                            ui.label("None");
-                        }
-                    });
-
-                    if ui
-                        .checkbox(
-                            &mut self.settings.use_global_keyfile,
-                            "Use global keyfile on startup",
-                        )
-                        .changed()
-                    {
-                        let _ = self.settings.save();
-                    }
-
-                    if ui.checkbox(&mut self.settings.show_keyfile_paths, "Show full keyfile paths")
-                        .on_hover_text("When disabled, full paths to keyfiles are masked as 'Secured' for privacy.")
-                        .changed() {
-                        let _ = self.settings.save();
-                    }
-
-                    if ui.checkbox(&mut self.settings.show_directory_paths, "Show full directory paths")
-                        .on_hover_text("When disabled, full directory paths (starting dir, file tree header) are masked as 'Secured'.")
-                        .changed() {
-                        let _ = self.settings.save();
-                    }
-
-                    ui.separator();
-                    ui.heading("Editor");
-
-                    if ui
-                        .checkbox(&mut self.settings.show_line_numbers, "Show line numbers")
-                        .changed()
-                    {
-                        let _ = self.settings.save();
-                    }
-
-                    if ui
-                        .checkbox(&mut self.settings.show_whitespace, "Show special symbols")
-                        .on_hover_text("Displays spaces as dots, tabs as arrows, and returns as a return arrow.")
-                        .changed()
-                    {
-                        let _ = self.settings.save();
-                    }
-
-
-                    // Cursor settings
-                    ui.horizontal(|ui| {
-                        ui.label("Cursor Shape:");
-                        egui::ComboBox::from_id_salt("cursor_shape_combo")
-                            .selected_text(format!("{:?}", self.settings.cursor_shape))
-                            .show_ui(ui, |ui| {
-                                if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Bar, "Bar").changed() {
-                                    let _ = self.settings.save();
-                                    self.style_dirty = true;
-                                }
-                                if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Block, "Block").changed() {
-                                    let _ = self.settings.save();
-                                    self.style_dirty = true;
-                                }
-                                if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Underscore, "Underscore").changed() {
-                                    let _ = self.settings.save();
-                                    self.style_dirty = true;
-                                }
-                            });
-                    });
-
-                    if ui.checkbox(&mut self.settings.cursor_blink, "Cursor blinking").changed() {
-                        let _ = self.settings.save();
-                        self.style_dirty = true;
-                    }
-                    // Max lines
-                    ui.horizontal(|ui| {
-                        ui.label("Max Lines Limit:");
-                        let mut limit_val = self.settings.max_lines;
-                        if ui
-                            .add(
-                                egui::DragValue::new(&mut limit_val)
-                                    .speed(10.0)
-                                    .range(0..=1000000),
-                            )
-                            .changed()
-                        {
-                            self.settings.max_lines = limit_val;
-                            let _ = self.settings.save();
-                        }
-                        if self.settings.max_lines == 0 {
-                            ui.label(egui::RichText::new("(No limit)").italics().weak());
-                        }
-                    })
-                    .response
-                    .on_hover_text("Maximum number of lines allowed in the editor. Set to 0 to disable the limit.");
-
-                    // History capacity
-                    ui.horizontal(|ui| {
-                        ui.label("Default history limit:");
-                        if ui
-                            .add(
-                                egui::DragValue::new(&mut self.settings.max_history_length)
-                                    .speed(1.0)
-                                    .range(1..=1000),
-                            )
-                            .changed()
-                        {
-                            let _ = self.settings.save();
-                        }
-                    });
-
-                    ui.separator();
-                    ui.heading("File Tree");
-
-                    if ui
-                        .checkbox(&mut self.settings.show_subfolders, "Show subfolders")
-                        .changed()
-                    {
-                        let _ = self.settings.save();
-                        self.refresh_file_tree();
-                    }
-
-                    if ui
-                        .checkbox(&mut self.settings.hide_sen_extension, "Hide .sen extensions")
-                        .changed()
-                    {
-                        let _ = self.settings.save();
-                    }
-
-                    // Starting directory setting
-                    ui.add_space(4.0);
-                    ui.label("Starting directory:");
-                    if let Some(ref dir) = self.settings.file_tree_starting_dir {
-                        let display_path = if self.settings.show_directory_paths {
-                            dir.display().to_string()
-                        } else {
-                            "Secured".to_string()
-                        };
-                        ui.label(
-                            egui::RichText::new(display_path)
-                                .small()
-                                .weak(),
-                        );
-                    } else {
-                        ui.label(egui::RichText::new("Not set (uses last opened)").small().weak());
-                    }
-                    ui.horizontal(|ui| {
-                        if ui.button("📁 Browse").clicked() {
-                            if let Some(dir) = rfd::FileDialog::new().pick_folder() {
-                                self.settings.file_tree_starting_dir = Some(dir.clone());
-                                self.file_tree_dir = Some(dir);
-                                let _ = self.settings.save();
-                                self.refresh_file_tree();
-                                self.log_info("Starting directory set");
-                            }
-                        }
-                        if self.settings.file_tree_starting_dir.is_some() {
-                            if ui.button("✕ Clear").clicked() {
-                                self.settings.file_tree_starting_dir = None;
-                                self.settings.file_tree_dir_encrypted = None;
-                                let _ = self.settings.save();
-                                self.log_info("Starting directory cleared");
-                            }
-                        }
-                    });
-
                     ui.add_space(4.0);
                 });
+
 
         });
     }
