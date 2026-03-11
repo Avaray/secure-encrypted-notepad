@@ -17,7 +17,7 @@ impl EditorApp {
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
                     ui.horizontal(|ui| {
-                        if ui.button("Open Folder").on_hover_text("Open settings folder").clicked() {
+                        if ui.button("Open Setting Folder").on_hover_text("Open settings folder").clicked() {
                             if let Some(path) = crate::settings::Settings::get_config_dir() {
                                 #[cfg(target_os = "windows")]
                                 {
