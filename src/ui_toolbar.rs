@@ -13,12 +13,16 @@ impl EditorApp {
             || self.settings.toolbar_position == crate::settings::ToolbarPosition::Right;
 
         if is_vertical {
-            ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                self.render_toolbar_content(ui, is_vertical);
+            egui::ScrollArea::vertical().id_salt("tb_scroll").show(ui, |ui| {
+                ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                    self.render_toolbar_content(ui, is_vertical);
+                });
             });
         } else {
-            ui.horizontal_wrapped(|ui| {
-                self.render_toolbar_content(ui, is_vertical);
+            egui::ScrollArea::horizontal().id_salt("tb_scroll").show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    self.render_toolbar_content(ui, is_vertical);
+                });
             });
         }
     }
@@ -159,13 +163,9 @@ impl EditorApp {
         }
 
         // --- RIGHT SIDE: Toggles ---
-        let layout = if is_vertical {
-            egui::Layout::bottom_up(egui::Align::Center)
-        } else {
-            egui::Layout::right_to_left(egui::Align::Center)
-        };
-        
-        ui.with_layout(layout, |ui| {
+        // With ScrollArea, we keep the continuous layout (top_down or left_to_right)
+        // to prevent overlapping issues and ensure smooth scrolling.
+        ui.separator();
             // Theme Editor toggle
             if icon_button(
                 ui,
@@ -221,18 +221,17 @@ impl EditorApp {
                 let _ = self.settings.save();
             }
 
-            if icon_button(
-                ui,
-                &self.icons.file_tree,
-                "Toggle File Tree",
-                self.show_file_tree,
-            )
-            .clicked()
-            {
-                self.show_file_tree = !self.show_file_tree;
-                self.settings.show_file_tree = self.show_file_tree;
-                let _ = self.settings.save();
-            }
-        });
+        if icon_button(
+            ui,
+            &self.icons.file_tree,
+            "Toggle File Tree",
+            self.show_file_tree,
+        )
+        .clicked()
+        {
+            self.show_file_tree = !self.show_file_tree;
+            self.settings.show_file_tree = self.show_file_tree;
+            let _ = self.settings.save();
+        }
     }
 }

@@ -25,9 +25,9 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 
 *Items in this section represent confirmed issues or glitches that need to be addressed.*
 
-- [ ] **File Tree Refresh on Global Keyfile Change**: The file tree (icons and access status) does not automatically refresh when a global keyfile is loaded or cleared in the settings.
+- [x] **File Tree Refresh on Global Keyfile Change**: The file tree (icons and access status) does not automatically refresh when a global keyfile is loaded or cleared in the settings.
 
-- [ ] **Toolbar Icon Overlap**: Prevent icons on the left and right sides of the top menu from overlapping when the window is narrow or there are too many icons.
+- [x] **Toolbar Icon Overlap**: Prevent icons on the left and right sides of the top menu from overlapping when the window is narrow or there are too many icons.
 
 ---
 

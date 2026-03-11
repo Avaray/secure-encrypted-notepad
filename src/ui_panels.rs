@@ -382,6 +382,7 @@ impl EditorApp {
                                         self.keyfile_path = Some(path);
                                     }
                                     let _ = self.settings.save();
+                                    self.refresh_file_tree(); // Refresh after setting
                                     self.log_info("Global keyfile set");
                                 }
                             }
@@ -396,6 +397,7 @@ impl EditorApp {
                                     self.settings.global_keyfile_path = None;
                                     self.settings.keyfile_path_encrypted = None;
                                     let _ = self.settings.save();
+                                    self.refresh_file_tree(); // Refresh after clearing
                                     self.show_clear_keyfile_confirmation = false;
                                     self.log_info("Global keyfile cleared");
                                 }
