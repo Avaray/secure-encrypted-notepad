@@ -795,15 +795,23 @@ impl EditorApp {
                                                 _ => ui.visuals().text_color(),
                                             };
 
-                                            let icon_size =
-                                                ui.text_style_height(&egui::TextStyle::Body);
-                                            ui.add(
-                                                egui::Image::new(&self.icons.key)
-                                                    .tint(icon_color)
-                                                    .max_width(icon_size),
-                                            );
+                                            let icon_size = ui.text_style_height(&egui::TextStyle::Body);
+                                            ui.allocate_ui(egui::vec2(icon_size, icon_size), |ui| {
+                                                ui.centered_and_justified(|ui| {
+                                                    ui.add(
+                                                        egui::Image::new(&self.icons.key)
+                                                            .tint(icon_color)
+                                                            .max_width(icon_size),
+                                                    );
+                                                });
+                                            });
                                         } else {
-                                            ui.label("📄");
+                                            let icon_size = ui.text_style_height(&egui::TextStyle::Body);
+                                            ui.allocate_ui(egui::vec2(icon_size, icon_size), |ui| {
+                                                ui.centered_and_justified(|ui| {
+                                                    ui.label("📄");
+                                                });
+                                            });
                                         }
 
                                         let display_name = if self.settings.hide_sen_extension
