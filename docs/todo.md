@@ -13,9 +13,10 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Theme System Refactoring**: Refactor the color system to allow customization of more editor components.
 - [ ] **Logo & App Icon**: Create a new professional logo for SEN and replace the current application icon.
 - [ ] **Auto-Backup on Save**: Add option to automatically copy encrypted .sen files to multiple backup folders on save.
-- [ ] **Reset All Settings**: Implement a reset functionality with a confirmation dialog requiring a slider to be moved to the right and clicking OK.
-- [ ] **Auto-save on Focus Loss**: Automatically save the current content to a `.autosave.sen` file when the application loses focus.
-- [ ] **Confirm Keyfile Clearing**: Add a confirmation dialog before clearing the global keyfile in the Settings panel.
+- [x] **Reset All Settings**: Implement a reset functionality with a confirmation dialog requiring a slider to be moved to the right and clicking OK.
+- [x] **Auto-save on Focus Loss**: Automatically save the current content to a `.autosave.sen` file when the application loses focus.
+- [x] **Confirm Keyfile Clearing**: Add a confirmation dialog before clearing the global keyfile in the Settings panel.
+- [ ] **Internal Auto-save Integration**: Change auto-save behavior to store content inside the original `.sen` file instead of a separate `.autosave.sen`. When opening a `.sen` file where the internal auto-save is newer than the latest history entry, prompt the user to restore the auto-saved version.
 
 ---
 
