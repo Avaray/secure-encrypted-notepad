@@ -68,7 +68,12 @@ impl EditorApp {
                     
                     ui.horizontal(|ui| {
                         ui.label("Slide to the right to confirm:");
-                        ui.add(egui::Slider::new(&mut self.reset_slider_val, 0.0..=1.0).show_value(false));
+                        ui.spacing_mut().slider_width = ui.available_width();
+                        ui.add(
+                            egui::Slider::new(&mut self.reset_slider_val, 0.0..=1.0)
+                                .show_value(false)
+                                .trailing_fill(true),
+                        );
                     });
                     ui.add_space(8.0);
 
