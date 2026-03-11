@@ -129,6 +129,37 @@ impl EditorApp {
         );
         let mut text_ui = ui.new_child(egui::UiBuilder::new().max_rect(text_area_rect));
 
+        // ═══════════════════════════════════════════════════════════════════
+        // Handle focus-based shortcuts BEFORE TextEdit (Option 1)
+        // Consuming keys here prevents TextEdit from seeing them and adding
+        // duplicate characters (like double tabs).
+        // ═══════════════════════════════════════════════════════════════════
+        if ui.memory(|mem| mem.has_focus(text_edit_id)) {
+            let text = &mut self.document.current_content;
+            if ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Tab)) {
+                Self::handle_tab_key(ui, text_edit_id, false, text, &self.settings, &mut self.is_modified);
+            } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, egui::Key::Tab)) {
+                Self::handle_tab_key(ui, text_edit_id, true, text, &self.settings, &mut self.is_modified);
+            } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::C)) {
+                Self::handle_copy_key(ui, text_edit_id, text);
+            } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::X)) {
+                Self::handle_cut_key(ui, text_edit_id, text, &mut self.is_modified);
+            } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::A)) {
+                if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
+                    let total_chars = text.chars().count();
+                    let current_pos = state.cursor.char_range().map(|r| r.primary.index).unwrap_or(0);
+                    let (primary, secondary) = if current_pos < total_chars / 2 { (0, total_chars) } else { (total_chars, 0) };
+                    state.cursor.set_char_range(Some(egui::text::CCursorRange {
+                        primary: egui::text::CCursor::new(primary),
+                        secondary: egui::text::CCursor::new(secondary),
+                        h_pos: None,
+                    }));
+                    state.store(ui.ctx(), text_edit_id);
+                    self.previous_cursor_byte_pos = Some(char_to_byte_idx(text, primary));
+                }
+            }
+        }
+
         let scroll_output = egui::ScrollArea::both()
             .id_salt("main_editor")
             .auto_shrink(false)
@@ -439,32 +470,6 @@ impl EditorApp {
 
         {
             let text = &mut self.document.current_content;
-            
-            // Handle focus-based shortcuts
-            if ui.memory(|mem| mem.has_focus(text_edit_id)) {
-                if ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Tab)) {
-                    Self::handle_tab_key(ui, text_edit_id, false, text, &self.settings, &mut self.is_modified);
-                } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, egui::Key::Tab)) {
-                    Self::handle_tab_key(ui, text_edit_id, true, text, &self.settings, &mut self.is_modified);
-                } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::C)) {
-                    Self::handle_copy_key(ui, text_edit_id, text);
-                } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::X)) {
-                    Self::handle_cut_key(ui, text_edit_id, text, &mut self.is_modified);
-                } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::A)) {
-                    if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
-                        let total_chars = text.chars().count();
-                        let current_pos = state.cursor.char_range().map(|r| r.primary.index).unwrap_or(0);
-                        let (primary, secondary) = if current_pos < total_chars / 2 { (0, total_chars) } else { (total_chars, 0) };
-                        state.cursor.set_char_range(Some(egui::text::CCursorRange {
-                            primary: egui::text::CCursor::new(primary),
-                            secondary: egui::text::CCursor::new(secondary),
-                            h_pos: None,
-                        }));
-                        state.store(ui.ctx(), text_edit_id);
-                        self.previous_cursor_byte_pos = Some(char_to_byte_idx(text, primary));
-                    }
-                }
-            }
 
             if output.response.changed() {
                 self.is_modified = true;
