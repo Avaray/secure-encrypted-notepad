@@ -613,26 +613,35 @@ impl eframe::App for EditorApp {
                     }
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        // Version info
+                        let version = format!("SEN {}", env!("CARGO_PKG_VERSION"));
+                        ui.add(egui::Label::new(
+                            egui::RichText::new(version).color(self.current_theme.colors.info_color())
+                        ).selectable(false));
+
+                        ui.separator();
+
                         // Keyfile indicator
                         if let Some(path) = &self.keyfile_path {
                             let icon_tint = self.current_theme.colors.success_color();
-                            let status_text = format!("[K] {}", self.mask_keyfile_path(path));
-                            ui.label(egui::RichText::new(status_text).color(icon_tint));
+                            let status_text = self.mask_keyfile_path(path);
+                            ui.add(egui::Label::new(
+                                egui::RichText::new(status_text).color(icon_tint)
+                            ).selectable(false));
                         } else {
                             let icon_tint = self.current_theme.colors.warning_color();
-                            ui.label(egui::RichText::new("No keyfile").color(icon_tint));
+                            ui.add(egui::Label::new(
+                                egui::RichText::new("No keyfile").color(icon_tint)
+                            ).selectable(false));
                         }
 
                         ui.separator();
 
                         // File indicator
                         if let Some(path) = &self.current_file_path {
-                            ui.label(format!(
-                                "[F] {}",
-                                path.file_name().unwrap_or_default().to_string_lossy()
-                            ));
+                            ui.label(path.file_name().unwrap_or_default().to_string_lossy());
                         } else {
-                            ui.label("[F] Unsaved document");
+                            ui.label("Unsaved document");
                         }
                     });
                 });

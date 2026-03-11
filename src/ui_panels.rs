@@ -553,6 +553,8 @@ impl EditorApp {
                             .add(
                                 egui::Slider::new(&mut self.settings.line_height, 1.0..=2.5)
                                     .step_by(0.05)
+                                    .max_decimals(2)
+                                    .min_decimals(2)
                                     .text("x"),
                             )
                             .changed()
@@ -607,10 +609,6 @@ impl EditorApp {
                         .checkbox(&mut self.settings.start_maximized, "Start Maximized")
                         .changed()
                     {
-                        ui.ctx()
-                            .send_viewport_cmd(egui::ViewportCommand::Maximized(
-                                self.settings.start_maximized,
-                            ));
                         let _ = self.settings.save();
                     }
 
