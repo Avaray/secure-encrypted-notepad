@@ -17,12 +17,15 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [x] **Auto-save on Focus Loss**: Automatically save the current content to a `.autosave.sen` file when the application loses focus.
 - [x] **Confirm Keyfile Clearing**: Add a confirmation dialog before clearing the global keyfile in the Settings panel.
 - [ ] **Internal Auto-save Integration**: Change auto-save behavior to store content inside the original `.sen` file instead of a separate `.autosave.sen`. When opening a `.sen` file where the internal auto-save is newer than the latest history entry, prompt the user to restore the auto-saved version.
+- [ ] **Multi-Keyfile Support**: Allow assigning multiple keyfiles to a single `.sen` file for shared access or redundancy.
 
 ---
 
 ## 🐛 Bug Fixes (To Fix)
 
 *Items in this section represent confirmed issues or glitches that need to be addressed.*
+
+- [ ] **File Tree Refresh on Global Keyfile Change**: The file tree (icons and access status) does not automatically refresh when a global keyfile is loaded or cleared in the settings.
 
 - [ ] **Toolbar Icon Overlap**: Prevent icons on the left and right sides of the top menu from overlapping when the window is narrow or there are too many icons.
 
