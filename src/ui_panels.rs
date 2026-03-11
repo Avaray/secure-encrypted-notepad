@@ -36,7 +36,7 @@ impl EditorApp {
                         
                         ui.separator();
 
-                        if ui.button("Reset All").on_hover_text("Restore all settings to factory defaults.").clicked() {
+                        if ui.button("Reset Settings").on_hover_text("Restore all settings to factory defaults.").clicked() {
                             self.show_reset_confirmation = true;
                             self.reset_slider_val = 0.0;
                         }
