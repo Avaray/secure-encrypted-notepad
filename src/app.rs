@@ -348,10 +348,7 @@ impl eframe::App for EditorApp {
             let mut changed = false;
 
             // Track maximize state changes
-            if self.is_maximized != self.settings.start_maximized {
-                self.settings.start_maximized = self.is_maximized;
-                changed = true;
-            }
+            // start_maximized is a manual preference, handled in the settings panel.
 
             // When NOT maximized, save position and size so we preserve the last
             // known non-maximized geometry.  Never overwrite these while maximized,
