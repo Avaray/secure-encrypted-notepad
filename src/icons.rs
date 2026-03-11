@@ -74,7 +74,7 @@ impl Icons {
             ),
             file_tree: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/FluentTreeEvergreen20Filled.svg"),
+                include_bytes!("../assets/CarbonTreeViewAlt.svg"),
                 "icon_tree",
             ),
             theme: Self::load_svg(
@@ -107,7 +107,10 @@ impl Icons {
 
     fn render_svg(svg_data: &[u8], width: u32, height: u32) -> ColorImage {
         let opt = usvg::Options::default();
-        let tree = usvg::Tree::from_data(svg_data, &opt).expect("Failed to parse SVG");
+
+        // Support for currentColor: re-map to white so it can be tinted by theme colors in egui.
+        let svg_str = String::from_utf8_lossy(svg_data).replace("currentColor", "white");
+        let tree = usvg::Tree::from_data(svg_str.as_bytes(), &opt).expect("Failed to parse SVG");
 
         let mut pixmap = tiny_skia::Pixmap::new(width, height).expect("Failed to create pixmap");
 
