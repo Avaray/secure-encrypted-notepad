@@ -391,19 +391,17 @@ impl EditorApp {
                                     self.show_clear_keyfile_confirmation = true;
                                 }
                             } else {
-                                ui.horizontal(|ui| {
-                                    ui.label(egui::RichText::new("Sure? ").color(self.current_theme.colors.error_color()));
-                                    if ui.button("Yes").clicked() {
-                                        self.settings.global_keyfile_path = None;
-                                        self.settings.keyfile_path_encrypted = None;
-                                        let _ = self.settings.save();
-                                        self.show_clear_keyfile_confirmation = false;
-                                        self.log_info("Global keyfile cleared");
-                                    }
-                                    if ui.button("No").clicked() {
-                                        self.show_clear_keyfile_confirmation = false;
-                                    }
-                                });
+                                ui.label(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color()));
+                                if ui.button("Yes").clicked() {
+                                    self.settings.global_keyfile_path = None;
+                                    self.settings.keyfile_path_encrypted = None;
+                                    let _ = self.settings.save();
+                                    self.show_clear_keyfile_confirmation = false;
+                                    self.log_info("Global keyfile cleared");
+                                }
+                                if ui.button("No").clicked() {
+                                    self.show_clear_keyfile_confirmation = false;
+                                }
                             }
                     });
 
