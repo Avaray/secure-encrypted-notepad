@@ -82,15 +82,25 @@ impl EditorApp {
                                     self.show_clear_keyfile_confirmation = false;
                                 }
                             }
+
+                            if ui.button("Use now").on_hover_text("Apply the global keyfile to the current session.").clicked() {
+                                if let Some(path) = self.settings.global_keyfile_path.clone() {
+                                    self.keyfile_path = Some(path);
+                                    self.refresh_file_tree();
+                                    self.log_info("Global keyfile applied");
+                                } else {
+                                    self.log_error("No global keyfile set to use");
+                                }
+                            }
                     });
 
                     ui.horizontal(|ui| {
                         ui.label("Current:");
                         if let Some(path) = &self.settings.global_keyfile_path {
                             if self.settings.show_keyfile_paths {
-                                ui.label(path.to_string_lossy());
+                                ui.label(egui::RichText::new(path.to_string_lossy()).color(self.current_theme.colors.warning_color()));
                             } else {
-                                ui.label("Secured");
+                                ui.label(egui::RichText::new("Secured").color(self.current_theme.colors.success_color()));
                             }
                         } else {
                             ui.label("None");
@@ -130,23 +140,24 @@ impl EditorApp {
 
                     // Starting directory setting
                     ui.add_space(4.0);
-                    ui.label("Starting directory:");
-                    if let Some(ref dir) = self.settings.file_tree_starting_dir {
-                        let display_path = if self.settings.show_directory_paths {
-                            dir.display().to_string()
+                    ui.horizontal_wrapped(|ui| {
+                        ui.label("Starting directory:");
+                        if let Some(ref dir) = self.settings.file_tree_starting_dir {
+                            if self.settings.show_directory_paths {
+                                ui.label(
+                                    egui::RichText::new(dir.display().to_string())
+                                        .color(self.current_theme.colors.warning_color()),
+                                );
+                            } else {
+                                ui.label(egui::RichText::new("Secured").color(self.current_theme.colors.success_color()));
+                            }
                         } else {
-                            "Secured".to_string()
-                        };
-                        ui.label(
-                            egui::RichText::new(display_path)
-                                .small()
-                                .weak(),
-                        );
-                    } else {
-                        ui.label(egui::RichText::new("Not set (uses last opened)").small().weak());
-                    }
+                            ui.label(egui::RichText::new("Not set (uses last opened)").small().weak());
+                        }
+                    });
+
                     ui.horizontal(|ui| {
-                        if ui.button("📁 Browse").clicked() {
+                        if ui.button("Browse").clicked() {
                             if let Some(dir) = rfd::FileDialog::new().pick_folder() {
                                 self.settings.file_tree_starting_dir = Some(dir.clone());
                                 self.file_tree_dir = Some(dir);
@@ -156,7 +167,7 @@ impl EditorApp {
                             }
                         }
                         if self.settings.file_tree_starting_dir.is_some() {
-                            if ui.button("✕ Clear").clicked() {
+                            if ui.button("Clear").clicked() {
                                 self.settings.file_tree_starting_dir = None;
                                 self.settings.file_tree_dir_encrypted = None;
                                 let _ = self.settings.save();
@@ -297,34 +308,38 @@ impl EditorApp {
                     // =========================================================================
                     ui.heading("Reliability");
 
-                    ui.group(|ui| {
-                        ui.label("Auto Save");
-                        if ui
-                            .checkbox(&mut self.settings.auto_save_on_focus_loss, "Auto-save on focus loss")
-                            .on_hover_text("Automatically saves to .autosave.sen when application loses focus.")
-                            .changed()
-                        {
-                            let _ = self.settings.save();
-                        }
-
-                        if ui
-                            .checkbox(&mut self.settings.auto_save_enabled, "Enable timed Auto-save")
-                            .changed()
-                        {
-                            let _ = self.settings.save();
-                        }
-
-                        ui.horizontal(|ui| {
-                            ui.label("Interval (seconds):");
+                    ui.vertical(|ui| {
+                        ui.set_min_width(ui.available_width());
+                        ui.group(|ui| {
+                            ui.set_min_width(ui.available_width());
+                            ui.label("Auto Save");
                             if ui
-                                .add(
-                                    egui::DragValue::new(&mut self.settings.auto_save_interval_secs)
-                                        .range(5..=3600),
-                                )
+                                .checkbox(&mut self.settings.auto_save_on_focus_loss, "Auto-save on focus loss")
+                                .on_hover_text("Automatically saves to .autosave.sen when application loses focus.")
                                 .changed()
                             {
                                 let _ = self.settings.save();
                             }
+
+                            if ui
+                                .checkbox(&mut self.settings.auto_save_enabled, "Enable timed Auto-save")
+                                .changed()
+                            {
+                                let _ = self.settings.save();
+                            }
+
+                            ui.horizontal(|ui| {
+                                ui.label("Interval (seconds):");
+                                if ui
+                                    .add(
+                                        egui::DragValue::new(&mut self.settings.auto_save_interval_secs)
+                                            .range(5..=3600),
+                                    )
+                                    .changed()
+                                {
+                                    let _ = self.settings.save();
+                                }
+                            });
                         });
                     });
 
