@@ -74,7 +74,7 @@ impl Icons {
             ),
             file_tree: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/CarbonTreeViewAlt.svg"),
+                include_bytes!("../assets/PhTreeViewFill.svg"),
                 "icon_tree",
             ),
             theme: Self::load_svg(
