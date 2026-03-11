@@ -525,10 +525,10 @@ impl eframe::App for EditorApp {
         let mut vertical_toolbar_frame = egui::Frame::side_top_panel(&ctx.style());
         vertical_toolbar_frame.stroke = egui::Stroke::NONE;
         vertical_toolbar_frame.inner_margin = egui::Margin {
-            left: 2,
-            right: 2,
-            top: 2,
-            bottom: 2,
+            left: 6,
+            right: 6,
+            top: 6,
+            bottom: 6,
         };
 
         // Frame for horizontal bars (top toolbar, search, status) - slim vertical, wide horizontal
@@ -551,9 +551,9 @@ impl eframe::App for EditorApp {
         // Button size in the toolbar is (ico_s + 4). Each frame adds its inner_margin
         // on both sides to arrive at the total panel dimension:
         //   bar_frame (Top):            top:6 + bottom:6 = 12  →  ico_s + 4 + 12 = ico_s + 16
-        //   vertical_toolbar_frame (Left/Right): top:2 + bottom:2 = 4  →  ico_s + 4 + 4 = ico_s + 8
+        //   vertical_toolbar_frame (Left/Right): left:6 + right:6 = 12  →  ico_s + 4 + 12 = ico_s + 16
         let toolbar_size_h = self.settings.toolbar_icon_size + 16.0; // Top
-        let toolbar_size_v = self.settings.toolbar_icon_size + 8.0;  // Left / Right
+        let toolbar_size_v = self.settings.toolbar_icon_size + 16.0;  // Left / Right
 
         match self.settings.toolbar_position {
             crate::settings::ToolbarPosition::Top => {
