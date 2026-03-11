@@ -69,7 +69,7 @@ impl Icons {
             ),
             debug: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/StreamlinePlumpBugSolid.svg"),
+                include_bytes!("../assets/AntDesignBugFilled.svg"),
                 "icon_debug",
             ),
             file_tree: Self::load_svg(
@@ -79,7 +79,7 @@ impl Icons {
             ),
             theme: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/StreamlineUltimateColorPalette.svg"),
+                include_bytes!("../assets/FamiconsColorFilterSharp.svg"),
                 "icon_theme",
             ),
             export: Self::load_svg(
