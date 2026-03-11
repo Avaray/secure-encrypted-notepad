@@ -58,6 +58,7 @@ impl EditorApp {
                     self.render_toolbar_file_group(ui);
                     ui.separator();
                     self.render_toolbar_keyfile_group(ui);
+                    ui.separator();
 
                     // Flexible gap — shrinks to min_gap when space is tight.
                     ui.add_space(spacer);
@@ -73,6 +74,7 @@ impl EditorApp {
             self.render_toolbar_file_group(ui);
             ui.separator();
             self.render_toolbar_keyfile_group(ui);
+            ui.separator();
 
             // ── Settings group (right-aligned) ────────────────────────────────
             // `right_to_left` consumes all remaining width and renders items from
@@ -191,8 +193,6 @@ impl EditorApp {
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
-        ui.separator();
-
         if Self::icon_btn(ui, &self.icons.theme, "Toggle Theme Editor", self.show_theme_editor, bs, is, ht, dt).clicked() {
             self.show_theme_editor = !self.show_theme_editor;
             self.settings.show_theme_editor = self.show_theme_editor;
@@ -266,8 +266,5 @@ impl EditorApp {
                 self.editing_theme = Some(self.current_theme.clone());
             }
         }
-
-        // Leftmost visual separator (rendered last in RTL = placed at the left edge)
-        ui.separator();
     }
 }
