@@ -33,24 +33,23 @@ impl EditorApp {
         let panel_h = ui.available_height();
 
         let ico_s = self.settings.toolbar_icon_size;
-        let btn_h = ico_s + 4.0 + 4.0; // button height + item_spacing
-        let sep_h = 10.0; // approximate separator height
+        let btn_h   = ico_s + 4.0;
+        let spacing = 4.0;
+        let sep_h   = 4.0; // egui::Separator defaults to spacing equal to item_spacing (4.0)
 
-        // Rough content-height estimate for all three groups + their separators.
-        //   File group:     6 buttons
-        //   Keyfile group:  4 buttons
-        //   Settings group: separator + 2 buttons + separator + 2 buttons + 1 button (total 5)
-        let file_h     = 6.0 * btn_h;
-        let keyfile_h  = 4.0 * btn_h; // used same size as file_h
-        let settings_h = 5.0 * btn_h + 2.0 * sep_h;
-        let dividers_h = 2.0 * sep_h; // the two separators between groups
-        let total_content_h = file_h + keyfile_h + settings_h + dividers_h;
+        // Count items and gaps:
+        // Buttons: 6 (file) + 4 (keyfile) + 5 (settings) = 15
+        // Separators: 2
+        // Gaps: 5 (in file) + 1 (to sep1) + 1 (to keyfile) + 3 (in keyfile) + 
+        //       1 (to spacer) + 1 (to settings) + 1 (in settings after sep2) + 4 (between settings buttons) = 17
+        let total_content_h = (15.0 * btn_h) + (2.0 * sep_h) + (17.0 * spacing);
 
         // The spacer fills whatever is left between groups 2 and 3.
         // When the window shrinks below total_content_h it collapses to a
         // small minimum gap and the ScrollArea scrolls normally.
         let min_gap = 16.0;
-        let spacer = (panel_h - total_content_h).max(min_gap);
+        // Calculation: content height + 1.0px safety margin to avoid unwanted scrollbars due to rounding
+        let spacer = (panel_h - total_content_h - 1.0).max(min_gap);
 
         egui::ScrollArea::vertical()
             .id_salt("tb_scroll")
