@@ -534,6 +534,8 @@ impl eframe::App for EditorApp {
         // Frame for horizontal bars (top toolbar, search, status) - slim vertical, wide horizontal
         let mut bar_frame = egui::Frame::side_top_panel(&ctx.style());
         bar_frame.stroke = egui::Stroke::NONE;
+        bar_frame.outer_margin = egui::Margin::ZERO;
+        bar_frame.shadow = egui::Shadow::NONE;
         bar_frame.inner_margin = egui::Margin {
             left: 12,
             right: 12,
@@ -546,13 +548,19 @@ impl eframe::App for EditorApp {
         content_frame.stroke = egui::Stroke::NONE;
         content_frame.inner_margin = egui::Margin::same(12);
 
-        let toolbar_size = self.settings.toolbar_icon_size + 8.0;
+        // Button size in the toolbar is (ico_s + 4). Each frame adds its inner_margin
+        // on both sides to arrive at the total panel dimension:
+        //   bar_frame (Top):            top:6 + bottom:6 = 12  →  ico_s + 4 + 12 = ico_s + 16
+        //   vertical_toolbar_frame (Left/Right): top:2 + bottom:2 = 4  →  ico_s + 4 + 4 = ico_s + 8
+        let toolbar_size_h = self.settings.toolbar_icon_size + 16.0; // Top
+        let toolbar_size_v = self.settings.toolbar_icon_size + 8.0;  // Left / Right
 
         match self.settings.toolbar_position {
             crate::settings::ToolbarPosition::Top => {
                 egui::TopBottomPanel::top("toolbar")
                     .frame(bar_frame.clone())
-                    .min_height(0.0)
+                    .exact_height(toolbar_size_h)
+                    .resizable(false)
                     .show(ctx, |ui| {
                         self.render_toolbar(ui);
                     });
@@ -560,7 +568,8 @@ impl eframe::App for EditorApp {
             crate::settings::ToolbarPosition::Left => {
                 egui::SidePanel::left("toolbar")
                     .frame(vertical_toolbar_frame.clone())
-                    .exact_width(toolbar_size)
+                    .exact_width(toolbar_size_v)
+                    .resizable(false)
                     .show(ctx, |ui| {
                         self.render_toolbar(ui);
                     });
@@ -568,7 +577,8 @@ impl eframe::App for EditorApp {
             crate::settings::ToolbarPosition::Right => {
                 egui::SidePanel::right("toolbar")
                     .frame(vertical_toolbar_frame.clone())
-                    .exact_width(toolbar_size)
+                    .exact_width(toolbar_size_v)
+                    .resizable(false)
                     .show(ctx, |ui| {
                         self.render_toolbar(ui);
                     });
