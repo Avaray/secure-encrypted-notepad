@@ -537,8 +537,8 @@ impl eframe::App for EditorApp {
         bar_frame.outer_margin = egui::Margin::ZERO;
         bar_frame.shadow = egui::Shadow::NONE;
         bar_frame.inner_margin = egui::Margin {
-            left: 12,
-            right: 12,
+            left: 6,
+            right: 6,
             top: 6,
             bottom: 6,
         };
