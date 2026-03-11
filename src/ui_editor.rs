@@ -351,91 +351,14 @@ impl EditorApp {
                 ui.visuals_mut().selection.bg_fill = original_selection_color;
 
                 // Draw Custom Cursor and Selection
-                if ui.memory(|mem| mem.has_focus(text_edit_id)) {
-                    if let Some(cursor_range) = output.cursor_range {
-                        let cursor_pos = cursor_range.primary;
-                        let galley = &output.galley;
-                        
-                        // Get cursor position relative to galley
-                        let cursor_rect = galley.pos_from_cursor(cursor_pos);
-                        
-                        // pos_from_cursor returns a rect spanning the full row height
-                        // (row.min_y to row.max_y). Since text is at the TOP of the row
-                        // (starting at font_impl_ascent), we shrink the cursor to font_h.
-                        let font_h = editor_font_size;
-                        let row_top_screen = cursor_rect.min.y + output.galley_pos.y;
-                        let painter_rect = egui::Rect::from_min_max(
-                            egui::pos2(cursor_rect.min.x + output.galley_pos.x, row_top_screen),
-                            egui::pos2(cursor_rect.max.x + output.galley_pos.x, row_top_screen + font_h),
-                        );
-                        
-                        // Check blink state
-                        let is_visible = if self.settings.cursor_blink {
-                            (ui.input(|i| i.time) * 2.0) as i32 % 2 == 0
-                        } else {
-                            true
-                        };
-
-                        if is_visible {
-                            let color = original_cursor_color;
-                            match self.settings.cursor_shape {
-                                crate::settings::CursorShape::Bar => {
-                                    ui.painter().line_segment(
-                                        [painter_rect.left_top(), painter_rect.left_bottom()],
-                                        egui::Stroke::new(2.0, color),
-                                    );
-                                }
-                                crate::settings::CursorShape::Block => {
-                                    let char_width = editor_font_size * 0.6; 
-                                    let block_rect = egui::Rect::from_min_size(
-                                        painter_rect.min,
-                                        egui::vec2(char_width, painter_rect.height())
-                                    );
-                                    ui.painter().rect_filled(block_rect, 0.0, color.linear_multiply(0.7));
-                                }
-                                crate::settings::CursorShape::Underscore => {
-                                    let char_width = editor_font_size * 0.6;
-                                    let line_y = painter_rect.bottom() - 1.0;
-                                    ui.painter().line_segment(
-                                        [egui::pos2(painter_rect.left(), line_y), egui::pos2(painter_rect.left() + char_width, line_y)],
-                                        egui::Stroke::new(2.0, color),
-                                    );
-                                }
-                            }
-                        }
-                        
-                        // Draw manual selection highlights
-                        if cursor_range.primary != cursor_range.secondary {
-                            let (min_idx, max_idx) = if cursor_range.primary.index < cursor_range.secondary.index {
-                                (cursor_range.primary.index, cursor_range.secondary.index)
-                            } else {
-                                (cursor_range.secondary.index, cursor_range.primary.index)
-                            };
-
-                            let mut current_char_idx = 0;
-                            for row in &galley.rows {
-                                let row_char_count = row.char_count_including_newline();
-                                let row_end_idx = current_char_idx + row_char_count;
-
-                                if row_end_idx > min_idx && current_char_idx < max_idx {
-                                    let local_min = if min_idx > current_char_idx { min_idx - current_char_idx } else { 0 };
-                                    let local_max = if max_idx < row_end_idx { max_idx - current_char_idx } else { row_char_count };
-                                    
-                                    let x_min = row.x_offset(local_min);
-                                    let x_max = row.x_offset(local_max);
-                                    
-                                    let rect = egui::Rect::from_min_max(
-                                        egui::pos2(x_min + output.galley_pos.x, row.min_y() + output.galley_pos.y),
-                                        egui::pos2(x_max + output.galley_pos.x, row.min_y() + output.galley_pos.y + font_h),
-                                    );
-                                    
-                                    ui.painter().rect_filled(rect, 0.0, selection_bg.linear_multiply(0.7));
-                                }
-                                current_char_idx = row_end_idx;
-                            }
-                        }
-                    }
-                }
+                Self::render_custom_cursor(
+                    ui,
+                    &self.settings,
+                    &output,
+                    editor_font_size,
+                    original_cursor_color,
+                    original_selection_color,
+                );
 
                 // Keep focus when interaction happens within the editor (e.g. scrollbars)
                 // but not on other focusable widgets.

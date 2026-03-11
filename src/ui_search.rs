@@ -16,10 +16,33 @@ impl EditorApp {
             }
 
             ui.label("Find:");
-            let response = ui.add(
-                egui::TextEdit::singleline(&mut self.search_query)
-                    .desired_width(200.0)
-                    .hint_text("Search..."),
+            let original_cursor_color = ui.visuals().text_cursor.stroke.color;
+            let original_selection_color = ui.visuals().selection.bg_fill;
+            let original_inactive_stroke = ui.visuals().widgets.inactive.bg_stroke;
+
+            ui.visuals_mut().text_cursor.stroke.color = egui::Color32::TRANSPARENT;
+            ui.visuals_mut().selection.bg_fill = egui::Color32::TRANSPARENT;
+            // Make border always visible like when hovered
+            ui.visuals_mut().widgets.inactive.bg_stroke = ui.visuals().widgets.hovered.bg_stroke;
+
+            let output = egui::TextEdit::singleline(&mut self.search_query)
+                .desired_width(200.0)
+                .hint_text("Search...")
+                .show(ui);
+
+            let response = output.response.clone();
+
+            ui.visuals_mut().text_cursor.stroke.color = original_cursor_color;
+            ui.visuals_mut().selection.bg_fill = original_selection_color;
+            ui.visuals_mut().widgets.inactive.bg_stroke = original_inactive_stroke;
+
+            Self::render_custom_cursor(
+                ui,
+                &self.settings,
+                &output,
+                self.settings.ui_font_size,
+                original_cursor_color,
+                original_selection_color,
             );
 
             if self.focus_search {
@@ -62,7 +85,31 @@ impl EditorApp {
             ui.separator();
             
             ui.label("Replace:");
-            ui.add(egui::TextEdit::singleline(&mut self.replace_query).desired_width(200.0).hint_text("Text"));
+            let original_cursor_color = ui.visuals().text_cursor.stroke.color;
+            let original_selection_color = ui.visuals().selection.bg_fill;
+            let original_inactive_stroke = ui.visuals().widgets.inactive.bg_stroke;
+
+            ui.visuals_mut().text_cursor.stroke.color = egui::Color32::TRANSPARENT;
+            ui.visuals_mut().selection.bg_fill = egui::Color32::TRANSPARENT;
+            ui.visuals_mut().widgets.inactive.bg_stroke = ui.visuals().widgets.hovered.bg_stroke;
+
+            let replace_output = egui::TextEdit::singleline(&mut self.replace_query)
+                .desired_width(200.0)
+                .hint_text("Text")
+                .show(ui);
+
+            ui.visuals_mut().text_cursor.stroke.color = original_cursor_color;
+            ui.visuals_mut().selection.bg_fill = original_selection_color;
+            ui.visuals_mut().widgets.inactive.bg_stroke = original_inactive_stroke;
+
+            Self::render_custom_cursor(
+                ui,
+                &self.settings,
+                &replace_output,
+                self.settings.ui_font_size,
+                original_cursor_color,
+                original_selection_color,
+            );
             
             if ui.button("Replace one").clicked() {
                  self.replace_current();

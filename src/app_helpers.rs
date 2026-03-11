@@ -429,4 +429,117 @@ impl EditorApp {
 
         ctx.send_viewport_cmd(egui::ViewportCommand::Title(title));
     }
+
+    /// Standard cursor rendering logic for TextEdit widgets to follow app settings
+    pub(crate) fn render_custom_cursor(
+        ui: &mut egui::Ui,
+        settings: &crate::settings::Settings,
+        output: &egui::text_edit::TextEditOutput,
+        font_size: f32,
+        cursor_color: egui::Color32,
+        selection_color: egui::Color32,
+    ) {
+        if !ui.memory(|mem| mem.has_focus(output.response.id)) {
+            return;
+        }
+
+        if let Some(cursor_range) = output.cursor_range {
+            let cursor_pos = cursor_range.primary;
+            let galley = &output.galley;
+            let cursor_rect = galley.pos_from_cursor(cursor_pos);
+
+            let row_top_screen = cursor_rect.min.y + output.galley_pos.y;
+            let painter_rect = egui::Rect::from_min_max(
+                egui::pos2(cursor_rect.min.x + output.galley_pos.x, row_top_screen),
+                egui::pos2(
+                    cursor_rect.max.x + output.galley_pos.x,
+                    row_top_screen + font_size,
+                ),
+            );
+
+            let is_visible = if settings.cursor_blink {
+                (ui.input(|i| i.time) * 2.0) as i32 % 2 == 0
+            } else {
+                true
+            };
+
+            if is_visible {
+                match settings.cursor_shape {
+                    crate::settings::CursorShape::Bar => {
+                        ui.painter().line_segment(
+                            [painter_rect.left_top(), painter_rect.left_bottom()],
+                            egui::Stroke::new(2.0, cursor_color),
+                        );
+                    }
+                    crate::settings::CursorShape::Block => {
+                        let char_width = font_size * 0.6;
+                        let block_rect = egui::Rect::from_min_size(
+                            painter_rect.min,
+                            egui::vec2(char_width, painter_rect.height()),
+                        );
+                        ui.painter()
+                            .rect_filled(block_rect, 0.0, cursor_color.linear_multiply(0.7));
+                    }
+                    crate::settings::CursorShape::Underscore => {
+                        let char_width = font_size * 0.6;
+                        let line_y = painter_rect.bottom() - 1.0;
+                        ui.painter().line_segment(
+                            [
+                                egui::pos2(painter_rect.left(), line_y),
+                                egui::pos2(painter_rect.left() + char_width, line_y),
+                            ],
+                            egui::Stroke::new(2.0, cursor_color),
+                        );
+                    }
+                }
+            }
+
+            // Draw manual selection highlights
+            if cursor_range.primary != cursor_range.secondary {
+                let (min_idx, max_idx) = if cursor_range.primary.index < cursor_range.secondary.index
+                {
+                    (cursor_range.primary.index, cursor_range.secondary.index)
+                } else {
+                    (cursor_range.secondary.index, cursor_range.primary.index)
+                };
+
+                let mut current_char_idx = 0;
+                for row in &galley.rows {
+                    let row_char_count = row.char_count_including_newline();
+                    let row_end_idx = current_char_idx + row_char_count;
+
+                    if row_end_idx > min_idx && current_char_idx < max_idx {
+                        let local_min = if min_idx > current_char_idx {
+                            min_idx - current_char_idx
+                        } else {
+                            0
+                        };
+                        let local_max = if max_idx < row_end_idx {
+                            max_idx - current_char_idx
+                        } else {
+                            row_char_count
+                        };
+
+                        let x_min = row.x_offset(local_min);
+                        let x_max = row.x_offset(local_max);
+
+                        let rect = egui::Rect::from_min_max(
+                            egui::pos2(
+                                x_min + output.galley_pos.x,
+                                row.min_y() + output.galley_pos.y,
+                            ),
+                            egui::pos2(
+                                x_max + output.galley_pos.x,
+                                row.min_y() + output.galley_pos.y + font_size,
+                            ),
+                        );
+
+                        ui.painter()
+                            .rect_filled(rect, 0.0, selection_color.linear_multiply(0.7));
+                    }
+                    current_char_idx = row_end_idx;
+                }
+            }
+        }
+    }
 }
