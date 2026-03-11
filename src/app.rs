@@ -589,8 +589,12 @@ impl eframe::App for EditorApp {
 
         // Search panel (below toolbar)
         if self.show_search_panel {
+            let mut search_bar_frame = bar_frame.clone();
+            search_bar_frame.inner_margin.left = 12;
+            search_bar_frame.inner_margin.right = 12;
+
             egui::TopBottomPanel::top("search_panel")
-                .frame(bar_frame.clone())
+                .frame(search_bar_frame)
                 .min_height(0.0)
                 .show(ctx, |ui| {
                     self.render_search_panel(ui);
