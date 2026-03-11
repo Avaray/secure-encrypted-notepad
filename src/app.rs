@@ -134,6 +134,8 @@ pub struct EditorApp {
     pub(crate) start_maximized: bool,
     /// Current maximized state, updated every frame from the OS viewport
     pub(crate) is_maximized: bool,
+    /// Maximized state from the previous frame to detect changes
+    pub(crate) last_is_maximized: bool,
 
     /// Flag to reset horizontal scroll to 0 on next frame (when cursor on empty line)
     pub(crate) reset_scroll_x_pending: bool,
@@ -240,6 +242,7 @@ impl EditorApp {
             first_frame: true,
             start_maximized: settings.start_maximized,
             is_maximized: false,
+            last_is_maximized: false,
             last_autosave_time: None,
 
             
@@ -331,6 +334,7 @@ impl eframe::App for EditorApp {
         // ── Window state tracking ──────────────────────────────────────────
         // Read the OS-reported maximized state every frame.
         // This correctly tracks when the user clicks the Windows maximize/restore button.
+        self.last_is_maximized = self.is_maximized;
         self.is_maximized = ctx.input(|i| i.viewport().maximized.unwrap_or(false));
 
         // First-frame maximize trick: with_maximized(true) in ViewportBuilder has a
@@ -348,7 +352,11 @@ impl eframe::App for EditorApp {
             let mut changed = false;
 
             // Track maximize state changes
-            // start_maximized is a manual preference, handled in the settings panel.
+            // If the window state changed (user maximized/restored via OS), sync with settings
+            if self.is_maximized != self.last_is_maximized {
+                self.settings.start_maximized = self.is_maximized;
+                changed = true;
+            }
 
             // When NOT maximized, save position and size so we preserve the last
             // known non-maximized geometry.  Never overwrite these while maximized,
