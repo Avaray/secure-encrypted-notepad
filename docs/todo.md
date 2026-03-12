@@ -13,7 +13,6 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Theme System Refactoring**: Refactor the color system to allow customization of more editor components.
 - [ ] **Logo & App Icon**: Create a new professional logo for SEN and replace the current application icon.
 - [ ] **Internal Auto-save Integration**: Change auto-save behavior to store content inside the original `.sen` file instead of a separate `.autosave.sen`. When opening a `.sen` file where the internal auto-save is newer than the latest history entry, prompt the user to restore the auto-saved version.
-- [x] **Tree-style File Tree View**: Add an alternative file tree display mode using ASCII/Unicode tree connectors (`│`, `├──`, `└──`) similar to the Windows `tree` command output. Allow switching between the current view and this tree view in settings.
 
 ---
 
@@ -22,10 +21,6 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 *Items in this section represent confirmed issues or glitches that need to be addressed.*
 
 *No known bugs at the moment.*
-
----
-
-## 🛡️ Security & Privacy (Planned)
 
 ---
 
