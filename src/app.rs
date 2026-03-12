@@ -150,6 +150,8 @@ pub struct EditorApp {
 
     // Global Keyfile Clear Confirmation State
     pub(crate) show_clear_keyfile_confirmation: bool,
+    /// Backup Directory Clear Confirmation State
+    pub(crate) show_clear_backup_dir_confirmation: bool,
     /// Workspace Clear Confirmation State
     pub(crate) show_clear_workspace_confirmation: bool,
     /// History Clear Confirmation State
@@ -278,6 +280,7 @@ impl EditorApp {
             show_reset_confirmation: false,
             reset_slider_val: 0.0,
             show_clear_keyfile_confirmation: false,
+            show_clear_backup_dir_confirmation: false,
             show_clear_workspace_confirmation: false,
             show_clear_history_confirmation: false,
             watcher: None,

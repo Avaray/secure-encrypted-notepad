@@ -115,6 +115,55 @@ if ui.checkbox(&mut self.settings.show_directory_paths, "Show full directory pat
 .changed() {
 let _ = self.settings.save();
 }
+
+ui.add_space(8.0);
+ui.label(egui::RichText::new("Auto-Backup").strong());
+if ui.checkbox(&mut self.settings.auto_backup_enabled, "Enable Auto-Backup on Save")
+    .on_hover_text("Automatically saves an encrypted copy to the backup directory on every successful save.")
+    .changed() {
+    let _ = self.settings.save();
+}
+ui.horizontal(|ui| {
+    if ui.button("Set Backup Directory").clicked() {
+        if let Some(dir) = rfd::FileDialog::new().pick_folder() {
+            self.settings.auto_backup_dir = Some(dir.clone());
+            let _ = self.settings.save();
+            self.log_info("Auto-backup directory set");
+        }
+    }
+    
+    if self.settings.auto_backup_dir.is_some() {
+        if !self.show_clear_backup_dir_confirmation {
+            if ui.button("Clear").clicked() {
+                self.show_clear_backup_dir_confirmation = true;
+            }
+        } else {
+            ui.label(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color()));
+            if ui.button("Yes").clicked() {
+                self.settings.auto_backup_dir = None;
+                self.settings.auto_backup_dir_encrypted = None;
+                let _ = self.settings.save();
+                self.show_clear_backup_dir_confirmation = false;
+                self.log_info("Auto-backup directory cleared");
+            }
+            if ui.button("No").clicked() {
+                self.show_clear_backup_dir_confirmation = false;
+            }
+        }
+    }
+});
+ui.horizontal(|ui| {
+    ui.label("Current:");
+    if let Some(path) = &self.settings.auto_backup_dir {
+        if self.settings.show_directory_paths {
+            ui.label(egui::RichText::new(path.to_string_lossy()).color(self.current_theme.colors.warning_color()));
+        } else {
+            ui.label(egui::RichText::new("Secured").color(self.current_theme.colors.success_color()));
+        }
+    } else {
+        ui.label(egui::RichText::new("None").color(self.current_theme.colors.info_color()));
+    }
+});
 ui.add_space(8.0);
 ui.separator();
 ui.add_space(8.0);

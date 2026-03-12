@@ -12,7 +12,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Icon Refresh**: Replace current temporary icons with higher-quality, professionally designed ones.
 - [ ] **Theme System Refactoring**: Refactor the color system to allow customization of more editor components.
 - [ ] **Logo & App Icon**: Create a new professional logo for SEN and replace the current application icon.
-- [ ] **Auto-Backup on Save**: Add option to automatically copy encrypted .sen files to multiple backup folders on save.
+- [x] **Auto-Backup on Save**: Add option to automatically copy encrypted .sen files to multiple backup folders on save.
 - [ ] **Internal Auto-save Integration**: Change auto-save behavior to store content inside the original `.sen` file instead of a separate `.autosave.sen`. When opening a `.sen` file where the internal auto-save is newer than the latest history entry, prompt the user to restore the auto-saved version.
 
 ---

@@ -205,6 +205,19 @@ impl EditorApp {
                 self.log_success("OK: File saved successfully");
                 self.refresh_file_tree();
 
+                // Auto-Backup Logic
+                if self.settings.auto_backup_enabled {
+                    if let Some(backup_dir) = &self.settings.auto_backup_dir {
+                        if let Some(file_name) = path.file_name() {
+                            let backup_path = backup_dir.join(file_name);
+                            match std::fs::copy(&path, &backup_path) {
+                                Ok(_) => self.log_info(format!("Auto-backed up to {}", self.mask_directory_path(&backup_path))),
+                                Err(e) => self.log_error(format!("Auto-backup failed: {}", e)),
+                            }
+                        }
+                    }
+                }
+
                 // Cleanup autosave file
                 let file_name = path.file_name().unwrap_or_default().to_string_lossy();
                 let base_name = file_name.strip_suffix(".sen").unwrap_or(&file_name);

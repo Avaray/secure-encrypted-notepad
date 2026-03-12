@@ -70,6 +70,16 @@ pub struct Settings {
     /// File tree starting directory (memory-only, never serialized to disk)
     #[serde(skip)]
     pub file_tree_starting_dir: Option<PathBuf>,
+
+    /// Encrypted auto-backup directory path
+    #[serde(default)]
+    pub auto_backup_dir_encrypted: Option<String>,
+    /// Path to the auto-backup directory (memory-only, never serialized to disk)
+    #[serde(skip)]
+    pub auto_backup_dir: Option<PathBuf>,
+    /// Auto-backup on save enabled
+    #[serde(default)]
+    pub auto_backup_enabled: bool,
     /// Show line numbers in editor
     pub show_line_numbers: bool,
     /// Show file tree panel
@@ -234,6 +244,9 @@ impl Default for Settings {
             global_keyfile_path: None,
             file_tree_dir_encrypted: None,
             file_tree_starting_dir: None,
+            auto_backup_dir_encrypted: None,
+            auto_backup_dir: None,
+            auto_backup_enabled: false,
             show_line_numbers: true,
             show_file_tree: true,
             show_whitespace: false,
@@ -302,6 +315,7 @@ impl Settings {
                                                         Ok(mut settings) => {
                                                             Self::decrypt_keyfile_path_field(&mut settings);
                                                             Self::decrypt_file_tree_dir_field(&mut settings);
+                                                            Self::decrypt_auto_backup_dir_field(&mut settings);
                                                             Self::migrate_legacy_fonts(&mut settings);
                                                             sen_debug!("Settings loaded OK: use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
                                                                 settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
@@ -326,6 +340,7 @@ impl Settings {
                                     Ok(mut settings) => {
                                         Self::decrypt_keyfile_path_field(&mut settings);
                                         Self::decrypt_file_tree_dir_field(&mut settings);
+                                        Self::decrypt_auto_backup_dir_field(&mut settings);
                                         Self::migrate_legacy_fonts(&mut settings);
                                         sen_debug!("Settings loaded OK (plaintext): use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
                                             settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
@@ -373,6 +388,7 @@ impl Settings {
             let mut to_save = self.clone();
             to_save.encrypt_keyfile_path_field();
             to_save.encrypt_file_tree_dir_field();
+            to_save.encrypt_auto_backup_dir_field();
 
             let toml_string = toml::to_string_pretty(&to_save)?;
             fs::write(&config_path, toml_string)?;
@@ -529,6 +545,50 @@ impl Settings {
                 }
                 Err(e) => {
                     sen_debug!("Warning: keychain unavailable for file tree dir: {}", e);
+                }
+            }
+        }
+    }
+
+    /// Decrypt `auto_backup_dir_encrypted` into `auto_backup_dir`.
+    fn decrypt_auto_backup_dir_field(settings: &mut Self) {
+        if let Some(ref encrypted) = settings.auto_backup_dir_encrypted {
+            match crate::config_crypto::get_or_create_config_key() {
+                Ok(key) => match crate::config_crypto::decrypt_keyfile_path(&key, encrypted) {
+                    Ok(path_str) => {
+                        sen_debug!("Auto-backup dir decrypted OK: {:?}", path_str);
+                        settings.auto_backup_dir = Some(PathBuf::from(path_str));
+                    }
+                    Err(e) => {
+                        sen_debug!("Warning: failed to decrypt auto-backup dir: {}", e);
+                        settings.auto_backup_dir = None;
+                    }
+                },
+                Err(e) => {
+                    sen_debug!("Warning: keychain unavailable for auto-backup dir: {}", e);
+                    settings.auto_backup_dir = None;
+                }
+            }
+        }
+    }
+
+    /// Encrypt `auto_backup_dir` into `auto_backup_dir_encrypted`.
+    fn encrypt_auto_backup_dir_field(&mut self) {
+        if let Some(ref path) = self.auto_backup_dir {
+            match crate::config_crypto::get_or_create_config_key() {
+                Ok(key) => {
+                    let path_str = path.to_string_lossy();
+                    match crate::config_crypto::encrypt_keyfile_path(&key, &path_str) {
+                        Ok(encrypted) => {
+                            self.auto_backup_dir_encrypted = Some(encrypted);
+                        }
+                        Err(e) => {
+                            sen_debug!("Warning: failed to encrypt auto-backup dir: {}", e);
+                        }
+                    }
+                }
+                Err(e) => {
+                    sen_debug!("Warning: keychain unavailable for auto-backup dir: {}", e);
                 }
             }
         }
