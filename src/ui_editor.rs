@@ -160,7 +160,13 @@ impl EditorApp {
             }
         }
 
-        let scroll_output = egui::ScrollArea::both()
+        // Use vertical-only scroll when word wrap is ON (no horizontal content to scroll).
+        // Use both axes when word wrap is OFF so long lines can scroll horizontally.
+        let scroll_output = if word_wrap {
+            egui::ScrollArea::vertical()
+        } else {
+            egui::ScrollArea::both()
+        }
             .id_salt("main_editor")
             .auto_shrink(false)
             .scroll_offset(scroll_state.offset.into())
@@ -339,11 +345,14 @@ impl EditorApp {
 
                 // desired_width controls text wrapping:
                 //   word_wrap ON  -> wrap at viewport width
-                //   word_wrap OFF -> no wrapping (INFINITY)
+                //   word_wrap OFF -> 0.0 so TextEdit sizes to actual content width;
+                //                   min_size ensures it fills the viewport for short/empty files,
+                //                   preventing a phantom horizontal scrollbar.
+                //                   The layouter already sets wrap.max_width = INFINITY independently.
                 let desired_width = if word_wrap {
                     viewport_width
                 } else {
-                    f32::INFINITY
+                    0.0
                 };
                 
                 let min_height = (text_area_rect.height() - scrollbar_outer_margin).max(100.0);
