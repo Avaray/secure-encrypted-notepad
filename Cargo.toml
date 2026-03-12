@@ -50,40 +50,40 @@ keyring = "3"
 hex = "0.4"
 
 # ============================================================================
-# BUILD PROFILES - Zoptymalizowane dla szybkości kompilacji
+# BUILD PROFILES - Optimized for compilation speed
 # ============================================================================
 
 [profile.dev]
-opt-level = 1              # Lekka optymalizacja (szybsza kompilacja + lepsza wydajność)
+opt-level = 1              # Light optimization (faster build + better performance)
 debug = true               # Debug symbols
-split-debuginfo = "unpacked"  # Windows - przyspiesza linking
-incremental = true         # Kompilacja inkrementalna
+split-debuginfo = "unpacked"  # Windows - speeds up linking
+incremental = true         # Incremental compilation
 
-# Optymalizuj zależności raz (nie przebudowują się)
+# Optimize dependencies once (they don't rebuild)
 [profile.dev.package."*"]
-opt-level = 3              # Pełna optymalizacja dla bibliotek
-debug = false              # Bez debug symbols dla zależności
+opt-level = 3              # Full optimization for libraries
+debug = false              # No debug symbols for dependencies
 
 # ============================================================================
-# RELEASE - Zbalansowany (szybki build + dobra wydajność)
+# RELEASE - Balanced (fast build + good performance)
 # ============================================================================
 [profile.release]
-opt-level = 3              # Pełna optymalizacja
-lto = "thin"               # ✅ Thin LTO zamiast full (3-5x szybciej!)
-codegen-units = 16         # ✅ Równoległość (16 zamiast 1!)
-strip = true               # Usuń debug info
-panic = "abort"            # Mniejszy binary
-incremental = true         # ✅ NOWE: Incremental dla release
+opt-level = 3              # Full optimization
+lto = "thin"               # ✅ Thin LTO instead of full (3-5x faster!)
+codegen-units = 16         # ✅ Parallelism (16 instead of 1!)
+strip = true               # Remove debug info
+panic = "abort"            # Smaller binary
+incremental = true         # ✅ NEW: Incremental for release
 
 # ============================================================================
-# RELEASE FINAL - Tylko dla publikacji (najwolniejszy, ale najmniejszy binary)
-# Użyj: cargo build --profile release-final
+# RELEASE FINAL - For publication only (slowest build, but smallest binary)
+# Use: cargo build --profile release-final
 # ============================================================================
 [profile.release-final]
 inherits = "release"
-opt-level = "z"            # Optymalizacja pod rozmiar
-lto = true                 # Full LTO (wolne, ale mały plik)
-codegen-units = 1          # Bez równoległości (wolne)
+opt-level = "z"            # Optimize for size
+lto = true                 # Full LTO (slow, but small file)
+codegen-units = 1          # No parallelism (slow)
 strip = true
 panic = "abort"
 
