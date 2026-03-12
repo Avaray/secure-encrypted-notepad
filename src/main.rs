@@ -32,12 +32,12 @@ mod app_actions;
 mod app_helpers;
 mod app_state;
 mod config_crypto;
+mod ui_batch;
 mod ui_dialogs;
 mod ui_editor;
 mod ui_panels;
 mod ui_search;
 mod ui_toolbar;
-mod ui_batch;
 
 use app::EditorApp;
 

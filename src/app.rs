@@ -1,9 +1,9 @@
 use eframe::egui;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Instant;
-use std::collections::HashMap;
 
-use crate::app_state::{FileTreeEntry, LogEntry, PendingAction, KeyStatus};
+use crate::app_state::{FileTreeEntry, KeyStatus, LogEntry, PendingAction};
 use crate::history::DocumentWithHistory;
 use crate::settings::Settings;
 use crate::theme::{load_themes, Theme};
@@ -33,8 +33,6 @@ pub struct EditorApp {
 
     /// User preferences (non-sensitive, saved as plaintext TOML)
     pub(crate) settings: Settings,
-
-
 
     /// Available themes
     pub(crate) themes: Vec<Theme>,
@@ -108,8 +106,6 @@ pub struct EditorApp {
     // Auto-save state
     pub last_autosave_time: Option<Instant>,
 
-
-
     // Style dirty flag
     pub(crate) style_dirty: bool,
 
@@ -118,7 +114,7 @@ pub struct EditorApp {
     pub(crate) search_query: String,
     pub(crate) replace_query: String,
     pub(crate) search_case_sensitive: bool,
-    pub(crate) search_matches: Vec<usize>,       // List of match starting indices (byte offsets)
+    pub(crate) search_matches: Vec<usize>, // List of match starting indices (byte offsets)
     pub(crate) current_match_index: Option<usize>, // Index into search_matches
 
     // Batch Converter State
@@ -157,7 +153,6 @@ pub struct EditorApp {
 
 impl EditorApp {
     pub fn from_settings(settings: Settings) -> Self {
-
         let themes = load_themes();
         let available_fonts = crate::fonts::get_system_fonts();
 
@@ -204,16 +199,32 @@ impl EditorApp {
 
             themes,
             current_theme: current_theme.clone(),
-            show_settings_panel: if restore_all { settings.show_settings_panel } else { false },
-            show_history_panel: if restore_all { settings.show_history_panel } else { false },
-            show_debug_panel: if restore_all { settings.show_debug_panel } else { false },
+            show_settings_panel: if restore_all {
+                settings.show_settings_panel
+            } else {
+                false
+            },
+            show_history_panel: if restore_all {
+                settings.show_history_panel
+            } else {
+                false
+            },
+            show_debug_panel: if restore_all {
+                settings.show_debug_panel
+            } else {
+                false
+            },
             show_file_tree: settings.show_file_tree,
             is_modified: false,
             debug_log: Vec::new(),
             file_tree_dir,
             file_tree_entries: Vec::new(),
             icons: crate::icons::Icons::load(&egui::Context::default()),
-            show_theme_editor: if restore_all { settings.show_theme_editor } else { false },
+            show_theme_editor: if restore_all {
+                settings.show_theme_editor
+            } else {
+                false
+            },
             editing_theme: if restore_all && settings.show_theme_editor {
                 Some(current_theme.clone())
             } else {
@@ -229,7 +240,11 @@ impl EditorApp {
             available_fonts,
             ui_font_index,
             editor_font_index,
-            show_search_panel: if restore_all { settings.show_search_panel } else { false },
+            show_search_panel: if restore_all {
+                settings.show_search_panel
+            } else {
+                false
+            },
             search_query: String::new(),
             replace_query: String::new(),
             search_case_sensitive: false,
@@ -245,7 +260,6 @@ impl EditorApp {
             last_is_maximized: false,
             last_autosave_time: None,
 
-            
             style_dirty: true, // Apply style on startup
             reset_scroll_x_pending: false,
             previous_cursor_byte_pos: None,
@@ -301,14 +315,17 @@ impl EditorApp {
         }
 
         let mut app = Self::from_settings(settings);
-        
+
         if let Some(msg) = system_log {
             app.log_info(msg);
         }
 
         app.icons = crate::icons::Icons::load(&cc.egui_ctx);
         app.current_theme.apply(&cc.egui_ctx);
-        app.log_info(format!("Application started (v{})", env!("CARGO_PKG_VERSION")));
+        app.log_info(format!(
+            "Application started (v{})",
+            env!("CARGO_PKG_VERSION")
+        ));
         app.refresh_file_tree();
         app
     }
@@ -396,8 +413,6 @@ impl eframe::App for EditorApp {
         // Perform auto-save check
         self.perform_autosave(false);
 
-
-
         // Handle close request
         if ctx.input(|i| i.viewport().close_requested()) {
             if self.is_modified {
@@ -411,8 +426,6 @@ impl eframe::App for EditorApp {
             self.apply_style(ctx);
             self.style_dirty = false;
         }
-
-
 
         // Keyboard shortcuts
         ctx.input_mut(|i| {
@@ -448,8 +461,9 @@ impl eframe::App for EditorApp {
                 egui::Modifiers::CTRL,
                 egui::Key::Equals,
             )) {
-               self.settings.editor_font_size = (self.settings.editor_font_size + 1.0).clamp(8.0, 128.0);
-               let _ = self.settings.save();
+                self.settings.editor_font_size =
+                    (self.settings.editor_font_size + 1.0).clamp(8.0, 128.0);
+                let _ = self.settings.save();
             }
 
             // Ctrl+Minus: Decrease Font
@@ -457,8 +471,9 @@ impl eframe::App for EditorApp {
                 egui::Modifiers::CTRL,
                 egui::Key::Minus,
             )) {
-               self.settings.editor_font_size = (self.settings.editor_font_size - 1.0).clamp(8.0, 128.0);
-               let _ = self.settings.save();
+                self.settings.editor_font_size =
+                    (self.settings.editor_font_size - 1.0).clamp(8.0, 128.0);
+                let _ = self.settings.save();
             }
 
             // Ctrl+N: New Document
@@ -506,14 +521,17 @@ impl eframe::App for EditorApp {
             }
 
             // Ctrl+Scroll: Zoom Font
-            if i.modifiers.command && (i.raw_scroll_delta.y != 0.0 || i.smooth_scroll_delta.y != 0.0) {
+            if i.modifiers.command
+                && (i.raw_scroll_delta.y != 0.0 || i.smooth_scroll_delta.y != 0.0)
+            {
                 let scroll_y = i.raw_scroll_delta.y + i.smooth_scroll_delta.y;
                 let zoom_speed = 0.05;
                 let delta = scroll_y * zoom_speed;
-                
-                self.settings.editor_font_size = (self.settings.editor_font_size + delta).clamp(8.0, 128.0);
+
+                self.settings.editor_font_size =
+                    (self.settings.editor_font_size + delta).clamp(8.0, 128.0);
                 let _ = self.settings.save();
-                
+
                 // Consume the scroll so it doesn't move the document
                 i.raw_scroll_delta = egui::Vec2::ZERO;
                 i.smooth_scroll_delta = egui::Vec2::ZERO;
@@ -558,7 +576,7 @@ impl eframe::App for EditorApp {
         //   bar_frame (Top):            top:6 + bottom:6 = 12  →  ico_s + 4 + 12 = ico_s + 16
         //   vertical_toolbar_frame (Left/Right): left:6 + right:6 = 12  →  ico_s + 4 + 12 = ico_s + 16
         let toolbar_size_h = self.settings.toolbar_icon_size + 16.0; // Top
-        let toolbar_size_v = self.settings.toolbar_icon_size + 16.0;  // Left / Right
+        let toolbar_size_v = self.settings.toolbar_icon_size + 16.0; // Left / Right
 
         match self.settings.toolbar_position {
             crate::settings::ToolbarPosition::Top => {
@@ -589,7 +607,7 @@ impl eframe::App for EditorApp {
                     });
             }
         }
-            
+
         // Batch Converter Window
         if self.show_batch_converter {
             self.render_batch_converter_window(ctx);
@@ -628,9 +646,13 @@ impl eframe::App for EditorApp {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         // Version info
                         let version = format!("SEN {}", env!("CARGO_PKG_VERSION"));
-                        ui.add(egui::Label::new(
-                            egui::RichText::new(version).color(self.current_theme.colors.info_color())
-                        ).selectable(false));
+                        ui.add(
+                            egui::Label::new(
+                                egui::RichText::new(version)
+                                    .color(self.current_theme.colors.info_color()),
+                            )
+                            .selectable(false),
+                        );
 
                         ui.separator();
 
@@ -638,14 +660,18 @@ impl eframe::App for EditorApp {
                         if let Some(path) = &self.keyfile_path {
                             let icon_tint = self.current_theme.colors.success_color();
                             let status_text = self.mask_keyfile_path(path);
-                            ui.add(egui::Label::new(
-                                egui::RichText::new(status_text).color(icon_tint)
-                            ).selectable(false));
+                            ui.add(
+                                egui::Label::new(egui::RichText::new(status_text).color(icon_tint))
+                                    .selectable(false),
+                            );
                         } else {
                             let icon_tint = self.current_theme.colors.warning_color();
-                            ui.add(egui::Label::new(
-                                egui::RichText::new("No keyfile").color(icon_tint)
-                            ).selectable(false));
+                            ui.add(
+                                egui::Label::new(
+                                    egui::RichText::new("No keyfile").color(icon_tint),
+                                )
+                                .selectable(false),
+                            );
                         }
 
                         ui.separator();
@@ -688,7 +714,7 @@ impl eframe::App for EditorApp {
                 .show(ctx, |ui| {
                     self.render_theme_editor_panel(ui);
                 });
-                
+
             let actual_width = panel_res.response.rect.width();
             if (actual_width - self.settings.theme_editor_width).abs() > 1.0 {
                 self.settings.theme_editor_width = actual_width;
@@ -706,7 +732,7 @@ impl eframe::App for EditorApp {
                 .show(ctx, |ui| {
                     self.render_settings_panel(ui);
                 });
-                
+
             let actual_width = panel_res.response.rect.width();
             if (actual_width - self.settings.settings_panel_width).abs() > 1.0 {
                 self.settings.settings_panel_width = actual_width;
@@ -723,7 +749,7 @@ impl eframe::App for EditorApp {
                 .show(ctx, |ui| {
                     self.render_history_panel(ui);
                 });
-                
+
             let actual_width = panel_res.response.rect.width();
             if (actual_width - self.settings.history_panel_width).abs() > 1.0 {
                 self.settings.history_panel_width = actual_width;
@@ -740,7 +766,7 @@ impl eframe::App for EditorApp {
                 .show(ctx, |ui| {
                     self.render_debug_panel(ui);
                 });
-                
+
             let actual_width = panel_res.response.rect.width();
             if (actual_width - self.settings.debug_panel_width).abs() > 1.0 {
                 self.settings.debug_panel_width = actual_width;

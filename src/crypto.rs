@@ -162,7 +162,7 @@ pub fn check_key_compatibility(
     sen_path: &Path,
 ) -> Result<bool, CryptoError> {
     let mut file = fs::File::open(sen_path)?;
-    
+
     // Header check: [MAGIC 4] [SALT 32]
     let mut header = [0u8; MAGIC_SIZE + SALT_SIZE];
     use std::io::Read;
@@ -175,20 +175,21 @@ pub fn check_key_compatibility(
     }
 
     let salt = &header[MAGIC_SIZE..];
-    
+
     // Important: We need at least the auth tag (16B) to verify.
     // In Orion, aead::open needs the ENTIRE ciphertext + tag.
-    // If the file is huge, we'd still read the whole thing. 
+    // If the file is huge, we'd still read the whole thing.
     // BUT we can read just the first block of ciphertext if we use a streaming AEAD or similar.
     // However, Orion's XChaCha20-Poly1305 is one-shot.
     // For performance, we'll read the file, but since SEN files are usually small it's fine.
-    // To make it TRULY fast for huge files, we'd need a different file structure, 
+    // To make it TRULY fast for huge files, we'd need a different file structure,
     // but we have what we have now.
-    
+
     let mut encrypted_data = Vec::new();
     file.read_to_end(&mut encrypted_data)?;
 
-    if encrypted_data.len() < KEYFILE_HASH_SIZE + 16 { // hash + tag
+    if encrypted_data.len() < KEYFILE_HASH_SIZE + 16 {
+        // hash + tag
         return Err(CryptoError::InvalidFormat);
     }
 
@@ -197,13 +198,14 @@ pub fn check_key_compatibility(
     let secret_key = derive_key_from_keyfile(&k_hash, salt)?;
 
     // Decrypt (authenticated)
-    let plaintext = aead::open(&secret_key, &encrypted_data).map_err(|_| CryptoError::DecryptionFailed)?;
-    
+    let plaintext =
+        aead::open(&secret_key, &encrypted_data).map_err(|_| CryptoError::DecryptionFailed)?;
+
     // Verify stored hash inside
     if plaintext.len() < KEYFILE_HASH_SIZE {
         return Err(CryptoError::InvalidFormat);
     }
-    
+
     Ok(&plaintext[..KEYFILE_HASH_SIZE] == keyfile_hash)
 }
 
@@ -302,7 +304,11 @@ mod tests {
         // Verify keyfile hash is NOT at the end of the file (legacy SED2 vulnerability)
         let keyfile_hash = hash_keyfile(&keyfile).unwrap();
         let file_end = &raw[raw.len().saturating_sub(32)..];
-        assert_ne!(file_end, keyfile_hash.as_bytes(), "Keyfile hash must NOT be at end of file in plaintext");
+        assert_ne!(
+            file_end,
+            keyfile_hash.as_bytes(),
+            "Keyfile hash must NOT be at end of file in plaintext"
+        );
 
         // Cleanup
         let _ = fs::remove_file(&output);

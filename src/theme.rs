@@ -83,8 +83,8 @@ impl ThemeColors {
             line_number: [128, 128, 128],
             comment: [106, 153, 85],
             icon_hover: [100, 150, 255],
-            icon_color: None,    // defaults to [200, 200, 200]
-            highlight: None,     // defaults to cursor color at 35% opacity
+            icon_color: None, // defaults to [200, 200, 200]
+            highlight: None,  // defaults to cursor color at 35% opacity
             success: [76, 175, 80],
             info: [33, 150, 243],
             warning: [255, 152, 0],
@@ -111,8 +111,8 @@ impl ThemeColors {
             line_number: [128, 128, 128],
             comment: [0, 128, 0],
             icon_hover: [0, 100, 255],
-            icon_color: None,    // defaults to [80, 80, 80]
-            highlight: None,     // defaults to cursor color at 35% opacity
+            icon_color: None, // defaults to [80, 80, 80]
+            highlight: None,  // defaults to cursor color at 35% opacity
             success: [46, 125, 50],
             info: [13, 71, 161],
             warning: [230, 81, 0],
@@ -211,7 +211,9 @@ impl ThemeColors {
 
     #[allow(dead_code)]
     pub fn surface_highlight_color(&self) -> egui::Color32 {
-        let c = self.surface_highlight.unwrap_or_else(|| self.surface.unwrap_or(self.panel_background));
+        let c = self
+            .surface_highlight
+            .unwrap_or_else(|| self.surface.unwrap_or(self.panel_background));
         egui::Color32::from_rgb(c[0], c[1], c[2])
     }
 }
@@ -270,17 +272,17 @@ impl Theme {
             let bg_color = self.colors.to_egui_color32(bg);
             visuals.widgets.inactive.weak_bg_fill = bg_color;
             visuals.widgets.inactive.bg_fill = bg_color;
-            
+
             // If hover/active not explicitly set, they will use egui defaults or be derived.
             // But we can set them to stay consistent if desired.
         }
-        
+
         if let Some(hover_bg) = self.colors.button_hover_bg {
             let color = self.colors.to_egui_color32(hover_bg);
             visuals.widgets.hovered.weak_bg_fill = color;
             visuals.widgets.hovered.bg_fill = color;
         }
-        
+
         if let Some(active_bg) = self.colors.button_active_bg {
             let color = self.colors.to_egui_color32(active_bg);
             visuals.widgets.active.weak_bg_fill = color;
@@ -290,13 +292,13 @@ impl Theme {
             let fg_color = self.colors.to_egui_color32(fg);
             visuals.widgets.inactive.fg_stroke.color = fg_color;
             visuals.widgets.noninteractive.fg_stroke.color = fg_color; // Checkboxes text etc?
-            // We usually want button text to be distinct from main text if button bg is different.
+                                                                       // We usually want button text to be distinct from main text if button bg is different.
         }
 
         // Apply Separator Color
         if let Some(sep) = self.colors.separator {
-             let sep_color = self.colors.to_egui_color32(sep);
-             visuals.widgets.noninteractive.bg_stroke.color = sep_color; // Used for separators
+            let sep_color = self.colors.to_egui_color32(sep);
+            visuals.widgets.noninteractive.bg_stroke.color = sep_color; // Used for separators
         }
 
         ctx.set_visuals(visuals);
@@ -363,7 +365,7 @@ pub fn delete_theme(theme_name: &str) -> Result<(), Box<dyn std::error::Error>> 
     let themes_dir = ensure_themes_dir()?;
     let filename = format!("{}.toml", theme_name.to_lowercase().replace(' ', "_"));
     let path = themes_dir.join(filename);
-    
+
     if path.exists() {
         fs::remove_file(path)?;
     }

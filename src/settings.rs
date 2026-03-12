@@ -82,7 +82,7 @@ pub struct Settings {
     pub tab_size: usize,
     pub use_spaces_for_tabs: bool,
     pub word_wrap: bool,
-    
+
     /// Auto-save enabled
     pub auto_save_enabled: bool,
     /// Auto-save interval in seconds
@@ -90,8 +90,6 @@ pub struct Settings {
     /// Auto-save on focus loss
     #[serde(default = "default_true")]
     pub auto_save_on_focus_loss: bool,
-
-
 
     /// Show debug panel
     pub show_debug_panel: bool,
@@ -112,19 +110,19 @@ pub struct Settings {
     pub preserve_all_panels: bool,
     /// File tree panel width
     pub file_tree_width: f32,
-    
+
     /// Theme editor panel width
     #[serde(default = "default_panel_width_270")]
     pub theme_editor_width: f32,
-    
+
     /// Settings panel width
     #[serde(default = "default_panel_width_350")]
     pub settings_panel_width: f32,
-    
+
     /// History panel width
     #[serde(default = "default_panel_width_250")]
     pub history_panel_width: f32,
-    
+
     /// Debug panel width
     #[serde(default = "default_panel_width_250")]
     pub debug_panel_width: f32,
@@ -136,7 +134,7 @@ pub struct Settings {
     pub hide_sen_extension: bool,
     /// Max history length
     pub max_history_length: usize,
-    
+
     /// Editor line limit (0 means disabled)
     #[serde(default = "default_max_lines")]
     pub max_lines: usize,
@@ -153,7 +151,7 @@ pub struct Settings {
     /// Hide panel headers (Settings, History, etc.)
     #[serde(default)]
     pub hide_panel_headers: bool,
-    
+
     /// Window dimensions and position
     #[serde(default = "default_window_width")]
     pub window_width: f32,
@@ -169,7 +167,7 @@ pub struct Settings {
     /// Toolbar position
     #[serde(default)]
     pub toolbar_position: ToolbarPosition,
-    
+
     /// Text cursor shape
     #[serde(default)]
     pub cursor_shape: CursorShape,
@@ -283,7 +281,6 @@ fn default_true() -> bool {
     true
 }
 
-
 impl Settings {
     /// Load settings from file
     pub fn load() -> Self {
@@ -296,11 +293,10 @@ impl Settings {
                         if content_bytes.len() > 4 && &content_bytes[0..4] == CONFIG_MAGIC {
                             // Encrypted content
                             match Self::get_or_create_config_key() {
-                                Ok(key_bytes) => {
-                                    match aead::SecretKey::from_slice(&key_bytes) {
-                                        Ok(secret_key) => {
-                                            let encrypted_data = &content_bytes[4..];
-                                            match aead::open(&secret_key, encrypted_data) {
+                                Ok(key_bytes) => match aead::SecretKey::from_slice(&key_bytes) {
+                                    Ok(secret_key) => {
+                                        let encrypted_data = &content_bytes[4..];
+                                        match aead::open(&secret_key, encrypted_data) {
                                                 Ok(plaintext) => {
                                                     match toml::from_str::<Settings>(&String::from_utf8_lossy(&plaintext)) {
                                                         Ok(mut settings) => {
@@ -316,11 +312,12 @@ impl Settings {
                                                 }
                                                 Err(e) => sen_debug!("Config decryption failed (key may have changed): {}", e),
                                             }
-                                        }
-                                        Err(e) => sen_debug!("Invalid config key format: {}", e),
                                     }
+                                    Err(e) => sen_debug!("Invalid config key format: {}", e),
+                                },
+                                Err(e) => {
+                                    sen_debug!("Failed to get config key from keyring: {}", e)
                                 }
-                                Err(e) => sen_debug!("Failed to get config key from keyring: {}", e),
                             }
                         } else {
                             // Plaintext fallback (legacy)
@@ -334,7 +331,9 @@ impl Settings {
                                             settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
                                         return settings;
                                     }
-                                    Err(e) => sen_debug!("Config TOML parse error (plaintext): {}", e),
+                                    Err(e) => {
+                                        sen_debug!("Config TOML parse error (plaintext): {}", e)
+                                    }
                                 }
                             }
                         }
@@ -386,7 +385,7 @@ impl Settings {
     /// Get or create a random 32-byte encryption key stored in OS keyring
     fn get_or_create_config_key() -> Result<Vec<u8>, Box<dyn std::error::Error>> {
         let entry = Entry::new(SERVICE_NAME, USER_NAME)?;
-        
+
         match entry.get_password() {
             Ok(password) => {
                 // Password is hex encoded key
@@ -400,15 +399,15 @@ impl Settings {
                 // Key not found or error, create new
             }
         }
-        
+
         // Generate new key
         let mut key = [0u8; 32];
         rand::rng().fill_bytes(&mut key);
         let key_hex = hex::encode(key);
-        
+
         // Store in keyring
         entry.set_password(&key_hex)?;
-        
+
         Ok(key.to_vec())
     }
 
@@ -423,7 +422,10 @@ impl Settings {
     /// is set to None and a warning is logged — never crashes.
     fn decrypt_keyfile_path_field(settings: &mut Self) {
         if let Some(ref encrypted) = settings.keyfile_path_encrypted {
-            sen_debug!("Attempting to decrypt keyfile path ({} chars encrypted)", encrypted.len());
+            sen_debug!(
+                "Attempting to decrypt keyfile path ({} chars encrypted)",
+                encrypted.len()
+            );
             match crate::config_crypto::get_or_create_config_key() {
                 Ok(key) => {
                     sen_debug!("Config crypto key retrieved from keychain OK");
@@ -439,7 +441,10 @@ impl Settings {
                     }
                 }
                 Err(e) => {
-                    sen_debug!("Warning: keychain unavailable, cannot decrypt keyfile path: {}", e);
+                    sen_debug!(
+                        "Warning: keychain unavailable, cannot decrypt keyfile path: {}",
+                        e
+                    );
                     settings.global_keyfile_path = None;
                 }
             }
@@ -471,7 +476,10 @@ impl Settings {
                 }
                 Err(e) => {
                     // Don't erase existing encrypted data on keychain failure
-                    sen_debug!("Warning: keychain unavailable, keyfile path will not be saved: {}", e);
+                    sen_debug!(
+                        "Warning: keychain unavailable, keyfile path will not be saved: {}",
+                        e
+                    );
                 }
             }
         }
@@ -485,18 +493,16 @@ impl Settings {
     fn decrypt_file_tree_dir_field(settings: &mut Self) {
         if let Some(ref encrypted) = settings.file_tree_dir_encrypted {
             match crate::config_crypto::get_or_create_config_key() {
-                Ok(key) => {
-                    match crate::config_crypto::decrypt_keyfile_path(&key, encrypted) {
-                        Ok(path_str) => {
-                            sen_debug!("File tree dir decrypted OK: {:?}", path_str);
-                            settings.file_tree_starting_dir = Some(PathBuf::from(path_str));
-                        }
-                        Err(e) => {
-                            sen_debug!("Warning: failed to decrypt file tree dir: {}", e);
-                            settings.file_tree_starting_dir = None;
-                        }
+                Ok(key) => match crate::config_crypto::decrypt_keyfile_path(&key, encrypted) {
+                    Ok(path_str) => {
+                        sen_debug!("File tree dir decrypted OK: {:?}", path_str);
+                        settings.file_tree_starting_dir = Some(PathBuf::from(path_str));
                     }
-                }
+                    Err(e) => {
+                        sen_debug!("Warning: failed to decrypt file tree dir: {}", e);
+                        settings.file_tree_starting_dir = None;
+                    }
+                },
                 Err(e) => {
                     sen_debug!("Warning: keychain unavailable for file tree dir: {}", e);
                     settings.file_tree_starting_dir = None;
@@ -532,5 +538,3 @@ impl Settings {
         dirs::config_dir().map(|d| d.join("sen"))
     }
 }
-
-

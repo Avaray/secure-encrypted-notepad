@@ -18,7 +18,11 @@ fn main() {
     let ico_bytes = build_ico(&png_entries);
     std::fs::write("assets/app_icon.ico", &ico_bytes).expect("Cannot write assets/app_icon.ico");
 
-    println!("✅ Generated assets/app_icon.ico with {} sizes: {:?}", sizes.len(), sizes);
+    println!(
+        "✅ Generated assets/app_icon.ico with {} sizes: {:?}",
+        sizes.len(),
+        sizes
+    );
 }
 
 fn render_svg_to_png(svg_data: &[u8], width: u32, height: u32) -> Vec<u8> {
@@ -54,13 +58,14 @@ fn build_ico(entries: &[(u32, Vec<u8>)]) -> Vec<u8> {
     for (size, png_data) in entries {
         let w = if *size >= 256 { 0u8 } else { *size as u8 };
         let h = w;
-        buf.push(w);                                    // width (0 = 256)
-        buf.push(h);                                    // height (0 = 256)
-        buf.push(0);                                    // color palette
-        buf.push(0);                                    // reserved
-        buf.write_all(&1u16.to_le_bytes()).unwrap();    // color planes
-        buf.write_all(&32u16.to_le_bytes()).unwrap();   // bits per pixel
-        buf.write_all(&(png_data.len() as u32).to_le_bytes()).unwrap(); // size of data
+        buf.push(w); // width (0 = 256)
+        buf.push(h); // height (0 = 256)
+        buf.push(0); // color palette
+        buf.push(0); // reserved
+        buf.write_all(&1u16.to_le_bytes()).unwrap(); // color planes
+        buf.write_all(&32u16.to_le_bytes()).unwrap(); // bits per pixel
+        buf.write_all(&(png_data.len() as u32).to_le_bytes())
+            .unwrap(); // size of data
         buf.write_all(&data_offset.to_le_bytes()).unwrap(); // offset to data
         data_offset += png_data.len() as u32;
     }

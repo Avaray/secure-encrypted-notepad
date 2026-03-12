@@ -2,11 +2,16 @@ use crate::EditorApp;
 use eframe::egui;
 
 fn char_to_byte_idx(s: &str, char_idx: usize) -> usize {
-    s.char_indices().nth(char_idx).map(|(b, _)| b).unwrap_or(s.len())
+    s.char_indices()
+        .nth(char_idx)
+        .map(|(b, _)| b)
+        .unwrap_or(s.len())
 }
 
 fn byte_to_char_idx(s: &str, byte_idx: usize) -> usize {
-    s.get(..byte_idx).map(|sub| sub.chars().count()).unwrap_or_else(|| s.chars().count())
+    s.get(..byte_idx)
+        .map(|sub| sub.chars().count())
+        .unwrap_or_else(|| s.chars().count())
 }
 
 impl EditorApp {
@@ -14,7 +19,12 @@ impl EditorApp {
         let line_count = if self.document.current_content.is_empty() {
             1
         } else {
-            self.document.current_content.lines().count() + if self.document.current_content.ends_with('\n') { 1 } else { 0 }
+            self.document.current_content.lines().count()
+                + if self.document.current_content.ends_with('\n') {
+                    1
+                } else {
+                    0
+                }
         };
         let editor_font_size = self.settings.editor_font_size;
         let show_line_numbers = self.settings.show_line_numbers;
@@ -34,7 +44,7 @@ impl EditorApp {
         let search_active = !self.search_query.is_empty() && !search_matches.is_empty();
         let highlight_color = self.current_theme.colors.highlight_color();
 
-        // Optical adjustment: line numbers are right-aligned, which often makes the left padding 
+        // Optical adjustment: line numbers are right-aligned, which often makes the left padding
         // appear larger due to monospace font side-bearings and smaller numbers.
         // We use asymmetric padding to make it visually balanced.
         let line_number_left_padding = 4.0;
@@ -45,7 +55,8 @@ impl EditorApp {
         let line_number_width = if show_line_numbers {
             let font_id = egui::FontId::monospace(editor_font_size);
             let max_line_text = format!("{}", line_count);
-            let text_width = ui.painter()
+            let text_width = ui
+                .painter()
                 .layout_no_wrap(max_line_text, font_id, egui::Color32::WHITE)
                 .rect
                 .width();
@@ -59,14 +70,14 @@ impl EditorApp {
 
         // Save fixed position for line numbers (left edge of view)
         let editor_left_edge = ui.cursor().left();
-        
+
         // Separator is at the very right edge of the entire line number block
         let separator_x = if show_line_numbers {
             editor_left_edge + line_number_width
         } else {
             0.0
         };
-        
+
         // Line numbers are drawn right-aligned starting exactly right-padding pixels before the separator
         let line_numbers_x = if show_line_numbers {
             separator_x - line_number_right_padding
@@ -84,7 +95,8 @@ impl EditorApp {
 
         // MIDDLE MOUSE BUTTON PANNING
         let pointer = ui.input(|i| i.pointer.clone());
-        let middle_button_active = pointer.middle_down() && !self.document.current_content.is_empty();
+        let middle_button_active =
+            pointer.middle_down() && !self.document.current_content.is_empty();
 
         if middle_button_active {
             if let Some(pos) = pointer.latest_pos() {
@@ -137,9 +149,23 @@ impl EditorApp {
         if ui.memory(|mem| mem.has_focus(text_edit_id)) {
             let text = &mut self.document.current_content;
             if ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Tab)) {
-                Self::handle_tab_key(ui, text_edit_id, false, text, &self.settings, &mut self.is_modified);
+                Self::handle_tab_key(
+                    ui,
+                    text_edit_id,
+                    false,
+                    text,
+                    &self.settings,
+                    &mut self.is_modified,
+                );
             } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, egui::Key::Tab)) {
-                Self::handle_tab_key(ui, text_edit_id, true, text, &self.settings, &mut self.is_modified);
+                Self::handle_tab_key(
+                    ui,
+                    text_edit_id,
+                    true,
+                    text,
+                    &self.settings,
+                    &mut self.is_modified,
+                );
             } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::C)) {
                 Self::handle_copy_key(ui, text_edit_id, text);
             } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::X)) {
@@ -147,8 +173,16 @@ impl EditorApp {
             } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::A)) {
                 if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
                     let total_chars = text.chars().count();
-                    let current_pos = state.cursor.char_range().map(|r| r.primary.index).unwrap_or(0);
-                    let (primary, secondary) = if current_pos < total_chars / 2 { (0, total_chars) } else { (total_chars, 0) };
+                    let current_pos = state
+                        .cursor
+                        .char_range()
+                        .map(|r| r.primary.index)
+                        .unwrap_or(0);
+                    let (primary, secondary) = if current_pos < total_chars / 2 {
+                        (0, total_chars)
+                    } else {
+                        (total_chars, 0)
+                    };
                     state.cursor.set_char_range(Some(egui::text::CCursorRange {
                         primary: egui::text::CCursor::new(primary),
                         secondary: egui::text::CCursor::new(secondary),
@@ -167,313 +201,319 @@ impl EditorApp {
         } else {
             egui::ScrollArea::both()
         }
-            .id_salt("main_editor")
-            .auto_shrink(false)
-            .scroll_offset(scroll_state.offset.into())
-            .show(&mut text_ui, |ui| {
-                let text_ptr = &mut self.document.current_content;
-                let scroll_area_rect = ui.clip_rect();
+        .id_salt("main_editor")
+        .auto_shrink(false)
+        .scroll_offset(scroll_state.offset.into())
+        .show(&mut text_ui, |ui| {
+            let text_ptr = &mut self.document.current_content;
+            let scroll_area_rect = ui.clip_rect();
 
-                let layouter = |ui: &egui::Ui, text_str: &str, wrap_width: f32| {
-                    let mut layout_job = egui::text::LayoutJob::default();
-                    let font_id = egui::FontId::monospace(editor_font_size);
-                    let line_height = Some(editor_font_size * line_height_multiplier);
+            let layouter = |ui: &egui::Ui, text_str: &str, wrap_width: f32| {
+                let mut layout_job = egui::text::LayoutJob::default();
+                let font_id = egui::FontId::monospace(editor_font_size);
+                let line_height = Some(editor_font_size * line_height_multiplier);
 
-                    // Set wrapping
-                    if word_wrap {
-                        layout_job.wrap.max_width = wrap_width;
+                // Set wrapping
+                if word_wrap {
+                    layout_job.wrap.max_width = wrap_width;
+                } else {
+                    layout_job.wrap.max_width = f32::INFINITY;
+                }
+
+                // Split text into lines & process each
+                let mut byte_offset: usize = 0;
+
+                // Handle empty text
+                if text_str.is_empty() {
+                    layout_job.append(
+                        "",
+                        0.0,
+                        egui::TextFormat {
+                            font_id: font_id.clone(),
+                            color: foreground_color,
+                            line_height,
+                            valign: egui::Align::Center,
+                            ..Default::default()
+                        },
+                    );
+                    return ui.fonts_mut(|f| f.layout_job(layout_job));
+                }
+
+                // Iterate lines, including trailing empty line after final \n
+                let mut lines_iter = text_str.split('\n').peekable();
+                let mut _line_idx = 0;
+                while let Some(line) = lines_iter.next() {
+                    let is_last = lines_iter.peek().is_none();
+
+                    // Determine colors
+                    let trimmed = line.trim_start();
+                    let is_comment = trimmed.starts_with("//");
+                    let content_color = if is_comment {
+                        comment_color
                     } else {
-                        layout_job.wrap.max_width = f32::INFINITY;
-                    }
+                        foreground_color
+                    };
 
-                    // Split text into lines & process each
-                    let mut byte_offset: usize = 0;
+                    // Add the line content with search highlighting
+                    if search_active && !line.is_empty() {
+                        // Render line with search match highlighting
+                        let line_start_byte = byte_offset;
+                        let line_end_byte = byte_offset + line.len();
+                        let mut pos = 0usize; // position within the line
 
-                    // Handle empty text
-                    if text_str.is_empty() {
+                        for &match_start in &search_matches {
+                            let match_end = match_start + search_query_len;
+                            // Check if this match overlaps with current line
+                            if match_end <= line_start_byte || match_start >= line_end_byte {
+                                continue;
+                            }
+                            // Clamp to line boundaries
+                            let local_start = if match_start > line_start_byte {
+                                match_start - line_start_byte
+                            } else {
+                                0
+                            };
+                            let local_end = if match_end < line_end_byte {
+                                match_end - line_start_byte
+                            } else {
+                                line.len()
+                            };
+
+                            // Append text before match
+                            if local_start > pos {
+                                layout_job.append(
+                                    &line[pos..local_start],
+                                    0.0,
+                                    egui::TextFormat {
+                                        font_id: font_id.clone(),
+                                        color: content_color,
+                                        line_height,
+                                        valign: egui::Align::Center,
+                                        ..Default::default()
+                                    },
+                                );
+                            }
+                            // Append matched text with highlight background
+                            if local_end > local_start {
+                                layout_job.append(
+                                    &line[local_start..local_end],
+                                    0.0,
+                                    egui::TextFormat {
+                                        font_id: font_id.clone(),
+                                        color: content_color,
+                                        line_height,
+                                        valign: egui::Align::Center,
+                                        background: highlight_color,
+                                        ..Default::default()
+                                    },
+                                );
+                            }
+                            pos = local_end;
+                        }
+                        // Append remaining text after last match
+                        if pos < line.len() {
+                            layout_job.append(
+                                &line[pos..],
+                                0.0,
+                                egui::TextFormat {
+                                    font_id: font_id.clone(),
+                                    color: content_color,
+                                    line_height,
+                                    valign: egui::Align::Center,
+                                    ..Default::default()
+                                },
+                            );
+                        }
+                        // Handle empty line edge case (pos == 0 and line is empty)
+                    } else {
+                        // No search highlighting - simple append
                         layout_job.append(
-                            "",
+                            line,
                             0.0,
                             egui::TextFormat {
                                 font_id: font_id.clone(),
-                                color: foreground_color,
+                                color: content_color,
                                 line_height,
                                 valign: egui::Align::Center,
                                 ..Default::default()
                             },
                         );
-                        return ui.fonts_mut(|f| f.layout_job(layout_job));
                     }
 
-                    // Iterate lines, including trailing empty line after final \n
-                    let mut lines_iter = text_str.split('\n').peekable();
-                    let mut _line_idx = 0;
-                    while let Some(line) = lines_iter.next() {
-                         let is_last = lines_iter.peek().is_none();
- 
-                         // Determine colors
-                         let trimmed = line.trim_start();
-                         let is_comment = trimmed.starts_with("//");
-                         let content_color = if is_comment {
-                             comment_color
-                         } else {
-                             foreground_color
-                         };
- 
-                         // Add the line content with search highlighting
-                         if search_active && !line.is_empty() {
-                             // Render line with search match highlighting
-                             let line_start_byte = byte_offset;
-                             let line_end_byte = byte_offset + line.len();
-                             let mut pos = 0usize; // position within the line
- 
-                             for &match_start in &search_matches {
-                                 let match_end = match_start + search_query_len;
-                                 // Check if this match overlaps with current line
-                                 if match_end <= line_start_byte || match_start >= line_end_byte {
-                                     continue;
-                                 }
-                                 // Clamp to line boundaries
-                                 let local_start = if match_start > line_start_byte {
-                                     match_start - line_start_byte
-                                 } else {
-                                     0
-                                 };
-                                 let local_end = if match_end < line_end_byte {
-                                     match_end - line_start_byte
-                                 } else {
-                                     line.len()
-                                 };
- 
-                                 // Append text before match
-                                 if local_start > pos {
-                                     layout_job.append(
-                                         &line[pos..local_start],
-                                         0.0,
-                                         egui::TextFormat {
-                                             font_id: font_id.clone(),
-                                             color: content_color,
-                                             line_height,
-                                             valign: egui::Align::Center,
-                                             ..Default::default()
-                                         },
-                                     );
-                                 }
-                                 // Append matched text with highlight background
-                                 if local_end > local_start {
-                                     layout_job.append(
-                                         &line[local_start..local_end],
-                                         0.0,
-                                         egui::TextFormat {
-                                             font_id: font_id.clone(),
-                                             color: content_color,
-                                             line_height,
-                                             valign: egui::Align::Center,
-                                             background: highlight_color,
-                                             ..Default::default()
-                                         },
-                                     );
-                                 }
-                                 pos = local_end;
-                             }
-                             // Append remaining text after last match
-                             if pos < line.len() {
-                                 layout_job.append(
-                                     &line[pos..],
-                                     0.0,
-                                     egui::TextFormat {
-                                         font_id: font_id.clone(),
-                                         color: content_color,
-                                         line_height,
-                                         valign: egui::Align::Center,
-                                         ..Default::default()
-                                     },
-                                 );
-                             }
-                             // Handle empty line edge case (pos == 0 and line is empty)
-                         } else {
-                             // No search highlighting - simple append
-                             layout_job.append(
-                                 line,
-                                 0.0,
-                                 egui::TextFormat {
-                                     font_id: font_id.clone(),
-                                     color: content_color,
-                                     line_height,
-                                     valign: egui::Align::Center,
-                                     ..Default::default()
-                                 },
-                             );
-                         }
- 
-                         // Add newline separator (except after the very last segment if text doesn't end with \n)
-                         if !is_last {
-                             layout_job.append(
-                                 "\n",
-                                 0.0,
-                                 egui::TextFormat {
-                                     font_id: font_id.clone(),
-                                     line_height,
-                                     valign: egui::Align::Center,
-                                     ..Default::default()
-                                 },
-                             );
-                             byte_offset += line.len() + 1; // +1 for '\n'
-                         } else {
-                             byte_offset += line.len();
-                         }
- 
-                         _line_idx += 1;
+                    // Add newline separator (except after the very last segment if text doesn't end with \n)
+                    if !is_last {
+                        layout_job.append(
+                            "\n",
+                            0.0,
+                            egui::TextFormat {
+                                font_id: font_id.clone(),
+                                line_height,
+                                valign: egui::Align::Center,
+                                ..Default::default()
+                            },
+                        );
+                        byte_offset += line.len() + 1; // +1 for '\n'
+                    } else {
+                        byte_offset += line.len();
                     }
 
-                    ui.fonts_mut(|f| f.layout_job(layout_job))
-                };
-
-                // Panning blocking handled by .interactive(!middle_button_active) in TextEdit
-
-                if ui.memory(|mem| mem.has_focus(text_edit_id)) {
-                    // We will handle Tab/Copy/Cut/SelectAll OUTSIDE the ScrollArea to avoid borrow checker issues
+                    _line_idx += 1;
                 }
 
-                // Viewport width is now simply the text_area width (the ScrollArea's own width)
-                let scrollbar_outer_margin = ui.style().spacing.scroll.bar_outer_margin
-                    + ui.style().spacing.scroll.bar_width
-                    + ui.style().spacing.scroll.bar_inner_margin;
-                // Added more right margin so text doesn't touch the edge (Editor Comfort Phase 2)
-                let text_right_padding = 120.0;
-                let viewport_width = (text_area_rect.width() - scrollbar_outer_margin - text_right_padding).max(100.0);
+                ui.fonts_mut(|f| f.layout_job(layout_job))
+            };
 
-                // desired_width controls text wrapping:
-                //   word_wrap ON  -> wrap at viewport width
-                //   word_wrap OFF -> 0.0 so TextEdit sizes to actual content width;
-                //                   min_size ensures it fills the viewport for short/empty files,
-                //                   preventing a phantom horizontal scrollbar.
-                //                   The layouter already sets wrap.max_width = INFINITY independently.
-                let desired_width = if word_wrap {
-                    viewport_width
-                } else {
-                    0.0
-                };
-                
-                let min_height = (text_area_rect.height() - scrollbar_outer_margin).max(100.0);
+            // Panning blocking handled by .interactive(!middle_button_active) in TextEdit
 
-                // HACK: Hide default cursor and selection to draw our own
-                let original_cursor_color = ui.visuals().text_cursor.stroke.color;
-                let original_selection_color = ui.visuals().selection.bg_fill;
-                ui.visuals_mut().text_cursor.stroke.color = egui::Color32::TRANSPARENT;
-                ui.visuals_mut().selection.bg_fill = egui::Color32::TRANSPARENT;
+            if ui.memory(|mem| mem.has_focus(text_edit_id)) {
+                // We will handle Tab/Copy/Cut/SelectAll OUTSIDE the ScrollArea to avoid borrow checker issues
+            }
 
-                let output = egui::TextEdit::multiline(text_ptr)
-                    .id(text_edit_id)
-                    .font(egui::TextStyle::Monospace)
-                    .code_editor()
-                    .desired_width(desired_width)
-                    .desired_rows(line_count)
-                    // min_size ensures TextEdit fills the visible area but is NEVER infinite
-                    .min_size(egui::vec2(viewport_width, min_height))
-                    // Add explicit margin so text is comfortable by the edges
-                    .margin(egui::Margin { 
-                        left: 0, 
-                        right: text_right_padding as i8, 
-                        top: 8, 
-                        bottom: 8 
-                    })
-                    .frame(false)
-                    .lock_focus(true)
-                    .interactive(!middle_button_active)
-                    .layouter(&mut |ui, text_str: &dyn egui::TextBuffer, wrap_width| {
-                        layouter(ui, text_str.as_str(), wrap_width)
-                    })
-                    .show(ui);
+            // Viewport width is now simply the text_area width (the ScrollArea's own width)
+            let scrollbar_outer_margin = ui.style().spacing.scroll.bar_outer_margin
+                + ui.style().spacing.scroll.bar_width
+                + ui.style().spacing.scroll.bar_inner_margin;
+            // Added more right margin so text doesn't touch the edge (Editor Comfort Phase 2)
+            let text_right_padding = 120.0;
+            let viewport_width =
+                (text_area_rect.width() - scrollbar_outer_margin - text_right_padding).max(100.0);
 
-                // Restore colors for other widgets
-                ui.visuals_mut().text_cursor.stroke.color = original_cursor_color;
-                ui.visuals_mut().selection.bg_fill = original_selection_color;
+            // desired_width controls text wrapping:
+            //   word_wrap ON  -> wrap at viewport width
+            //   word_wrap OFF -> 0.0 so TextEdit sizes to actual content width;
+            //                   min_size ensures it fills the viewport for short/empty files,
+            //                   preventing a phantom horizontal scrollbar.
+            //                   The layouter already sets wrap.max_width = INFINITY independently.
+            let desired_width = if word_wrap { viewport_width } else { 0.0 };
 
-                // Draw Custom Cursor and Selection
-                Self::render_custom_cursor(
-                    ui,
-                    &self.settings,
-                    &output,
-                    editor_font_size,
-                    original_cursor_color,
-                    original_selection_color,
-                );
+            let min_height = (text_area_rect.height() - scrollbar_outer_margin).max(100.0);
 
-                // Keep focus when interaction happens within the editor (e.g. scrollbars)
-                // but not on other focusable widgets.
-                if output.response.lost_focus() && ui.memory(|mem| mem.focused().is_none()) {
-                    let pointer_pos = ui.input(|i| i.pointer.latest_pos()).unwrap_or(egui::pos2(-1.0, -1.0));
-                    if full_clip_rect.contains(pointer_pos) {
-                        ui.memory_mut(|mem| mem.request_focus(text_edit_id));
+            // HACK: Hide default cursor and selection to draw our own
+            let original_cursor_color = ui.visuals().text_cursor.stroke.color;
+            let original_selection_color = ui.visuals().selection.bg_fill;
+            ui.visuals_mut().text_cursor.stroke.color = egui::Color32::TRANSPARENT;
+            ui.visuals_mut().selection.bg_fill = egui::Color32::TRANSPARENT;
+
+            let output = egui::TextEdit::multiline(text_ptr)
+                .id(text_edit_id)
+                .font(egui::TextStyle::Monospace)
+                .code_editor()
+                .desired_width(desired_width)
+                .desired_rows(line_count)
+                // min_size ensures TextEdit fills the visible area but is NEVER infinite
+                .min_size(egui::vec2(viewport_width, min_height))
+                // Add explicit margin so text is comfortable by the edges
+                .margin(egui::Margin {
+                    left: 0,
+                    right: text_right_padding as i8,
+                    top: 8,
+                    bottom: 8,
+                })
+                .frame(false)
+                .lock_focus(true)
+                .interactive(!middle_button_active)
+                .layouter(&mut |ui, text_str: &dyn egui::TextBuffer, wrap_width| {
+                    layouter(ui, text_str.as_str(), wrap_width)
+                })
+                .show(ui);
+
+            // Restore colors for other widgets
+            ui.visuals_mut().text_cursor.stroke.color = original_cursor_color;
+            ui.visuals_mut().selection.bg_fill = original_selection_color;
+
+            // Draw Custom Cursor and Selection
+            Self::render_custom_cursor(
+                ui,
+                &self.settings,
+                &output,
+                editor_font_size,
+                original_cursor_color,
+                original_selection_color,
+            );
+
+            // Keep focus when interaction happens within the editor (e.g. scrollbars)
+            // but not on other focusable widgets.
+            if output.response.lost_focus() && ui.memory(|mem| mem.focused().is_none()) {
+                let pointer_pos = ui
+                    .input(|i| i.pointer.latest_pos())
+                    .unwrap_or(egui::pos2(-1.0, -1.0));
+                if full_clip_rect.contains(pointer_pos) {
+                    ui.memory_mut(|mem| mem.request_focus(text_edit_id));
+                }
+            }
+
+            // Removed unconditionally frame-based cursor scroll here to prevent fighting manual mouse scrolling.
+
+            let _text_rect = output.response.rect;
+            let galley = &output.galley;
+
+            // AUTO-SCROLL during text selection with left button
+            if output.response.dragged() && !middle_button_active {
+                if let Some(pointer_pos) = pointer.latest_pos() {
+                    let scroll_speed = 15.0;
+                    let scroll_margin = 30.0;
+
+                    if pointer_pos.y < scroll_area_rect.top() + scroll_margin {
+                        scroll_state.offset.y = (scroll_state.offset.y - scroll_speed).max(0.0);
+                    } else if pointer_pos.y > scroll_area_rect.bottom() - scroll_margin {
+                        scroll_state.offset.y += scroll_speed;
                     }
-                }
 
-                // Removed unconditionally frame-based cursor scroll here to prevent fighting manual mouse scrolling.
-
-                let _text_rect = output.response.rect;
-                let galley = &output.galley;
-
-                // AUTO-SCROLL during text selection with left button
-                if output.response.dragged() && !middle_button_active {
-                    if let Some(pointer_pos) = pointer.latest_pos() {
-                        let scroll_speed = 15.0;
-                        let scroll_margin = 30.0;
-
-                        if pointer_pos.y < scroll_area_rect.top() + scroll_margin {
-                            scroll_state.offset.y =
-                                (scroll_state.offset.y - scroll_speed).max(0.0);
-                        } else if pointer_pos.y > scroll_area_rect.bottom() - scroll_margin {
-                            scroll_state.offset.y += scroll_speed;
-                        }
-
-                        if pointer_pos.x < scroll_area_rect.left() + scroll_margin {
-                            scroll_state.offset.x =
-                                (scroll_state.offset.x - scroll_speed).max(0.0);
-                        } else if pointer_pos.x > scroll_area_rect.right() - scroll_margin {
-                            scroll_state.offset.x += scroll_speed;
-                        }
-
-                        let content_rect = galley.rect;
-                        let max_offset_y = (content_rect.height() - scroll_area_rect.height()).max(0.0);
-                        let max_offset_x = (content_rect.width() - scroll_area_rect.width()).max(0.0);
-                        scroll_state.offset.y = scroll_state.offset.y.clamp(0.0, max_offset_y);
-                        scroll_state.offset.x = scroll_state.offset.x.clamp(0.0, max_offset_x);
-
-                        scroll_state.store(ui.ctx(), scroll_id);
+                    if pointer_pos.x < scroll_area_rect.left() + scroll_margin {
+                        scroll_state.offset.x = (scroll_state.offset.x - scroll_speed).max(0.0);
+                    } else if pointer_pos.x > scroll_area_rect.right() - scroll_margin {
+                        scroll_state.offset.x += scroll_speed;
                     }
+
+                    let content_rect = galley.rect;
+                    let max_offset_y = (content_rect.height() - scroll_area_rect.height()).max(0.0);
+                    let max_offset_x = (content_rect.width() - scroll_area_rect.width()).max(0.0);
+                    scroll_state.offset.y = scroll_state.offset.y.clamp(0.0, max_offset_y);
+                    scroll_state.offset.x = scroll_state.offset.x.clamp(0.0, max_offset_x);
+
+                    scroll_state.store(ui.ctx(), scroll_id);
                 }
+            }
 
-                if output.response.changed() {
-                    // Logic moved outside
-                }
+            if output.response.changed() {
+                // Logic moved outside
+            }
 
-                // UPDATE HIGHLIGHTING EVERY FRAME when TextEdit has focus
-                if output.response.has_focus() {
-                    if let Some(state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
-                        if let Some(cursor_range_state) = state.cursor.char_range() {
-                            let cursor_char_pos = cursor_range_state.primary.index;
-                            let _cursor_byte_pos = char_to_byte_idx(text_ptr, cursor_char_pos);
+            // UPDATE HIGHLIGHTING EVERY FRAME when TextEdit has focus
+            if output.response.has_focus() {
+                if let Some(state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
+                    if let Some(cursor_range_state) = state.cursor.char_range() {
+                        let cursor_char_pos = cursor_range_state.primary.index;
+                        let _cursor_byte_pos = char_to_byte_idx(text_ptr, cursor_char_pos);
 
-                            // Detect if cursor is on an empty or blank line → schedule scroll reset
-                            if let Some(cursor_range_galley) = output.cursor_range {
-                                let cursor_rect = output.galley.pos_from_cursor(cursor_range_galley.primary);
-                                let screen_cursor_rect = cursor_rect.translate(output.galley_pos.to_vec2());
-                                let padded_rect = screen_cursor_rect.expand(4.0);
-                                ui.scroll_to_rect(padded_rect, None);
-                            }
+                        // Detect if cursor is on an empty or blank line → schedule scroll reset
+                        if let Some(cursor_range_galley) = output.cursor_range {
+                            let cursor_rect =
+                                output.galley.pos_from_cursor(cursor_range_galley.primary);
+                            let screen_cursor_rect =
+                                cursor_rect.translate(output.galley_pos.to_vec2());
+                            let padded_rect = screen_cursor_rect.expand(4.0);
+                            ui.scroll_to_rect(padded_rect, None);
                         }
                     }
                 }
+            }
 
-                let galley_clone = output.galley.clone();
-                let separator_stroke = ui.visuals().widgets.noninteractive.bg_stroke;
-                let galley_pos = output.galley_pos;
-                (output, scroll_area_rect, galley_clone, galley_pos, separator_stroke)
-            });
+            let galley_clone = output.galley.clone();
+            let separator_stroke = ui.visuals().widgets.noninteractive.bg_stroke;
+            let galley_pos = output.galley_pos;
+            (
+                output,
+                scroll_area_rect,
+                galley_clone,
+                galley_pos,
+                separator_stroke,
+            )
+        });
 
         // --- POST-PROCESSING OUTSIDE CLOSURE ---
-        let (output, _scroll_area_rect, galley_data, galley_pos_data, separator_stroke_data) = scroll_output.inner;
+        let (output, _scroll_area_rect, galley_data, galley_pos_data, separator_stroke_data) =
+            scroll_output.inner;
         let mut status_update = None;
         let mut warning_log = None;
 
@@ -483,16 +523,28 @@ impl EditorApp {
             if output.response.changed() {
                 self.is_modified = true;
                 self.loaded_history_index = None;
-                
+
                 // Enforce max lines limit
                 if self.settings.max_lines > 0 {
                     let current_lines = text.lines().count();
                     if current_lines > self.settings.max_lines {
-                        let mut lines = text.lines().take(self.settings.max_lines).collect::<Vec<_>>().join("\n");
-                        if text.ends_with('\n') { lines.push('\n'); }
+                        let mut lines = text
+                            .lines()
+                            .take(self.settings.max_lines)
+                            .collect::<Vec<_>>()
+                            .join("\n");
+                        if text.ends_with('\n') {
+                            lines.push('\n');
+                        }
                         *text = lines;
-                        status_update = Some(format!("⚠️ Line limit of {} reached!", self.settings.max_lines));
-                        warning_log = Some(format!("Line limit ({}) exceeded and content truncated.", self.settings.max_lines));
+                        status_update = Some(format!(
+                            "⚠️ Line limit of {} reached!",
+                            self.settings.max_lines
+                        ));
+                        warning_log = Some(format!(
+                            "Line limit ({}) exceeded and content truncated.",
+                            self.settings.max_lines
+                        ));
                     }
                 }
             }
@@ -512,14 +564,25 @@ impl EditorApp {
                 if let Some(cursor_range) = state.cursor.char_range() {
                     let cursor_char_pos = cursor_range.primary.index;
                     let cursor_byte_pos = char_to_byte_idx(text, cursor_char_pos);
-                    
-                    let line_num = text[..cursor_byte_pos].as_bytes().iter().filter(|&&b| b == b'\n').count() + 1;
+
+                    let line_num = text[..cursor_byte_pos]
+                        .as_bytes()
+                        .iter()
+                        .filter(|&&b| b == b'\n')
+                        .count()
+                        + 1;
                     self.highlighted_line = Some(line_num);
 
-                    let line_start = text[..cursor_byte_pos].rfind('\n').map(|i| i + 1).unwrap_or(0);
-                    let line_end = text[cursor_byte_pos..].find('\n').map(|i| cursor_byte_pos + i).unwrap_or(text.len());
+                    let line_start = text[..cursor_byte_pos]
+                        .rfind('\n')
+                        .map(|i| i + 1)
+                        .unwrap_or(0);
+                    let line_end = text[cursor_byte_pos..]
+                        .find('\n')
+                        .map(|i| cursor_byte_pos + i)
+                        .unwrap_or(text.len());
                     let current_line_text = &text[line_start..line_end];
-                    
+
                     if self.previous_cursor_byte_pos != Some(cursor_byte_pos) {
                         if current_line_text.trim().is_empty() {
                             self.reset_scroll_x_pending = true;
@@ -663,13 +726,11 @@ impl EditorApp {
                             if let Some(mut state) =
                                 egui::TextEdit::load_state(ui.ctx(), text_edit_id)
                             {
-                                state.cursor.set_char_range(Some(
-                                    egui::text::CCursorRange {
-                                        primary: egui::text::CCursor::new(end_char),
-                                        secondary: egui::text::CCursor::new(start_char),
-                                        h_pos: None,
-                                    },
-                                ));
+                                state.cursor.set_char_range(Some(egui::text::CCursorRange {
+                                    primary: egui::text::CCursor::new(end_char),
+                                    secondary: egui::text::CCursor::new(start_char),
+                                    h_pos: None,
+                                }));
                                 state.store(ui.ctx(), text_edit_id);
                             }
                             ui.memory_mut(|mem| mem.request_focus(text_edit_id));
@@ -694,38 +755,42 @@ impl EditorApp {
 
             let start_y = full_clip_rect.top() - galley_pos_data.y;
             let end_y = full_clip_rect.bottom() - galley_pos_data.y;
-            
+
             // Get visible character range with generous padding
             let start_cursor = galley_data.cursor_from_pos(egui::vec2(0.0, start_y));
             let end_cursor = galley_data.cursor_from_pos(egui::vec2(full_clip_rect.width(), end_y));
-            
+
             let total_chars = text.chars().count();
             let start_char_idx = start_cursor.index.saturating_sub(100);
             let end_char_idx = (end_cursor.index.saturating_add(200)).min(total_chars);
-            
+
             let byte_start = char_to_byte_idx(text, start_char_idx);
             let byte_end = char_to_byte_idx(text, end_char_idx);
 
             let mut current_char_idx = start_char_idx;
             for (_byte_offset, chr) in text[byte_start..byte_end].char_indices() {
                 if chr == ' ' || chr == '\t' || chr == '\n' {
-                    let cursor_rect1 = galley_data.pos_from_cursor(egui::text::CCursor::new(current_char_idx));
-                    let cursor_rect2 = galley_data.pos_from_cursor(egui::text::CCursor::new(current_char_idx + 1));
-                    
+                    let cursor_rect1 =
+                        galley_data.pos_from_cursor(egui::text::CCursor::new(current_char_idx));
+                    let cursor_rect2 =
+                        galley_data.pos_from_cursor(egui::text::CCursor::new(current_char_idx + 1));
+
                     let mut char_width = cursor_rect2.left() - cursor_rect1.left();
                     // If it wraps to next line or is a newline itself, just use a fallback width
                     if char_width < 0.0 || chr == '\n' {
                         char_width = 8.0;
                     }
-                    
+
                     let char_rect = egui::Rect::from_min_size(
                         cursor_rect1.left_top(),
                         egui::vec2(char_width, cursor_rect1.height()),
                     );
-                    
+
                     let screen_rect = char_rect.translate(galley_pos_data.to_vec2());
-                    
-                    if screen_rect.bottom() >= full_clip_rect.top() && screen_rect.top() <= full_clip_rect.bottom() {
+
+                    if screen_rect.bottom() >= full_clip_rect.top()
+                        && screen_rect.top() <= full_clip_rect.bottom()
+                    {
                         // The screen_rect's height spans the full row. Text is rendered at the top.
                         // We center our symbols within the *font* height rather than the full *row* height.
                         let font_h = editor_font_size;
@@ -733,16 +798,29 @@ impl EditorApp {
 
                         if chr == ' ' {
                             let center_x = screen_rect.center().x;
-                            painter.circle_filled(egui::pos2(center_x, text_center_y), 1.5, whitespace_color);
+                            painter.circle_filled(
+                                egui::pos2(center_x, text_center_y),
+                                1.5,
+                                whitespace_color,
+                            );
                         } else if chr == '\t' {
                             let y = text_center_y;
                             let px1 = screen_rect.left() + 2.0;
                             let px2 = (screen_rect.right() - 2.0).max(px1 + 8.0);
-                            
-                            painter.line_segment([egui::pos2(px1, y), egui::pos2(px2, y)], egui::Stroke::new(1.0, whitespace_color));
+
+                            painter.line_segment(
+                                [egui::pos2(px1, y), egui::pos2(px2, y)],
+                                egui::Stroke::new(1.0, whitespace_color),
+                            );
                             let a = 3.0;
-                            painter.line_segment([egui::pos2(px2 - a, y - a), egui::pos2(px2, y)], egui::Stroke::new(1.0, whitespace_color));
-                            painter.line_segment([egui::pos2(px2 - a, y + a), egui::pos2(px2, y)], egui::Stroke::new(1.0, whitespace_color));
+                            painter.line_segment(
+                                [egui::pos2(px2 - a, y - a), egui::pos2(px2, y)],
+                                egui::Stroke::new(1.0, whitespace_color),
+                            );
+                            painter.line_segment(
+                                [egui::pos2(px2 - a, y + a), egui::pos2(px2, y)],
+                                egui::Stroke::new(1.0, whitespace_color),
+                            );
                         } else if chr == '\n' {
                             // Shift slightly upwards to compensate for font baseline of the return symbol
                             let y = text_center_y - 2.5;
@@ -763,87 +841,120 @@ impl EditorApp {
         ui.style_mut().animation_time = original_animation_time;
     }
 
-    fn handle_tab_key(ui: &egui::Ui, id: egui::Id, unindent: bool, text: &mut String, settings: &crate::settings::Settings, is_modified: &mut bool) {
+    fn handle_tab_key(
+        ui: &egui::Ui,
+        id: egui::Id,
+        unindent: bool,
+        text: &mut String,
+        settings: &crate::settings::Settings,
+        is_modified: &mut bool,
+    ) {
         if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), id) {
             if let Some(range) = state.cursor.char_range() {
-                 let start_char = range.primary.index.min(range.secondary.index);
-                 let end_char = range.primary.index.max(range.secondary.index);
-                 let start_byte = char_to_byte_idx(text, start_char);
-                 
-                 let tab_str = if settings.use_spaces_for_tabs {
-                     " ".repeat(settings.tab_size)
-                 } else {
-                     "\t".to_string()
-                 };
-                 
-                 if start_char == end_char && !unindent {
-                     // Simple insert at cursor
-                     if start_byte <= text.len() {
-                         text.insert_str(start_byte, &tab_str);
-                         let chars_added = tab_str.chars().count();
-                         state.cursor.set_char_range(Some(egui::text::CCursorRange::one(
-                             egui::text::CCursor::new(start_char + chars_added)
-                         )));
-                         state.store(ui.ctx(), id);
-                         *is_modified = true;
-                     }
+                let start_char = range.primary.index.min(range.secondary.index);
+                let end_char = range.primary.index.max(range.secondary.index);
+                let start_byte = char_to_byte_idx(text, start_char);
+
+                let tab_str = if settings.use_spaces_for_tabs {
+                    " ".repeat(settings.tab_size)
                 } else {
-                     // Multi-line indent/unindent or single line unindent
-                     if unindent && start_char == end_char {
-                         let text_ref = &*text;
-                         // Find line start/end
-                         let line_start = text_ref[..start_byte].rfind('\n').map(|i| i + 1).unwrap_or(0);
-                         let line_end = text_ref[start_byte..].find('\n').map(|i| start_byte + i).unwrap_or(text.len());
-                         let line = &text_ref[line_start..line_end];
-                         
-                         let tab_len = if settings.use_spaces_for_tabs { settings.tab_size } else { 1 };
-                         
-                         // Check for indentation
-                         let leading_spaces = line.chars().take_while(|c| *c == ' ').count();
-                         
-                         if leading_spaces >= tab_len && settings.use_spaces_for_tabs {
-                             // Remove one level of spaces
-                             text.replace_range(line_start..line_start + tab_len, "");
-                             let new_cursor_byte = start_byte.saturating_sub(tab_len).max(line_start);
-                             let new_cursor_char = byte_to_char_idx(text, new_cursor_byte);
-                             state.cursor.set_char_range(Some(egui::text::CCursorRange::one(egui::text::CCursor::new(new_cursor_char))));
-                             state.store(ui.ctx(), id);
-                             *is_modified = true;
-                         } else if leading_spaces > 0 {
-                             // Remove leftover spaces
-                             text.replace_range(line_start..line_start + leading_spaces, "");
-                             let new_cursor_byte = start_byte.saturating_sub(leading_spaces).max(line_start);
-                             let new_cursor_char = byte_to_char_idx(text, new_cursor_byte);
-                             state.cursor.set_char_range(Some(egui::text::CCursorRange::one(egui::text::CCursor::new(new_cursor_char))));
-                             state.store(ui.ctx(), id);
-                             *is_modified = true;
-                         } else if line.starts_with('\t') {
-                             // Remove tab
-                             text.replace_range(line_start..line_start + 1, "");
-                             let new_cursor_byte = start_byte.saturating_sub(1).max(line_start);
-                             let new_cursor_char = byte_to_char_idx(text, new_cursor_byte);
-                             state.cursor.set_char_range(Some(egui::text::CCursorRange::one(egui::text::CCursor::new(new_cursor_char))));
-                             state.store(ui.ctx(), id);
-                             *is_modified = true;
-                         }
-                     }
+                    "\t".to_string()
+                };
+
+                if start_char == end_char && !unindent {
+                    // Simple insert at cursor
+                    if start_byte <= text.len() {
+                        text.insert_str(start_byte, &tab_str);
+                        let chars_added = tab_str.chars().count();
+                        state
+                            .cursor
+                            .set_char_range(Some(egui::text::CCursorRange::one(
+                                egui::text::CCursor::new(start_char + chars_added),
+                            )));
+                        state.store(ui.ctx(), id);
+                        *is_modified = true;
+                    }
+                } else {
+                    // Multi-line indent/unindent or single line unindent
+                    if unindent && start_char == end_char {
+                        let text_ref = &*text;
+                        // Find line start/end
+                        let line_start = text_ref[..start_byte]
+                            .rfind('\n')
+                            .map(|i| i + 1)
+                            .unwrap_or(0);
+                        let line_end = text_ref[start_byte..]
+                            .find('\n')
+                            .map(|i| start_byte + i)
+                            .unwrap_or(text.len());
+                        let line = &text_ref[line_start..line_end];
+
+                        let tab_len = if settings.use_spaces_for_tabs {
+                            settings.tab_size
+                        } else {
+                            1
+                        };
+
+                        // Check for indentation
+                        let leading_spaces = line.chars().take_while(|c| *c == ' ').count();
+
+                        if leading_spaces >= tab_len && settings.use_spaces_for_tabs {
+                            // Remove one level of spaces
+                            text.replace_range(line_start..line_start + tab_len, "");
+                            let new_cursor_byte =
+                                start_byte.saturating_sub(tab_len).max(line_start);
+                            let new_cursor_char = byte_to_char_idx(text, new_cursor_byte);
+                            state
+                                .cursor
+                                .set_char_range(Some(egui::text::CCursorRange::one(
+                                    egui::text::CCursor::new(new_cursor_char),
+                                )));
+                            state.store(ui.ctx(), id);
+                            *is_modified = true;
+                        } else if leading_spaces > 0 {
+                            // Remove leftover spaces
+                            text.replace_range(line_start..line_start + leading_spaces, "");
+                            let new_cursor_byte =
+                                start_byte.saturating_sub(leading_spaces).max(line_start);
+                            let new_cursor_char = byte_to_char_idx(text, new_cursor_byte);
+                            state
+                                .cursor
+                                .set_char_range(Some(egui::text::CCursorRange::one(
+                                    egui::text::CCursor::new(new_cursor_char),
+                                )));
+                            state.store(ui.ctx(), id);
+                            *is_modified = true;
+                        } else if line.starts_with('\t') {
+                            // Remove tab
+                            text.replace_range(line_start..line_start + 1, "");
+                            let new_cursor_byte = start_byte.saturating_sub(1).max(line_start);
+                            let new_cursor_char = byte_to_char_idx(text, new_cursor_byte);
+                            state
+                                .cursor
+                                .set_char_range(Some(egui::text::CCursorRange::one(
+                                    egui::text::CCursor::new(new_cursor_char),
+                                )));
+                            state.store(ui.ctx(), id);
+                            *is_modified = true;
+                        }
+                    }
                 }
             }
         }
     }
 
-
     fn handle_copy_key(ui: &egui::Ui, id: egui::Id, text: &str) {
         if let Some(state) = egui::TextEdit::load_state(ui.ctx(), id) {
             if let Some(range) = state.cursor.char_range() {
-                 let start_byte = char_to_byte_idx(text, range.primary.index.min(range.secondary.index));
-                 let end_byte = char_to_byte_idx(text, range.primary.index.max(range.secondary.index));
-                 
-                 if start_byte != end_byte && end_byte <= text.len() {
-                     let selected_text = &text[start_byte..end_byte];
-                     ui.ctx().copy_text(selected_text.to_string());
+                let start_byte =
+                    char_to_byte_idx(text, range.primary.index.min(range.secondary.index));
+                let end_byte =
+                    char_to_byte_idx(text, range.primary.index.max(range.secondary.index));
 
-                 }
+                if start_byte != end_byte && end_byte <= text.len() {
+                    let selected_text = &text[start_byte..end_byte];
+                    ui.ctx().copy_text(selected_text.to_string());
+                }
             }
         }
     }
@@ -851,26 +962,27 @@ impl EditorApp {
     fn handle_cut_key(ui: &egui::Ui, id: egui::Id, text: &mut String, is_modified: &mut bool) {
         if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), id) {
             if let Some(range) = state.cursor.char_range() {
-                 let start_char = range.primary.index.min(range.secondary.index);
-                 let end_char = range.primary.index.max(range.secondary.index);
-                 let start_byte = char_to_byte_idx(text, start_char);
-                 let end_byte = char_to_byte_idx(text, end_char);
-                 
-                 if start_byte != end_byte && end_byte <= text.len() {
-                     let selected_text = &text[start_byte..end_byte];
-                     ui.ctx().copy_text(selected_text.to_string());
+                let start_char = range.primary.index.min(range.secondary.index);
+                let end_char = range.primary.index.max(range.secondary.index);
+                let start_byte = char_to_byte_idx(text, start_char);
+                let end_byte = char_to_byte_idx(text, end_char);
 
-                     
-                     // Delete selection
-                     text.replace_range(start_byte..end_byte, "");
-                     *is_modified = true;
-                     
-                     // Update cursor
-                     state.cursor.set_char_range(Some(egui::text::CCursorRange::one(
-                         egui::text::CCursor::new(start_char)
-                     )));
-                     state.store(ui.ctx(), id);
-                 }
+                if start_byte != end_byte && end_byte <= text.len() {
+                    let selected_text = &text[start_byte..end_byte];
+                    ui.ctx().copy_text(selected_text.to_string());
+
+                    // Delete selection
+                    text.replace_range(start_byte..end_byte, "");
+                    *is_modified = true;
+
+                    // Update cursor
+                    state
+                        .cursor
+                        .set_char_range(Some(egui::text::CCursorRange::one(
+                            egui::text::CCursor::new(start_char),
+                        )));
+                    state.store(ui.ctx(), id);
+                }
             }
         }
     }

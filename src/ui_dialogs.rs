@@ -39,12 +39,12 @@ impl EditorApp {
                             if let PendingAction::Exit = action {
                                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                             } else {
-                                    self.execute_pending_action(action);
-                                }
-                            } else {
-                                // Save failed or cancelled
-                                self.status_message = "Save cancelled or failed".to_string();
+                                self.execute_pending_action(action);
                             }
+                        } else {
+                            // Save failed or cancelled
+                            self.status_message = "Save cancelled or failed".to_string();
+                        }
 
                         if ui.button("Cancel").clicked() {
                             self.show_close_confirmation = false;
@@ -62,10 +62,18 @@ impl EditorApp {
                 .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
                 .show(ctx, |ui| {
                     ui.set_max_width(400.0);
-                    ui.add(egui::Label::new("This will restore all settings to their factory defaults.").wrap_mode(egui::TextWrapMode::Extend));
-                    ui.add(egui::Label::new("This action cannot be undone.").wrap_mode(egui::TextWrapMode::Extend));
+                    ui.add(
+                        egui::Label::new(
+                            "This will restore all settings to their factory defaults.",
+                        )
+                        .wrap_mode(egui::TextWrapMode::Extend),
+                    );
+                    ui.add(
+                        egui::Label::new("This action cannot be undone.")
+                            .wrap_mode(egui::TextWrapMode::Extend),
+                    );
                     ui.add_space(8.0);
-                    
+
                     ui.horizontal(|ui| {
                         ui.label("Slide to the right to confirm:");
                         ui.spacing_mut().slider_width = ui.available_width();
@@ -79,7 +87,7 @@ impl EditorApp {
 
                     // Only enable OK if slider is fully to the right
                     let is_confirmed = self.reset_slider_val >= 0.99;
-                    
+
                     ui.horizontal(|ui| {
                         ui.add_enabled_ui(is_confirmed, |ui| {
                             if ui.button("OK").clicked() {
@@ -87,11 +95,14 @@ impl EditorApp {
                                 let _ = self.settings.save();
                                 self.show_reset_confirmation = false;
                                 self.style_dirty = true; // Apply default fonts/sizes
-                                self.status_message = "All settings have been reset to factory defaults".to_string();
-                                self.log_warning("All settings have been reset to factory defaults");
+                                self.status_message =
+                                    "All settings have been reset to factory defaults".to_string();
+                                self.log_warning(
+                                    "All settings have been reset to factory defaults",
+                                );
                             }
                         });
-                        
+
                         if ui.button("Cancel").clicked() {
                             self.show_reset_confirmation = false;
                         }

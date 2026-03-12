@@ -193,7 +193,6 @@ impl DocumentWithHistory {
         self.max_history_length
     }
 
-
     /// Get only visible (non-deleted) history for UI display
     pub fn get_visible_history(&self) -> Vec<(usize, &HistoryEntry)> {
         self.history
@@ -230,7 +229,6 @@ impl DocumentWithHistory {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {

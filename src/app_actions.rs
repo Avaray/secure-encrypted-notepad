@@ -8,7 +8,10 @@ impl EditorApp {
     /// Check for unsaved changes before action
     pub(crate) fn check_changes_before_action(&mut self, action: PendingAction) {
         // Skip check for certain actions that don't close the current file
-        let skip_check = matches!(action, PendingAction::OpenDirectory | PendingAction::ChangeDirectory(_));
+        let skip_check = matches!(
+            action,
+            PendingAction::OpenDirectory | PendingAction::ChangeDirectory(_)
+        );
 
         if self.is_modified && !skip_check {
             self.pending_action = action;
@@ -67,7 +70,10 @@ impl EditorApp {
 
         let keyfile = self.keyfile_path.clone().unwrap();
         self.log_info(format!("Opening file: {}", self.mask_directory_path(&path)));
-        self.log_info(format!("Using keyfile: {}", self.mask_keyfile_path(&keyfile)));
+        self.log_info(format!(
+            "Using keyfile: {}",
+            self.mask_keyfile_path(&keyfile)
+        ));
 
         match decrypt_file(&keyfile, &path) {
             Ok(content) => {
@@ -97,7 +103,10 @@ impl EditorApp {
     /// Open directory implementation
     pub(crate) fn perform_open_directory(&mut self) {
         if let Some(path) = rfd::FileDialog::new().pick_folder() {
-            self.log_info(format!("Opening directory: {}", self.mask_directory_path(&path)));
+            self.log_info(format!(
+                "Opening directory: {}",
+                self.mask_directory_path(&path)
+            ));
             self.file_tree_dir = Some(path.clone());
 
             self.show_file_tree = true;
@@ -109,7 +118,10 @@ impl EditorApp {
 
     /// Change directory implementation
     pub(crate) fn perform_change_directory(&mut self, path: PathBuf) {
-        self.log_info(format!("Changing to directory: {}", self.mask_directory_path(&path)));
+        self.log_info(format!(
+            "Changing to directory: {}",
+            self.mask_directory_path(&path)
+        ));
         self.file_tree_dir = Some(path.clone());
 
         let _ = self.settings.save();
@@ -192,11 +204,11 @@ impl EditorApp {
                 let autosave_name = format!("{}.autosave.sen", base_name);
                 let autosave_path = path.with_file_name(autosave_name);
                 if autosave_path.exists() {
-                     if let Err(e) = std::fs::remove_file(&autosave_path) {
-                         self.log_error(format!("Failed to remove autosave file: {}", e));
-                     } else {
-                         self.log_info("Autosave file cleaned up");
-                     }
+                    if let Err(e) = std::fs::remove_file(&autosave_path) {
+                        self.log_error(format!("Failed to remove autosave file: {}", e));
+                    } else {
+                        self.log_info("Autosave file cleaned up");
+                    }
                 }
             }
             Err(e) => {
@@ -209,7 +221,10 @@ impl EditorApp {
     /// Load keyfile
     pub(crate) fn load_keyfile(&mut self) {
         if let Some(path) = rfd::FileDialog::new().pick_file() {
-            self.log_info(format!("Attempting to load keyfile: {}", self.mask_keyfile_path(&path)));
+            self.log_info(format!(
+                "Attempting to load keyfile: {}",
+                self.mask_keyfile_path(&path)
+            ));
 
             match std::fs::metadata(&path) {
                 Ok(metadata) => {
@@ -236,12 +251,8 @@ impl EditorApp {
                             self.keyfile_path = Some(path.clone());
                             self.refresh_file_access_status();
                             let masked = self.mask_keyfile_path(&path);
-                            self.status_message =
-                                format!("Valid keyfile loaded: {}", masked);
-                            self.log_info(format!(
-                                "Valid keyfile loaded successfully: {}",
-                                masked
-                            ));
+                            self.status_message = format!("Valid keyfile loaded: {}", masked);
+                            self.log_info(format!("Valid keyfile loaded successfully: {}", masked));
                         }
                         Err(e) => {
                             self.status_message = format!("Error: Cannot read keyfile: {}", e);
@@ -260,7 +271,10 @@ impl EditorApp {
     /// Generate new keyfile
     pub(crate) fn generate_new_keyfile(&mut self) {
         if let Some(path) = rfd::FileDialog::new().set_file_name("keyfile").save_file() {
-            self.log_info(format!("Generating new keyfile: {}", self.mask_keyfile_path(&path)));
+            self.log_info(format!(
+                "Generating new keyfile: {}",
+                self.mask_keyfile_path(&path)
+            ));
 
             match generate_keyfile(&path) {
                 Ok(_) => {
@@ -360,8 +374,10 @@ impl EditorApp {
         {
             match std::fs::write(&path, &content) {
                 Ok(_) => {
-                    self.status_message =
-                        format!("OK: Exported as plaintext: {}", self.mask_directory_path(&path));
+                    self.status_message = format!(
+                        "OK: Exported as plaintext: {}",
+                        self.mask_directory_path(&path)
+                    );
                     self.log_info(format!(
                         "OK: Exported {} bytes to {}",
                         content.len(),
@@ -413,10 +429,7 @@ impl EditorApp {
                             "Error: New keyfile too large ({:.1} MB, max 100 MB)",
                             metadata.len() as f64 / (1024.0 * 1024.0)
                         );
-                        self.log_error(format!(
-                            "New keyfile too large: {} bytes",
-                            metadata.len()
-                        ));
+                        self.log_error(format!("New keyfile too large: {} bytes", metadata.len()));
                         return;
                     }
                 }
@@ -444,11 +457,8 @@ impl EditorApp {
                     self.is_modified = false;
 
                     let new_masked = self.mask_keyfile_path(&new_keyfile_path);
-                    self.status_message = format!(
-                        "OK: Keyfile rotated: {} → {}",
-                        old_name,
-                        new_masked
-                    );
+                    self.status_message =
+                        format!("OK: Keyfile rotated: {} → {}", old_name, new_masked);
                     self.log_success(format!(
                         "OK: Keyfile rotated successfully for {}",
                         self.mask_directory_path(&file_path)
@@ -482,28 +492,34 @@ impl EditorApp {
                     return;
                 }
             } else {
-                 // Initialize timer if not set (wait for first interval)
-                 self.last_autosave_time = Some(now);
-                 return;
+                // Initialize timer if not set (wait for first interval)
+                self.last_autosave_time = Some(now);
+                return;
             }
         }
 
         let original_path = self.current_file_path.as_ref().unwrap();
         // Construct autosave path: filename.autosave.sen
-        let file_name = original_path.file_name().unwrap_or_default().to_string_lossy();
+        let file_name = original_path
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy();
         let base_name = file_name.strip_suffix(".sen").unwrap_or(&file_name);
         let autosave_name = format!("{}.autosave.sen", base_name);
         let autosave_path = original_path.with_file_name(autosave_name);
-        
+
         let keyfile = self.keyfile_path.clone().unwrap();
-        
+
         // Encrypt and save silently
         let file_content = self.document.to_file_content();
-        
+
         match encrypt_file(&file_content, &keyfile, &autosave_path) {
             Ok(_) => {
                 self.last_autosave_time = Some(now);
-                self.log_info(format!("Auto-saved to {}", self.mask_directory_path(&autosave_path)));
+                self.log_info(format!(
+                    "Auto-saved to {}",
+                    self.mask_directory_path(&autosave_path)
+                ));
             }
             Err(e) => {
                 self.log_error(format!("Auto-save failed: {}", e));

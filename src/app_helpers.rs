@@ -1,4 +1,4 @@
-use crate::app_state::{FileTreeEntry, LogEntry, LogLevel, KeyStatus};
+use crate::app_state::{FileTreeEntry, KeyStatus, LogEntry, LogLevel};
 use crate::EditorApp;
 
 impl EditorApp {
@@ -258,7 +258,10 @@ impl EditorApp {
         let dir_opt = self.file_tree_dir.clone();
 
         if let Some(dir) = dir_opt {
-            self.log_info(format!("Refreshing file tree for: {}", self.mask_directory_path(&dir)));
+            self.log_info(format!(
+                "Refreshing file tree for: {}",
+                self.mask_directory_path(&dir)
+            ));
             match std::fs::read_dir(&dir) {
                 Ok(entries) => {
                     let mut folders = Vec::new();
@@ -371,25 +374,26 @@ impl EditorApp {
             return;
         }
 
-        self.log_info(format!("Checking access for {} files in background...", paths_to_check.len()));
+        self.log_info(format!(
+            "Checking access for {} files in background...",
+            paths_to_check.len()
+        ));
 
         // 3. Spawn background checking thread
         let (tx, rx) = std::sync::mpsc::channel();
         self.access_check_receiver = Some(rx);
-        
-        // We'll use a thread to check these files one by one. 
+
+        // We'll use a thread to check these files one by one.
         // For very large trees, we might want a pool, but this is simple and doesn't block UI.
         std::thread::spawn(move || {
             for path in paths_to_check {
                 let status = match crate::crypto::check_key_compatibility(&key_hash, &path) {
                     Ok(true) => KeyStatus::Decryptable,
                     Ok(false) => KeyStatus::WrongKey,
-                    Err(e) => {
-                        match e {
-                            crate::crypto::CryptoError::InvalidMagicNumber => KeyStatus::NotSen,
-                            _ => KeyStatus::WrongKey,
-                        }
-                    }
+                    Err(e) => match e {
+                        crate::crypto::CryptoError::InvalidMagicNumber => KeyStatus::NotSen,
+                        _ => KeyStatus::WrongKey,
+                    },
                 };
                 let _ = tx.send((path, status));
             }
@@ -405,7 +409,7 @@ impl EditorApp {
                 self.file_access_cache.insert(path, status);
                 got_any = true;
             }
-            
+
             // If we got results, we need a repaint to show them
             if got_any {
                 ctx.request_repaint();
@@ -477,8 +481,11 @@ impl EditorApp {
                             painter_rect.min,
                             egui::vec2(char_width, painter_rect.height()),
                         );
-                        ui.painter()
-                            .rect_filled(block_rect, 0.0, cursor_color.linear_multiply(0.7));
+                        ui.painter().rect_filled(
+                            block_rect,
+                            0.0,
+                            cursor_color.linear_multiply(0.7),
+                        );
                     }
                     crate::settings::CursorShape::Underscore => {
                         let char_width = font_size * 0.6;
@@ -496,12 +503,12 @@ impl EditorApp {
 
             // Draw manual selection highlights
             if cursor_range.primary != cursor_range.secondary {
-                let (min_idx, max_idx) = if cursor_range.primary.index < cursor_range.secondary.index
-                {
-                    (cursor_range.primary.index, cursor_range.secondary.index)
-                } else {
-                    (cursor_range.secondary.index, cursor_range.primary.index)
-                };
+                let (min_idx, max_idx) =
+                    if cursor_range.primary.index < cursor_range.secondary.index {
+                        (cursor_range.primary.index, cursor_range.secondary.index)
+                    } else {
+                        (cursor_range.secondary.index, cursor_range.primary.index)
+                    };
 
                 let mut current_char_idx = 0;
                 for row in &galley.rows {

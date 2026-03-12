@@ -14,9 +14,8 @@ impl EditorApp {
         ui.spacing_mut().interact_size.y = 0.0;
         ui.spacing_mut().item_spacing = egui::vec2(4.0, 4.0);
 
-        let is_vertical =
-            self.settings.toolbar_position == crate::settings::ToolbarPosition::Left
-                || self.settings.toolbar_position == crate::settings::ToolbarPosition::Right;
+        let is_vertical = self.settings.toolbar_position == crate::settings::ToolbarPosition::Left
+            || self.settings.toolbar_position == crate::settings::ToolbarPosition::Right;
 
         if is_vertical {
             self.render_toolbar_vertical(ui);
@@ -33,14 +32,14 @@ impl EditorApp {
         let panel_h = ui.available_height();
 
         let ico_s = self.settings.toolbar_icon_size;
-        let btn_h   = ico_s + 4.0;
+        let btn_h = ico_s + 4.0;
         let spacing = 4.0;
-        let sep_h   = 4.0; // egui::Separator defaults to spacing equal to item_spacing (4.0)
+        let sep_h = 4.0; // egui::Separator defaults to spacing equal to item_spacing (4.0)
 
         // Count items and gaps:
         // Buttons: 6 (file) + 4 (keyfile) + 5 (settings) = 15
         // Separators: 2
-        // Gaps: 5 (in file) + 1 (to sep1) + 1 (to keyfile) + 3 (in keyfile) + 
+        // Gaps: 5 (in file) + 1 (to sep1) + 1 (to keyfile) + 3 (in keyfile) +
         //       1 (to spacer) + 1 (to settings) + 1 (in settings after sep2) + 4 (between settings buttons) = 17
         let total_content_h = (15.0 * btn_h) + (2.0 * sep_h) + (17.0 * spacing);
 
@@ -141,13 +140,35 @@ impl EditorApp {
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
-        if Self::icon_btn(ui, &self.icons.new_doc, "New (Ctrl+N)", false, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.new_doc,
+            "New (Ctrl+N)",
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.new_document();
         }
         if Self::icon_btn(ui, &self.icons.open, "Open (Ctrl+O)", false, bs, is, ht, dt).clicked() {
             self.open_file_dialog();
         }
-        if Self::icon_btn(ui, &self.icons.open_folder, "Open Directory", false, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.open_folder,
+            "Open Directory",
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.open_directory();
         }
         if Self::icon_btn(ui, &self.icons.save, "Save (Ctrl+S)", false, bs, is, ht, dt).clicked() {
@@ -156,7 +177,18 @@ impl EditorApp {
         if Self::icon_btn(ui, &self.icons.save_as, "Save As", false, bs, is, ht, dt).clicked() {
             self.save_file_as();
         }
-        if Self::icon_btn(ui, &self.icons.export, "Export to Plaintext (.txt)", false, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.export,
+            "Export to Plaintext (.txt)",
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.export_plaintext();
         }
     }
@@ -170,16 +202,49 @@ impl EditorApp {
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
-        if Self::icon_btn(ui, &self.icons.generate, "Generate Keyfile", false, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.generate,
+            "Generate Keyfile",
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.generate_new_keyfile();
         }
         if Self::icon_btn(ui, &self.icons.key, "Load Keyfile", false, bs, is, ht, dt).clicked() {
             self.load_keyfile();
         }
-        if Self::icon_btn(ui, &self.icons.rotate, "Rotate Keyfile", false, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.rotate,
+            "Rotate Keyfile",
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.rotate_keyfile();
         }
-        if Self::icon_btn(ui, &self.icons.batch_convert, "Batch Convert", false, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.batch_convert,
+            "Batch Convert",
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_batch_converter = !self.show_batch_converter;
         }
     }
@@ -193,7 +258,18 @@ impl EditorApp {
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
-        if Self::icon_btn(ui, &self.icons.theme, "Toggle Theme Editor", self.show_theme_editor, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.theme,
+            "Toggle Theme Editor",
+            self.show_theme_editor,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_theme_editor = !self.show_theme_editor;
             self.settings.show_theme_editor = self.show_theme_editor;
             let _ = self.settings.save();
@@ -201,23 +277,67 @@ impl EditorApp {
                 self.editing_theme = Some(self.current_theme.clone());
             }
         }
-        if Self::icon_btn(ui, &self.icons.settings, "Toggle Settings", self.show_settings_panel, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.settings,
+            "Toggle Settings",
+            self.show_settings_panel,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_settings_panel = !self.show_settings_panel;
             self.settings.show_settings_panel = self.show_settings_panel;
             let _ = self.settings.save();
         }
 
-        if Self::icon_btn(ui, &self.icons.debug, "Toggle Debug", self.show_debug_panel, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.debug,
+            "Toggle Debug",
+            self.show_debug_panel,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_debug_panel = !self.show_debug_panel;
             self.settings.show_debug_panel = self.show_debug_panel;
             let _ = self.settings.save();
         }
-        if Self::icon_btn(ui, &self.icons.history, "Toggle History", self.show_history_panel, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.history,
+            "Toggle History",
+            self.show_history_panel,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_history_panel = !self.show_history_panel;
             self.settings.show_history_panel = self.show_history_panel;
             let _ = self.settings.save();
         }
-        if Self::icon_btn(ui, &self.icons.file_tree, "Toggle File Tree", self.show_file_tree, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.file_tree,
+            "Toggle File Tree",
+            self.show_file_tree,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_file_tree = !self.show_file_tree;
             self.settings.show_file_tree = self.show_file_tree;
             let _ = self.settings.save();
@@ -237,28 +357,83 @@ impl EditorApp {
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
-        if Self::icon_btn(ui, &self.icons.file_tree, "Toggle File Tree", self.show_file_tree, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.file_tree,
+            "Toggle File Tree",
+            self.show_file_tree,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_file_tree = !self.show_file_tree;
             self.settings.show_file_tree = self.show_file_tree;
             let _ = self.settings.save();
         }
-        if Self::icon_btn(ui, &self.icons.history, "Toggle History", self.show_history_panel, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.history,
+            "Toggle History",
+            self.show_history_panel,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_history_panel = !self.show_history_panel;
             self.settings.show_history_panel = self.show_history_panel;
             let _ = self.settings.save();
         }
-        if Self::icon_btn(ui, &self.icons.debug, "Toggle Debug", self.show_debug_panel, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.debug,
+            "Toggle Debug",
+            self.show_debug_panel,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_debug_panel = !self.show_debug_panel;
             self.settings.show_debug_panel = self.show_debug_panel;
             let _ = self.settings.save();
         }
 
-        if Self::icon_btn(ui, &self.icons.settings, "Toggle Settings", self.show_settings_panel, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.settings,
+            "Toggle Settings",
+            self.show_settings_panel,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_settings_panel = !self.show_settings_panel;
             self.settings.show_settings_panel = self.show_settings_panel;
             let _ = self.settings.save();
         }
-        if Self::icon_btn(ui, &self.icons.theme, "Toggle Theme Editor", self.show_theme_editor, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.theme,
+            "Toggle Theme Editor",
+            self.show_theme_editor,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_theme_editor = !self.show_theme_editor;
             self.settings.show_theme_editor = self.show_theme_editor;
             let _ = self.settings.save();
