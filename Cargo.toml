@@ -48,6 +48,7 @@ base64 = "0.22"
 font-kit = "0.14"
 keyring = "3"
 hex = "0.4"
+notify = "8.0"
 
 # ============================================================================
 # BUILD PROFILES - Optimized for compilation speed

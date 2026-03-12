@@ -113,6 +113,7 @@ impl EditorApp {
             self.settings.show_file_tree = true;
             let _ = self.settings.save();
             self.refresh_file_tree();
+            self.setup_watcher();
         }
     }
 
@@ -126,6 +127,7 @@ impl EditorApp {
 
         let _ = self.settings.save();
         self.refresh_file_tree();
+        self.setup_watcher();
     }
 
     /// Save file

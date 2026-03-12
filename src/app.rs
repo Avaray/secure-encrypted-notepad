@@ -152,6 +152,10 @@ pub struct EditorApp {
     pub(crate) show_clear_keyfile_confirmation: bool,
     /// Workspace Clear Confirmation State
     pub(crate) show_clear_workspace_confirmation: bool,
+    /// File system watcher for the current directory
+    pub(crate) watcher: Option<notify::RecommendedWatcher>,
+    /// Receiver for file system events
+    pub(crate) watcher_receiver: Option<std::sync::mpsc::Receiver<Result<notify::Event, notify::Error>>>,
 }
 
 impl EditorApp {
@@ -273,6 +277,8 @@ impl EditorApp {
             reset_slider_val: 0.0,
             show_clear_keyfile_confirmation: false,
             show_clear_workspace_confirmation: false,
+            watcher: None,
+            watcher_receiver: None,
         }
     }
 
@@ -332,6 +338,7 @@ impl EditorApp {
             env!("CARGO_PKG_VERSION")
         ));
         app.refresh_file_tree();
+        app.setup_watcher();
         app
     }
 }
@@ -349,6 +356,28 @@ impl eframe::App for EditorApp {
 
         // Process results from background file access checks
         self.process_access_check_results(ctx);
+
+        // Process file system events for file tree
+        if let Some(rx) = &self.watcher_receiver {
+            let mut refresh_needed = false;
+            while let Ok(res) = rx.try_recv() {
+                match res {
+                    Ok(event) => {
+                        // Refresh on any change that isn't just a simple access
+                        if !event.kind.is_access() {
+                            refresh_needed = true;
+                        }
+                    }
+                    Err(_) => {
+                        // On error, we might want to refresh just in case, or do nothing
+                    }
+                }
+            }
+            if refresh_needed {
+                self.refresh_file_tree();
+                ctx.request_repaint();
+            }
+        }
 
         // Update window title dynamically
         self.update_window_title(ctx);

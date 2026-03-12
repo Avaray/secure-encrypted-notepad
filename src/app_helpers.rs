@@ -220,6 +220,38 @@ impl EditorApp {
         }
     }
 
+    /// Setup file system watcher for the current directory
+    pub(crate) fn setup_watcher(&mut self) {
+        use notify::{RecursiveMode, Watcher};
+
+        // Stop previous watcher if any
+        self.watcher = None;
+
+        let Some(dir) = &self.file_tree_dir else {
+            return;
+        };
+
+        let (tx, rx) = std::sync::mpsc::channel();
+        self.watcher_receiver = Some(rx);
+
+        let mut watcher = match notify::recommended_watcher(move |res| {
+            let _ = tx.send(res);
+        }) {
+            Ok(w) => w,
+            Err(e) => {
+                self.log_error(format!("Failed to create watcher: {}", e));
+                return;
+            }
+        };
+
+        if let Err(e) = watcher.watch(dir, RecursiveMode::NonRecursive) {
+            self.log_error(format!("Failed to watch directory: {}", e));
+            return;
+        }
+
+        self.watcher = Some(watcher);
+    }
+
     /// Get line indices that should be toggled (0-indexed)
     pub(crate) fn get_lines_in_selection(&self) -> Vec<usize> {
         let text = &self.document.current_content;
