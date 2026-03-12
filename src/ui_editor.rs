@@ -157,6 +157,7 @@ impl EditorApp {
                     &self.settings,
                     &mut self.is_modified,
                 );
+                self.last_modification_time = std::time::Instant::now();
             } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::SHIFT, egui::Key::Tab)) {
                 Self::handle_tab_key(
                     ui,
@@ -166,10 +167,12 @@ impl EditorApp {
                     &self.settings,
                     &mut self.is_modified,
                 );
+                self.last_modification_time = std::time::Instant::now();
             } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::C)) {
                 Self::handle_copy_key(ui, text_edit_id, text);
             } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::X)) {
                 Self::handle_cut_key(ui, text_edit_id, text, &mut self.is_modified);
+                self.last_modification_time = std::time::Instant::now();
             } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::CTRL, egui::Key::A)) {
                 if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
                     let total_chars = text.chars().count();
@@ -523,6 +526,7 @@ impl EditorApp {
             if output.response.changed() {
                 self.is_modified = true;
                 self.loaded_history_index = None;
+                self.last_modification_time = std::time::Instant::now();
 
                 // Enforce max lines limit
                 if self.settings.max_lines > 0 {

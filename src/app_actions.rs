@@ -476,25 +476,28 @@ impl EditorApp {
 
     /// Perform auto-save if needed. If `immediate` is true, bypass interval check.
     pub(crate) fn perform_autosave(&mut self, immediate: bool) {
-        if !self.settings.auto_save_enabled && !immediate {
+        if (!self.settings.auto_save_enabled && !immediate) || !self.is_modified {
             return;
         }
 
-        // Only save if modified, file is open, and keyfile exists
-        if !self.is_modified || self.current_file_path.is_none() || self.keyfile_path.is_none() {
+        // Only save if file is open, and keyfile exists
+        if self.current_file_path.is_none() || self.keyfile_path.is_none() {
             return;
         }
 
         let now = std::time::Instant::now();
         if !immediate {
+            // DEBOUNCE LOGIC: Wait for inactivity
+            let elapsed = now.duration_since(self.last_modification_time).as_secs();
+            if elapsed < self.settings.auto_save_debounce_secs {
+                return;
+            }
+
+            // Don't spam saves if we already auto-saved the current changes
             if let Some(last_time) = self.last_autosave_time {
-                if now.duration_since(last_time).as_secs() < self.settings.auto_save_interval_secs {
+                if last_time > self.last_modification_time {
                     return;
                 }
-            } else {
-                // Initialize timer if not set (wait for first interval)
-                self.last_autosave_time = Some(now);
-                return;
             }
         }
 

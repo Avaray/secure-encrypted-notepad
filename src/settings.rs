@@ -85,8 +85,8 @@ pub struct Settings {
 
     /// Auto-save enabled
     pub auto_save_enabled: bool,
-    /// Auto-save interval in seconds
-    pub auto_save_interval_secs: u64,
+    /// Auto-save debounce time in seconds (inactivity before saving)
+    pub auto_save_debounce_secs: u64,
     /// Auto-save on focus loss
     #[serde(default = "default_true")]
     pub auto_save_on_focus_loss: bool,
@@ -241,7 +241,7 @@ impl Default for Settings {
             use_spaces_for_tabs: true,
             word_wrap: false,
             auto_save_enabled: true,
-            auto_save_interval_secs: 60,
+            auto_save_debounce_secs: 15,
             auto_save_on_focus_loss: true,
 
             show_debug_panel: false,

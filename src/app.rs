@@ -105,6 +105,7 @@ pub struct EditorApp {
 
     // Auto-save state
     pub last_autosave_time: Option<Instant>,
+    pub(crate) last_modification_time: Instant,
 
     // Style dirty flag
     pub(crate) style_dirty: bool,
@@ -261,6 +262,7 @@ impl EditorApp {
             is_maximized: false,
             last_is_maximized: false,
             last_autosave_time: None,
+            last_modification_time: Instant::now(),
 
             style_dirty: true, // Apply style on startup
             reset_scroll_x_pending: false,

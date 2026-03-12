@@ -298,24 +298,25 @@ if ui
 {
 let _ = self.settings.save();
 }
-if ui
-.checkbox(&mut self.settings.auto_save_enabled, "Enable timed Auto-save")
-.changed()
+                if ui
+                    .checkbox(&mut self.settings.auto_save_enabled, "Enable Debounce Auto-save")
+                    .on_hover_text("Automatically saves after a period of inactivity while typing.")
+                    .changed()
 {
 let _ = self.settings.save();
 }
-ui.horizontal(|ui| {
-ui.label("Interval (seconds):");
-if ui
-.add(
-egui::DragValue::new(&mut self.settings.auto_save_interval_secs)
-.range(5..=3600),
-)
-.changed()
-{
-let _ = self.settings.save();
-}
-});
+                ui.horizontal(|ui| {
+                    ui.label("Inactivity (seconds):");
+                    if ui
+                        .add(
+                            egui::DragValue::new(&mut self.settings.auto_save_debounce_secs)
+                                .range(1..=3600),
+                        )
+                        .changed()
+                    {
+                        let _ = self.settings.save();
+                    }
+                });
 });
 });
 ui.add_space(8.0);
