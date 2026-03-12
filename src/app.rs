@@ -152,6 +152,8 @@ pub struct EditorApp {
     pub(crate) show_clear_keyfile_confirmation: bool,
     /// Workspace Clear Confirmation State
     pub(crate) show_clear_workspace_confirmation: bool,
+    /// History Clear Confirmation State
+    pub(crate) show_clear_history_confirmation: bool,
     /// File system watcher for the current directory
     pub(crate) watcher: Option<notify::RecommendedWatcher>,
     /// Receiver for file system events
@@ -277,6 +279,7 @@ impl EditorApp {
             reset_slider_val: 0.0,
             show_clear_keyfile_confirmation: false,
             show_clear_workspace_confirmation: false,
+            show_clear_history_confirmation: false,
             watcher: None,
             watcher_receiver: None,
         }

@@ -190,6 +190,11 @@ impl EditorApp {
             Ok(_) => {
                 self.current_file_path = Some(path.clone());
                 self.is_modified = false;
+                
+                // Commit trimmed history state after successful save
+                self.document.trim_to_limit();
+                // Filter out entries marked as deleted to fully synchronize
+                self.document.history.retain(|e| !e.deleted);
 
                 let history_count = self.document.get_visible_history().len();
                 self.status_message = format!(

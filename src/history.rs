@@ -113,13 +113,19 @@ impl DocumentWithHistory {
 
     /// Convert to file format (current + history + settings)
     pub fn to_file_content(&self) -> String {
-        // Filter out deleted entries before saving
-        let active_history: Vec<HistoryEntry> = self
+        // Filter out deleted entries (manually deleted) and enforce max_history_limit
+        let mut active_history: Vec<HistoryEntry> = self
             .history
             .iter()
             .filter(|entry| !entry.deleted)
             .cloned()
             .collect();
+
+        // Enforce limit: keep only the newest ones
+        if active_history.len() > self.max_history_length {
+            let to_remove = active_history.len() - self.max_history_length;
+            active_history.drain(0..to_remove);
+        }
 
         if active_history.is_empty() {
             self.current_content.clone()
@@ -157,14 +163,13 @@ impl DocumentWithHistory {
         };
         self.history.push(snapshot);
 
-        // Automatically mark oldest as deleted if over limit
-        self.trim_to_limit();
+        // Trim is deferred until save
 
         true
     }
 
     /// Mark entries as deleted to fit max_history_length (soft delete)
-    fn trim_to_limit(&mut self) {
+    pub fn trim_to_limit(&mut self) {
         let visible_count = self.history.iter().filter(|e| !e.deleted).count();
         if visible_count > self.max_history_length {
             let to_delete = visible_count - self.max_history_length;
@@ -185,7 +190,7 @@ impl DocumentWithHistory {
     /// Set maximum history length and mark excess as deleted (soft delete)
     pub fn set_max_history_length(&mut self, max_length: usize) {
         self.max_history_length = max_length.max(1); // At least 1
-        self.trim_to_limit();
+        // Trim is deferred until save
     }
 
     /// Get maximum history length

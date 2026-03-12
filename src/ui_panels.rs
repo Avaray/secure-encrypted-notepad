@@ -576,9 +576,10 @@ ui.add_space(4.0);
             .collect();
         let history_len = visible_history.len();
         let doc_max_limit = self.document.get_max_history_length();
+
         ui.vertical(|ui| {
             if !self.settings.hide_panel_headers {
-                ui.heading("📜 History");
+                ui.heading("History");
             }
             ui.horizontal(|ui| {
                 ui.label("Max History for this file:");
@@ -596,70 +597,173 @@ ui.add_space(4.0);
                     self.log_info(format!("Document history limit set to {}", temp_limit));
                 }
             });
+            let history_status_color = if history_len > doc_max_limit {
+                self.current_theme.colors.warning_color()
+            } else {
+                ui.visuals().widgets.noninteractive.fg_stroke.color // Default weak color
+            };
+            
             ui.label(
                 egui::RichText::new(format!(
                     "Current: {}/{} entries",
                     history_len, doc_max_limit
                 ))
-                .small()
-                .weak(),
+                .color(history_status_color),
             );
-            ui.separator();
-            if history_len > 0 {
-                if ui.button("🗑 Clear All History").clicked() {
-                    self.clear_all_history();
-                    self.loaded_history_index = None;
-                }
+
+            if history_len > doc_max_limit {
+                let to_delete = history_len - doc_max_limit;
+                ui.label(
+                    egui::RichText::new(format!("{} entries will be deleted upon save", to_delete))
+                        .color(self.current_theme.colors.warning_color())
+                        .small(),
+                );
             }
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                if history_len == 0 {
-                    ui.label("No history");
-                } else {
-                    for (original_index, entry) in visible_history.iter().rev() {
-                        let is_loaded = self.loaded_history_index == Some(*original_index);
-                        // ONE LINE COMPACT VIEW
-                        ui.horizontal(|ui| {
-                            ui.spacing_mut().item_spacing.x = 4.0;
-                            if is_loaded {
-                                ui.label(
-                                    egui::RichText::new("▶")
-                                        .color(self.current_theme.colors.cursor_color()),
-                                );
-                            } else {
-                                ui.add_space(8.0);
-                            }
-                            let text =
-                                format!("{} - {}", entry.display_timestamp(), entry.display_size());
-                            let label_res = ui.selectable_label(is_loaded, text);
-                            if label_res.clicked() {
-                                self.load_history_version(*original_index);
-                                self.loaded_history_index = Some(*original_index);
-                            }
-                            label_res.on_hover_ui(|ui| {
-                                ui.label(format!(
-                                    "Full date: {}",
-                                    entry.timestamp.format("%Y-%m-%d %H:%M:%S")
-                                ));
-                                if let Some(ref comment) = entry.comment {
-                                    ui.label(format!("Comment: {}", comment));
+            ui.separator();
+
+            let history_area_id = ui.id().with("history_focus_area");
+            let has_focus = ui.memory(|mem| mem.has_focus(history_area_id));
+
+            if history_len > 0 {
+                // keyboard navigation IF focused
+                if has_focus {
+                    if ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::ArrowUp)) {
+                        if let Some(loaded_idx) = self.loaded_history_index {
+                            if let Some(pos) = visible_history.iter().position(|(idx, _)| *idx == loaded_idx) {
+                                if pos < visible_history.len() - 1 {
+                                    let (new_idx, _) = visible_history[pos + 1];
+                                    self.load_history_version(new_idx);
+                                    self.loaded_history_index = Some(new_idx);
                                 }
-                            });
-                            ui.with_layout(
-                                egui::Layout::right_to_left(egui::Align::Center),
-                                |ui| {
-                                    if ui.button("🗑").on_hover_text("Delete").clicked() {
-                                        self.delete_history_entry(*original_index);
-                                        if self.loaded_history_index == Some(*original_index) {
-                                            self.loaded_history_index = None;
-                                        }
-                                    }
+                            }
+                        } else if let Some((idx, _)) = visible_history.last() {
+                            self.load_history_version(*idx);
+                            self.loaded_history_index = Some(*idx);
+                        }
+                    }
+                    if ui.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::ArrowDown)) {
+                        if let Some(loaded_idx) = self.loaded_history_index {
+                            if let Some(pos) = visible_history.iter().position(|(idx, _)| *idx == loaded_idx) {
+                                if pos > 0 {
+                                    let (new_idx, _) = visible_history[pos - 1];
+                                    self.load_history_version(new_idx);
+                                    self.loaded_history_index = Some(new_idx);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                ui.horizontal(|ui| {
+                    if self.show_clear_history_confirmation {
+                        ui.label(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color()));
+                        if ui.button("Yes").clicked() {
+                            self.clear_all_history();
+                            self.loaded_history_index = None;
+                            self.show_clear_history_confirmation = false;
+                        }
+                        if ui.button("No").clicked() {
+                            self.show_clear_history_confirmation = false;
+                        }
+                    } else if ui.button("🗑 Clear All History").clicked() {
+                        self.show_clear_history_confirmation = true;
+                    }
+                });
+            }
+
+            // High-level frame to catch clicks for focus
+            let stroke = if has_focus {
+                egui::Stroke::new(1.0, self.current_theme.colors.cursor_color())
+            } else {
+                egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color)
+            };
+
+            egui::Frame::none()
+                .inner_margin(4.0)
+                .stroke(stroke)
+                .rounding(4.0)
+                .show(ui, |ui| {
+                    // Interaction to gain focus
+                    let rect = ui.available_rect_before_wrap();
+                    let response = ui.interact(rect, history_area_id, egui::Sense::click());
+                    if response.clicked() {
+                        ui.memory_mut(|mem| mem.request_focus(history_area_id));
+                    }
+
+                    // Prevent arrow keys from moving focus out of the history panel when focused
+                    if has_focus {
+                        ui.memory_mut(|mem| {
+                            mem.set_focus_lock_filter(
+                                history_area_id,
+                                egui::EventFilter {
+                                    tab: true,
+                                    horizontal_arrows: true,
+                                    vertical_arrows: true,
+                                    escape: false,
                                 },
                             );
                         });
-                        ui.add_space(2.0);
                     }
-                }
-            });
+
+                    egui::ScrollArea::vertical()
+                        .id_salt("history_scroll_area")
+                        .show(ui, |ui| {
+                            if history_len == 0 {
+                                ui.label("No history");
+                            } else {
+                                let to_delete_count = if history_len > doc_max_limit {
+                                    history_len - doc_max_limit
+                                } else {
+                                    0
+                                };
+
+                                for (v_idx, (original_index, entry)) in visible_history.iter().enumerate().rev() {
+                                    let is_loaded = self.loaded_history_index == Some(*original_index);
+                                    let will_be_deleted = v_idx < to_delete_count;
+                                    
+                                    ui.horizontal(|ui| {
+                                        ui.spacing_mut().item_spacing.x = 4.0;
+                                        if is_loaded {
+                                            ui.label(
+                                                egui::RichText::new("▶")
+                                                    .color(self.current_theme.colors.success_color()),
+                                            );
+                                        } else {
+                                            ui.add_space(8.0);
+                                        }
+                                        
+                                        let text = format!("{} - {}", entry.display_timestamp(), entry.display_size());
+                                        let mut rich_text = egui::RichText::new(text);
+                                        if will_be_deleted {
+                                            rich_text = rich_text.color(self.current_theme.colors.warning_color());
+                                        }
+                                        
+                                        let label_res = ui.selectable_label(is_loaded, rich_text);
+                                        
+                                        if label_res.clicked() {
+                                            self.load_history_version(*original_index);
+                                            self.loaded_history_index = Some(*original_index);
+                                            ui.memory_mut(|mem| mem.request_focus(history_area_id));
+                                        }
+                                        
+                                        if is_loaded && has_focus {
+                                            label_res.scroll_to_me(None);
+                                        }
+                                        
+                                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                            if ui.button("🗑").on_hover_text("Delete").clicked() {
+                                                self.delete_history_entry(*original_index);
+                                                if self.loaded_history_index == Some(*original_index) {
+                                                    self.loaded_history_index = None;
+                                                }
+                                            }
+                                        });
+                                    });
+                                    ui.add_space(2.0);
+                                }
+                            }
+                        });
+                });
         });
     }
     /// Render debug panel
