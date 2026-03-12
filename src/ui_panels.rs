@@ -678,10 +678,10 @@ ui.add_space(4.0);
                 egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color)
             };
 
-            egui::Frame::none()
+            egui::Frame::NONE
                 .inner_margin(4.0)
                 .stroke(stroke)
-                .rounding(4.0)
+                .corner_radius(4.0)
                 .show(ui, |ui| {
                     // Interaction to gain focus
                     let rect = ui.available_rect_before_wrap();
