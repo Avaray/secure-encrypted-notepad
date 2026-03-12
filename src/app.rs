@@ -585,8 +585,19 @@ impl eframe::App for EditorApp {
         // Perform auto-save check
         self.perform_autosave(false);
 
+        // Sync all panel visibility to settings every frame (no disk write here)
+        self.settings.show_debug_panel = self.show_debug_panel;
+        self.settings.show_settings_panel = self.show_settings_panel;
+        self.settings.show_history_panel = self.show_history_panel;
+        self.settings.show_theme_editor = self.show_theme_editor;
+        self.settings.show_search_panel = self.show_search_panel;
+        self.settings.show_file_tree = self.show_file_tree;
+
         // Handle close request
         if ctx.input(|i| i.viewport().close_requested()) {
+            // Always save final panel state on close
+            let _ = self.settings.save();
+
             if self.is_modified {
                 ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
                 self.check_changes_before_action(PendingAction::Exit);
@@ -678,6 +689,8 @@ impl eframe::App for EditorApp {
                 egui::Key::F,
             )) {
                 self.show_search_panel = !self.show_search_panel;
+                self.settings.show_search_panel = self.show_search_panel;
+                let _ = self.settings.save();
                 if self.show_search_panel {
                     self.focus_search = true;
                 }

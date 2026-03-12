@@ -848,7 +848,8 @@ ui.add_space(4.0);
                 ui.label(format!("Entries: {}", self.debug_log.len()));
             });
             ui.separator();
-            egui::ScrollArea::vertical()
+            egui::ScrollArea::both()
+                .auto_shrink([false, false])
                 .stick_to_bottom(true)
                 .show(ui, |ui| {
                     for entry in &self.debug_log {
