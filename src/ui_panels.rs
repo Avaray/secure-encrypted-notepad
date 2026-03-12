@@ -244,6 +244,13 @@ if ui
 {
 let _ = self.settings.save();
 }
+if ui
+.checkbox(&mut self.settings.tree_style_file_tree, "Tree-style view")
+.on_hover_text("Display files with tree connectors (├── └──) like the 'tree' command")
+.changed()
+{
+let _ = self.settings.save();
+}
 ui.add_space(8.0);
 ui.separator();
 ui.add_space(8.0);
@@ -872,7 +879,21 @@ ui.add_space(4.0);
                         }
                         let available_width = ui.available_width();
                         ui.set_max_width(available_width);
-                        for entry in &self.file_tree_entries.clone() {
+                        let entries = self.file_tree_entries.clone();
+                        let tree_on = self.settings.tree_style_file_tree;
+                        let tree_indent: f32 = if tree_on { 18.0 } else { 0.0 };
+                        let panel_left = ui.min_rect().left();
+                        let line_x = panel_left + 7.0;
+                        let branch_end_x = panel_left + tree_indent - 2.0;
+                        let line_color = ui.visuals().weak_text_color();
+                        let stroke = egui::Stroke::new(1.0, line_color);
+
+                        // Collect mid_y positions for tree lines (two-pass to avoid overlap)
+                        let mut entry_mid_ys: Vec<f32> = Vec::new();
+
+                        for (_i, entry) in entries.iter().enumerate() {
+                            let top_y = ui.cursor().top();
+
                             match entry {
                                 FileTreeEntry::Directory(path) => {
                                     let is_parent = self
@@ -889,21 +910,28 @@ ui.add_space(4.0);
                                             path.file_name().unwrap_or_default().to_string_lossy()
                                         )
                                     };
-                                    if ui
-                                        .add(egui::Button::new(&display_name).truncate())
-                                        .on_hover_text(&display_name)
-                                        .clicked()
-                                    {
-                                        self.change_directory(path.clone());
-                                    }
+                                    ui.horizontal(|ui| {
+                                        if tree_on {
+                                            ui.add_space(tree_indent);
+                                        }
+                                        if ui
+                                            .add(egui::Button::new(&display_name).truncate())
+                                            .on_hover_text(&display_name)
+                                            .clicked()
+                                        {
+                                            self.change_directory(path.clone());
+                                        }
+                                    });
                                 }
                                 FileTreeEntry::File(path) => {
                                     let filename =
                                         path.file_name().unwrap_or_default().to_string_lossy();
                                     ui.horizontal(|ui| {
+                                        if tree_on {
+                                            ui.add_space(tree_indent);
+                                        }
                                         ui.spacing_mut().item_spacing.x = 4.0;
                                         if filename.ends_with(".sen") {
-                                            // Get access status from cache
                                             let status = self
                                                 .file_access_cache
                                                 .get(path)
@@ -960,6 +988,35 @@ ui.add_space(4.0);
                                         }
                                     });
                                 }
+                            }
+
+                            if tree_on {
+                                let bottom_y = ui.cursor().top();
+                                let mid_y = (top_y + bottom_y) / 2.0;
+                                entry_mid_ys.push(mid_y);
+                            }
+                        }
+
+                        // Paint all tree lines in one pass (no overlapping segments)
+                        if tree_on && !entry_mid_ys.is_empty() {
+                            let painter = ui.painter();
+
+                            // One vertical line from first entry's mid to last entry's mid
+                            let first_mid = entry_mid_ys[0];
+                            let last_mid = *entry_mid_ys.last().unwrap();
+                            if entry_mid_ys.len() > 1 {
+                                painter.line_segment(
+                                    [egui::pos2(line_x, first_mid), egui::pos2(line_x, last_mid)],
+                                    stroke,
+                                );
+                            }
+
+                            // Horizontal branches for each entry
+                            for mid_y in &entry_mid_ys {
+                                painter.line_segment(
+                                    [egui::pos2(line_x, *mid_y), egui::pos2(branch_end_x, *mid_y)],
+                                    stroke,
+                                );
                             }
                         }
                     } else {

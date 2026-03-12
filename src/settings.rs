@@ -87,6 +87,9 @@ pub struct Settings {
     pub show_line_numbers: bool,
     /// Show file tree panel
     pub show_file_tree: bool,
+    /// Use tree-style connectors (│├──└──) in file tree
+    #[serde(default)]
+    pub tree_style_file_tree: bool,
     /// Show special symbols (spaces, tabs, returns)
     #[serde(default)]
     pub show_whitespace: bool,
@@ -253,6 +256,7 @@ impl Default for Settings {
             screen_capture_protection: false,
             show_line_numbers: true,
             show_file_tree: true,
+            tree_style_file_tree: false,
             show_whitespace: false,
             tab_size: 4,
             use_spaces_for_tabs: true,
