@@ -64,6 +64,9 @@ pub struct EditorApp {
     /// File tree entries
     pub(crate) file_tree_entries: Vec<FileTreeEntry>,
 
+    /// Expanded directories in the file tree
+    pub(crate) expanded_directories: std::collections::HashSet<PathBuf>,
+
     /// Icons
     pub(crate) icons: crate::icons::Icons,
 
@@ -233,6 +236,7 @@ impl EditorApp {
             debug_log: Vec::new(),
             file_tree_dir,
             file_tree_entries: Vec::new(),
+            expanded_directories: std::collections::HashSet::new(),
             icons: crate::icons::Icons::load(&egui::Context::default()),
             show_theme_editor: if restore_all {
                 settings.show_theme_editor

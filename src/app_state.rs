@@ -44,9 +44,11 @@ impl LogEntry {
 
 /// File tree entry type
 #[derive(Debug, Clone)]
-pub enum FileTreeEntry {
-    File(PathBuf),
-    Directory(PathBuf),
+pub struct FileTreeEntry {
+    pub path: PathBuf,
+    pub is_dir: bool,
+    pub is_expanded: bool,
+    pub depth: usize,
 }
 
 /// Pending action for unsaved changes confirmation

@@ -1,5 +1,6 @@
 use crate::app_state::{FileTreeEntry, KeyStatus, LogEntry, LogLevel};
 use crate::EditorApp;
+use std::path::PathBuf;
 
 impl EditorApp {
     /// Logging functions
@@ -294,74 +295,149 @@ impl EditorApp {
                 "Refreshing file tree for: {}",
                 self.mask_directory_path(&dir)
             ));
-            match std::fs::read_dir(&dir) {
-                Ok(entries) => {
-                    let mut folders = Vec::new();
-                    let mut files = Vec::new();
+            
+            if self.settings.tree_style_file_tree {
+                // Tree View (recursive lazy load)
+                let mut entries = Vec::new();
+                
+                let has_parent = dir.parent().is_some();
+                // Add parent directory ".." button at the top
+                if has_parent {
+                    entries.push(FileTreeEntry {
+                        path: dir.parent().unwrap().to_path_buf(),
+                        is_dir: true,
+                        is_expanded: false,
+                        depth: 0,
+                    });
+                }
+                
+                let start_depth = if has_parent { 1 } else { 0 };
+                
+                self.build_tree_recursive(&dir, start_depth, &mut entries);
+                self.file_tree_entries = entries;
+                
+            } else {
+                // Simple View (flat list)
+                match std::fs::read_dir(&dir) {
+                    Ok(read_dir) => {
+                        let mut folders = Vec::new();
+                        let mut files = Vec::new();
 
-                    for entry in entries.flatten() {
-                        let path = entry.path();
-                        if path.is_dir() && self.settings.show_subfolders {
-                            folders.push(FileTreeEntry::Directory(path));
-                        } else if path.is_file() {
-                            if let Some(ext) = path.extension() {
-                                if ext == "sen" {
-                                    files.push(FileTreeEntry::File(path));
+                        for entry_res in read_dir {
+                            if let Ok(entry) = entry_res {
+                                let path = entry.path();
+                                if path.is_dir() && self.settings.show_subfolders {
+                                    folders.push(FileTreeEntry {
+                                        path: path.clone(),
+                                        is_dir: true,
+                                        is_expanded: false,
+                                        depth: 0,
+                                    });
+                                } else if path.is_file() {
+                                    if let Some(ext) = path.extension() {
+                                        if ext == "sen" {
+                                            files.push(FileTreeEntry {
+                                                path: path.clone(),
+                                                is_dir: false,
+                                                is_expanded: false,
+                                                depth: 0,
+                                            });
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    folders.sort_by(|a, b| {
-                        if let (FileTreeEntry::Directory(a), FileTreeEntry::Directory(b)) = (a, b) {
-                            a.file_name().cmp(&b.file_name())
-                        } else {
-                            std::cmp::Ordering::Equal
+                        folders.sort_by(|a, b| a.path.file_name().unwrap_or_default().cmp(b.path.file_name().unwrap_or_default()));
+                        files.sort_by(|a, b| a.path.file_name().unwrap_or_default().cmp(b.path.file_name().unwrap_or_default()));
+
+                        if dir.parent().is_some() && self.settings.show_subfolders {
+                            self.file_tree_entries.push(FileTreeEntry {
+                                path: dir.parent().unwrap().to_path_buf(),
+                                is_dir: true,
+                                is_expanded: false,
+                                depth: 0,
+                            });
                         }
-                    });
 
-                    files.sort_by(|a, b| {
-                        if let (FileTreeEntry::File(a), FileTreeEntry::File(b)) = (a, b) {
-                            a.file_name().cmp(&b.file_name())
-                        } else {
-                            std::cmp::Ordering::Equal
-                        }
-                    });
-
-                    if dir.parent().is_some() && self.settings.show_subfolders {
-                        self.file_tree_entries.push(FileTreeEntry::Directory(
-                            dir.parent().unwrap().to_path_buf(),
-                        ));
+                        self.file_tree_entries.extend(folders);
+                        self.file_tree_entries.extend(files);
                     }
-
-                    self.file_tree_entries.extend(folders);
-                    self.file_tree_entries.extend(files);
-
-                    let folder_count = self
-                        .file_tree_entries
-                        .iter()
-                        .filter(|e| matches!(e, FileTreeEntry::Directory(_)))
-                        .count();
-                    let file_count = self
-                        .file_tree_entries
-                        .iter()
-                        .filter(|e| matches!(e, FileTreeEntry::File(_)))
-                        .count();
-
-                    self.log_info(format!(
-                        "Found {} folders and {} .sen files",
-                        folder_count, file_count
-                    ));
-
-                    // Refresh access status for the newly loaded tree
-                    self.refresh_file_access_status();
-                }
-                Err(e) => {
-                    self.log_error(format!("Failed to read directory: {}", e));
+                    Err(e) => {
+                        self.log_error(format!("Failed to read directory: {}", e));
+                    }
                 }
             }
+            
+            let folder_count = self.file_tree_entries.iter().filter(|e| e.is_dir).count();
+            let file_count = self.file_tree_entries.iter().filter(|e| !e.is_dir).count();
+
+            self.log_info(format!(
+                "Found {} folders and {} .sen files",
+                folder_count, file_count
+            ));
+
+            // Refresh access status for the newly loaded tree
+            self.refresh_file_access_status();
+            
         } else {
             self.log_warning("No directory selected for file tree");
+        }
+    }
+
+    /// Recursively build the file tree entry list for Tree View
+    fn build_tree_recursive(
+        &self,
+        dir: &PathBuf,
+        depth: usize,
+        out_entries: &mut Vec<FileTreeEntry>,
+    ) {
+        let Ok(read_dir) = std::fs::read_dir(dir) else { return };
+        
+        let mut child_folders = Vec::new();
+        let mut child_files = Vec::new();
+
+        for entry_res in read_dir {
+            if let Ok(entry) = entry_res {
+                let path = entry.path();
+                if path.is_dir() && self.settings.show_subfolders {
+                    child_folders.push(path);
+                } else if path.is_file() {
+                    if let Some(ext) = path.extension() {
+                        if ext == "sen" {
+                            child_files.push(path);
+                        }
+                    }
+                }
+            }
+        }
+
+        child_folders.sort_by(|a, b| a.file_name().unwrap_or_default().cmp(b.file_name().unwrap_or_default()));
+        child_files.sort_by(|a, b| a.file_name().unwrap_or_default().cmp(b.file_name().unwrap_or_default()));
+
+
+        for path in child_folders {
+            let is_expanded = self.expanded_directories.contains(&path);
+
+            out_entries.push(FileTreeEntry {
+                path: path.clone(),
+                is_dir: true,
+                is_expanded,
+                depth,
+            });
+            
+            if is_expanded {
+                self.build_tree_recursive(&path, depth + 1, out_entries);
+            }
+        }
+
+        for path in child_files {
+            out_entries.push(FileTreeEntry {
+                path,
+                is_dir: false,
+                is_expanded: false,
+                depth,
+            });
         }
     }
 
@@ -393,10 +469,10 @@ impl EditorApp {
         // 2. Identify files that need checking
         let mut paths_to_check = Vec::new();
         for entry in &self.file_tree_entries {
-            if let FileTreeEntry::File(path) = entry {
-                if path.extension().and_then(|s| s.to_str()) == Some("sen") {
-                    if !self.file_access_cache.contains_key(path) {
-                        paths_to_check.push(path.clone());
+            if !entry.is_dir {
+                if entry.path.extension().and_then(|s| s.to_str()) == Some("sen") {
+                    if !self.file_access_cache.contains_key(&entry.path) {
+                        paths_to_check.push(entry.path.clone());
                     }
                 }
             }

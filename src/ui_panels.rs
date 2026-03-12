@@ -1,4 +1,4 @@
-use crate::app_state::{FileTreeEntry, KeyStatus, LogLevel};
+use crate::app_state::{KeyStatus, LogLevel};
 use crate::history::HistoryEntry;
 use crate::EditorApp;
 use eframe::egui;
@@ -245,8 +245,8 @@ if ui
 let _ = self.settings.save();
 }
 if ui
-.checkbox(&mut self.settings.tree_style_file_tree, "Tree-style view")
-.on_hover_text("Display files with tree connectors (├── └──) like the 'tree' command")
+.checkbox(&mut self.settings.tree_style_file_tree, "Use Tree View (expandable)")
+.on_hover_text("Display folders hierarchically and toggle expansion on click")
 .changed()
 {
 let _ = self.settings.save();
@@ -881,142 +881,190 @@ ui.add_space(4.0);
                         ui.set_max_width(available_width);
                         let entries = self.file_tree_entries.clone();
                         let tree_on = self.settings.tree_style_file_tree;
-                        let tree_indent: f32 = if tree_on { 18.0 } else { 0.0 };
-                        let panel_left = ui.min_rect().left();
-                        let line_x = panel_left + 7.0;
-                        let branch_end_x = panel_left + tree_indent - 2.0;
+                        let tree_indent: f32 = if tree_on { 24.0 } else { 0.0 };
+                        let panel_left = ui.cursor().left();
                         let line_color = ui.visuals().weak_text_color();
                         let stroke = egui::Stroke::new(1.0, line_color);
 
                         // Collect mid_y positions for tree lines (two-pass to avoid overlap)
-                        let mut entry_mid_ys: Vec<f32> = Vec::new();
+                        struct RowData {
+                            depth: usize,
+                            is_dir: bool,
+
+                            bottom_y: f32,
+                            mid_y: f32,
+                        }
+                        
+                        let mut row_infos = Vec::new();
 
                         for (_i, entry) in entries.iter().enumerate() {
                             let top_y = ui.cursor().top();
+                            let path = &entry.path;
+                            let filename = path.file_name().unwrap_or_default().to_string_lossy();
+                            let depth = entry.depth;
 
-                            match entry {
-                                FileTreeEntry::Directory(path) => {
+                            ui.horizontal(|ui| {
+                                if tree_on {
+                                    // Spacing for depth
+                                    ui.add_space(depth as f32 * tree_indent);
+                                }
+                                ui.spacing_mut().item_spacing.x = 4.0;
+                                
+                                if entry.is_dir {
+                                    // Directory
                                     let is_parent = self
                                         .file_tree_dir
                                         .as_ref()
                                         .and_then(|d| d.parent())
                                         .map(|p| p == path)
                                         .unwrap_or(false);
+                                        
                                     let display_name = if is_parent {
                                         "📁 ..".to_string()
                                     } else {
                                         format!(
-                                            "📁 {}",
-                                            path.file_name().unwrap_or_default().to_string_lossy()
+                                            "{} {}",
+                                            if entry.is_expanded { "📂" } else { "📁" },
+                                            filename
                                         )
                                     };
-                                    ui.horizontal(|ui| {
-                                        if tree_on {
-                                            ui.add_space(tree_indent);
-                                        }
-                                        if ui
-                                            .add(egui::Button::new(&display_name).truncate())
-                                            .on_hover_text(&display_name)
-                                            .clicked()
-                                        {
+                                    
+                                    if ui
+                                        .add(egui::Button::new(&display_name).truncate())
+                                        .on_hover_text(&display_name)
+                                        .clicked()
+                                    {
+                                        if is_parent {
+                                            self.change_directory(path.clone());
+                                        } else if tree_on {
+                                            // Toggle expansion
+                                            if entry.is_expanded {
+                                                self.expanded_directories.remove(path);
+                                            } else {
+                                                self.expanded_directories.insert(path.clone());
+                                            }
+                                            self.refresh_file_tree(); // Re-trigger build
+                                        } else {
                                             self.change_directory(path.clone());
                                         }
-                                    });
-                                }
-                                FileTreeEntry::File(path) => {
-                                    let filename =
-                                        path.file_name().unwrap_or_default().to_string_lossy();
-                                    ui.horizontal(|ui| {
+                                    }
+                                } else {
+                                    // File
+                                    let mut display_name = if self.settings.hide_sen_extension
+                                        && filename.to_lowercase().ends_with(".sen")
+                                    {
+                                        filename[..filename.len() - 4].to_string()
+                                    } else {
+                                        filename.to_string()
+                                    };
+
+                                    if filename.ends_with(".sen") {
+                                        let status = self
+                                            .file_access_cache
+                                            .get(path)
+                                            .cloned()
+                                            .unwrap_or(KeyStatus::Unknown);
+                                            
                                         if tree_on {
-                                            ui.add_space(tree_indent);
-                                        }
-                                        ui.spacing_mut().item_spacing.x = 4.0;
-                                        if filename.ends_with(".sen") {
-                                            let status = self
-                                                .file_access_cache
-                                                .get(path)
-                                                .cloned()
-                                                .unwrap_or(KeyStatus::Unknown);
+                                            // Inline text indicator for Tree View
+                                            let (indicator, color) = match status {
+                                                KeyStatus::Decryptable => ("●", self.current_theme.colors.success_color()),
+                                                KeyStatus::WrongKey => ("●", self.current_theme.colors.error_color()),
+                                                _ => ("○", ui.visuals().weak_text_color()),
+                                            };
+                                            
+                                            // We use rich text in the button
+                                            let rt = egui::RichText::new(format!("{} {}", indicator, display_name))
+                                                .color(if matches!(status, KeyStatus::Unknown | KeyStatus::NotSen) { ui.visuals().text_color() } else { color });
+                                                
+                                            if ui
+                                                .add(egui::Button::new(rt).truncate())
+                                                .on_hover_text(&*filename)
+                                                .clicked()
+                                            {
+                                                self.open_file(path.clone());
+                                            }
+                                        } else {
+                                            // Simple View (Icon + Text)
                                             let icon_color = match status {
-                                                KeyStatus::Decryptable => {
-                                                    self.current_theme.colors.success_color()
-                                                }
-                                                KeyStatus::WrongKey => {
-                                                    self.current_theme.colors.error_color()
-                                                }
+                                                KeyStatus::Decryptable => self.current_theme.colors.success_color(),
+                                                KeyStatus::WrongKey => self.current_theme.colors.error_color(),
                                                 _ => ui.visuals().text_color(),
                                             };
-                                            let icon_size =
-                                                ui.text_style_height(&egui::TextStyle::Body);
-                                            ui.allocate_ui(
-                                                egui::vec2(icon_size, icon_size),
-                                                |ui| {
-                                                    ui.centered_and_justified(|ui| {
-                                                        ui.add(
-                                                            egui::Image::new(&self.icons.key)
-                                                                .tint(icon_color)
-                                                                .max_width(icon_size),
-                                                        );
-                                                    });
-                                                },
-                                            );
-                                        } else {
-                                            let icon_size =
-                                                ui.text_style_height(&egui::TextStyle::Body);
-                                            ui.allocate_ui(
-                                                egui::vec2(icon_size, icon_size),
-                                                |ui| {
-                                                    ui.centered_and_justified(|ui| {
-                                                        ui.label("📄");
-                                                    });
-                                                },
-                                            );
+                                            let icon_size = ui.text_style_height(&egui::TextStyle::Body);
+                                            ui.allocate_ui(egui::vec2(icon_size, icon_size), |ui| {
+                                                ui.centered_and_justified(|ui| {
+                                                    ui.add(egui::Image::new(&self.icons.key).tint(icon_color).max_width(icon_size));
+                                                });
+                                            });
+                                            if ui.add(egui::Button::new(&display_name).truncate()).on_hover_text(&*filename).clicked() {
+                                                self.open_file(path.clone());
+                                            }
                                         }
-                                        let display_name = if self.settings.hide_sen_extension
-                                            && filename.to_lowercase().ends_with(".sen")
-                                        {
-                                            filename[..filename.len() - 4].to_string()
+                                    } else {
+                                        // Non-SEN file
+                                        if !tree_on {
+                                            let icon_size = ui.text_style_height(&egui::TextStyle::Body);
+                                            ui.allocate_ui(egui::vec2(icon_size, icon_size), |ui| {
+                                                ui.centered_and_justified(|ui| {
+                                                    ui.label("📄");
+                                                });
+                                            });
                                         } else {
-                                            filename.to_string()
-                                        };
-                                        if ui
-                                            .add(egui::Button::new(&display_name).truncate())
-                                            .on_hover_text(&*filename)
-                                            .clicked()
-                                        {
+                                            display_name = format!("📄 {}", display_name);
+                                        }
+                                        if ui.add(egui::Button::new(&display_name).truncate()).on_hover_text(&*filename).clicked() {
                                             self.open_file(path.clone());
                                         }
-                                    });
+                                    }
                                 }
-                            }
+                            });
 
                             if tree_on {
                                 let bottom_y = ui.cursor().top();
-                                let mid_y = (top_y + bottom_y) / 2.0;
-                                entry_mid_ys.push(mid_y);
+                                let actual_bottom_y = bottom_y - ui.spacing().item_spacing.y;
+                                row_infos.push(RowData {
+                                    depth,
+                                    is_dir: entry.is_dir,
+                                    bottom_y: actual_bottom_y,
+                                    mid_y: (top_y + actual_bottom_y) / 2.0,
+                                });
                             }
                         }
 
-                        // Paint all tree lines in one pass (no overlapping segments)
-                        if tree_on && !entry_mid_ys.is_empty() {
+                        // Pass 2: Draw the tree geometry based on layout positions
+                        if tree_on && !row_infos.is_empty() {
                             let painter = ui.painter();
-
-                            // One vertical line from first entry's mid to last entry's mid
-                            let first_mid = entry_mid_ys[0];
-                            let last_mid = *entry_mid_ys.last().unwrap();
-                            if entry_mid_ys.len() > 1 {
-                                painter.line_segment(
-                                    [egui::pos2(line_x, first_mid), egui::pos2(line_x, last_mid)],
-                                    stroke,
-                                );
-                            }
-
-                            // Horizontal branches for each entry
-                            for mid_y in &entry_mid_ys {
-                                painter.line_segment(
-                                    [egui::pos2(line_x, *mid_y), egui::pos2(branch_end_x, *mid_y)],
-                                    stroke,
-                                );
+                            
+                            for i in 0..row_infos.len() {
+                                let row = &row_infos[i];
+                                
+                                // Draw horizontal branch
+                                if row.depth > 0 {
+                                    let parent_depth = row.depth - 1;
+                                    let branch_start_x = panel_left + (parent_depth as f32) * tree_indent + 11.0;
+                                    let branch_end_x = panel_left + (row.depth as f32) * tree_indent - 1.0;
+                                    painter.line_segment([egui::pos2(branch_start_x, row.mid_y), egui::pos2(branch_end_x, row.mid_y)], stroke);
+                                }
+                                
+                                // Draw vertical drop line to children
+                                if row.is_dir {
+                                    // Find the last direct child (depth == row.depth + 1)
+                                    let mut last_child_mid_y = None;
+                                    for j in (i + 1)..row_infos.len() {
+                                        if row_infos[j].depth <= row.depth {
+                                            break;
+                                        }
+                                        if row_infos[j].depth == row.depth + 1 {
+                                            last_child_mid_y = Some(row_infos[j].mid_y);
+                                        }
+                                    }
+                                    
+                                    if let Some(end_y) = last_child_mid_y {
+                                        let drop_x = panel_left + (row.depth as f32) * tree_indent + 11.0;
+                                        painter.line_segment([egui::pos2(drop_x, row.bottom_y), egui::pos2(drop_x, end_y)], stroke);
+                                    }
+                                }
                             }
                         }
                     } else {
