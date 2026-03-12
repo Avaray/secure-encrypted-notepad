@@ -81,7 +81,7 @@ pub struct Settings {
     #[serde(default)]
     pub auto_backup_enabled: bool,
     /// Screen capture protection (Windows only)
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub screen_capture_protection: bool,
     /// Show line numbers in editor
     pub show_line_numbers: bool,
@@ -253,7 +253,7 @@ impl Default for Settings {
             auto_backup_dir_encrypted: None,
             auto_backup_dir: None,
             auto_backup_enabled: false,
-            screen_capture_protection: false,
+            screen_capture_protection: true,
             show_line_numbers: true,
             show_file_tree: true,
             tree_style_file_tree: false,
