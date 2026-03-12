@@ -56,33 +56,33 @@ self.refresh_file_tree(); // Refresh after setting
 self.log_info("Global keyfile set");
 }
 }
-if !self.show_clear_keyfile_confirmation {
-if ui.button("Clear").clicked() {
-self.show_clear_keyfile_confirmation = true;
-}
-} else {
-ui.label(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color()));
-if ui.button("Yes").clicked() {
-self.settings.global_keyfile_path = None;
-self.settings.keyfile_path_encrypted = None;
-let _ = self.settings.save();
-self.refresh_file_tree(); // Refresh after clearing
-self.show_clear_keyfile_confirmation = false;
-self.log_info("Global keyfile cleared");
-}
-if ui.button("No").clicked() {
-self.show_clear_keyfile_confirmation = false;
-}
-}
-if ui.button("Use now").on_hover_text("Apply the global keyfile to the current session.").clicked() {
-if let Some(path) = self.settings.global_keyfile_path.clone() {
-self.keyfile_path = Some(path);
-self.refresh_file_tree();
-self.log_info("Global keyfile applied");
-} else {
-self.log_error("No global keyfile set to use");
-}
-}
+        if let Some(path) = self.settings.global_keyfile_path.clone() {
+            if ui.button("Use now").on_hover_text("Apply the global keyfile to the current session.").clicked() {
+                self.keyfile_path = Some(path);
+                self.refresh_file_tree();
+                self.log_info("Global keyfile applied");
+            }
+        }
+        if self.settings.global_keyfile_path.is_some() {
+            if !self.show_clear_keyfile_confirmation {
+                if ui.button("Clear").clicked() {
+                    self.show_clear_keyfile_confirmation = true;
+                }
+            } else {
+                ui.label(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color()));
+                if ui.button("Yes").clicked() {
+                    self.settings.global_keyfile_path = None;
+                    self.settings.keyfile_path_encrypted = None;
+                    let _ = self.settings.save();
+                    self.refresh_file_tree();
+                    self.show_clear_keyfile_confirmation = false;
+                    self.log_info("Global keyfile cleared");
+                }
+                if ui.button("No").clicked() {
+                    self.show_clear_keyfile_confirmation = false;
+                }
+            }
+        }
 });
 ui.horizontal(|ui| {
 ui.label("Current:");
@@ -93,7 +93,7 @@ ui.label(egui::RichText::new(path.to_string_lossy()).color(self.current_theme.co
 ui.label(egui::RichText::new("Secured").color(self.current_theme.colors.success_color()));
 }
 } else {
-ui.label("None");
+    ui.label(egui::RichText::new("None").color(self.current_theme.colors.info_color()));
 }
 });
 if ui
@@ -136,11 +136,11 @@ egui::RichText::new(dir.display().to_string())
 ui.label(egui::RichText::new("Secured").color(self.current_theme.colors.success_color()));
 }
 } else {
-ui.label(egui::RichText::new("Not set (uses last opened)").small().weak());
+ui.label(egui::RichText::new("Not set").color(self.current_theme.colors.info_color()));
 }
 });
 ui.horizontal(|ui| {
-if ui.button("Browse").clicked() {
+if ui.button("Set Starting Directory").clicked() {
 if let Some(dir) = rfd::FileDialog::new().pick_folder() {
 self.settings.file_tree_starting_dir = Some(dir.clone());
 self.file_tree_dir = Some(dir);
@@ -149,14 +149,25 @@ self.refresh_file_tree();
 self.log_info("Starting directory set");
 }
 }
-if self.settings.file_tree_starting_dir.is_some() {
-if ui.button("Clear").clicked() {
-self.settings.file_tree_starting_dir = None;
-self.settings.file_tree_dir_encrypted = None;
-let _ = self.settings.save();
-self.log_info("Starting directory cleared");
-}
-}
+            if self.settings.file_tree_starting_dir.is_some() {
+                if !self.show_clear_workspace_confirmation {
+                    if ui.button("Clear").clicked() {
+                        self.show_clear_workspace_confirmation = true;
+                    }
+                } else {
+                    ui.label(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color()));
+                    if ui.button("Yes").clicked() {
+                        self.settings.file_tree_starting_dir = None;
+                        self.settings.file_tree_dir_encrypted = None;
+                        let _ = self.settings.save();
+                        self.log_info("Starting directory cleared");
+                        self.show_clear_workspace_confirmation = false;
+                    }
+                    if ui.button("No").clicked() {
+                        self.show_clear_workspace_confirmation = false;
+                    }
+                }
+            }
 });
 if ui
 .checkbox(&mut self.settings.show_subfolders, "Show subfolders")
