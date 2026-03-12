@@ -967,24 +967,41 @@ ui.add_space(4.0);
                                             .unwrap_or(KeyStatus::Unknown);
                                             
                                         if tree_on {
-                                            // Inline text indicator for Tree View
-                                            let (indicator, color) = match status {
-                                                KeyStatus::Decryptable => ("●", self.current_theme.colors.success_color()),
-                                                KeyStatus::WrongKey => ("●", self.current_theme.colors.error_color()),
-                                                _ => ("○", ui.visuals().weak_text_color()),
+                                            // Status indicator logic (manually drawn inside button frame)
+                                            let color = match status {
+                                                KeyStatus::Decryptable => self.current_theme.colors.success_color(),
+                                                KeyStatus::WrongKey => self.current_theme.colors.error_color(),
+                                                _ => ui.visuals().weak_text_color(),
                                             };
+
+                                            let mut job = egui::text::LayoutJob::default();
+                                            let font_id = egui::TextStyle::Button.resolve(ui.style());
                                             
-                                            // We use rich text in the button
-                                            let rt = egui::RichText::new(format!("{} {}", indicator, display_name))
-                                                .color(if matches!(status, KeyStatus::Unknown | KeyStatus::NotSen) { ui.visuals().text_color() } else { color });
-                                                
-                                            if ui
-                                                .add(egui::Button::new(rt).truncate())
-                                                .on_hover_text(&*filename)
-                                                .clicked()
-                                            {
+                                            // Add 3 spaces to make room for the dot at the beginning
+                                            job.append("   ", 0.0, egui::text::TextFormat {
+                                                font_id: font_id.clone(),
+                                                ..Default::default()
+                                            });
+                                            job.append(&display_name, 0.0, egui::text::TextFormat {
+                                                color: ui.visuals().text_color(),
+                                                font_id,
+                                                ..Default::default()
+                                            });
+
+                                            let button_resp = ui.add(egui::Button::new(job).truncate());
+                                            
+                                            // Draw the dot manually on top of the button's rectangle
+                                            let dot_radius = 4.0;
+                                            let dot_center = egui::pos2(
+                                                button_resp.rect.left() + 10.0,
+                                                button_resp.rect.center().y
+                                            );
+                                            ui.painter().circle_filled(dot_center, dot_radius, color);
+
+                                            if button_resp.clicked() {
                                                 self.open_file(path.clone());
                                             }
+                                            button_resp.on_hover_text(&*filename);
                                         } else {
                                             // Simple View (Icon + Text)
                                             let icon_color = match status {
