@@ -587,7 +587,7 @@ ui.add_space(4.0);
                 if ui
                     .add(
                         egui::DragValue::new(&mut temp_limit)
-                            .speed(1.0)
+                            .speed(0.1)
                             .range(1..=1000),
                     )
                     .changed()
