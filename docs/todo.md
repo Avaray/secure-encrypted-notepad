@@ -14,7 +14,6 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Logo & App Icon**: Create a new professional logo for SEN and replace the current application icon.
 - [ ] **Auto-Backup on Save**: Add option to automatically copy encrypted .sen files to multiple backup folders on save.
 - [ ] **Internal Auto-save Integration**: Change auto-save behavior to store content inside the original `.sen` file instead of a separate `.autosave.sen`. When opening a `.sen` file where the internal auto-save is newer than the latest history entry, prompt the user to restore the auto-saved version.
-- [ ] **Multi-Keyfile Support**: Allow assigning multiple keyfiles to a single `.sen` file for shared access or redundancy.
 
 ---
 
