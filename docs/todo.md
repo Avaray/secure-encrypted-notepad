@@ -27,8 +27,8 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 
 ## 🛡️ Security & Privacy (Planned)
 
-- [ ] **Screen Capture Protection**: Add an option to block application screenshots (OS-level protection where possible) with a toggle in settings.
-    - *Recommendation: Use "Best-Effort" approach. Windows (SetWindowDisplayAffinity) is highly effective. macOS (NSWindowSharingNone) is restricted/alert-heavy on 15+. Linux Wayland is secure by default (isolation); X11 lacks native support.*
+- [x] **Screen Capture Protection**: Add an option to block application screenshots (OS-level protection where possible) with a toggle in settings.
+    - *Implemented for Windows using `SetWindowDisplayAffinity` with `WDA_EXCLUDEFROMCAPTURE`. The option is only visible on Windows.*
 
 ---
 

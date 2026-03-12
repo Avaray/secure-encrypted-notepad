@@ -164,6 +164,19 @@ ui.horizontal(|ui| {
         ui.label(egui::RichText::new("None").color(self.current_theme.colors.info_color()));
     }
 });
+
+#[cfg(target_os = "windows")]
+{
+    ui.add_space(8.0);
+    ui.label(egui::RichText::new("Screen Capture Protection").strong());
+    if ui.checkbox(&mut self.settings.screen_capture_protection, "Prevent screen capture")
+        .on_hover_text("Prevents screenshots and screen recordings from capturing this window's content. Requires Windows 10 2004 or later.")
+        .changed() {
+        let _ = self.settings.save();
+        self.apply_screen_capture_protection();
+    }
+}
+
 ui.add_space(8.0);
 ui.separator();
 ui.add_space(8.0);

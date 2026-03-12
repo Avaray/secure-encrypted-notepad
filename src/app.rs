@@ -160,6 +160,9 @@ pub struct EditorApp {
     pub(crate) watcher: Option<notify::RecommendedWatcher>,
     /// Receiver for file system events
     pub(crate) watcher_receiver: Option<std::sync::mpsc::Receiver<Result<notify::Event, notify::Error>>>,
+    /// Cached native window handle (Windows only, for SetWindowDisplayAffinity)
+    #[cfg(target_os = "windows")]
+    pub(crate) cached_hwnd: Option<windows_sys::Win32::Foundation::HWND>,
 }
 
 impl EditorApp {
@@ -285,6 +288,121 @@ impl EditorApp {
             show_clear_history_confirmation: false,
             watcher: None,
             watcher_receiver: None,
+            #[cfg(target_os = "windows")]
+            cached_hwnd: None,
+        }
+    }
+
+    /// Find the main application window by process ID (Windows only).
+    /// Skips console windows to avoid targeting the wrong HWND in debug builds.
+    #[cfg(target_os = "windows")]
+    pub(crate) fn find_own_hwnd(&mut self) {
+        use windows_sys::Win32::Foundation::{HWND, LPARAM};
+        use windows_sys::Win32::UI::WindowsAndMessaging::{
+            EnumWindows, GetClassNameW, GetWindowLongW, GetWindowThreadProcessId,
+            IsWindowVisible, GWL_EXSTYLE,
+        };
+        use windows_sys::Win32::System::Threading::GetCurrentProcessId;
+
+        const WS_EX_TOOLWINDOW: i32 = 0x00000080;
+        const WS_EX_NOACTIVATE: i32 = 0x08000000;
+
+        unsafe extern "system" fn enum_callback(hwnd: HWND, lparam: LPARAM) -> i32 {
+            let mut pid: u32 = 0;
+            GetWindowThreadProcessId(hwnd, &mut pid);
+            let our_pid = GetCurrentProcessId();
+            if pid != our_pid || IsWindowVisible(hwnd) == 0 {
+                return 1; // not ours or not visible, skip
+            }
+
+            // Skip console windows
+            let mut class_name = [0u16; 64];
+            let len = GetClassNameW(hwnd, class_name.as_mut_ptr(), 64);
+            if len > 0 {
+                let class_str = String::from_utf16_lossy(&class_name[..len as usize]);
+                if class_str == "ConsoleWindowClass" {
+                    return 1;
+                }
+            }
+
+            // Skip tool windows, overlays, and non-activatable windows
+            // (egui creates these for tooltips, popups, etc.)
+            let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+            if ex_style & WS_EX_TOOLWINDOW != 0 || ex_style & WS_EX_NOACTIVATE != 0 {
+                return 1; // skip overlays
+            }
+
+            *(lparam as *mut HWND) = hwnd;
+            0 // found the main window
+        }
+
+        let mut found_hwnd: HWND = std::ptr::null_mut();
+        unsafe {
+            EnumWindows(Some(enum_callback), &mut found_hwnd as *mut HWND as LPARAM);
+        }
+        if !found_hwnd.is_null() {
+            self.cached_hwnd = Some(found_hwnd);
+        }
+    }
+
+    /// Apply or remove screen capture protection (Windows only).
+    /// Removes WS_EX_NOREDIRECTIONBITMAP if present (needed for DWM composition),
+    /// then sets display affinity via SetWindowDisplayAffinity.
+    #[cfg(target_os = "windows")]
+    pub(crate) fn apply_screen_capture_protection(&mut self) {
+        use windows_sys::Win32::UI::WindowsAndMessaging::{
+            GetWindowLongW, SetWindowDisplayAffinity,
+            SetWindowLongW, SetWindowPos, GWL_EXSTYLE,
+            SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER,
+        };
+        const WDA_NONE: u32 = 0x00000000;
+        const WDA_EXCLUDEFROMCAPTURE: u32 = 0x00000011;
+        const WDA_MONITOR: u32 = 0x00000001;
+        const WS_EX_NOREDIRECTIONBITMAP: i32 = 0x00200000;
+
+        // If we don't have the HWND yet, try to find it now
+        if self.cached_hwnd.is_none() {
+            self.find_own_hwnd();
+        }
+
+        if let Some(hwnd) = self.cached_hwnd {
+            if self.settings.screen_capture_protection {
+                // Remove WS_EX_NOREDIRECTIONBITMAP if present, so DWM can protect the content
+                let ex_style = unsafe { GetWindowLongW(hwnd, GWL_EXSTYLE) };
+                if ex_style & WS_EX_NOREDIRECTIONBITMAP != 0 {
+                    let new_style = ex_style & !WS_EX_NOREDIRECTIONBITMAP;
+                    unsafe {
+                        SetWindowLongW(hwnd, GWL_EXSTYLE, new_style);
+                        SetWindowPos(
+                            hwnd, std::ptr::null_mut(), 0, 0, 0, 0,
+                            SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE,
+                        );
+                    }
+                }
+
+                // Set display affinity (try EXCLUDE_FROM_CAPTURE, fallback to MONITOR)
+                let result = unsafe { SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE) };
+                if result != 0 {
+                    self.log_info("Screen capture protection enabled");
+                } else {
+                    let result2 = unsafe { SetWindowDisplayAffinity(hwnd, WDA_MONITOR) };
+                    if result2 != 0 {
+                        self.log_info("Screen capture protection enabled (fallback mode)");
+                    } else {
+                        self.log_error("Failed to enable screen capture protection");
+                    }
+                }
+            } else {
+                // Disable protection
+                let result = unsafe { SetWindowDisplayAffinity(hwnd, WDA_NONE) };
+                if result != 0 {
+                    self.log_info("Screen capture protection disabled");
+                } else {
+                    self.log_error("Failed to disable screen capture protection");
+                }
+            }
+        } else {
+            self.log_error("Cannot apply screen capture protection: HWND not found");
         }
     }
 
@@ -401,6 +519,16 @@ impl eframe::App for EditorApp {
             self.first_frame = false;
             if self.start_maximized {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Maximized(true));
+            }
+        }
+
+        // Try to capture our GUI window handle every frame until found (Windows only).
+        // Can't be done on first_frame because the window may not be visible yet.
+        #[cfg(target_os = "windows")]
+        if self.cached_hwnd.is_none() {
+            self.find_own_hwnd();
+            if self.cached_hwnd.is_some() && self.settings.screen_capture_protection {
+                self.apply_screen_capture_protection();
             }
         }
 
