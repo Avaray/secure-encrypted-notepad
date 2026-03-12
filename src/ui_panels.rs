@@ -964,7 +964,7 @@ ui.add_space(4.0);
         let mut should_reset = false;
         ui.vertical(|ui| {
             if !self.settings.hide_panel_headers {
-                ui.heading("🎨 Theme Editor");
+                ui.heading("Theme Editor");
             }
             // Top bar: Theme selector and actions
             ui.horizontal(|ui| {
