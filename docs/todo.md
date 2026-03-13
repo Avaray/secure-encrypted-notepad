@@ -24,8 +24,3 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 *Items in this section represent confirmed issues or glitches that need to be addressed.*
 
 *No known bugs at the moment.*
-
----
-
-> [!NOTE]
-> This list is dynamic and will be updated as the project evolves. Specific details for these items will be provided by the project maintainer.
