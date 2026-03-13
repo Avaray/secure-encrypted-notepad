@@ -83,6 +83,12 @@ impl EditorApp {
                 self.loaded_history_index = None;
 
                 let history_count = self.document.get_visible_history().len();
+
+                // Check for internal auto-save slot
+                if self.document.autosave.is_some() {
+                    self.show_autosave_restore = true;
+                }
+
                 self.status_message = format!(
                     "Opened: {} ({} history entries)",
                     self.mask_directory_path(&path),
@@ -183,6 +189,9 @@ impl EditorApp {
             self.log_info("Snapshot created automatically");
         }
 
+        // Clear autosave slot on proper save
+        self.document.clear_autosave();
+
         let file_content = self.document.to_file_content();
         self.log_info(format!("Content size: {} bytes", file_content.len()));
 
@@ -215,19 +224,6 @@ impl EditorApp {
                                 Err(e) => self.log_error(format!("Auto-backup failed: {}", e)),
                             }
                         }
-                    }
-                }
-
-                // Cleanup autosave file
-                let file_name = path.file_name().unwrap_or_default().to_string_lossy();
-                let base_name = file_name.strip_suffix(".sen").unwrap_or(&file_name);
-                let autosave_name = format!("{}.autosave.sen", base_name);
-                let autosave_path = path.with_file_name(autosave_name);
-                if autosave_path.exists() {
-                    if let Err(e) = std::fs::remove_file(&autosave_path) {
-                        self.log_error(format!("Failed to remove autosave file: {}", e));
-                    } else {
-                        self.log_info("Autosave file cleaned up");
                     }
                 }
             }
@@ -521,30 +517,26 @@ impl EditorApp {
             }
         }
 
-        let original_path = self.current_file_path.as_ref().unwrap();
-        // Construct autosave path: filename.autosave.sen
-        let file_name = original_path
-            .file_name()
-            .unwrap_or_default()
-            .to_string_lossy();
-        let base_name = file_name.strip_suffix(".sen").unwrap_or(&file_name);
-        let autosave_name = format!("{}.autosave.sen", base_name);
-        let autosave_path = original_path.with_file_name(autosave_name);
-
+        let original_path = self.current_file_path.as_ref().unwrap().clone();
         let keyfile = self.keyfile_path.clone().unwrap();
 
-        // Encrypt and save silently
+        // Store autosave content inside the document's autosave slot
+        self.document.set_autosave(self.document.current_content.clone());
+
+        // Re-encrypt the entire file in-place with the autosave slot included
         let file_content = self.document.to_file_content();
 
-        match encrypt_file(&file_content, &keyfile, &autosave_path) {
+        match encrypt_file(&file_content, &keyfile, &original_path) {
             Ok(_) => {
                 self.last_autosave_time = Some(now);
                 self.log_info(format!(
-                    "Auto-saved to {}",
-                    self.mask_directory_path(&autosave_path)
+                    "Auto-saved inside {}",
+                    self.mask_directory_path(&original_path)
                 ));
             }
             Err(e) => {
+                // Revert autosave slot on failure to avoid stale data
+                self.document.clear_autosave();
                 self.log_error(format!("Auto-save failed: {}", e));
             }
         }

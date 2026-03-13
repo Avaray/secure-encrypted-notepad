@@ -4,6 +4,15 @@ use serde::{Deserialize, Serialize};
 /// Separator between content and history in file
 const HISTORY_SEPARATOR: &str = "\n<>\n";
 
+/// Auto-save entry stored inside the .sen file
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AutosaveEntry {
+    /// Timestamp when the auto-save was created
+    pub timestamp: DateTime<Local>,
+    /// Auto-saved content snapshot
+    pub content: String,
+}
+
 /// Single history entry
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HistoryEntry {
@@ -45,6 +54,9 @@ pub struct DocumentWithHistory {
     /// Maximum history length for this document
     #[serde(default = "default_max_history")]
     pub max_history_length: usize,
+    /// Internal auto-save slot (stored inside the .sen file)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub autosave: Option<AutosaveEntry>,
 }
 
 fn default_max_history() -> usize {
@@ -57,6 +69,7 @@ impl Default for DocumentWithHistory {
             current_content: String::new(),
             history: Vec::new(),
             max_history_length: 1000,
+            autosave: None,
         }
     }
 }
@@ -68,6 +81,7 @@ impl DocumentWithHistory {
             current_content: String::new(),
             history: Vec::new(),
             max_history_length,
+            autosave: None,
         }
     }
 
@@ -77,12 +91,14 @@ impl DocumentWithHistory {
             let current_content = file_content[..pos].to_string();
             let history_json = &file_content[pos + HISTORY_SEPARATOR.len()..];
 
-            // POPRAWKA: Deserializuj bezpośrednio jako obiekt z history i max_history_length
+            // Deserializuj jako obiekt z history, max_history_length i autosave
             #[derive(Deserialize)]
             struct HistoryData {
                 history: Vec<HistoryEntry>,
                 #[serde(default = "default_max_history")]
                 max_history_length: usize,
+                #[serde(default)]
+                autosave: Option<AutosaveEntry>,
             }
 
             if let Ok(data) = serde_json::from_str::<HistoryData>(history_json) {
@@ -90,6 +106,7 @@ impl DocumentWithHistory {
                     current_content,
                     history: data.history,
                     max_history_length: data.max_history_length,
+                    autosave: data.autosave,
                 }
             } else {
                 // Fallback: old format - tylko array historii
@@ -99,6 +116,7 @@ impl DocumentWithHistory {
                     current_content,
                     history,
                     max_history_length: 1000,
+                    autosave: None,
                 }
             }
         } else {
@@ -107,6 +125,7 @@ impl DocumentWithHistory {
                 current_content: file_content.to_string(),
                 history: Vec::new(),
                 max_history_length: 1000,
+                autosave: None,
             }
         }
     }
@@ -127,14 +146,18 @@ impl DocumentWithHistory {
             active_history.drain(0..to_remove);
         }
 
-        if active_history.is_empty() {
+        if active_history.is_empty() && self.autosave.is_none() {
             self.current_content.clone()
         } else {
-            // Serialize as object with history and max_history_length
-            let doc_data = serde_json::json!({
+            // Serialize as object with history, max_history_length, and autosave
+            let mut doc_data = serde_json::json!({
                 "history": active_history,
                 "max_history_length": self.max_history_length
             });
+
+            if let Some(ref autosave) = self.autosave {
+                doc_data["autosave"] = serde_json::to_value(autosave).unwrap_or_default();
+            }
 
             let history_json = serde_json::to_string(&doc_data).unwrap_or_default();
             format!(
@@ -232,6 +255,19 @@ impl DocumentWithHistory {
         for entry in &mut self.history {
             entry.deleted = true;
         }
+    }
+
+    /// Set auto-save slot with current content
+    pub fn set_autosave(&mut self, content: String) {
+        self.autosave = Some(AutosaveEntry {
+            timestamp: chrono::Local::now(),
+            content,
+        });
+    }
+
+    /// Clear the auto-save slot
+    pub fn clear_autosave(&mut self) {
+        self.autosave = None;
     }
 }
 

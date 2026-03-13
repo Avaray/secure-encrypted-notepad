@@ -396,7 +396,7 @@ ui.set_min_width(ui.available_width());
 ui.label("Auto Save");
 if ui
 .checkbox(&mut self.settings.auto_save_on_focus_loss, "Auto-save on focus loss")
-.on_hover_text("Automatically saves to .autosave.sen when application loses focus.")
+.on_hover_text("Automatically saves inside the .sen file when application loses focus.")
 .changed()
 {
 let _ = self.settings.save();

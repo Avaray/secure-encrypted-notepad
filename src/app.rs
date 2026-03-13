@@ -161,6 +161,8 @@ pub struct EditorApp {
     pub(crate) show_clear_workspace_confirmation: bool,
     /// History Clear Confirmation State
     pub(crate) show_clear_history_confirmation: bool,
+    /// Auto-save restore prompt
+    pub(crate) show_autosave_restore: bool,
     /// File system watcher for the current directory
     pub(crate) watcher: Option<notify::RecommendedWatcher>,
     /// Receiver for file system events
@@ -299,6 +301,7 @@ impl EditorApp {
             show_clear_backup_dir_confirmation: false,
             show_clear_workspace_confirmation: false,
             show_clear_history_confirmation: false,
+            show_autosave_restore: false,
             watcher: None,
             watcher_receiver: None,
             #[cfg(target_os = "windows")]
@@ -756,6 +759,9 @@ impl eframe::App for EditorApp {
 
         // Confirmation dialog
         self.render_confirmation_dialog(ctx);
+
+        // Auto-save restore dialog
+        self.render_autosave_restore_dialog(ctx);
 
         // Custom frame for toolbar (vertical positions)
         let mut vertical_toolbar_frame = egui::Frame::side_top_panel(&ctx.style());

@@ -175,4 +175,48 @@ impl EditorApp {
             self.goto_line_input.clear();
         }
     }
+
+    /// Render auto-save restore dialog
+    pub(crate) fn render_autosave_restore_dialog(&mut self, ctx: &egui::Context) {
+        if !self.show_autosave_restore {
+            return;
+        }
+
+        let timestamp_str = self.document.autosave
+            .as_ref()
+            .map(|a| a.timestamp.format("%Y-%m-%d %H:%M:%S").to_string())
+            .unwrap_or_default();
+
+        egui::Window::new("Auto-save Found")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .show(ctx, |ui| {
+                ui.set_max_width(350.0);
+                ui.label(format!(
+                    "An auto-saved version was found ({}). Would you like to restore it?",
+                    timestamp_str
+                ));
+                ui.separator();
+
+                ui.horizontal(|ui| {
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button("Restore").clicked() {
+                            if let Some(autosave) = self.document.autosave.take() {
+                                self.document.current_content = autosave.content;
+                                self.is_modified = true;
+                                self.log_info("Restored content from auto-save");
+                                self.status_message = "Auto-save restored".to_string();
+                            }
+                            self.show_autosave_restore = false;
+                        }
+                        if ui.button("Discard").clicked() {
+                            self.document.clear_autosave();
+                            self.log_info("Auto-save discarded");
+                            self.show_autosave_restore = false;
+                        }
+                    });
+                });
+            });
+    }
 }
