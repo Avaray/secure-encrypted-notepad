@@ -12,7 +12,6 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Icon Refresh**: Replace current temporary icons with higher-quality, professionally designed ones.
 - [ ] **Theme System Refactoring**: Refactor the color system to allow customization of more editor components.
 - [ ] **Logo & App Icon**: Create a new professional logo for SEN and replace the current application icon.
-- [ ] **Internal Auto-save Integration**: Change auto-save behavior to store content inside the original `.sen` file instead of a separate `.autosave.sen`. When opening a `.sen` file where the internal auto-save is newer than the latest history entry, prompt the user to restore the auto-saved version.
 - [ ] **UI Icon Sets**: Add the ability to change icon sets from a dropdown in settings. This will allow users to choose between different visual styles for the application icons (folders, keys, files, etc.), requiring architectural changes to support dynamic icon loading.
 - [ ] **File Tree Icons Refresh**: Replace current folder and file icons in the file tree panel with high-quality SVG equivalents for better visual consistency.
 
