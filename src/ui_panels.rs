@@ -883,7 +883,7 @@ ui.add_space(4.0);
                 .show(ui, |ui| {
                     if let Some(dir) = &self.file_tree_dir {
                         if self.settings.show_directory_paths {
-                            ui.label(egui::RichText::new(dir.display().to_string()).small());
+                            ui.label(dir.display().to_string());
                             ui.separator();
                         }
                         let available_width = ui.available_width();
