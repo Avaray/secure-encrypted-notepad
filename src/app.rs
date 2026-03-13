@@ -168,6 +168,8 @@ pub struct EditorApp {
     pub(crate) cached_hwnd: Option<windows_sys::Win32::Foundation::HWND>,
     /// Zen mode active
     pub(crate) zen_mode: bool,
+    /// Flag to track if Zen mode fullscreen was applied at startup
+    pub(crate) zen_mode_applied: bool,
 }
 
 impl EditorApp {
@@ -234,6 +236,7 @@ impl EditorApp {
                 false
             },
             zen_mode: settings.zen_mode,
+            zen_mode_applied: false,
             show_file_tree: settings.show_file_tree,
             is_modified: false,
             debug_log: Vec::new(),
@@ -485,6 +488,15 @@ impl eframe::App for EditorApp {
         }
         self.focused = is_focused;
 
+        // Apply Zen mode fullscreen state on first frame if enabled from settings
+        if !self.zen_mode_applied {
+            if self.zen_mode {
+                ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(true));
+            }
+            self.zen_mode_applied = true;
+        }
+
+
         // Process results from background file access checks
         self.process_access_check_results(ctx);
 
@@ -595,6 +607,7 @@ impl eframe::App for EditorApp {
         self.settings.show_theme_editor = self.show_theme_editor;
         self.settings.show_search_panel = self.show_search_panel;
         self.settings.show_file_tree = self.show_file_tree;
+        self.settings.zen_mode = self.zen_mode;
 
         // Handle close request
         if ctx.input(|i| i.viewport().close_requested()) {
