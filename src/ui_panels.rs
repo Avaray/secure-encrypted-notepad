@@ -939,7 +939,6 @@ ui.add_space(4.0);
                                     
                                     if ui
                                         .add(egui::Button::new(&display_name).truncate())
-                                        .on_hover_text(&display_name)
                                         .clicked()
                                     {
                                         if is_parent {
@@ -1008,7 +1007,6 @@ ui.add_space(4.0);
                                             if button_resp.clicked() {
                                                 self.open_file(path.clone());
                                             }
-                                            button_resp.on_hover_text(&*filename);
                                         } else {
                                             // Simple View (Icon + Text)
                                             let icon_color = match status {
@@ -1022,7 +1020,7 @@ ui.add_space(4.0);
                                                     ui.add(egui::Image::new(&self.icons.key).tint(icon_color).max_width(icon_size));
                                                 });
                                             });
-                                            if ui.add(egui::Button::new(&display_name).truncate()).on_hover_text(&*filename).clicked() {
+                                            if ui.add(egui::Button::new(&display_name).truncate()).clicked() {
                                                 self.open_file(path.clone());
                                             }
                                         }
@@ -1038,7 +1036,7 @@ ui.add_space(4.0);
                                         } else {
                                             display_name = format!("📄 {}", display_name);
                                         }
-                                        if ui.add(egui::Button::new(&display_name).truncate()).on_hover_text(&*filename).clicked() {
+                                        if ui.add(egui::Button::new(&display_name).truncate()).clicked() {
                                             self.open_file(path.clone());
                                         }
                                     }
