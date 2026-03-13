@@ -85,27 +85,27 @@ impl EditorApp {
                     });
                     ui.add_space(8.0);
 
-                    // Only enable OK if slider is fully to the right
                     let is_confirmed = self.reset_slider_val >= 0.99;
-
                     ui.horizontal(|ui| {
-                        ui.add_enabled_ui(is_confirmed, |ui| {
-                            if ui.button("OK").clicked() {
-                                self.settings = crate::settings::Settings::default();
-                                let _ = self.settings.save();
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            ui.add_enabled_ui(is_confirmed, |ui| {
+                                if ui.button("OK").clicked() {
+                                    self.settings = crate::settings::Settings::default();
+                                    let _ = self.settings.save();
+                                    self.show_reset_confirmation = false;
+                                    self.style_dirty = true; // Apply default fonts/sizes
+                                    self.status_message =
+                                        "All settings have been reset to factory defaults".to_string();
+                                    self.log_warning(
+                                        "All settings have been reset to factory defaults",
+                                    );
+                                }
+                            });
+
+                            if ui.button("Cancel").clicked() {
                                 self.show_reset_confirmation = false;
-                                self.style_dirty = true; // Apply default fonts/sizes
-                                self.status_message =
-                                    "All settings have been reset to factory defaults".to_string();
-                                self.log_warning(
-                                    "All settings have been reset to factory defaults",
-                                );
                             }
                         });
-
-                        if ui.button("Cancel").clicked() {
-                            self.show_reset_confirmation = false;
-                        }
                     });
                 });
         }
