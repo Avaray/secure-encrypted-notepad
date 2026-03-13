@@ -37,11 +37,15 @@ impl EditorApp {
         let sep_h = 4.0; // egui::Separator defaults to spacing equal to item_spacing (4.0)
 
         // Count items and gaps:
-        // Buttons: 6 (file) + 4 (keyfile) + 5 (settings) = 15
+        // Buttons: 6 (file) + 4 (keyfile) + 6 (settings) = 16
         // Separators: 2
         // Gaps: 5 (in file) + 1 (to sep1) + 1 (to keyfile) + 3 (in keyfile) +
-        //       1 (to spacer) + 1 (to settings) + 1 (in settings after sep2) + 4 (between settings buttons) = 17
-        let total_content_h = (15.0 * btn_h) + (2.0 * sep_h) + (17.0 * spacing);
+        //       1 (to spacer) + 1 (to settings) + 5 (between settings buttons) = 17
+        // Wait, total gaps: 
+        // 5 (file btn gaps) + 1 (before sep) + 1 (after sep) + 
+        // 3 (keyfile btn gaps) + 1 (before sep) + 1 (after sep) + 
+        // 1 (after spacer) + 5 (settings btn gaps) = 18
+        let total_content_h = (16.0 * btn_h) + (2.0 * sep_h) + (18.0 * spacing);
 
         // The spacer fills whatever is left between groups 2 and 3.
         // When the window shrinks below total_content_h it collapses to a

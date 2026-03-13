@@ -305,7 +305,7 @@ ui.label("Tab Size:");
                     .add(
                         egui::DragValue::new(&mut self.settings.tab_size)
                             .range(2..=8)
-                            .clamp_to_range(true),
+                            .clamp_existing_to_range(true),
                     )
 .changed()
 {
@@ -360,7 +360,7 @@ if ui
                         egui::DragValue::new(&mut limit_val)
                             .speed(10.0)
                             .range(0..=1000000)
-                            .clamp_to_range(true),
+                            .clamp_existing_to_range(true),
 )
 .changed()
 {
@@ -381,7 +381,7 @@ if ui
                         egui::DragValue::new(&mut self.settings.max_history_length)
                             .speed(0.5)
                             .range(1..=1000)
-                            .clamp_to_range(true),
+                            .clamp_existing_to_range(true),
 )
 .changed()
 {
@@ -421,7 +421,7 @@ let _ = self.settings.save();
                             egui::DragValue::new(&mut self.settings.auto_save_debounce_secs)
                                 .speed(1.0)
                                 .range(1..=3600)
-                                .clamp_to_range(true),
+                                .clamp_existing_to_range(true),
                         )
                         .changed()
                     {
@@ -636,7 +636,7 @@ if ui
 egui::DragValue::new(&mut self.settings.toolbar_icon_size)
 .speed(1.0)
 .range(12.0..=48.0)
-.clamp_to_range(true),
+.clamp_existing_to_range(true),
 )
 .changed()
 {
@@ -708,7 +708,7 @@ ui.add_space(4.0);
                         egui::DragValue::new(&mut temp_limit)
                             .speed(0.5)
                             .range(1..=1000)
-                            .clamp_to_range(true),
+                            .clamp_existing_to_range(true),
                     )
                     .changed()
                 {
