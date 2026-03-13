@@ -170,6 +170,9 @@ pub struct Settings {
     /// Zen mode (minimalist UI, fullscreen)
     #[serde(default)]
     pub zen_mode: bool,
+    /// Whether to remember and restore Zen Mode state at launch
+    #[serde(default)]
+    pub remember_zen_mode: bool,
 
     /// Window dimensions and position
     #[serde(default = "default_window_width")]
@@ -283,6 +286,7 @@ impl Default for Settings {
             hide_sen_extension: false,
             hide_panel_headers: false,
             zen_mode: false,
+            remember_zen_mode: false,
             max_history_length: 100,
             max_lines: default_max_lines(),
 

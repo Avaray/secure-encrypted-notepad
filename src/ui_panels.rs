@@ -630,6 +630,13 @@ if ui
 {
 let _ = self.settings.save();
 }
+if ui
+.checkbox(&mut self.settings.remember_zen_mode, "Remember Zen mode")
+.on_hover_text("If enabled, Zen mode will be restored on next launch if it was active when closing.")
+.changed()
+{
+let _ = self.settings.save();
+}
 ui.add_space(4.0);
 });
 });

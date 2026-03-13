@@ -235,7 +235,7 @@ impl EditorApp {
             } else {
                 false
             },
-            zen_mode: settings.zen_mode,
+            zen_mode: if settings.remember_zen_mode { settings.zen_mode } else { false },
             zen_mode_applied: false,
             show_file_tree: settings.show_file_tree,
             is_modified: false,
