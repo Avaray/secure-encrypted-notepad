@@ -817,6 +817,7 @@ ui.add_space(4.0);
 
                     egui::ScrollArea::vertical()
                         .id_salt("history_scroll_area")
+                        .auto_shrink([false, false])
                         .show(ui, |ui| {
                             if history_len == 0 {
                                 ui.label("No history");
