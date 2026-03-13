@@ -250,6 +250,7 @@ if ui
 .changed()
 {
 let _ = self.settings.save();
+self.refresh_file_tree();
 }
 ui.add_space(8.0);
 ui.separator();
