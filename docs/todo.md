@@ -19,6 +19,8 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Missing Tests Analysis**: Check which unit tests or edge-cases are missing and implement them.
 - [ ] **Larger Toolbar Icons**: Increase the maximum allowed size for toolbar icons in the settings.
 - [ ] **Multicursor Support**: Implement multicursor functionality in the text editor.
+- [ ] **Window Title Privacy**: Remove the `.sen` extension from the application window title.
+- [ ] **Taskbar Privacy**: Add an option to completely hide the currently edited filename from the window title/taskbar to enhance privacy.
 
 
 ---
