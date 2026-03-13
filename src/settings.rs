@@ -37,6 +37,10 @@ impl Default for ToolbarPosition {
     }
 }
 
+fn default_comment_prefix() -> String {
+    "//".to_string()
+}
+
 /// User preferences - persisted between sessions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
@@ -98,6 +102,8 @@ pub struct Settings {
     pub tab_size: usize,
     pub use_spaces_for_tabs: bool,
     pub word_wrap: bool,
+    #[serde(default = "default_comment_prefix")]
+    pub comment_prefix: String,
 
     /// Auto-save enabled
     pub auto_save_enabled: bool,
@@ -267,6 +273,7 @@ impl Default for Settings {
             tab_size: 4,
             use_spaces_for_tabs: true,
             word_wrap: false,
+            comment_prefix: default_comment_prefix(),
             auto_save_enabled: true,
             auto_save_debounce_secs: 15,
             auto_save_on_focus_loss: true,

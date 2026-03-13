@@ -147,29 +147,37 @@ impl EditorApp {
     }
 
     /// Toggle comment on selected lines or current line
-    pub(crate) fn toggle_comment_lines(&mut self) {
+    pub(crate) fn toggle_comment_lines(&mut self, ctx: &egui::Context) {
         let lines_to_toggle = self.get_lines_in_selection();
         if lines_to_toggle.is_empty() {
             return;
         }
 
         let text = &mut self.document.current_content;
-        if text.is_empty() {
-            return;
-        }
 
         // POPRAWKA: Użyj split('\n') zamiast lines() aby zachować końcowe puste linie
         let lines: Vec<&str> = text.split('\n').collect();
 
-        // Check if all selected lines are commented
+        let comment_prefix = self.settings.comment_prefix.clone();
+        let comment_prefix_space = format!("{} ", comment_prefix);
+
         let all_commented = lines_to_toggle.iter().all(|&line_idx| {
             if line_idx < lines.len() {
                 let trimmed = lines[line_idx].trim_start();
-                trimmed.starts_with("//")
+                trimmed.starts_with(&comment_prefix)
             } else {
                 false
             }
         });
+
+        let was_empty = if lines_to_toggle.len() == 1 {
+            let line_idx = lines_to_toggle[0];
+            line_idx < lines.len() && lines[line_idx].trim_start().is_empty()
+        } else {
+            false
+        };
+
+        let added_len = comment_prefix_space.chars().count();
 
         let mut new_lines: Vec<String> = Vec::new();
 
@@ -179,12 +187,12 @@ impl EditorApp {
 
                 if all_commented {
                     // Uncomment
-                    if trimmed.starts_with("// ") {
-                        let uncommented = trimmed.strip_prefix("// ").unwrap();
+                    if trimmed.starts_with(&comment_prefix_space) {
+                        let uncommented = trimmed.strip_prefix(&comment_prefix_space).unwrap();
                         let indent = line.len() - trimmed.len();
                         new_lines.push(format!("{}{}", " ".repeat(indent), uncommented));
-                    } else if trimmed.starts_with("//") {
-                        let uncommented = trimmed.strip_prefix("//").unwrap();
+                    } else if trimmed.starts_with(&comment_prefix) {
+                        let uncommented = trimmed.strip_prefix(&comment_prefix).unwrap();
                         let indent = line.len() - trimmed.len();
                         new_lines.push(format!("{}{}", " ".repeat(indent), uncommented));
                     } else {
@@ -192,9 +200,9 @@ impl EditorApp {
                     }
                 } else {
                     // Comment
-                    if !trimmed.starts_with("//") {
+                    if !trimmed.starts_with(&comment_prefix) {
                         let indent_count = line.len() - trimmed.len();
-                        new_lines.push(format!("{}// {}", " ".repeat(indent_count), trimmed));
+                        new_lines.push(format!("{}{}{}", " ".repeat(indent_count), comment_prefix_space, trimmed));
                     } else {
                         new_lines.push(line.to_string());
                     }
@@ -207,6 +215,19 @@ impl EditorApp {
         // POPRAWKA: Użyj join('\n') żeby zachować strukturę
         *text = new_lines.join("\n");
         self.is_modified = true;
+
+        if lines_to_toggle.len() == 1 && was_empty && !all_commented {
+            if let Some(id) = self.text_edit_id {
+                if let Some(mut state) = egui::TextEdit::load_state(ctx, id) {
+                    if let Some(mut range) = state.cursor.char_range() {
+                        range.primary.index += added_len;
+                        range.secondary.index += added_len;
+                        state.cursor.set_char_range(Some(range));
+                        state.store(ctx, id);
+                    }
+                }
+            }
+        }
 
         if lines_to_toggle.len() == 1 {
             self.log_info(format!(
@@ -261,7 +282,7 @@ impl EditorApp {
             let mut current_pos = 0;
             let mut line_indices = std::collections::HashSet::new();
 
-            for (line_idx, line) in text.lines().enumerate() {
+            for (line_idx, line) in text.split('\n').enumerate() {
                 let line_end = current_pos + line.len();
                 if current_pos <= range.end && line_end >= range.start {
                     line_indices.insert(line_idx);

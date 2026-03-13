@@ -314,6 +314,39 @@ if ui
 {
 let _ = self.settings.save();
 }
+
+ui.horizontal(|ui| {
+    ui.label("Comment Prefix:");
+    let mut changed = false;
+    let original_inactive_stroke = ui.visuals().widgets.inactive.bg_stroke;
+    ui.visuals_mut().widgets.inactive.bg_stroke = ui.visuals().widgets.hovered.bg_stroke;
+
+    let response = ui.add(
+        egui::TextEdit::singleline(&mut self.settings.comment_prefix)
+            .desired_width(50.0)
+            .margin(egui::vec2(6.0, 4.0)) // Adding some margin helps it stand out like a generic border
+    );
+
+    ui.visuals_mut().widgets.inactive.bg_stroke = original_inactive_stroke;
+    
+    if response.changed() {
+        changed = true;
+    }
+    
+    if response.lost_focus() {
+        if self.settings.comment_prefix.trim().is_empty() {
+            self.settings.comment_prefix = "//".to_string();
+        } else {
+            self.settings.comment_prefix = self.settings.comment_prefix.trim().to_string();
+        }
+        changed = true; // Save the trimmed state
+    }
+    
+    if changed {
+        let _ = self.settings.save();
+        self.style_dirty = true;
+    }
+});
 // Max lines
 ui.horizontal(|ui| {
 ui.label("Max Lines Limit:");

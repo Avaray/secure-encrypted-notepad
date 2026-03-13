@@ -142,6 +142,8 @@ pub struct EditorApp {
 
     /// Previous cursor byte position (to detect navigation)
     pub(crate) previous_cursor_byte_pos: Option<usize>,
+    /// Stored TextEdit ID for cursor manipulation
+    pub(crate) text_edit_id: Option<egui::Id>,
     /// Flag to trigger focus on search field
     pub(crate) focus_search: bool,
     /// Track actual window focus to trigger auto-save on focus loss
@@ -288,6 +290,7 @@ impl EditorApp {
             style_dirty: true, // Apply style on startup
             reset_scroll_x_pending: false,
             previous_cursor_byte_pos: None,
+            text_edit_id: None,
             focus_search: false,
             focused: true, // Default to focused on start
             show_reset_confirmation: false,
@@ -626,6 +629,8 @@ impl eframe::App for EditorApp {
             self.style_dirty = false;
         }
 
+        let mut toggle_comment = false;
+
         // Keyboard shortcuts
         ctx.input_mut(|i| {
             // Ctrl+S: Save
@@ -694,7 +699,7 @@ impl eframe::App for EditorApp {
                 egui::Modifiers::CTRL,
                 egui::Key::Slash,
             )) {
-                self.toggle_comment_lines();
+                toggle_comment = true;
             }
 
             // Ctrl+F: Find
@@ -735,6 +740,10 @@ impl eframe::App for EditorApp {
                 i.smooth_scroll_delta = egui::Vec2::ZERO;
             }
         });
+
+        if toggle_comment {
+            self.toggle_comment_lines(ctx);
+        }
 
         // F11: Zen Mode
         if ctx.input(|i| i.key_pressed(egui::Key::F11)) {

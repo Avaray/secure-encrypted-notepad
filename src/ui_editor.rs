@@ -67,6 +67,7 @@ impl EditorApp {
 
         // Fixed ID for TextEdit
         let text_edit_id = ui.id().with("main_text_editor");
+        self.text_edit_id = Some(text_edit_id);
 
         // Save fixed position for line numbers (left edge of view)
         let editor_left_edge = ui.cursor().left();
@@ -250,7 +251,8 @@ impl EditorApp {
 
                     // Determine colors
                     let trimmed = line.trim_start();
-                    let is_comment = trimmed.starts_with("//");
+                    let is_comment = !self.settings.comment_prefix.is_empty() 
+                        && trimmed.starts_with(&self.settings.comment_prefix);
                     let content_color = if is_comment {
                         comment_color
                     } else {
