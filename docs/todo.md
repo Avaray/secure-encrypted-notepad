@@ -16,6 +16,9 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **File Tree Icons Refresh**: Replace current folder and file icons in the file tree panel with high-quality SVG equivalents for better visual consistency.
 - [ ] **Debug Log & Status Messages Cleanup**: Review and clean up messages in the debug log and status bar. Some should be changed or removed, especially when directory and keyfile path protection is enabled.
 - [ ] **Debug Log Filtering**: Implement log level filtering in the debug panel to easily toggle visibility of Info, Success, Warning, and Error messages.
+- [ ] **Missing Tests Analysis**: Check which unit tests or edge-cases are missing and implement them.
+- [ ] **Larger Toolbar Icons**: Increase the maximum allowed size for toolbar icons in the settings.
+- [ ] **Multicursor Support**: Implement multicursor functionality in the text editor.
 
 
 ---
