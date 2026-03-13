@@ -272,7 +272,6 @@ impl EditorApp {
         {
             self.show_theme_editor = !self.show_theme_editor;
             self.settings.show_theme_editor = self.show_theme_editor;
-            let _ = self.settings.save();
             if self.show_theme_editor {
                 self.editing_theme = Some(self.current_theme.clone());
             }
@@ -291,7 +290,6 @@ impl EditorApp {
         {
             self.show_settings_panel = !self.show_settings_panel;
             self.settings.show_settings_panel = self.show_settings_panel;
-            let _ = self.settings.save();
         }
 
         if Self::icon_btn(
@@ -308,7 +306,6 @@ impl EditorApp {
         {
             self.show_debug_panel = !self.show_debug_panel;
             self.settings.show_debug_panel = self.show_debug_panel;
-            let _ = self.settings.save();
         }
         if Self::icon_btn(
             ui,
@@ -324,7 +321,6 @@ impl EditorApp {
         {
             self.show_history_panel = !self.show_history_panel;
             self.settings.show_history_panel = self.show_history_panel;
-            let _ = self.settings.save();
         }
         if Self::icon_btn(
             ui,
@@ -340,7 +336,21 @@ impl EditorApp {
         {
             self.show_file_tree = !self.show_file_tree;
             self.settings.show_file_tree = self.show_file_tree;
-            let _ = self.settings.save();
+        }
+
+        if Self::icon_btn(
+            ui,
+            &self.icons.zen,
+            "Toggle Zen Mode (F11)",
+            self.zen_mode,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
+            self.toggle_zen_mode(ui.ctx());
         }
     }
 
@@ -371,8 +381,23 @@ impl EditorApp {
         {
             self.show_file_tree = !self.show_file_tree;
             self.settings.show_file_tree = self.show_file_tree;
-            let _ = self.settings.save();
         }
+
+        if Self::icon_btn(
+            ui,
+            &self.icons.zen,
+            "Toggle Zen Mode (F11)",
+            self.zen_mode,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
+            self.toggle_zen_mode(ui.ctx());
+        }
+
         if Self::icon_btn(
             ui,
             &self.icons.history,
@@ -387,7 +412,6 @@ impl EditorApp {
         {
             self.show_history_panel = !self.show_history_panel;
             self.settings.show_history_panel = self.show_history_panel;
-            let _ = self.settings.save();
         }
         if Self::icon_btn(
             ui,
@@ -403,7 +427,6 @@ impl EditorApp {
         {
             self.show_debug_panel = !self.show_debug_panel;
             self.settings.show_debug_panel = self.show_debug_panel;
-            let _ = self.settings.save();
         }
 
         if Self::icon_btn(
@@ -420,7 +443,6 @@ impl EditorApp {
         {
             self.show_settings_panel = !self.show_settings_panel;
             self.settings.show_settings_panel = self.show_settings_panel;
-            let _ = self.settings.save();
         }
         if Self::icon_btn(
             ui,
@@ -436,7 +458,6 @@ impl EditorApp {
         {
             self.show_theme_editor = !self.show_theme_editor;
             self.settings.show_theme_editor = self.show_theme_editor;
-            let _ = self.settings.save();
             if self.show_theme_editor {
                 self.editing_theme = Some(self.current_theme.clone());
             }

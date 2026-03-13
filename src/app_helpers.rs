@@ -657,4 +657,24 @@ impl EditorApp {
             }
         }
     }
+
+    /// Toggle Zen Mode (minimalist UI + Fullscreen)
+    pub(crate) fn toggle_zen_mode(&mut self, ctx: &egui::Context) {
+        self.zen_mode = !self.zen_mode;
+        self.settings.zen_mode = self.zen_mode;
+        
+        if self.zen_mode {
+            // Enter Fullscreen
+            ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(true));
+            self.log_info("Zen Mode enabled");
+        } else {
+            // Exit Fullscreen
+            ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(false));
+            // Force restore maximized state if it was set
+            if self.settings.start_maximized {
+                ctx.send_viewport_cmd(egui::ViewportCommand::Maximized(true));
+            }
+            self.log_info("Zen Mode disabled");
+        }
+    }
 }

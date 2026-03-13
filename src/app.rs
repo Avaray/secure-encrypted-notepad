@@ -166,6 +166,8 @@ pub struct EditorApp {
     /// Cached native window handle (Windows only, for SetWindowDisplayAffinity)
     #[cfg(target_os = "windows")]
     pub(crate) cached_hwnd: Option<windows_sys::Win32::Foundation::HWND>,
+    /// Zen mode active
+    pub(crate) zen_mode: bool,
 }
 
 impl EditorApp {
@@ -231,6 +233,7 @@ impl EditorApp {
             } else {
                 false
             },
+            zen_mode: settings.zen_mode,
             show_file_tree: settings.show_file_tree,
             is_modified: false,
             debug_log: Vec::new(),
@@ -646,7 +649,6 @@ impl eframe::App for EditorApp {
             )) {
                 self.settings.editor_font_size =
                     (self.settings.editor_font_size + 1.0).clamp(8.0, 128.0);
-                let _ = self.settings.save();
             }
 
             // Ctrl+Minus: Decrease Font
@@ -656,7 +658,6 @@ impl eframe::App for EditorApp {
             )) {
                 self.settings.editor_font_size =
                     (self.settings.editor_font_size - 1.0).clamp(8.0, 128.0);
-                let _ = self.settings.save();
             }
 
             // Ctrl+N: New Document
@@ -690,11 +691,11 @@ impl eframe::App for EditorApp {
             )) {
                 self.show_search_panel = !self.show_search_panel;
                 self.settings.show_search_panel = self.show_search_panel;
-                let _ = self.settings.save();
                 if self.show_search_panel {
                     self.focus_search = true;
                 }
             }
+
 
             // Ctrl+H: Replace
             if i.consume_shortcut(&egui::KeyboardShortcut::new(
@@ -715,13 +716,18 @@ impl eframe::App for EditorApp {
 
                 self.settings.editor_font_size =
                     (self.settings.editor_font_size + delta).clamp(8.0, 128.0);
-                let _ = self.settings.save();
 
                 // Consume the scroll so it doesn't move the document
                 i.raw_scroll_delta = egui::Vec2::ZERO;
                 i.smooth_scroll_delta = egui::Vec2::ZERO;
             }
         });
+
+        // F11: Zen Mode
+        if ctx.input(|i| i.key_pressed(egui::Key::F11)) {
+            self.toggle_zen_mode(ctx);
+        }
+
 
         // Go to Line Dialog
         self.render_goto_line_dialog(ctx);
@@ -799,7 +805,7 @@ impl eframe::App for EditorApp {
         }
 
         // Search panel (below toolbar)
-        if self.show_search_panel {
+        if self.show_search_panel && !self.zen_mode {
             let mut search_bar_frame = bar_frame.clone();
             search_bar_frame.inner_margin.left = 12;
             search_bar_frame.inner_margin.right = 12;
@@ -813,15 +819,16 @@ impl eframe::App for EditorApp {
         }
 
         // Status bar
-        let mut status_bar_frame = bar_frame.clone();
-        status_bar_frame.inner_margin.left = 12;
-        status_bar_frame.inner_margin.right = 12;
+        if !self.zen_mode {
+            let mut status_bar_frame = bar_frame.clone();
+            status_bar_frame.inner_margin.left = 12;
+            status_bar_frame.inner_margin.right = 12;
 
-        egui::TopBottomPanel::bottom("status_bar")
-            .frame(status_bar_frame)
-            .min_height(24.0)
-            .show(ctx, |ui| {
-                ui.horizontal(|ui| {
+            egui::TopBottomPanel::bottom("status_bar")
+                .frame(status_bar_frame)
+                .min_height(24.0)
+                .show(ctx, |ui| {
+                    ui.horizontal(|ui| {
                     ui.label(&self.status_message);
 
                     if self.is_modified {
@@ -870,9 +877,10 @@ impl eframe::App for EditorApp {
                     });
                 });
             });
+        }
 
         // File tree (left)
-        if self.show_file_tree {
+        if self.show_file_tree && !self.zen_mode {
             let panel_res = egui::SidePanel::left("file_tree")
                 .frame(content_frame.clone())
                 .resizable(true)
@@ -891,7 +899,7 @@ impl eframe::App for EditorApp {
         }
 
         // Theme Editor panel (right)
-        if self.show_theme_editor {
+        if self.show_theme_editor && !self.zen_mode {
             let panel_res = egui::SidePanel::right("theme_editor")
                 .frame(content_frame.clone())
                 .resizable(true)
@@ -908,7 +916,7 @@ impl eframe::App for EditorApp {
         }
 
         // Settings panel (right)
-        if self.show_settings_panel {
+        if self.show_settings_panel && !self.zen_mode {
             let panel_res = egui::SidePanel::right("settings_panel")
                 .frame(content_frame.clone())
                 .resizable(true)
@@ -926,7 +934,7 @@ impl eframe::App for EditorApp {
         }
 
         // History panel (right)
-        if self.show_history_panel {
+        if self.show_history_panel && !self.zen_mode {
             let panel_res = egui::SidePanel::right("history")
                 .frame(content_frame.clone())
                 .resizable(true)
@@ -943,7 +951,7 @@ impl eframe::App for EditorApp {
         }
 
         // Debug panel (right, below history if both shown)
-        if self.show_debug_panel {
+        if self.show_debug_panel && !self.zen_mode {
             let panel_res = egui::SidePanel::right("debug")
                 .frame(content_frame.clone())
                 .resizable(true)

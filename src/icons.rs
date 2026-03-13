@@ -17,6 +17,7 @@ pub struct Icons {
     pub export: TextureHandle,
     pub rotate: TextureHandle,
     pub batch_convert: TextureHandle,
+    pub zen: TextureHandle,
 }
 
 impl Icons {
@@ -96,6 +97,11 @@ impl Icons {
                 ctx,
                 include_bytes!("../assets/MaterialSymbolsBatchConvert.svg"),
                 "icon_batch_convert",
+            ),
+            zen: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/IxEyeFocus.svg"),
+                "icon_zen",
             ),
         }
     }
