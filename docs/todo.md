@@ -15,6 +15,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **UI Icon Sets**: Add the ability to change icon sets from a dropdown in settings. This will allow users to choose between different visual styles for the application icons (folders, keys, files, etc.), requiring architectural changes to support dynamic icon loading.
 - [ ] **File Tree Icons Refresh**: Replace current folder and file icons in the file tree panel with high-quality SVG equivalents for better visual consistency.
 - [ ] **Debug Log & Status Messages Cleanup**: Review and clean up messages in the debug log and status bar. Some should be changed or removed, especially when directory and keyfile path protection is enabled.
+- [ ] **Debug Log Filtering**: Implement log level filtering in the debug panel to easily toggle visibility of Info, Success, Warning, and Error messages.
 
 
 ---
