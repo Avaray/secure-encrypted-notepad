@@ -301,8 +301,12 @@ let _ = self.settings.save();
 }
 ui.horizontal(|ui| {
 ui.label("Tab Size:");
-if ui
-.add(egui::DragValue::new(&mut self.settings.tab_size).range(2..=8))
+                if ui
+                    .add(
+                        egui::DragValue::new(&mut self.settings.tab_size)
+                            .range(2..=8)
+                            .clamp_to_range(true),
+                    )
 .changed()
 {
 let _ = self.settings.save();
@@ -353,9 +357,10 @@ ui.label("Max Lines Limit:");
 let mut limit_val = self.settings.max_lines;
 if ui
 .add(
-egui::DragValue::new(&mut limit_val)
-.speed(10.0)
-.range(0..=1000000),
+                        egui::DragValue::new(&mut limit_val)
+                            .speed(10.0)
+                            .range(0..=1000000)
+                            .clamp_to_range(true),
 )
 .changed()
 {
@@ -373,9 +378,10 @@ ui.horizontal(|ui| {
 ui.label("Default history limit:");
 if ui
 .add(
-egui::DragValue::new(&mut self.settings.max_history_length)
-.speed(1.0)
-.range(1..=1000),
+                        egui::DragValue::new(&mut self.settings.max_history_length)
+                            .speed(0.5)
+                            .range(1..=1000)
+                            .clamp_to_range(true),
 )
 .changed()
 {
@@ -413,7 +419,9 @@ let _ = self.settings.save();
                     if ui
                         .add(
                             egui::DragValue::new(&mut self.settings.auto_save_debounce_secs)
-                                .range(1..=3600),
+                                .speed(1.0)
+                                .range(1..=3600)
+                                .clamp_to_range(true),
                         )
                         .changed()
                     {
@@ -627,7 +635,8 @@ if ui
 .add(
 egui::DragValue::new(&mut self.settings.toolbar_icon_size)
 .speed(1.0)
-.range(12.0..=64.0),
+.range(12.0..=48.0)
+.clamp_to_range(true),
 )
 .changed()
 {
@@ -697,8 +706,9 @@ ui.add_space(4.0);
                 if ui
                     .add(
                         egui::DragValue::new(&mut temp_limit)
-                            .speed(0.1)
-                            .range(1..=1000),
+                            .speed(0.5)
+                            .range(1..=1000)
+                            .clamp_to_range(true),
                     )
                     .changed()
                 {
