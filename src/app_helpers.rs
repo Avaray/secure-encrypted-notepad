@@ -402,7 +402,7 @@ impl EditorApp {
             self.refresh_file_access_status();
             
         } else {
-            self.log_warning("No directory selected for file tree");
+            self.log_info("No directory selected for file tree");
         }
     }
 
