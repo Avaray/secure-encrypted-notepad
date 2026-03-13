@@ -16,6 +16,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **UI Icon Sets**: Add the ability to change icon sets from a dropdown in settings. This will allow users to choose between different visual styles for the application icons (folders, keys, files, etc.), requiring architectural changes to support dynamic icon loading.
 - [x] **Zen Mode**: Implement a distraction-free writing environment (minimalist UI, panels hidden, optional full-screen) toggled via F11 shortcut.
 - [ ] **Customizable Comment Characters**: Allow users to define their own comment prefix (currently fixed to `//`). This will enable support for different syntax styles (e.g., `#`, `--`, `/*`) based on user preference.
+- [ ] **File Tree Icons Refresh**: Replace current folder and file icons in the file tree panel with high-quality SVG equivalents for better visual consistency.
 
 
 ---
