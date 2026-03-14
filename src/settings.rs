@@ -115,6 +115,17 @@ pub struct Settings {
 
     /// Show debug panel
     pub show_debug_panel: bool,
+    
+    /// Debug log filters
+    #[serde(default = "default_true")]
+    pub debug_show_info: bool,
+    #[serde(default = "default_true")]
+    pub debug_show_success: bool,
+    #[serde(default = "default_true")]
+    pub debug_show_warning: bool,
+    #[serde(default = "default_true")]
+    pub debug_show_error: bool,
+
     /// Show settings panel
     #[serde(default)]
     pub show_settings_panel: bool,
@@ -282,6 +293,11 @@ impl Default for Settings {
             auto_save_on_focus_loss: true,
 
             show_debug_panel: false,
+            debug_show_info: true,
+            debug_show_success: true,
+            debug_show_warning: true,
+            debug_show_error: true,
+            
             show_settings_panel: false,
             show_history_panel: false,
             show_theme_editor: false,

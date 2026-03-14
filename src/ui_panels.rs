@@ -643,7 +643,7 @@ if ui
 .add(
 egui::DragValue::new(&mut self.settings.toolbar_icon_size)
 .speed(1.0)
-.range(12.0..=48.0)
+.range(12.0..=96.0)
 .clamp_existing_to_range(true),
 )
 .changed()
@@ -905,21 +905,44 @@ ui.add_space(4.0);
                 if ui.button("Clear").clicked() {
                     self.debug_log.clear();
                 }
-                ui.label(format!("Entries: {}", self.debug_log.len()));
+                
+                let mut changed = false;
+                changed |= ui.checkbox(&mut self.settings.debug_show_info, "Info").changed();
+                changed |= ui.checkbox(&mut self.settings.debug_show_success, "Success").changed();
+                changed |= ui.checkbox(&mut self.settings.debug_show_warning, "Warning").changed();
+                changed |= ui.checkbox(&mut self.settings.debug_show_error, "Error").changed();
+                
+                if changed {
+                    let _ = self.settings.save();
+                }
             });
             ui.separator();
             egui::ScrollArea::both()
                 .auto_shrink([false, false])
                 .stick_to_bottom(true)
                 .show(ui, |ui| {
+                    let mut visible_count = 0;
                     for entry in &self.debug_log {
-                        let color = match entry.level {
-                            LogLevel::Info => self.current_theme.colors.info_color(),
-                            LogLevel::Success => self.current_theme.colors.success_color(),
-                            LogLevel::Warning => self.current_theme.colors.warning_color(),
-                            LogLevel::Error => self.current_theme.colors.error_color(),
+                        let show = match entry.level {
+                            LogLevel::Info => self.settings.debug_show_info,
+                            LogLevel::Success => self.settings.debug_show_success,
+                            LogLevel::Warning => self.settings.debug_show_warning,
+                            LogLevel::Error => self.settings.debug_show_error,
                         };
-                        ui.colored_label(color, entry.display());
+                        
+                        if show {
+                            visible_count += 1;
+                            let color = match entry.level {
+                                LogLevel::Info => self.current_theme.colors.info_color(),
+                                LogLevel::Success => self.current_theme.colors.success_color(),
+                                LogLevel::Warning => self.current_theme.colors.warning_color(),
+                                LogLevel::Error => self.current_theme.colors.error_color(),
+                            };
+                            ui.colored_label(color, entry.display());
+                        }
+                    }
+                    if visible_count == 0 && !self.debug_log.is_empty() {
+                        ui.label(egui::RichText::new("All entries filtered out.").italics().weak());
                     }
                 });
         });
