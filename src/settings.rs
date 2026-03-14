@@ -641,3 +641,20 @@ impl Settings {
         dirs::config_dir().map(|d| d.join("sen"))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_settings_default_serialization() {
+        let settings = Settings::default();
+        let serialized = toml::to_string(&settings).expect("Failed to serialize default settings");
+        let deserialized: Settings = toml::from_str(&serialized).expect("Failed to deserialize default settings");
+        
+        // Assert a few key fields to ensure serde works correctly
+        assert_eq!(settings.theme_name, deserialized.theme_name);
+        assert_eq!(settings.max_history_length, deserialized.max_history_length);
+        assert_eq!(settings.auto_save_enabled, deserialized.auto_save_enabled);
+    }
+}

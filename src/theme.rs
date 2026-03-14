@@ -371,3 +371,21 @@ pub fn delete_theme(theme_name: &str) -> Result<(), Box<dyn std::error::Error>> 
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_themes() {
+        let dark = Theme::dark();
+        assert_eq!(dark.name, "Dark");
+        assert_eq!(dark.color_scheme, ColorScheme::Dark);
+        assert_eq!(dark.colors.background, [27, 27, 27]);
+
+        let light = Theme::light();
+        assert_eq!(light.name, "Light");
+        assert_eq!(light.color_scheme, ColorScheme::Light);
+        assert_eq!(light.colors.background, [255, 255, 255]);
+    }
+}

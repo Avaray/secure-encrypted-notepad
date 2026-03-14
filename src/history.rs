@@ -326,4 +326,18 @@ mod tests {
         let reloaded = DocumentWithHistory::from_file_content(&content);
         assert_eq!(reloaded.history.len(), 1); // Only 1 after reload
     }
+
+    #[test]
+    fn test_autosave_roundtrip() {
+        let mut doc = DocumentWithHistory::default();
+        doc.current_content = "Normal content".to_string();
+        doc.set_autosave("Autosaved content".to_string());
+        
+        let serialized = doc.to_file_content();
+        let loaded = DocumentWithHistory::from_file_content(&serialized);
+        
+        assert_eq!(loaded.current_content, "Normal content");
+        assert!(loaded.autosave.is_some());
+        assert_eq!(loaded.autosave.unwrap().content, "Autosaved content");
+    }
 }
