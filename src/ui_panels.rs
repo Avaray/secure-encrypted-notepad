@@ -1201,6 +1201,7 @@ ui.add_space(4.0);
                                 self.editing_theme = Some(theme.clone());
                                 self.current_theme = theme.clone();
                                 self.settings.theme_name = theme.name.clone();
+                                self.show_delete_theme_confirmation = false; // Reset confirmation on theme change
                                 self.apply_theme(ui.ctx());
                                 let _ = self.settings.save();
                             }
@@ -1210,19 +1211,28 @@ ui.add_space(4.0);
                     let mut new_theme = self.current_theme.clone();
                     new_theme.name = format!("{} (Copy)", new_theme.name);
                     self.editing_theme = Some(new_theme);
+                    self.show_delete_theme_confirmation = false; // Reset confirmation
                 }
                 // Delete button with confirmation
                 if let Some(theme) = &self.editing_theme {
                     let is_builtin = theme.name == "Dark" || theme.name == "Light";
                     if !is_builtin {
-                        if ui.button("🗑 Delete").clicked() {
-                            // This actually needs a way to confirm. For now, simple delete.
-                            // In a real app we'd show a modal.
-                            // Since we don't have modals easily, we'll just delete and select default.
-                            let _ = crate::theme::delete_theme(&theme.name);
-                            self.themes = crate::theme::load_themes(); // Reload
-                            self.editing_theme = Some(crate::theme::Theme::dark());
-                            // Reset to safe default
+                        if !self.show_delete_theme_confirmation {
+                            if ui.button("🗑 Delete").clicked() {
+                                self.show_delete_theme_confirmation = true;
+                            }
+                        } else {
+                            ui.label(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color()));
+                            if ui.button("Yes").clicked() {
+                                let _ = crate::theme::delete_theme(&theme.name);
+                                self.themes = crate::theme::load_themes(); // Reload
+                                self.editing_theme = Some(crate::theme::Theme::dark());
+                                self.show_delete_theme_confirmation = false;
+                                // Reset to safe default
+                            }
+                            if ui.button("No").clicked() {
+                                self.show_delete_theme_confirmation = false;
+                            }
                         }
                     }
                 }

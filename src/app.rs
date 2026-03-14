@@ -174,6 +174,8 @@ pub struct EditorApp {
     pub(crate) zen_mode: bool,
     /// Flag to track if Zen mode fullscreen was applied at startup
     pub(crate) zen_mode_applied: bool,
+    /// Confirmation for theme deletion
+    pub(crate) show_delete_theme_confirmation: bool,
 }
 
 impl EditorApp {
@@ -298,6 +300,7 @@ impl EditorApp {
             show_reset_confirmation: false,
             reset_slider_val: 0.0,
             show_clear_keyfile_confirmation: false,
+            show_delete_theme_confirmation: false,
             show_clear_backup_dir_confirmation: false,
             show_clear_workspace_confirmation: false,
             show_clear_history_confirmation: false,

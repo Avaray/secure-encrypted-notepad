@@ -462,6 +462,7 @@ impl EditorApp {
         {
             self.show_theme_editor = !self.show_theme_editor;
             self.settings.show_theme_editor = self.show_theme_editor;
+            self.show_delete_theme_confirmation = false; // Reset confirmation
             if self.show_theme_editor {
                 self.editing_theme = Some(self.current_theme.clone());
             }
