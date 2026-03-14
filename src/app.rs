@@ -793,6 +793,22 @@ impl eframe::App for EditorApp {
         content_frame.stroke = egui::Stroke::NONE;
         content_frame.inner_margin = egui::Margin::same(12);
 
+        // Prep variants of the content frame that allow scrollbars to adhere to window edges
+        let mut left_panel_frame = content_frame.clone();
+        // File tree still wants a little left padding for icons
+        left_panel_frame.inner_margin.left = 8;
+
+        let mut right_panel_frame = content_frame.clone();
+        if self.settings.toolbar_position != crate::settings::ToolbarPosition::Right {
+            right_panel_frame.inner_margin.right = 0;
+        }
+
+        let mut central_panel_frame = content_frame.clone();
+        let any_right_panel = self.show_settings_panel || self.show_debug_panel || self.show_history_panel || self.show_theme_editor;
+        if self.settings.toolbar_position != crate::settings::ToolbarPosition::Right && !any_right_panel {
+            central_panel_frame.inner_margin.right = 0;
+        }
+
         // Button size in the toolbar is (ico_s + 4). Each frame adds its inner_margin
         // on both sides to arrive at the total panel dimension:
         //   bar_frame (Top):            top:6 + bottom:6 = 12  →  ico_s + 4 + 12 = ico_s + 16
@@ -913,7 +929,7 @@ impl eframe::App for EditorApp {
         // File tree (left)
         if self.show_file_tree && !self.zen_mode {
             let panel_res = egui::SidePanel::left("file_tree")
-                .frame(content_frame.clone())
+                .frame(left_panel_frame)
                 .resizable(true)
                 .default_width(self.settings.file_tree_width)
                 .width_range(150.0..=f32::INFINITY)
@@ -932,7 +948,7 @@ impl eframe::App for EditorApp {
         // Theme Editor panel (right)
         if self.show_theme_editor && !self.zen_mode {
             let panel_res = egui::SidePanel::right("theme_editor")
-                .frame(content_frame.clone())
+                .frame(right_panel_frame.clone())
                 .resizable(true)
                 .default_width(self.settings.theme_editor_width)
                 .show(ctx, |ui| {
@@ -949,7 +965,7 @@ impl eframe::App for EditorApp {
         // Settings panel (right)
         if self.show_settings_panel && !self.zen_mode {
             let panel_res = egui::SidePanel::right("settings_panel")
-                .frame(content_frame.clone())
+                .frame(right_panel_frame.clone())
                 .resizable(true)
                 .default_width(self.settings.settings_panel_width)
                 .min_width(300.0)
@@ -967,7 +983,7 @@ impl eframe::App for EditorApp {
         // History panel (right)
         if self.show_history_panel && !self.zen_mode {
             let panel_res = egui::SidePanel::right("history")
-                .frame(content_frame.clone())
+                .frame(right_panel_frame.clone())
                 .resizable(true)
                 .default_width(self.settings.history_panel_width)
                 .show(ctx, |ui| {
@@ -984,7 +1000,7 @@ impl eframe::App for EditorApp {
         // Debug panel (right, below history if both shown)
         if self.show_debug_panel && !self.zen_mode {
             let panel_res = egui::SidePanel::right("debug")
-                .frame(content_frame.clone())
+                .frame(right_panel_frame)
                 .resizable(true)
                 .default_width(self.settings.debug_panel_width)
                 .show(ctx, |ui| {
@@ -1000,7 +1016,7 @@ impl eframe::App for EditorApp {
 
         // Central editor
         egui::CentralPanel::default()
-            .frame(content_frame.clone())
+            .frame(central_panel_frame)
             .show(ctx, |ui| {
                 self.render_editor(ui);
             });
