@@ -244,6 +244,14 @@ if ui
 {
 let _ = self.settings.save();
 }
+
+if ui
+.checkbox(&mut self.settings.hide_filename_in_title, "Hide filename in Window Title")
+.on_hover_text("Enhances privacy by not displaying the current filename in the window title or taskbar.")
+.changed()
+{
+let _ = self.settings.save();
+}
 if ui
 .checkbox(&mut self.settings.tree_style_file_tree, "Use Tree View (expandable)")
 .on_hover_text("Display folders hierarchically and toggle expansion on click")

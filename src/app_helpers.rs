@@ -551,13 +551,27 @@ impl EditorApp {
 
     /// Update window title based on current file and modified state
     pub(crate) fn update_window_title(&self, ctx: &egui::Context) {
-        let title = if let Some(path) = &self.current_file_path {
+        let title = if self.settings.hide_filename_in_title {
+            if self.is_modified {
+                "SEN *".to_string()
+            } else {
+                "SEN".to_string()
+            }
+        } else if let Some(path) = &self.current_file_path {
             let filename = path.file_name().unwrap_or_default().to_string_lossy();
-            let modified = if self.is_modified { "*" } else { "" };
-            format!("{} {} - SEN", filename, modified)
+            let display_name = filename.strip_suffix(".sen").unwrap_or(&filename);
+            
+            if self.is_modified {
+                format!("* {} - SEN", display_name)
+            } else {
+                format!("{} - SEN", display_name)
+            }
         } else {
-            let modified = if self.is_modified { "*" } else { "" };
-            format!("Untitled {} - SEN", modified)
+            if self.is_modified {
+                "* Untitled - SEN".to_string()
+            } else {
+                "Untitled - SEN".to_string()
+            }
         };
 
         ctx.send_viewport_cmd(egui::ViewportCommand::Title(title));

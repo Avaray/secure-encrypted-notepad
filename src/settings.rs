@@ -154,6 +154,9 @@ pub struct Settings {
     /// Hide .sen extension in file tree
     #[serde(default)]
     pub hide_sen_extension: bool,
+    /// Hide filename in window title/taskbar
+    #[serde(default)]
+    pub hide_filename_in_title: bool,
     /// Max history length
     pub max_history_length: usize,
 
@@ -291,6 +294,7 @@ impl Default for Settings {
             debug_panel_width: default_panel_width_250(),
             show_subfolders: true,
             hide_sen_extension: false,
+            hide_filename_in_title: false,
             hide_panel_headers: false,
             zen_mode: false,
             remember_zen_mode: false,
