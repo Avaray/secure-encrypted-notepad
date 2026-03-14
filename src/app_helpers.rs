@@ -384,8 +384,8 @@ impl EditorApp {
                         self.file_tree_entries.extend(folders);
                         self.file_tree_entries.extend(files);
                     }
-                    Err(e) => {
-                        self.log_error(format!("Failed to read directory: {}", e));
+                    Err(_) => {
+                        self.log_error("Failed to read directory".to_string());
                     }
                 }
             }

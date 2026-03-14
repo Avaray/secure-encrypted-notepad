@@ -119,11 +119,13 @@ impl EditorApp {
                                                 {
                                                     Ok(_) => {
                                                         success += 1;
-                                                        self.log_success(format!(
-                                                            "Encrypted: {} -> {}",
-                                                            self.mask_directory_path(file),
-                                                            self.mask_directory_path(&output_path)
-                                                        ));
+                                                        let masked_in = self.mask_directory_path(file);
+                                                        let masked_out = self.mask_directory_path(&output_path);
+                                                        if masked_in == "Secured" && masked_out == "Secured" {
+                                                            self.log_success("File encrypted successfully".to_string());
+                                                        } else {
+                                                            self.log_success(format!("Encrypted: {} -> {}", masked_in, masked_out));
+                                                        }
                                                     }
                                                     Err(e) => {
                                                         failed += 1;
@@ -198,11 +200,13 @@ impl EditorApp {
                                                 match std::fs::write(&output_path, content) {
                                                     Ok(_) => {
                                                         success += 1;
-                                                        self.log_success(format!(
-                                                            "Decrypted: {} -> {}",
-                                                            self.mask_directory_path(file),
-                                                            self.mask_directory_path(&output_path)
-                                                        ));
+                                                        let masked_in = self.mask_directory_path(file);
+                                                        let masked_out = self.mask_directory_path(&output_path);
+                                                        if masked_in == "Secured" && masked_out == "Secured" {
+                                                            self.log_success("File decrypted successfully".to_string());
+                                                        } else {
+                                                            self.log_success(format!("Decrypted: {} -> {}", masked_in, masked_out));
+                                                        }
                                                     }
                                                     Err(e) => {
                                                         failed += 1;

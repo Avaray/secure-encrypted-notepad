@@ -48,7 +48,6 @@ impl EditorApp {
 
     /// Open file dialog implementation
     pub(crate) fn perform_open_file_dialog(&mut self) {
-        self.log_info("Opening file dialog");
         if let Some(path) = rfd::FileDialog::new()
             .add_filter("SEN Files", &["sen"])
             .add_filter("All Files", &["*"])
@@ -56,7 +55,6 @@ impl EditorApp {
         {
             self.perform_open_file(path);
         } else {
-            self.log_info("File dialog cancelled");
         }
     }
 
@@ -89,15 +87,19 @@ impl EditorApp {
                     self.show_autosave_restore = true;
                 }
 
-                self.status_message = format!(
-                    "Opened: {} ({} history entries)",
-                    self.mask_directory_path(&path),
-                    history_count
-                );
-                self.log_info(format!(
-                    "OK: File opened successfully with {} history entries",
-                    history_count
-                ));
+                let masked_path = self.mask_directory_path(&path);
+                
+                self.status_message = if masked_path == "Secured" {
+                    format!("Opened file with {} history entries", history_count)
+                } else {
+                    format!("Opened: {} ({} history entries)", masked_path, history_count)
+                };
+                
+                self.log_info(if masked_path == "Secured" {
+                    format!("File opened successfully with {} history entries", history_count)
+                } else {
+                    format!("File opened successfully: {} ({} history entries)", masked_path, history_count)
+                });
             }
             Err(e) => {
                 self.status_message = format!("Error: {}", e);
@@ -145,10 +147,8 @@ impl EditorApp {
         }
 
         if let Some(path) = self.current_file_path.clone() {
-            self.log_info("Saving to existing file path");
             self.perform_save(path);
         } else {
-            self.log_info("No file path set, opening save dialog");
             self.save_file_as();
         }
     }
@@ -161,7 +161,6 @@ impl EditorApp {
             return;
         }
 
-        self.log_info("Opening save as dialog");
         let mut dialog = rfd::FileDialog::new()
             .add_filter("SEN Files", &["sen"])
             .set_file_name("document.sen");
@@ -174,7 +173,6 @@ impl EditorApp {
         if let Some(path) = dialog.save_file() {
             self.perform_save(path);
         } else {
-            self.log_info("Save as dialog cancelled");
         }
     }
 
@@ -193,7 +191,6 @@ impl EditorApp {
         self.document.clear_autosave();
 
         let file_content = self.document.to_file_content();
-        self.log_info(format!("Content size: {} bytes", file_content.len()));
 
         match encrypt_file(&file_content, &keyfile, &path) {
             Ok(_) => {
@@ -206,12 +203,20 @@ impl EditorApp {
                 self.document.history.retain(|e| !e.deleted);
 
                 let history_count = self.document.get_visible_history().len();
-                self.status_message = format!(
-                    "Saved: {} ({} history entries)",
-                    self.mask_directory_path(&path),
-                    history_count
-                );
-                self.log_success("OK: File saved successfully");
+                let masked_path = self.mask_directory_path(&path);
+                
+                self.status_message = if masked_path == "Secured" {
+                    format!("Saved file with {} history entries", history_count)
+                } else {
+                    format!("Saved: {} ({} history entries)", masked_path, history_count)
+                };
+                
+                self.log_success(if masked_path == "Secured" {
+                    "File saved successfully".to_string()
+                } else {
+                    format!("File saved successfully: {}", masked_path)
+                });
+                
                 self.refresh_file_tree();
 
                 // Auto-Backup Logic
@@ -245,7 +250,6 @@ impl EditorApp {
             match std::fs::metadata(&path) {
                 Ok(metadata) => {
                     let size = metadata.len();
-                    self.log_info(format!("Keyfile size: {} bytes", size));
 
                     if size == 0 {
                         self.status_message = "Error: Keyfile is empty (0 bytes)".to_string();
@@ -267,8 +271,16 @@ impl EditorApp {
                             self.keyfile_path = Some(path.clone());
                             self.refresh_file_access_status();
                             let masked = self.mask_keyfile_path(&path);
-                            self.status_message = format!("Valid keyfile loaded: {}", masked);
-                            self.log_info(format!("Valid keyfile loaded successfully: {}", masked));
+                            self.status_message = if masked == "Secured" {
+                                "Valid keyfile loaded".to_string()
+                            } else {
+                                format!("Valid keyfile loaded: {}", masked)
+                            };
+                            self.log_info(if masked == "Secured" {
+                                "Valid keyfile loaded successfully".to_string()
+                            } else {
+                                format!("Valid keyfile loaded successfully: {}", masked)
+                            });
                         }
                         Err(e) => {
                             self.status_message = format!("Error: Cannot read keyfile: {}", e);
@@ -297,11 +309,16 @@ impl EditorApp {
                     self.keyfile_path = Some(path.clone());
                     self.refresh_file_access_status();
                     let masked = self.mask_keyfile_path(&path);
-                    self.status_message = format!("OK: Keyfile generated: {}", masked);
-                    self.log_info(format!(
-                        "OK: Keyfile generated successfully (256 bytes): {}",
-                        masked
-                    ));
+                    self.status_message = if masked == "Secured" {
+                        "Keyfile generated successfully".to_string()
+                    } else {
+                        format!("Keyfile generated successfully: {}", masked)
+                    };
+                    self.log_info(if masked == "Secured" {
+                        "Keyfile generated successfully (256 bytes)".to_string()
+                    } else {
+                        format!("Keyfile generated successfully (256 bytes): {}", masked)
+                    });
                 }
                 Err(e) => {
                     self.status_message = format!("Error: {}", e);
@@ -473,12 +490,18 @@ impl EditorApp {
                     self.is_modified = false;
 
                     let new_masked = self.mask_keyfile_path(&new_keyfile_path);
-                    self.status_message =
-                        format!("OK: Keyfile rotated: {} → {}", old_name, new_masked);
-                    self.log_success(format!(
-                        "OK: Keyfile rotated successfully for {}",
-                        self.mask_directory_path(&file_path)
-                    ));
+                    
+                    self.status_message = if new_masked == "Secured" && old_name == "Secured" {
+                        "Keyfile rotated successfully".to_string()
+                    } else {
+                        format!("Keyfile rotated successfully: {} → {}", old_name, new_masked)
+                    };
+                    
+                    self.log_success(if new_masked == "Secured" {
+                        "Keyfile rotated successfully".to_string()
+                    } else {
+                        format!("Keyfile rotated successfully for {}", self.mask_directory_path(&file_path))
+                    });
                 }
                 Err(e) => {
                     self.status_message = format!("Error during keyfile rotation: {}", e);
