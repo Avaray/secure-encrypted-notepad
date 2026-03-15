@@ -15,6 +15,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **UI Icon Sets**: Add the ability to change icon sets from a dropdown in settings. This will allow users to choose between different visual styles for the application icons (folders, keys, files, etc.), requiring architectural changes to support dynamic icon loading.
 - [ ] **File Tree Icons Refresh**: Replace current folder and file icons in the file tree panel with high-quality SVG equivalents for better visual consistency.
 - [ ] **Multicursor Support**: Implement multicursor functionality in the text editor.
+- [ ] **Scrollbar Padding in Panels**: In all side panels (Settings, History, Debug, etc.), ensure there is a right-side margin/padding to account for the vertical scrollbar. This prevents the scrollbar from overlapping buttons, text, or other UI elements when it appears.
 - [ ] **Stealth Mode**: Option to save files without the `.sen` extension and without any identifying headers (pure binary noise) to make it impossible to identify the application associated with the file. By default, `.sen` files would load automatically in the file tree, while extensionless "stealth" files would require a background verification process (trial decryption) to be identified and marked.
 
 
