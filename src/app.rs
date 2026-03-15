@@ -982,8 +982,13 @@ impl eframe::App for EditorApp {
 
         // History panel (right)
         if self.show_history_panel && !self.zen_mode {
+            let mut history_panel_frame = right_panel_frame.clone();
+            // Restore right margin for symmetry, as history has its own internal border & scrollbar 
+            // and should not be flush with the screen edge.
+            history_panel_frame.inner_margin.right = history_panel_frame.inner_margin.left;
+
             let panel_res = egui::SidePanel::right("history")
-                .frame(right_panel_frame.clone())
+                .frame(history_panel_frame)
                 .resizable(true)
                 .default_width(self.settings.history_panel_width)
                 .show(ctx, |ui| {

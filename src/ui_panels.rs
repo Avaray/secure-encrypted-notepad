@@ -755,7 +755,6 @@ let _ = self.settings.save();
                         .small(),
                 );
             }
-            ui.separator();
 
             let history_area_id = ui.id().with("history_focus_area");
             let has_focus = ui.memory(|mem| mem.has_focus(history_area_id));
