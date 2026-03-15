@@ -883,36 +883,29 @@ let _ = self.settings.save();
                                             );
                                         }
 
-                                        // 2. Delete button — reserve it next on the RIGHT by
-                                        //    computing how wide it will be and allocating that
-                                        //    space at the end of the row, so the label between
-                                        //    them gets exactly the leftover width.
-                                        let btn_text = "🗑";
-                                        let btn_size = egui::vec2(
-                                            ui.spacing().interact_size.y + 4.0,
-                                            ui.spacing().interact_size.y,
-                                        );
-                                        // How much space is left after arrow and item_spacing?
-                                        let available = ui.available_width();
-                                        let label_width = (available - btn_size.x - ui.spacing().item_spacing.x).max(0.0);
-
-                                        // 3. Label — left-aligned, capped to label_width.
                                         let text = entry.display_timestamp().to_string();
                                         let mut rich_text = egui::RichText::new(text);
                                         if will_be_deleted {
                                             rich_text = rich_text.color(self.current_theme.colors.warning_color());
                                         }
-                                        let label_res = ui.add_sized(
-                                            egui::vec2(label_width, ui.spacing().interact_size.y),
-                                            egui::SelectableLabel::new(is_loaded, rich_text),
-                                        );
 
-                                        // 4. Delete button — placed immediately after the label,
-                                        //    which puts it flush against the right edge.
-                                        let delete_clicked = ui
-                                            .add_sized(btn_size, egui::Button::new(btn_text))
-                                            .on_hover_text("Delete")
-                                            .clicked();
+                                        // right_to_left places the delete button on the far right
+                                        // first, then the nested left_to_right layout fills all
+                                        // remaining space with the label — text stays left-aligned.
+                                        let (label_res, delete_clicked) = ui.with_layout(
+                                            egui::Layout::right_to_left(egui::Align::Center),
+                                            |ui| {
+                                                let del = ui
+                                                    .button("\u{1F5D1}")
+                                                    .on_hover_text("Delete")
+                                                    .clicked();
+                                                let lbl = ui.with_layout(
+                                                    egui::Layout::left_to_right(egui::Align::Center),
+                                                    |ui| ui.selectable_label(is_loaded, rich_text),
+                                                ).inner;
+                                                (lbl, del)
+                                            },
+                                        ).inner;
 
                                         if label_res.clicked() {
                                             self.load_history_version(*original_index);
