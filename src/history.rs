@@ -32,6 +32,7 @@ impl HistoryEntry {
         self.timestamp.format("%Y-%m-%d %H:%M:%S").to_string()
     }
 
+    #[allow(dead_code)]
     pub fn display_size(&self) -> String {
         let size = self.content.len() as f64;
         if size < 1024.0 {
