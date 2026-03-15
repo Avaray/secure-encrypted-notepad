@@ -27,31 +27,24 @@ impl EditorApp {
     // ─── Layout orchestrators ────────────────────────────────────────────────────
 
     fn render_toolbar_vertical(&mut self, ui: &mut egui::Ui) {
-        // Capture the panel height *before* entering the ScrollArea (inside a
-        // ScrollArea, available_height() reports the virtual/infinite canvas size).
+        // Capture the panel height *before* entering the ScrollArea
         let panel_h = ui.available_height();
 
         let ico_s = self.settings.toolbar_icon_size;
         let btn_h = ico_s + 4.0;
         let spacing = 4.0;
-        let sep_h = 4.0; // egui::Separator defaults to spacing equal to item_spacing (4.0)
+        let sep_h = 4.0;
 
-        // Count items and gaps:
-        // Buttons: 6 (file) + 4 (keyfile) + 6 (settings) = 16
-        // Separators: 2
-        // Gaps: 5 (in file) + 1 (to sep1) + 1 (to keyfile) + 3 (in keyfile) +
-        //       1 (to spacer) + 1 (to settings) + 5 (between settings buttons) = 17
-        // Wait, total gaps: 
-        // 5 (file btn gaps) + 1 (before sep) + 1 (after sep) + 
-        // 3 (keyfile btn gaps) + 1 (before sep) + 1 (after sep) + 
-        // 1 (after spacer) + 5 (settings btn gaps) = 18
-        let total_content_h = (16.0 * btn_h) + (2.0 * sep_h) + (18.0 * spacing);
-
-        // The spacer fills whatever is left between groups 2 and 3.
-        // When the window shrinks below total_content_h it collapses to a
-        // small minimum gap and the ScrollArea scrolls normally.
+        // Group 1: 5 btns (new, open, open_folder, save, save_as)
+        // Group 2: 2 btns
+        // Group 3: 3 btns (load, rotate, generate)
+        // Group 4: 6 btns
+        // Total: 16 buttons
+        // Separators: 3
+        // Padding/Spacing:
+        //   5 (in G1) + 1 (sep) + 2 (in G2) + 1 (sep) + 3 (in G3) + 1 (sep) + 1 (spacer) + 6 (in G4) = 20 gaps
+        let total_content_h = (16.0 * btn_h) + (3.0 * sep_h) + (20.0 * spacing);
         let min_gap = 16.0;
-        // Calculation: content height + 1.0px safety margin to avoid unwanted scrollbars due to rounding
         let spacer = (panel_h - total_content_h - 1.0).max(min_gap);
 
         egui::ScrollArea::vertical()
@@ -60,10 +53,11 @@ impl EditorApp {
                 ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
                     self.render_toolbar_file_group(ui);
                     ui.separator();
-                    self.render_toolbar_keyfile_group(ui);
+                    self.render_toolbar_batch_group(ui);
+                    ui.separator();
+                    self.render_toolbar_key_ops_group(ui);
                     ui.separator();
 
-                    // Flexible gap — shrinks to min_gap when space is tight.
                     ui.add_space(spacer);
 
                     self.render_toolbar_settings_group(ui);
@@ -73,15 +67,19 @@ impl EditorApp {
 
     fn render_toolbar_horizontal(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
-            // ── Main groups (left-aligned) ────────────────────────────────────
+            // Group 1: Files
             self.render_toolbar_file_group(ui);
             ui.separator();
-            self.render_toolbar_keyfile_group(ui);
+            
+            // Group 2: Batch/Export
+            self.render_toolbar_batch_group(ui);
+            ui.separator();
+
+            // Group 3: Keyfile management
+            self.render_toolbar_key_ops_group(ui);
             ui.separator();
 
             // ── Settings group (right-aligned) ────────────────────────────────
-            // `right_to_left` consumes all remaining width and renders items from
-            // the right edge inwards, naturally pushing the group to the far right.
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 self.render_toolbar_settings_group_rtl(ui);
             });
@@ -136,7 +134,7 @@ impl EditorApp {
 
     // ─── Group renderers ─────────────────────────────────────────────────────────
 
-    /// File operations: New, Open, Open Directory, Save, Save As, Export.
+    /// Group 1: New, Open, Open Directory, Save As.
     fn render_toolbar_file_group(&mut self, ui: &mut egui::Ui) {
         let ico_s = self.settings.toolbar_icon_size;
         let bs = egui::vec2(ico_s + 4.0, ico_s + 4.0);
@@ -144,117 +142,62 @@ impl EditorApp {
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
-        if Self::icon_btn(
-            ui,
-            &self.icons.new_doc,
-            "New (Ctrl+N)",
-            false,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
+        if Self::icon_btn(ui, &self.icons.new_doc, "New (Ctrl+N)", false, bs, is, ht, dt).clicked() {
             self.new_document();
         }
         if Self::icon_btn(ui, &self.icons.open, "Open (Ctrl+O)", false, bs, is, ht, dt).clicked() {
             self.open_file_dialog();
         }
-        if Self::icon_btn(
-            ui,
-            &self.icons.open_folder,
-            "Open Directory",
-            false,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
+        if Self::icon_btn(ui, &self.icons.open_folder, "Open Directory", false, bs, is, ht, dt).clicked() {
             self.open_directory();
         }
         if Self::icon_btn(ui, &self.icons.save, "Save (Ctrl+S)", false, bs, is, ht, dt).clicked() {
             self.save_file();
         }
+        // User requested Save As to be in Group 1
         if Self::icon_btn(ui, &self.icons.save_as, "Save As", false, bs, is, ht, dt).clicked() {
             self.save_file_as();
         }
-        if Self::icon_btn(
-            ui,
-            &self.icons.export,
-            "Export to Plaintext (.txt)",
-            false,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
-            self.export_plaintext();
-        }
     }
 
-    /// Keyfile operations: Generate, Load, Rotate, Batch Convert.
-    /// NOTE: the duplicate "Export as Plaintext" that was here has been removed.
-    fn render_toolbar_keyfile_group(&mut self, ui: &mut egui::Ui) {
+    /// Group 2: Export to Plaintext, Batch Convert.
+    fn render_toolbar_batch_group(&mut self, ui: &mut egui::Ui) {
         let ico_s = self.settings.toolbar_icon_size;
         let bs = egui::vec2(ico_s + 4.0, ico_s + 4.0);
         let is = egui::vec2(ico_s, ico_s);
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
-        if Self::icon_btn(
-            ui,
-            &self.icons.generate,
-            "Generate Keyfile",
-            false,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
-            self.generate_new_keyfile();
+        if Self::icon_btn(ui, &self.icons.export, "Export to Plaintext (.txt)", false, bs, is, ht, dt).clicked() {
+            self.export_plaintext();
         }
+        if Self::icon_btn(ui, &self.icons.batch_convert, "Batch Convert", false, bs, is, ht, dt).clicked() {
+            self.show_batch_converter = !self.show_batch_converter;
+        }
+    }
+
+    /// Group 3: Load, Rotate, Generate.
+    fn render_toolbar_key_ops_group(&mut self, ui: &mut egui::Ui) {
+        let ico_s = self.settings.toolbar_icon_size;
+        let bs = egui::vec2(ico_s + 4.0, ico_s + 4.0);
+        let is = egui::vec2(ico_s, ico_s);
+        let ht = self.current_theme.colors.icon_hover_color();
+        let dt = self.current_theme.colors.icon_color();
+
         if Self::icon_btn(ui, &self.icons.key, "Load Keyfile", false, bs, is, ht, dt).clicked() {
             self.load_keyfile();
         }
-        if Self::icon_btn(
-            ui,
-            &self.icons.rotate,
-            "Rotate Keyfile",
-            false,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
+        if Self::icon_btn(ui, &self.icons.rotate, "Rotate Keyfile", false, bs, is, ht, dt).clicked() {
             self.rotate_keyfile();
         }
-        if Self::icon_btn(
-            ui,
-            &self.icons.batch_convert,
-            "Batch Convert",
-            false,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
-            self.show_batch_converter = !self.show_batch_converter;
+        if Self::icon_btn(ui, &self.icons.generate, "Generate Keyfile", false, bs, is, ht, dt).clicked() {
+            self.generate_new_keyfile();
         }
     }
 
     /// Panel-toggle group rendered in normal (top-down / left-to-right) order.
     /// Used by the **vertical** toolbar.
+    /// Group 4: History, File Tree, Zen, Theme Editor, Settings, Debug.
     fn render_toolbar_settings_group(&mut self, ui: &mut egui::Ui) {
         let ico_s = self.settings.toolbar_icon_size;
         let bs = egui::vec2(ico_s + 4.0, ico_s + 4.0);
@@ -262,99 +205,32 @@ impl EditorApp {
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
-        if Self::icon_btn(
-            ui,
-            &self.icons.theme,
-            "Toggle Theme Editor",
-            self.show_theme_editor,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
+        if Self::icon_btn(ui, &self.icons.history, "Toggle History", self.show_history_panel, bs, is, ht, dt).clicked() {
+            self.show_history_panel = !self.show_history_panel;
+            self.settings.show_history_panel = self.show_history_panel;
+        }
+        if Self::icon_btn(ui, &self.icons.file_tree, "Toggle File Tree", self.show_file_tree, bs, is, ht, dt).clicked() {
+            self.show_file_tree = !self.show_file_tree;
+            self.settings.show_file_tree = self.show_file_tree;
+        }
+        if Self::icon_btn(ui, &self.icons.zen, "Toggle Zen Mode (F11)", self.zen_mode, bs, is, ht, dt).clicked() {
+            self.toggle_zen_mode(ui.ctx());
+        }
+        if Self::icon_btn(ui, &self.icons.theme, "Toggle Theme Editor", self.show_theme_editor, bs, is, ht, dt).clicked() {
             self.show_theme_editor = !self.show_theme_editor;
             self.settings.show_theme_editor = self.show_theme_editor;
+            self.show_delete_theme_confirmation = false;
             if self.show_theme_editor {
                 self.editing_theme = Some(self.current_theme.clone());
             }
         }
-        if Self::icon_btn(
-            ui,
-            &self.icons.settings,
-            "Toggle Settings",
-            self.show_settings_panel,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
+        if Self::icon_btn(ui, &self.icons.settings, "Toggle Settings", self.show_settings_panel, bs, is, ht, dt).clicked() {
             self.show_settings_panel = !self.show_settings_panel;
             self.settings.show_settings_panel = self.show_settings_panel;
         }
-
-        if Self::icon_btn(
-            ui,
-            &self.icons.debug,
-            "Toggle Debug",
-            self.show_debug_panel,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
+        if Self::icon_btn(ui, &self.icons.debug, "Toggle Debug", self.show_debug_panel, bs, is, ht, dt).clicked() {
             self.show_debug_panel = !self.show_debug_panel;
             self.settings.show_debug_panel = self.show_debug_panel;
-        }
-        if Self::icon_btn(
-            ui,
-            &self.icons.history,
-            "Toggle History",
-            self.show_history_panel,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
-            self.show_history_panel = !self.show_history_panel;
-            self.settings.show_history_panel = self.show_history_panel;
-        }
-        if Self::icon_btn(
-            ui,
-            &self.icons.file_tree,
-            "Toggle File Tree",
-            self.show_file_tree,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
-            self.show_file_tree = !self.show_file_tree;
-            self.settings.show_file_tree = self.show_file_tree;
-        }
-
-        if Self::icon_btn(
-            ui,
-            &self.icons.zen,
-            "Toggle Zen Mode (F11)",
-            self.zen_mode,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
-            self.toggle_zen_mode(ui.ctx());
         }
     }
 
@@ -364,6 +240,9 @@ impl EditorApp {
     /// In RTL the first item rendered lands at the rightmost position.
     /// Desired visual order left→right:  | theme | settings || debug | history | file_tree |
     /// So the RTL render order must be:    file_tree, history, debug, sep, settings, theme, sep
+    /// Group 4 (RTL): Debug, Settings, Theme Editor, Zen, File Tree, History.
+    /// In RTL, the last item in code becomes the leftmost in UI (within the right-aligned block).
+    /// Desired visual order: History, File Tree, Zen, Theme Editor, Settings, Debug.
     fn render_toolbar_settings_group_rtl(&mut self, ui: &mut egui::Ui) {
         let ico_s = self.settings.toolbar_icon_size;
         let bs = egui::vec2(ico_s + 4.0, ico_s + 4.0);
@@ -371,101 +250,38 @@ impl EditorApp {
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
-        if Self::icon_btn(
-            ui,
-            &self.icons.file_tree,
-            "Toggle File Tree",
-            self.show_file_tree,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
-            self.show_file_tree = !self.show_file_tree;
-            self.settings.show_file_tree = self.show_file_tree;
-        }
-
-        if Self::icon_btn(
-            ui,
-            &self.icons.zen,
-            "Toggle Zen Mode (F11)",
-            self.zen_mode,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
-            self.toggle_zen_mode(ui.ctx());
-        }
-
-        if Self::icon_btn(
-            ui,
-            &self.icons.history,
-            "Toggle History",
-            self.show_history_panel,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
-            self.show_history_panel = !self.show_history_panel;
-            self.settings.show_history_panel = self.show_history_panel;
-        }
-        if Self::icon_btn(
-            ui,
-            &self.icons.debug,
-            "Toggle Debug",
-            self.show_debug_panel,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
+        // 6. Debug
+        if Self::icon_btn(ui, &self.icons.debug, "Toggle Debug", self.show_debug_panel, bs, is, ht, dt).clicked() {
             self.show_debug_panel = !self.show_debug_panel;
             self.settings.show_debug_panel = self.show_debug_panel;
         }
-
-        if Self::icon_btn(
-            ui,
-            &self.icons.settings,
-            "Toggle Settings",
-            self.show_settings_panel,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
+        // 5. Settings
+        if Self::icon_btn(ui, &self.icons.settings, "Toggle Settings", self.show_settings_panel, bs, is, ht, dt).clicked() {
             self.show_settings_panel = !self.show_settings_panel;
             self.settings.show_settings_panel = self.show_settings_panel;
         }
-        if Self::icon_btn(
-            ui,
-            &self.icons.theme,
-            "Toggle Theme Editor",
-            self.show_theme_editor,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
+        // 4. Theme Editor
+        if Self::icon_btn(ui, &self.icons.theme, "Toggle Theme Editor", self.show_theme_editor, bs, is, ht, dt).clicked() {
             self.show_theme_editor = !self.show_theme_editor;
             self.settings.show_theme_editor = self.show_theme_editor;
-            self.show_delete_theme_confirmation = false; // Reset confirmation
+            self.show_delete_theme_confirmation = false;
             if self.show_theme_editor {
                 self.editing_theme = Some(self.current_theme.clone());
             }
+        }
+        // 3. Zen Mode
+        if Self::icon_btn(ui, &self.icons.zen, "Toggle Zen Mode (F11)", self.zen_mode, bs, is, ht, dt).clicked() {
+            self.toggle_zen_mode(ui.ctx());
+        }
+        // 2. File Tree
+        if Self::icon_btn(ui, &self.icons.file_tree, "Toggle File Tree", self.show_file_tree, bs, is, ht, dt).clicked() {
+            self.show_file_tree = !self.show_file_tree;
+            self.settings.show_file_tree = self.show_file_tree;
+        }
+        // 1. History
+        if Self::icon_btn(ui, &self.icons.history, "Toggle History", self.show_history_panel, bs, is, ht, dt).clicked() {
+            self.show_history_panel = !self.show_history_panel;
+            self.settings.show_history_panel = self.show_history_panel;
         }
     }
 }
