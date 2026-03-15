@@ -90,7 +90,9 @@ impl EditorApp {
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             ui.add_enabled_ui(is_confirmed, |ui| {
                                 if ui.button("OK").clicked() {
+                                    let was_maximized = self.settings.start_maximized;
                                     self.settings = crate::settings::Settings::default();
+                                    self.settings.start_maximized = was_maximized;
                                     let _ = self.settings.save();
                                     self.show_reset_confirmation = false;
                                     self.style_dirty = true; // Apply default fonts/sizes
