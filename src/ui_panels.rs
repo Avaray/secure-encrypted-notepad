@@ -867,46 +867,63 @@ let _ = self.settings.save();
                                     
                                     ui.horizontal(|ui| {
                                         ui.spacing_mut().item_spacing.x = 4.0;
+
+                                        // 1. Arrow column — fixed width, painted manually so it
+                                        //    never affects the layout width regardless of visibility.
+                                        let row_height = ui.text_style_height(&egui::TextStyle::Body);
+                                        let arrow_size = egui::vec2(16.0, row_height);
+                                        let (arrow_rect, _) = ui.allocate_exact_size(arrow_size, egui::Sense::hover());
                                         if is_loaded {
-                                            ui.label(
-                                                egui::RichText::new("▶")
-                                                    .color(self.current_theme.colors.success_color()),
+                                            ui.painter().text(
+                                                arrow_rect.center(),
+                                                egui::Align2::CENTER_CENTER,
+                                                "▶",
+                                                egui::FontId::proportional(row_height),
+                                                self.current_theme.colors.success_color(),
                                             );
-                                        } else {
-                                            ui.add_space(8.0);
                                         }
-                                        
-                                        let text = format!("{} - {}", entry.display_timestamp(), entry.display_size());
+
+                                        // 2. Delete button — reserve it next on the RIGHT by
+                                        //    computing how wide it will be and allocating that
+                                        //    space at the end of the row, so the label between
+                                        //    them gets exactly the leftover width.
+                                        let btn_text = "🗑";
+                                        let btn_size = egui::vec2(
+                                            ui.spacing().interact_size.y + 4.0,
+                                            ui.spacing().interact_size.y,
+                                        );
+                                        // How much space is left after arrow and item_spacing?
+                                        let available = ui.available_width();
+                                        let label_width = (available - btn_size.x - ui.spacing().item_spacing.x).max(0.0);
+
+                                        // 3. Label — left-aligned, capped to label_width.
+                                        let text = entry.display_timestamp().to_string();
                                         let mut rich_text = egui::RichText::new(text);
                                         if will_be_deleted {
                                             rich_text = rich_text.color(self.current_theme.colors.warning_color());
                                         }
-                                        
-                                        // Use right-to-left layout for the remaining space so the delete
-                                        // button is reserved on the far right first, and the label fills
-                                        // the space to its left — preventing any overlap between the two.
-                                        let (label_res, delete_clicked) = ui.with_layout(
-                                            egui::Layout::right_to_left(egui::Align::Center),
-                                            |ui| {
-                                                let del = ui
-                                                    .button("🗑")
-                                                    .on_hover_text("Delete")
-                                                    .clicked();
-                                                let lbl = ui.selectable_label(is_loaded, rich_text);
-                                                (lbl, del)
-                                            },
-                                        ).inner;
-                                        
+                                        let label_res = ui.add_sized(
+                                            egui::vec2(label_width, ui.spacing().interact_size.y),
+                                            egui::SelectableLabel::new(is_loaded, rich_text),
+                                        );
+
+                                        // 4. Delete button — placed immediately after the label,
+                                        //    which puts it flush against the right edge.
+                                        let delete_clicked = ui
+                                            .add_sized(btn_size, egui::Button::new(btn_text))
+                                            .on_hover_text("Delete")
+                                            .clicked();
+
                                         if label_res.clicked() {
                                             self.load_history_version(*original_index);
                                             self.loaded_history_index = Some(*original_index);
                                             ui.memory_mut(|mem| mem.request_focus(history_area_id));
                                         }
-                                        
+
                                         if is_loaded && has_focus {
                                             label_res.scroll_to_me(None);
                                         }
-                                        
+
                                         if delete_clicked {
                                             self.delete_history_entry(*original_index);
                                             if self.loaded_history_index == Some(*original_index) {
