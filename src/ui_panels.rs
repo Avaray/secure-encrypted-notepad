@@ -11,9 +11,17 @@ ui.horizontal(|ui| {
 ui.heading("Settings");
 });
 }
-egui::ScrollArea::vertical()
-.auto_shrink([false, false])
-.show(ui, |ui| {
+            egui::ScrollArea::vertical()
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    egui::Frame::NONE
+                        .inner_margin(egui::Margin {
+                            left: 8,
+                            right: 20,
+                            top: 0,
+                            bottom: 0,
+                        })
+                        .show(ui, |ui| {
 ui.horizontal(|ui| {
 if ui.button("Open Setting Folder").on_hover_text("Open settings folder").clicked() {
 if let Some(path) = crate::settings::Settings::get_config_dir() {
@@ -687,8 +695,9 @@ if ui
 {
 let _ = self.settings.save();
 }
-ui.add_space(4.0);
-});
+                            ui.add_space(4.0);
+                        });
+                });
 });
     }
     /// Render history panel
@@ -835,8 +844,16 @@ ui.add_space(4.0);
                     egui::ScrollArea::vertical()
                         .id_salt("history_scroll_area")
                         .auto_shrink([false, false])
-                        .show(ui, |ui| {
-                            if history_len == 0 {
+                                                .show(ui, |ui| {
+                            egui::Frame::NONE
+                                .inner_margin(egui::Margin {
+                                    left: 4,
+                                    right: 16,
+                                    top: 0,
+                                    bottom: 0,
+                                })
+                                .show(ui, |ui| {
+                                    if history_len == 0 {
                                 ui.label("No history");
                             } else {
                                 let to_delete_count = if history_len > doc_max_limit {
@@ -892,6 +909,7 @@ ui.add_space(4.0);
                             }
                         });
                 });
+                });
         });
     }
     /// Render debug panel
@@ -919,8 +937,16 @@ ui.add_space(4.0);
             egui::ScrollArea::both()
                 .auto_shrink([false, false])
                 .stick_to_bottom(true)
-                .show(ui, |ui| {
-                    let mut visible_count = 0;
+                                .show(ui, |ui| {
+                    egui::Frame::NONE
+                        .inner_margin(egui::Margin {
+                            left: 4,
+                            right: 16,
+                            top: 0,
+                            bottom: 0,
+                        })
+                        .show(ui, |ui| {
+                            let mut visible_count = 0;
                     for entry in &self.debug_log {
                         let show = match entry.level {
                             LogLevel::Info => self.settings.debug_show_info,
@@ -944,6 +970,7 @@ ui.add_space(4.0);
                         ui.label(egui::RichText::new("All entries filtered out.").italics().weak());
                     }
                 });
+                });
         });
     }
     /// Render file tree panel
@@ -954,7 +981,15 @@ ui.add_space(4.0);
             }
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
-                .show(ui, |ui| {
+                                .show(ui, |ui| {
+                    egui::Frame::NONE
+                        .inner_margin(egui::Margin {
+                            left: 4,
+                            right: 16,
+                            top: 0,
+                            bottom: 0,
+                        })
+                        .show(ui, |ui| {
                     if let Some(dir) = &self.file_tree_dir {
                         if self.settings.show_directory_paths {
                             ui.label(dir.display().to_string());
@@ -1172,6 +1207,7 @@ ui.add_space(4.0);
                         }
                     }
                 });
+                });
         });
     }
     /// Render theme editor panel
@@ -1274,8 +1310,16 @@ ui.add_space(4.0);
                 egui::ScrollArea::vertical()
                     .auto_shrink([false, false])
                     .max_height(ui.available_height() - 80.0)
-                    .show(ui, |ui| {
-                        ui.heading("Colors");
+                                        .show(ui, |ui| {
+                        egui::Frame::NONE
+                            .inner_margin(egui::Margin {
+                                left: 4,
+                                right: 16,
+                                top: 0,
+                                bottom: 0,
+                            })
+                            .show(ui, |ui| {
+                                ui.heading("Colors");
                         ui.add_space(4.0);
                         egui::Grid::new("all_theme_colors_grid")
                             .num_columns(2)
@@ -1635,6 +1679,7 @@ ui.add_space(4.0);
                                 ui.end_row();
                             });
                     });
+                });
                 // KLUCZOWA ZMIANA: Synchronizuj z current_theme natychmiast!
                 if theme_changed {
                     theme.apply(ui.ctx());
