@@ -882,7 +882,20 @@ let _ = self.settings.save();
                                             rich_text = rich_text.color(self.current_theme.colors.warning_color());
                                         }
                                         
-                                        let label_res = ui.selectable_label(is_loaded, rich_text);
+                                        // Use right-to-left layout for the remaining space so the delete
+                                        // button is reserved on the far right first, and the label fills
+                                        // the space to its left — preventing any overlap between the two.
+                                        let (label_res, delete_clicked) = ui.with_layout(
+                                            egui::Layout::right_to_left(egui::Align::Center),
+                                            |ui| {
+                                                let del = ui
+                                                    .button("🗑")
+                                                    .on_hover_text("Delete")
+                                                    .clicked();
+                                                let lbl = ui.selectable_label(is_loaded, rich_text);
+                                                (lbl, del)
+                                            },
+                                        ).inner;
                                         
                                         if label_res.clicked() {
                                             self.load_history_version(*original_index);
@@ -894,14 +907,12 @@ let _ = self.settings.save();
                                             label_res.scroll_to_me(None);
                                         }
                                         
-                                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                            if ui.button("🗑").on_hover_text("Delete").clicked() {
-                                                self.delete_history_entry(*original_index);
-                                                if self.loaded_history_index == Some(*original_index) {
-                                                    self.loaded_history_index = None;
-                                                }
+                                        if delete_clicked {
+                                            self.delete_history_entry(*original_index);
+                                            if self.loaded_history_index == Some(*original_index) {
+                                                self.loaded_history_index = None;
                                             }
-                                        });
+                                        }
                                     });
                                     ui.add_space(2.0);
                                 }
