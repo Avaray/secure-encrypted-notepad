@@ -889,24 +889,24 @@ let _ = self.settings.save();
                                             rich_text = rich_text.color(self.current_theme.colors.warning_color());
                                         }
 
-                                        // right_to_left places the buttons on the far right
-                                        // first, then the nested left_to_right layout fills all
-                                        // remaining space with the label — text stays left-aligned.
+                                        // right_to_left places the buttons on the far right first, then the nested
+                                        // left_to_right layout fills all remaining space with the label (text stays left-aligned).
                                         let (label_res, delete_clicked, revert_clicked) = ui.with_layout(
                                             egui::Layout::right_to_left(egui::Align::Center),
                                             |ui| {
-                                                let del = ui
-                                                    .button("\u{1F5D1}")
-                                                    .on_hover_text("Delete this entry")
-                                                    .clicked();
-                                                let rev = ui
-                                                    .button("\u{23EE}")
-                                                    .on_hover_text("Revert: Set as current and delete all newer entries")
-                                                    .clicked();
+                                                let del = ui.button("🗑").on_hover_text("Delete this entry").clicked();
+                                                let rev = ui.button("⏪").on_hover_text("Revert (Set as current and delete all newer entries)").clicked();
+                                                
                                                 let lbl = ui.with_layout(
                                                     egui::Layout::left_to_right(egui::Align::Center),
-                                                    |ui| ui.selectable_label(is_loaded, rich_text),
+                                                    |ui| {
+                                                        // Prevent text from wrapping to a new line and pushing the layout down
+                                                        ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Truncate);
+                                                        
+                                                        ui.selectable_label(is_loaded, rich_text)
+                                                    },
                                                 ).inner;
+                                                
                                                 (lbl, del, rev)
                                             },
                                         ).inner;
