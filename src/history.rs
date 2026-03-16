@@ -241,6 +241,22 @@ impl DocumentWithHistory {
         }
     }
 
+    /// Revert to history version by index (delete all newer versions and load content)
+    pub fn revert_to_version(&mut self, index: usize) -> bool {
+        if index < self.history.len() && !self.history[index].deleted {
+            // Load content from selected version
+            self.current_content = self.history[index].content.clone();
+
+            // Mark all newer entries as deleted
+            for i in (index + 1)..self.history.len() {
+                self.history[i].deleted = true;
+            }
+            true
+        } else {
+            false
+        }
+    }
+
     /// Mark history entry as deleted by index (soft delete)
     pub fn mark_entry_deleted(&mut self, index: usize) -> bool {
         if index < self.history.len() {

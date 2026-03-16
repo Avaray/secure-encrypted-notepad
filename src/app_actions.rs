@@ -346,6 +346,17 @@ impl EditorApp {
         }
     }
 
+    /// Revert to history version (delete newer entries)
+    pub(crate) fn revert_to_history_version(&mut self, index: usize) {
+        if self.document.revert_to_version(index) {
+            self.is_modified = true;
+            self.loaded_history_index = Some(index);
+            self.status_message =
+                "Reverted to selected version, newer entries marked for deletion".to_string();
+            self.log_success(format!("Reverted to history version #{}", index));
+        }
+    }
+
     /// Clear all history (soft delete - mark all as deleted)
     pub(crate) fn clear_all_history(&mut self) {
         let count = self.document.get_visible_history().len();
