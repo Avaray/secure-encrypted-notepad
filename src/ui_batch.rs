@@ -338,7 +338,32 @@ impl EditorApp {
                                         };
 
                                         ui.horizontal(|ui| {
-                                            ui.label(egui::RichText::new(file.file_name().unwrap_or_default().to_string_lossy()).color(text_color));
+                                            // Reserve button space first so long filenames can't push it off-screen.
+                                            let btn_width = ui.spacing().interact_size.y
+                                                + ui.spacing().button_padding.x * 2.0;
+                                            let label_width = (ui.available_width()
+                                                - btn_width
+                                                - ui.spacing().item_spacing.x)
+                                                .max(0.0);
+
+                                            let file_name = file
+                                                .file_name()
+                                                .unwrap_or_default()
+                                                .to_string_lossy();
+                                            ui.allocate_ui_with_layout(
+                                                egui::vec2(label_width, ui.spacing().interact_size.y),
+                                                egui::Layout::left_to_right(egui::Align::Center),
+                                                |ui| {
+                                                    ui.add(
+                                                        egui::Label::new(
+                                                            egui::RichText::new(file_name.as_ref())
+                                                                .color(text_color),
+                                                        )
+                                                        .truncate(),
+                                                    );
+                                                },
+                                            );
+
                                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                                 if ui.button("❌").clicked() {
                                                     to_remove = Some(idx);
