@@ -17,6 +17,8 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Multicursor Support**: Implement multicursor functionality in the text editor.
 - [ ] **Scrollbar Padding in Panels**: In all side panels (Settings, History, Debug, etc.), ensure there is a right-side margin/padding to account for the vertical scrollbar. This prevents the scrollbar from overlapping buttons, text, or other UI elements when it appears.
 - [ ] **Stealth Mode**: Option to save files without the `.sen` extension and without any identifying headers (pure binary noise) to make it impossible to identify the application associated with the file. By default, `.sen` files would load automatically in the file tree, while extensionless "stealth" files would require a background verification process (trial decryption) to be identified and marked.
+- [ ] **Batch Keyfile Rotation**: Add a "Rotate Keyfile" mode to the Batch Converter. A mode switch (Encrypt / Decrypt / Rotate) should appear as a new field above the keyfile selection. When "Rotate" is selected, two keyfile pickers should be shown (old keyfile and new keyfile) instead of one.
+- [ ] **Batch Converter Dynamic Action Button**: Replace the two bottom action buttons (Encrypt All / Decrypt All) with a single dynamic button whose label changes based on the selected mode (e.g. "🔒 Encrypt All", "🔓 Decrypt All", or "🔄 Rotate All").
 
 ---
 
