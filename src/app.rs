@@ -872,184 +872,206 @@ impl eframe::App for EditorApp {
             }
         }
 
-        // Batch Converter Window
+        // Main content area
         if self.show_batch_converter {
-            self.render_batch_converter_window(ctx);
-        }
+            // Render global panels FIRST so they reserve space
+            if !self.zen_mode {
+                let mut status_bar_frame = bar_frame.clone();
+                status_bar_frame.inner_margin.left = 12;
+                status_bar_frame.inner_margin.right = 12;
 
-        // Search panel (below toolbar)
-        if self.show_search_panel && !self.zen_mode {
-            let mut search_bar_frame = bar_frame.clone();
-            search_bar_frame.inner_margin.left = 12;
-            search_bar_frame.inner_margin.right = 12;
-
-            egui::TopBottomPanel::top("search_panel")
-                .frame(search_bar_frame)
-                .min_height(0.0)
-                .show(ctx, |ui| {
-                    self.render_search_panel(ui);
+                egui::TopBottomPanel::bottom("status_bar")
+                    .frame(status_bar_frame)
+                    .min_height(24.0)
+                    .show(ctx, |ui| {
+                        ui.horizontal(|ui| {
+                        ui.label(&self.status_message);
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            let version = format!("SEN {}", env!("CARGO_PKG_VERSION"));
+                            ui.label(version);
+                        });
+                    });
                 });
-        }
+            }
 
-        // Status bar
-        if !self.zen_mode {
-            let mut status_bar_frame = bar_frame.clone();
-            status_bar_frame.inner_margin.left = 12;
-            status_bar_frame.inner_margin.right = 12;
+            // Batch Converter takes over the REMAINING central area
+            self.render_batch_converter_panel(ctx);
+        } else {
+            // Standard Editor Mode
+            // Search panel (below toolbar)
+            if self.show_search_panel && !self.zen_mode {
+                let mut search_bar_frame = bar_frame.clone();
+                search_bar_frame.inner_margin.left = 12;
+                search_bar_frame.inner_margin.right = 12;
 
-            egui::TopBottomPanel::bottom("status_bar")
-                .frame(status_bar_frame)
-                .min_height(24.0)
-                .show(ctx, |ui| {
-                    ui.horizontal(|ui| {
-                    ui.label(&self.status_message);
+                egui::TopBottomPanel::top("search_panel")
+                    .frame(search_bar_frame)
+                    .min_height(0.0)
+                    .show(ctx, |ui| {
+                        self.render_search_panel(ui);
+                    });
+            }
 
-                    if self.is_modified {
-                        ui.label(egui::RichText::new(" *").color(egui::Color32::YELLOW));
-                    }
+            // Status bar
+            if !self.zen_mode {
+                let mut status_bar_frame = bar_frame.clone();
+                status_bar_frame.inner_margin.left = 12;
+                status_bar_frame.inner_margin.right = 12;
 
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        // Version info
-                        let version = format!("SEN {}", env!("CARGO_PKG_VERSION"));
-                        ui.add(
-                            egui::Label::new(
-                                egui::RichText::new(version)
-                                    .color(self.current_theme.colors.info_color()),
-                            )
-                            .selectable(false),
-                        );
+                egui::TopBottomPanel::bottom("status_bar")
+                    .frame(status_bar_frame)
+                    .min_height(24.0)
+                    .show(ctx, |ui| {
+                        ui.horizontal(|ui| {
+                        ui.label(&self.status_message);
 
-                        ui.separator();
+                        if self.is_modified {
+                            ui.label(egui::RichText::new(" *").color(egui::Color32::YELLOW));
+                        }
 
-                        // Keyfile indicator
-                        if let Some(path) = &self.keyfile_path {
-                            let icon_tint = self.current_theme.colors.success_color();
-                            let status_text = self.mask_keyfile_path(path);
-                            ui.add(
-                                egui::Label::new(egui::RichText::new(status_text).color(icon_tint))
-                                    .selectable(false),
-                            );
-                        } else {
-                            let icon_tint = self.current_theme.colors.warning_color();
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            // Version info
+                            let version = format!("SEN {}", env!("CARGO_PKG_VERSION"));
                             ui.add(
                                 egui::Label::new(
-                                    egui::RichText::new("No keyfile").color(icon_tint),
+                                    egui::RichText::new(version)
+                                        .color(self.current_theme.colors.info_color()),
                                 )
                                 .selectable(false),
                             );
-                        }
 
-                        ui.separator();
+                            ui.separator();
 
-                        // File indicator
-                        if let Some(path) = &self.current_file_path {
-                            ui.label(path.file_name().unwrap_or_default().to_string_lossy());
-                        } else {
-                            ui.label("Unsaved document");
-                        }
+                            // Keyfile indicator
+                            if let Some(path) = &self.keyfile_path {
+                                let icon_tint = self.current_theme.colors.success_color();
+                                let status_text = self.mask_keyfile_path(path);
+                                ui.add(
+                                    egui::Label::new(egui::RichText::new(status_text).color(icon_tint))
+                                        .selectable(false),
+                                );
+                            } else {
+                                let icon_tint = self.current_theme.colors.warning_color();
+                                ui.add(
+                                    egui::Label::new(
+                                        egui::RichText::new("No keyfile").color(icon_tint),
+                                    )
+                                    .selectable(false),
+                                );
+                            }
+
+                            ui.separator();
+
+                            // File indicator
+                            if let Some(path) = &self.current_file_path {
+                                ui.label(path.file_name().unwrap_or_default().to_string_lossy());
+                            } else {
+                                ui.label("Unsaved document");
+                            }
+                        });
                     });
                 });
-            });
-        }
-
-        // File tree (left)
-        if self.show_file_tree && !self.zen_mode {
-            let panel_res = egui::SidePanel::left("file_tree")
-                .frame(left_panel_frame)
-                .resizable(true)
-                .default_width(self.settings.file_tree_width)
-                .width_range(150.0..=f32::INFINITY)
-                .show(ctx, |ui| {
-                    self.render_file_tree(ui);
-                });
-
-            // Persist panel width when user resizes it
-            let actual_width = panel_res.response.rect.width();
-            if (actual_width - self.settings.file_tree_width).abs() > 1.0 {
-                self.settings.file_tree_width = actual_width;
-                let _ = self.settings.save();
             }
-        }
 
-        // Theme Editor panel (right)
-        if self.show_theme_editor && !self.zen_mode {
-            let panel_res = egui::SidePanel::right("theme_editor")
-                .frame(right_panel_frame.clone())
-                .resizable(true)
-                .default_width(self.settings.theme_editor_width)
-                .show(ctx, |ui| {
-                    self.render_theme_editor_panel(ui);
-                });
+            // File tree (left)
+            if self.show_file_tree && !self.zen_mode {
+                let panel_res = egui::SidePanel::left("file_tree")
+                    .frame(left_panel_frame)
+                    .resizable(true)
+                    .default_width(self.settings.file_tree_width)
+                    .width_range(150.0..=f32::INFINITY)
+                    .show(ctx, |ui| {
+                        self.render_file_tree(ui);
+                    });
 
-            let actual_width = panel_res.response.rect.width();
-            if (actual_width - self.settings.theme_editor_width).abs() > 1.0 {
-                self.settings.theme_editor_width = actual_width;
-                let _ = self.settings.save();
+                // Persist panel width when user resizes it
+                let actual_width = panel_res.response.rect.width();
+                if (actual_width - self.settings.file_tree_width).abs() > 1.0 {
+                    self.settings.file_tree_width = actual_width;
+                    let _ = self.settings.save();
+                }
             }
-        }
 
-        // Settings panel (right)
-        if self.show_settings_panel && !self.zen_mode {
-            let panel_res = egui::SidePanel::right("settings_panel")
-                .frame(right_panel_frame.clone())
-                .resizable(true)
-                .default_width(self.settings.settings_panel_width)
-                .min_width(300.0)
-                .show(ctx, |ui| {
-                    self.render_settings_panel(ui);
-                });
+            // Theme Editor panel (right)
+            if self.show_theme_editor && !self.zen_mode {
+                let panel_res = egui::SidePanel::right("theme_editor")
+                    .frame(right_panel_frame.clone())
+                    .resizable(true)
+                    .default_width(self.settings.theme_editor_width)
+                    .show(ctx, |ui| {
+                        self.render_theme_editor_panel(ui);
+                    });
 
-            let actual_width = panel_res.response.rect.width();
-            if (actual_width - self.settings.settings_panel_width).abs() > 1.0 {
-                self.settings.settings_panel_width = actual_width;
-                let _ = self.settings.save();
+                let actual_width = panel_res.response.rect.width();
+                if (actual_width - self.settings.theme_editor_width).abs() > 1.0 {
+                    self.settings.theme_editor_width = actual_width;
+                    let _ = self.settings.save();
+                }
             }
-        }
 
-        // History panel (right)
-        if self.show_history_panel && !self.zen_mode {
-            let mut history_panel_frame = right_panel_frame.clone();
-            // Restore right margin for symmetry, as history has its own internal border & scrollbar 
-            // and should not be flush with the screen edge.
-            history_panel_frame.inner_margin.right = history_panel_frame.inner_margin.left;
+            // Settings panel (right)
+            if self.show_settings_panel && !self.zen_mode {
+                let panel_res = egui::SidePanel::right("settings_panel")
+                    .frame(right_panel_frame.clone())
+                    .resizable(true)
+                    .default_width(self.settings.settings_panel_width)
+                    .min_width(300.0)
+                    .show(ctx, |ui| {
+                        self.render_settings_panel(ui);
+                    });
 
-            let panel_res = egui::SidePanel::right("history")
-                .frame(history_panel_frame)
-                .resizable(true)
-                .default_width(self.settings.history_panel_width)
-                .show(ctx, |ui| {
-                    self.render_history_panel(ui);
-                });
-
-            let actual_width = panel_res.response.rect.width();
-            if (actual_width - self.settings.history_panel_width).abs() > 1.0 {
-                self.settings.history_panel_width = actual_width;
-                let _ = self.settings.save();
+                let actual_width = panel_res.response.rect.width();
+                if (actual_width - self.settings.settings_panel_width).abs() > 1.0 {
+                    self.settings.settings_panel_width = actual_width;
+                    let _ = self.settings.save();
+                }
             }
-        }
 
-        // Debug panel (right, below history if both shown)
-        if self.show_debug_panel && !self.zen_mode {
-            let panel_res = egui::SidePanel::right("debug")
-                .frame(right_panel_frame)
-                .resizable(true)
-                .default_width(self.settings.debug_panel_width)
-                .show(ctx, |ui| {
-                    self.render_debug_panel(ui);
-                });
+            // History panel (right)
+            if self.show_history_panel && !self.zen_mode {
+                let mut history_panel_frame = right_panel_frame.clone();
+                // Restore right margin for symmetry, as history has its own internal border & scrollbar 
+                // and should not be flush with the screen edge.
+                history_panel_frame.inner_margin.right = history_panel_frame.inner_margin.left;
 
-            let actual_width = panel_res.response.rect.width();
-            if (actual_width - self.settings.debug_panel_width).abs() > 1.0 {
-                self.settings.debug_panel_width = actual_width;
-                let _ = self.settings.save();
+                let panel_res = egui::SidePanel::right("history")
+                    .frame(history_panel_frame)
+                    .resizable(true)
+                    .default_width(self.settings.history_panel_width)
+                    .show(ctx, |ui| {
+                        self.render_history_panel(ui);
+                    });
+
+                let actual_width = panel_res.response.rect.width();
+                if (actual_width - self.settings.history_panel_width).abs() > 1.0 {
+                    self.settings.history_panel_width = actual_width;
+                    let _ = self.settings.save();
+                }
             }
-        }
 
-        // Central editor
-        egui::CentralPanel::default()
-            .frame(central_panel_frame)
-            .show(ctx, |ui| {
-                self.render_editor(ui);
-            });
+            // Debug panel (right, below history if both shown)
+            if self.show_debug_panel && !self.zen_mode {
+                let panel_res = egui::SidePanel::right("debug")
+                    .frame(right_panel_frame)
+                    .resizable(true)
+                    .default_width(self.settings.debug_panel_width)
+                    .show(ctx, |ui| {
+                        self.render_debug_panel(ui);
+                    });
+
+                let actual_width = panel_res.response.rect.width();
+                if (actual_width - self.settings.debug_panel_width).abs() > 1.0 {
+                    self.settings.debug_panel_width = actual_width;
+                    let _ = self.settings.save();
+                }
+            }
+
+            // Central editor
+            egui::CentralPanel::default()
+                .frame(central_panel_frame)
+                .show(ctx, |ui| {
+                    self.render_editor(ui);
+                });
+        }
     }
 }

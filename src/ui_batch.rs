@@ -5,37 +5,55 @@ use eframe::egui;
 use std::path::Path;
 
 impl EditorApp {
-    pub(crate) fn render_batch_converter_window(&mut self, ctx: &egui::Context) {
-        let mut open = self.show_batch_converter;
-        
-        // Refresh access status for batch files
-        if open {
-            self.refresh_batch_file_access_status();
+    pub(crate) fn render_batch_converter_panel(&mut self, ctx: &egui::Context) {
+        if !self.show_batch_converter {
+            return;
         }
 
-        let content_rect = ctx.content_rect();
+        self.refresh_batch_file_access_status();
 
-        let mut window_frame = egui::Frame::window(&ctx.style());
-        window_frame.inner_margin = egui::Margin::same(0);
+        let mut central_panel_frame = egui::Frame::NONE;
+        central_panel_frame.inner_margin = egui::Margin::same(0);
 
-        egui::Window::new("Batch File Converter")
-            .id(egui::Id::new("batch_converter_v8"))
-            .open(&mut open)
-            .frame(window_frame)
-            .resizable(true)
-            .collapsible(false)
-            .default_width(content_rect.width() * 0.5)
-            .default_height(content_rect.height() * 0.5)
-            .pivot(egui::Align2::CENTER_CENTER)
-            .constrain_to(ctx.content_rect().shrink(16.0))
-            .default_pos(ctx.content_rect().center())
+        egui::CentralPanel::default()
+            .frame(central_panel_frame)
             .show(ctx, |ui| {
-                // === TOP ===
-                egui::TopBottomPanel::top("batch_top_panel")
+                self.render_batch_converter_body(ui);
+            });
+    }
+
+    fn render_batch_converter_body(&mut self, ui: &mut egui::Ui) {
+        // --- Unified Header ---
+        egui::TopBottomPanel::top("batch_header_panel")
+            .resizable(false)
+            .frame(egui::Frame::NONE.inner_margin(egui::Margin {
+                left: 12,
+                right: 8,
+                top: 4,
+                bottom: 4,
+            }))
+            .show_inside(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.heading("Batch File Converter");
+                    ui.label("(Encrypt, decrypt, or rotate keyfiles)");
+                    
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button("✕").on_hover_text("Close and return to editor").clicked() {
+                            self.show_batch_converter = false;
+                        }
+                    });
+                });
+            });
+        
+        // Horizontal separator after header
+        ui.separator();
+
+                // === TOP / MODE INFO ===
+                egui::TopBottomPanel::top("batch_top_info_panel")
                     .resizable(false)
                     .frame(egui::Frame::NONE.inner_margin(8.0))
                     .show_inside(ui, |ui| {
-                        ui.label("Encrypt, decrypt, or rotate keyfiles for multiple files at once.");
+                        ui.label("Batch process multiple files at once. All operations are local and secure.");
                     });
 
                 // === BOTTOM ===
@@ -82,11 +100,11 @@ impl EditorApp {
                     });
 
                 // === LEFT PANEL ===
-                let half_width = ui.available_width() / 2.0;
+                let initial_width = ui.available_width() / 3.0;
                 egui::SidePanel::left("batch_left_panel")
                     .resizable(true)
-                    .default_width(half_width)
-                    .width_range((half_width * 0.2)..=(half_width * 1.8))
+                    .default_width(initial_width)
+                    .width_range((initial_width * 0.5)..=(ui.available_width() * 0.8))
                     .frame(egui::Frame::NONE.inner_margin(8.0))
                     .show_inside(ui, |ui| {
                         if self.batch_is_running {
@@ -378,9 +396,6 @@ impl EditorApp {
                                 }
                             });
                     });
-            });
-
-        self.show_batch_converter = open;
     }
 
     /// Execute the batch action based on the current mode
