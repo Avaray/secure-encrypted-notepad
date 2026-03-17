@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Instant;
 
-use crate::app_state::{FileTreeEntry, KeyStatus, LogEntry, PendingAction};
+use crate::app_state::{BatchMode, FileTreeEntry, KeyStatus, LogEntry, PendingAction};
 use crate::history::DocumentWithHistory;
 use crate::settings::Settings;
 use crate::theme::{load_themes, Theme};
@@ -123,8 +123,10 @@ pub struct EditorApp {
 
     // Batch Converter State
     pub(crate) show_batch_converter: bool,
+    pub(crate) batch_mode: BatchMode,
     pub(crate) batch_files: Vec<PathBuf>,
     pub(crate) batch_keyfile: Option<PathBuf>,
+    pub(crate) batch_keyfile_new: Option<PathBuf>,
     pub(crate) batch_output_dir: Option<PathBuf>,
 
     // Window state tracking
@@ -281,8 +283,10 @@ impl EditorApp {
             search_matches: Vec::new(),
             current_match_index: None,
             show_batch_converter: false,
+            batch_mode: BatchMode::default(),
             batch_files: Vec::new(),
             batch_keyfile: None,
+            batch_keyfile_new: None,
             batch_output_dir: None,
             first_frame: true,
             start_maximized: settings.start_maximized,

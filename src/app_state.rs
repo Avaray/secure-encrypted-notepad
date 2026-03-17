@@ -78,3 +78,17 @@ impl Default for KeyStatus {
         Self::Unknown
     }
 }
+
+/// Batch converter operation mode
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BatchMode {
+    Encrypt,
+    Decrypt,
+    Rotate,
+}
+
+impl Default for BatchMode {
+    fn default() -> Self {
+        Self::Encrypt
+    }
+}
