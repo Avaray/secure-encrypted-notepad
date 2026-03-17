@@ -1,5 +1,5 @@
 use crate::app_state::{BatchMode, KeyStatus};
-use crate::crypto::{decrypt_file, encrypt_file};
+use crate::crypto::{decrypt_bytes, encrypt_bytes};
 use crate::EditorApp;
 use eframe::egui;
 use std::path::Path;
@@ -43,24 +43,39 @@ impl EditorApp {
                     .resizable(false)
                     .frame(egui::Frame::NONE.inner_margin(8.0))
                     .show_inside(ui, |ui| {
+                        let is_running = self.batch_is_running;
                         let has_files = !self.batch_files.is_empty();
                         let has_keyfile = self.batch_keyfile.is_some();
                         let has_new_keyfile = self.batch_keyfile_new.is_some();
 
-                        let enabled = match self.batch_mode {
+                        let enabled = !is_running && match self.batch_mode {
                             BatchMode::Encrypt | BatchMode::Decrypt => has_files && has_keyfile,
                             BatchMode::Rotate => has_files && has_keyfile && has_new_keyfile,
                         };
 
-                        let (label, icon) = match self.batch_mode {
-                            BatchMode::Encrypt => ("Encrypt All", "🔒"),
-                            BatchMode::Decrypt => ("Decrypt All", "🔓"),
-                            BatchMode::Rotate => ("Rotate All", "🔄"),
+                        let (label, icon) = if is_running {
+                            let mode_icon = match self.batch_mode {
+                                BatchMode::Encrypt => "🔒",
+                                BatchMode::Decrypt => "🔓",
+                                BatchMode::Rotate => "🔄",
+                            };
+                            let verb = match self.batch_mode {
+                                BatchMode::Encrypt => "Encrypting",
+                                BatchMode::Decrypt => "Decrypting",
+                                BatchMode::Rotate => "Rotating",
+                            };
+                            (format!("{} {}/{} (OK: {}, ERR: {})", verb, self.batch_progress_count, self.batch_total_count, self.batch_success_count, self.batch_failed_count), mode_icon)
+                        } else {
+                            match self.batch_mode {
+                                BatchMode::Encrypt => ("Encrypt All".to_string(), "🔒"),
+                                BatchMode::Decrypt => ("Decrypt All".to_string(), "🔓"),
+                                BatchMode::Rotate => ("Rotate All".to_string(), "🔄"),
+                            }
                         };
 
-                        ui.add_enabled_ui(enabled, |ui| {
+                        ui.add_enabled_ui(enabled || is_running, |ui| {
                             let btn_size = egui::vec2(ui.available_width(), 32.0);
-                            if ui.add_sized(btn_size, egui::Button::new(format!("{} {}", icon, label))).clicked() {
+                            if ui.add_sized(btn_size, egui::Button::new(format!("{} {}", icon, label))).clicked() && !is_running {
                                 self.execute_batch_action();
                             }
                         });
@@ -74,6 +89,9 @@ impl EditorApp {
                     .width_range((half_width * 0.2)..=(half_width * 1.8))
                     .frame(egui::Frame::NONE.inner_margin(8.0))
                     .show_inside(ui, |ui| {
+                        if self.batch_is_running {
+                            ui.disable();
+                        }
                         // --- Mode Selector ---
                         let available_w = ui.available_width();
                         if available_w > 370.0 {
@@ -234,12 +252,31 @@ impl EditorApp {
                                 ui.label("Same as input files (default)");
                             }
                         });
+
+                        // --- Output Extension (Decrypt mode only) ---
+                        if self.batch_mode == BatchMode::Decrypt {
+                            ui.add_space(4.0);
+                            ui.separator();
+                            ui.add_space(4.0);
+
+                            ui.horizontal(|ui| {
+                                ui.heading("Output Extension");
+                                ui.add_space(8.0);
+                                let mut ext = self.batch_output_extension.clone();
+                                if ui.add(egui::TextEdit::singleline(&mut ext).hint_text("no extension")).changed() {
+                                    self.batch_output_extension = ext.trim_start_matches('.').to_string();
+                                }
+                            });
+                        }
                     });
 
                 // === RIGHT/CENTER PANEL ===
                 egui::CentralPanel::default()
                     .frame(egui::Frame::NONE.inner_margin(8.0))
                     .show_inside(ui, |ui| {
+                        if self.batch_is_running {
+                            ui.disable();
+                        }
                         let files_count = self.batch_files.len();
                         let heading_text = if files_count > 0 {
                             format!("Input Files ({})", files_count)
@@ -331,17 +368,37 @@ impl EditorApp {
     }
 
     fn batch_encrypt(&mut self) {
-        self.status_message = "Batch encryption started...".to_string();
-        self.log_info("Batch encryption requested");
+        let (tx, rx) = std::sync::mpsc::channel();
+        self.batch_progress_receiver = Some(rx);
+        self.batch_is_running = true;
+        self.batch_progress_count = 0;
+        self.batch_total_count = self.batch_files.len();
+        self.batch_success_count = 0;
+        self.batch_failed_count = 0;
 
-        if let Some(keyfile) = self.batch_keyfile.clone() {
+        let batch_files = self.batch_files.clone();
+        let keyfile = self.batch_keyfile.clone().unwrap();
+        let batch_output_dir = self.batch_output_dir.clone();
+
+        if let Err(e) = crate::crypto::get_keyfile_hash(&keyfile) {
+            let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, format!("Critical: Keyfile error: {}", e)));
+            let _ = tx.send(crate::app_state::BatchProgressUpdate::Finished(0, 0));
+            return;
+        }
+
+        std::thread::spawn(move || {
             let mut success = 0;
             let mut failed = 0;
-            let batch_files = self.batch_files.clone();
-            let batch_output_dir = self.batch_output_dir.clone();
-            let total = batch_files.len();
 
-            for file in &batch_files {
+            for (i, file) in batch_files.iter().enumerate() {
+                // Heuristic Check: Is it already a SEN file?
+                if crate::crypto::is_sen_file(file) {
+                    failed += 1;
+                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, format!("[Encrypt] Ignored: File is already encrypted (SEN header detected): {}", file.file_name().unwrap_or_default().to_string_lossy())));
+                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
+                    continue;
+                }
+
                 let output_dir = if let Some(d) = &batch_output_dir {
                     d.clone()
                 } else {
@@ -351,56 +408,65 @@ impl EditorApp {
                 let file_name = file.file_name().unwrap_or_default();
                 let output_path = output_dir.join(format!("{}.sen", file_name.to_string_lossy()));
 
-                match std::fs::read_to_string(file) {
-                    Ok(content) => {
-                        match encrypt_file(&content, &keyfile, &output_path) {
+                match std::fs::read(file) {
+                    Ok(buffer) => {
+                        // Binary Check: Heuristic check if it's actually text
+                        if !crate::crypto::is_buffer_text(&buffer) {
+                             failed += 1;
+                             let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, format!("[Encrypt] Ignored: File appears to be binary (non-text): {}", file.file_name().unwrap_or_default().to_string_lossy())));
+                             let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
+                             continue;
+                        }
+
+                        match encrypt_bytes(&buffer, &keyfile, &output_path) {
                             Ok(_) => {
                                 success += 1;
-                                let masked_in = self.mask_directory_path(file);
-                                let masked_out = self.mask_directory_path(&output_path);
-                                if masked_in == "Secured" && masked_out == "Secured" {
-                                    self.log_success("File encrypted successfully".to_string());
-                                } else {
-                                    self.log_success(format!("Encrypted: {} -> {}", masked_in, masked_out));
-                                }
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Success, format!("[Encrypt] Success: {}", file.file_name().unwrap_or_default().to_string_lossy())));
                             }
                             Err(e) => {
                                 failed += 1;
-                                self.log_error(format!(
-                                    "Failed to encrypt {}: {}",
-                                    self.mask_directory_path(file),
-                                    e
-                                ));
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, format!("[Encrypt] Failed {}: {}", file.file_name().unwrap_or_default().to_string_lossy(), e)));
                             }
                         }
                     }
                     Err(e) => {
                         failed += 1;
-                        self.log_error(format!(
-                            "Failed to read {}: {}",
-                            self.mask_directory_path(file),
-                            e
-                        ));
+                        let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, format!("[Encrypt] Read Error {}: {}", file.file_name().unwrap_or_default().to_string_lossy(), e)));
                     }
                 }
+                let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
             }
-
-            self.status_message = format!("Batch Encrypt: {}/{} succeeded, {} failed", success, total, failed);
-        }
+            let _ = tx.send(crate::app_state::BatchProgressUpdate::Finished(success, failed));
+        });
     }
 
     fn batch_decrypt(&mut self) {
-        self.status_message = "Batch decryption started...".to_string();
-        self.log_info("Batch decryption requested");
+        let (tx, rx) = std::sync::mpsc::channel();
+        self.batch_progress_receiver = Some(rx);
+        self.batch_is_running = true;
+        self.batch_progress_count = 0;
+        self.batch_total_count = self.batch_files.len();
+        self.batch_success_count = 0;
+        self.batch_failed_count = 0;
 
-        if let Some(keyfile) = self.batch_keyfile.clone() {
+        let batch_files = self.batch_files.clone();
+        let keyfile = self.batch_keyfile.clone().unwrap();
+        let batch_output_dir = self.batch_output_dir.clone();
+        let batch_output_extension = self.batch_output_extension.clone();
+
+        std::thread::spawn(move || {
             let mut success = 0;
             let mut failed = 0;
-            let batch_files = self.batch_files.clone();
-            let batch_output_dir = self.batch_output_dir.clone();
-            let total = batch_files.len();
 
-            for file in &batch_files {
+            for (i, file) in batch_files.iter().enumerate() {
+                // Heuristic Check: Is it a SEN file?
+                if !crate::crypto::is_sen_file(file) {
+                    failed += 1;
+                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, format!("[Decrypt] Ignored: Not a recognized SEN file (invalid magic): {}", file.file_name().unwrap_or_default().to_string_lossy())));
+                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
+                    continue;
+                }
+
                 let output_dir = if let Some(d) = &batch_output_dir {
                     d.clone()
                 } else {
@@ -408,10 +474,16 @@ impl EditorApp {
                 };
 
                 let original_name = file.file_name().unwrap_or_default().to_string_lossy();
-                let new_name = if original_name.ends_with(".sen") {
+                let stem = if original_name.ends_with(".sen") {
                     original_name.trim_end_matches(".sen").to_string()
                 } else {
-                    format!("{}.txt", original_name)
+                    original_name.to_string()
+                };
+
+                let new_name = if batch_output_extension.is_empty() {
+                    stem
+                } else {
+                    format!("{}.{}", stem, batch_output_extension)
                 };
 
                 let mut output_path = output_dir.join(&new_name);
@@ -419,98 +491,79 @@ impl EditorApp {
                     output_path = output_dir.join(format!("{}.decrypted", new_name));
                 }
 
-                match decrypt_file(&keyfile, file) {
-                    Ok(content) => {
-                        match std::fs::write(&output_path, content) {
+                match decrypt_bytes(&keyfile, file) {
+                    Ok(buffer) => {
+                        match std::fs::write(&output_path, buffer) {
                             Ok(_) => {
                                 success += 1;
-                                let masked_in = self.mask_directory_path(file);
-                                let masked_out = self.mask_directory_path(&output_path);
-                                if masked_in == "Secured" && masked_out == "Secured" {
-                                    self.log_success("File decrypted successfully".to_string());
-                                } else {
-                                    self.log_success(format!("Decrypted: {} -> {}", masked_in, masked_out));
-                                }
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Success, format!("[Decrypt] Success: {}", file.file_name().unwrap_or_default().to_string_lossy())));
                             }
                             Err(e) => {
                                 failed += 1;
-                                self.log_error(format!(
-                                    "Failed to write {}: {}",
-                                    self.mask_directory_path(&output_path),
-                                    e
-                                ));
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, format!("[Decrypt] Write Error {}: {}", output_path.file_name().unwrap_or_default().to_string_lossy(), e)));
                             }
                         }
                     }
                     Err(e) => {
                         failed += 1;
-                        self.log_error(format!(
-                            "Failed to decrypt {}: {}",
-                            self.mask_directory_path(file),
-                            e
-                        ));
+                        let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, format!("[Decrypt] Error {}: {}", file.file_name().unwrap_or_default().to_string_lossy(), e)));
                     }
                 }
+                let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
             }
-
-            self.status_message = format!("Batch Decrypt: {}/{} succeeded, {} failed", success, total, failed);
-        }
+            let _ = tx.send(crate::app_state::BatchProgressUpdate::Finished(success, failed));
+        });
     }
 
     fn batch_rotate(&mut self) {
-        self.status_message = "Batch keyfile rotation started...".to_string();
-        self.log_info("Batch keyfile rotation requested");
+        let (tx, rx) = std::sync::mpsc::channel();
+        self.batch_progress_receiver = Some(rx);
+        self.batch_is_running = true;
+        self.batch_progress_count = 0;
+        self.batch_total_count = self.batch_files.len();
+        self.batch_success_count = 0;
+        self.batch_failed_count = 0;
 
-        let old_keyfile = match self.batch_keyfile.clone() {
-            Some(k) => k,
-            None => return,
-        };
-        let new_keyfile = match self.batch_keyfile_new.clone() {
-            Some(k) => k,
-            None => return,
-        };
-
-        let mut success = 0;
-        let mut failed = 0;
         let batch_files = self.batch_files.clone();
-        let total = batch_files.len();
+        let old_keyfile = self.batch_keyfile.clone().unwrap();
+        let new_keyfile = self.batch_keyfile_new.clone().unwrap();
 
-        for file in &batch_files {
-            // Step 1: Decrypt with old keyfile
-            match decrypt_file(&old_keyfile, file) {
-                Ok(content) => {
-                    // Step 2: Re-encrypt with new keyfile, writing back to the same file
-                    match encrypt_file(&content, &new_keyfile, file) {
-                        Ok(_) => {
-                            success += 1;
-                            let masked = self.mask_directory_path(file);
-                            if masked == "Secured" {
-                                self.log_success("Keyfile rotated successfully".to_string());
-                            } else {
-                                self.log_success(format!("Rotated: {}", masked));
+        std::thread::spawn(move || {
+            let mut success = 0;
+            let mut failed = 0;
+
+            for (i, file) in batch_files.iter().enumerate() {
+                // Heuristic Check: Is it a SEN file?
+                if !crate::crypto::is_sen_file(file) {
+                    failed += 1;
+                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, format!("[Rotate] Ignored: Not a recognized SEN file (invalid magic): {}", file.file_name().unwrap_or_default().to_string_lossy())));
+                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
+                    continue;
+                }
+
+                // Step 1: Decrypt with old keyfile
+                match decrypt_bytes(&old_keyfile, file) {
+                    Ok(buffer) => {
+                        // Step 2: Re-encrypt with new keyfile, writing back to the same file
+                        match encrypt_bytes(&buffer, &new_keyfile, file) {
+                            Ok(_) => {
+                                success += 1;
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Success, format!("[Rotate] Success: {}", file.file_name().unwrap_or_default().to_string_lossy())));
+                            }
+                            Err(e) => {
+                                failed += 1;
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, format!("[Rotate] Re-encrypt Error {}: {}", file.file_name().unwrap_or_default().to_string_lossy(), e)));
                             }
                         }
-                        Err(e) => {
-                            failed += 1;
-                            self.log_error(format!(
-                                "Failed to re-encrypt {}: {}",
-                                self.mask_directory_path(file),
-                                e
-                            ));
-                        }
+                    }
+                    Err(e) => {
+                        failed += 1;
+                        let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, format!("[Rotate] Decrypt Error {}: {}", file.file_name().unwrap_or_default().to_string_lossy(), e)));
                     }
                 }
-                Err(e) => {
-                    failed += 1;
-                    self.log_error(format!(
-                        "Failed to decrypt {}: {}",
-                        self.mask_directory_path(file),
-                        e
-                    ));
-                }
+                let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
             }
-        }
-
-        self.status_message = format!("Batch Rotate: {}/{} succeeded, {} failed", success, total, failed);
+            let _ = tx.send(crate::app_state::BatchProgressUpdate::Finished(success, failed));
+        });
     }
 }

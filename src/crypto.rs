@@ -114,12 +114,9 @@ pub fn generate_keyfile(output_path: &Path) -> Result<(), CryptoError> {
     Ok(())
 }
 
-/// FILE ENCRYPTION
-/// SEN1 Structure: [MAGIC 4B] [SALT 32B] [ENCRYPTED DATA]
-/// Encrypted payload: [KEYFILE HASH 32B] [CONTENT BYTES]
-/// The keyfile hash is inside the encrypted payload for security
-pub fn encrypt_file(
-    content: &str,
+/// FILE ENCRYPTION (Bytes)
+pub fn encrypt_bytes(
+    content_bytes: &[u8],
     keyfile_path: &Path,
     output_path: &Path,
 ) -> Result<(), CryptoError> {
@@ -132,8 +129,6 @@ pub fn encrypt_file(
     let secret_key = derive_key_from_keyfile(&keyfile_hash, &salt)?;
 
     // 3. Build plaintext: [keyfile_hash 32B] + [content]
-    // Keyfile hash is embedded inside encrypted data for verification
-    let content_bytes = content.as_bytes();
     let mut payload = Zeroizing::new(Vec::with_capacity(KEYFILE_HASH_SIZE + content_bytes.len()));
     payload.extend_from_slice(keyfile_hash.as_bytes());
     payload.extend_from_slice(content_bytes);
@@ -149,6 +144,44 @@ pub fn encrypt_file(
 
     fs::write(output_path, file_data)?;
     Ok(())
+}
+
+/// Heuristic: Check if a buffer looks like a text file.
+/// Standard check: looks for NULL bytes in the first 8KB.
+pub fn is_buffer_text(data: &[u8]) -> bool {
+    if data.is_empty() {
+        return true;
+    }
+    let check_len = std::cmp::min(data.len(), 8192);
+    for &byte in &data[..check_len] {
+        if byte == 0 {
+            return false;
+        }
+    }
+    true
+}
+
+/// Quick check if a file starts with the SEN magic number.
+pub fn is_sen_file(path: &Path) -> bool {
+    let mut file = match fs::File::open(path) {
+        Ok(f) => f,
+        Err(_) => return false,
+    };
+    let mut magic = [0u8; MAGIC_SIZE];
+    use std::io::Read;
+    if file.read_exact(&mut magic).is_err() {
+        return false;
+    }
+    &magic == MAGIC_NUMBER
+}
+
+/// FILE ENCRYPTION (String wrapper)
+pub fn encrypt_file(
+    content: &str,
+    keyfile_path: &Path,
+    output_path: &Path,
+) -> Result<(), CryptoError> {
+    encrypt_bytes(content.as_bytes(), keyfile_path, output_path)
 }
 
 /// SECURITY: Hash keyfile content using SHA-256 (Public wrapper)
@@ -176,20 +209,10 @@ pub fn check_key_compatibility(
 
     let salt = &header[MAGIC_SIZE..];
 
-    // Important: We need at least the auth tag (16B) to verify.
-    // In Orion, aead::open needs the ENTIRE ciphertext + tag.
-    // If the file is huge, we'd still read the whole thing.
-    // BUT we can read just the first block of ciphertext if we use a streaming AEAD or similar.
-    // However, Orion's XChaCha20-Poly1305 is one-shot.
-    // For performance, we'll read the file, but since SEN files are usually small it's fine.
-    // To make it TRULY fast for huge files, we'd need a different file structure,
-    // but we have what we have now.
-
     let mut encrypted_data = Vec::new();
     file.read_to_end(&mut encrypted_data)?;
 
     if encrypted_data.len() < KEYFILE_HASH_SIZE + 16 {
-        // hash + tag
         return Err(CryptoError::InvalidFormat);
     }
 
@@ -209,15 +232,14 @@ pub fn check_key_compatibility(
     Ok(&plaintext[..KEYFILE_HASH_SIZE] == keyfile_hash)
 }
 
-/// FILE DECRYPTION
-/// SEN: keyfile hash is verified from inside the encrypted payload
-pub fn decrypt_file(
+/// FILE DECRYPTION (Bytes)
+pub fn decrypt_bytes(
     keyfile_path: &Path,
     encrypted_file_path: &Path,
-) -> Result<String, CryptoError> {
+) -> Result<Vec<u8>, CryptoError> {
     let file_data = fs::read(encrypted_file_path)?;
 
-    // Basic size check: magic + salt + at least some encrypted data
+    // Basic size check
     if file_data.len() < MAGIC_SIZE + SALT_SIZE + 1 {
         return Err(CryptoError::InvalidFormat);
     }
@@ -227,7 +249,7 @@ pub fn decrypt_file(
         return Err(CryptoError::InvalidMagicNumber);
     }
 
-    // 2. Split components: [MAGIC 4B] [SALT 32B] [ENCRYPTED DATA]
+    // 2. Split components
     let salt_end = MAGIC_SIZE + SALT_SIZE;
     let salt = &file_data[MAGIC_SIZE..salt_end];
     let encrypted_data = &file_data[salt_end..];
@@ -241,7 +263,7 @@ pub fn decrypt_file(
         aead::open(&secret_key, encrypted_data).map_err(|_| CryptoError::DecryptionFailed)?;
     let plaintext = Zeroizing::new(plaintext_bytes);
 
-    // 5. Verify keyfile hash from decrypted payload: [HASH 32B] [CONTENT]
+    // 5. Verify keyfile hash
     if plaintext.len() < KEYFILE_HASH_SIZE {
         return Err(CryptoError::InvalidFormat);
     }
@@ -253,12 +275,16 @@ pub fn decrypt_file(
         ));
     }
 
-    // 6. Extract content (after the hash)
-    let content_bytes = &plaintext[KEYFILE_HASH_SIZE..];
-    let content =
-        String::from_utf8(content_bytes.to_vec()).map_err(|_| CryptoError::InvalidFormat)?;
+    Ok(plaintext[KEYFILE_HASH_SIZE..].to_vec())
+}
 
-    Ok(content)
+/// FILE DECRYPTION (String wrapper)
+pub fn decrypt_file(
+    keyfile_path: &Path,
+    encrypted_file_path: &Path,
+) -> Result<String, CryptoError> {
+    let bytes = decrypt_bytes(keyfile_path, encrypted_file_path)?;
+    String::from_utf8(bytes).map_err(|_| CryptoError::InvalidFormat)
 }
 
 #[cfg(test)]

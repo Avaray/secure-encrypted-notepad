@@ -131,6 +131,13 @@ pub struct EditorApp {
     pub(crate) batch_file_access_cache: HashMap<PathBuf, KeyStatus>,
     pub(crate) batch_access_check_receiver: Option<std::sync::mpsc::Receiver<(PathBuf, KeyStatus)>>,
     pub(crate) batch_current_key_hash: Option<[u8; 32]>,
+    pub(crate) batch_is_running: bool,
+    pub(crate) batch_progress_count: usize,
+    pub(crate) batch_total_count: usize,
+    pub(crate) batch_success_count: usize,
+    pub(crate) batch_failed_count: usize,
+    pub(crate) batch_output_extension: String,
+    pub(crate) batch_progress_receiver: Option<std::sync::mpsc::Receiver<crate::app_state::BatchProgressUpdate>>,
 
     // Window state tracking
     /// True only for the very first update() call — used for the first-frame maximize trick
@@ -294,6 +301,13 @@ impl EditorApp {
             batch_file_access_cache: HashMap::new(),
             batch_access_check_receiver: None,
             batch_current_key_hash: None,
+            batch_is_running: false,
+            batch_progress_count: 0,
+            batch_total_count: 0,
+            batch_success_count: 0,
+            batch_failed_count: 0,
+            batch_output_extension: String::new(),
+            batch_progress_receiver: None,
             first_frame: true,
             start_maximized: settings.start_maximized,
             is_maximized: false,
@@ -519,6 +533,7 @@ impl eframe::App for EditorApp {
         // Process results from background file access checks
         self.process_access_check_results(ctx);
         self.process_batch_access_check_results(ctx);
+        self.process_batch_progress_results(ctx);
 
         // Process file system events for file tree
         if let Some(rx) = &self.watcher_receiver {

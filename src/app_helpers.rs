@@ -625,13 +625,61 @@ impl EditorApp {
             }
 
             // Check if the sender has been dropped (thread finished)
-            // Note: try_recv returning Err(Disconnected) means finished
             if let Err(std::sync::mpsc::TryRecvError::Disconnected) = rx.try_recv() {
                 finished = true;
             }
 
             if finished {
                 self.batch_access_check_receiver = None;
+            }
+
+            if got_any {
+                ctx.request_repaint();
+            }
+        }
+    }
+
+    /// Process results from background batch operation progress (call every frame)
+    pub(crate) fn process_batch_progress_results(&mut self, ctx: &egui::Context) {
+        if let Some(rx) = self.batch_progress_receiver.take() {
+            let mut got_any = false;
+            let mut finished = false;
+
+            while let Ok(update) = rx.try_recv() {
+                got_any = true;
+                match update {
+                    crate::app_state::BatchProgressUpdate::Log(level, msg) => {
+                        match level {
+                            crate::app_state::LogLevel::Info => self.log_info(msg),
+                            crate::app_state::LogLevel::Success => self.log_success(msg),
+                            crate::app_state::LogLevel::Warning => self.log_warning(msg),
+                            crate::app_state::LogLevel::Error => self.log_error(msg),
+                        }
+                    }
+                    crate::app_state::BatchProgressUpdate::Progress(count, success, failed) => {
+                        self.batch_progress_count = count;
+                        self.batch_success_count = success;
+                        self.batch_failed_count = failed;
+                    }
+                    crate::app_state::BatchProgressUpdate::Finished(success, failed) => {
+                        self.batch_success_count = success;
+                        self.batch_failed_count = failed;
+                        self.batch_is_running = false;
+                        finished = true;
+                        
+                        let total = self.batch_total_count;
+                        let mode_name = match self.batch_mode {
+                            crate::app_state::BatchMode::Encrypt => "Encrypt",
+                            crate::app_state::BatchMode::Decrypt => "Decrypt",
+                            crate::app_state::BatchMode::Rotate => "Rotate",
+                        };
+                        self.status_message = format!("Batch {}: {}/{} succeeded, {} failed", mode_name, success, total, failed);
+                    }
+                }
+            }
+
+            if !finished {
+                self.batch_progress_receiver = Some(rx);
             }
 
             if got_any {
