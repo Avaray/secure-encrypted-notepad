@@ -3378,7 +3378,7 @@ checksum = "d767eb0aabc880b29956c35734170f26ed551a859dbd361d140cdbeca61ab1e2"
 
 [[package]]
 name = "sen"
-version = "0.6.3"
+version = "0.6.4"
 dependencies = [
  "aes-gcm",
  "base64",

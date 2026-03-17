@@ -8,32 +8,178 @@ impl EditorApp {
         let mut open = self.show_batch_converter;
 
         egui::Window::new("Batch Converter")
+            .id(egui::Id::new("batch_converter_v4"))
             .open(&mut open)
             .resizable(true)
             .collapsible(false)
-            .default_width(600.0)
-            .default_height(400.0)
+            .default_width(900.0)
+            .default_height(800.0)
             .pivot(egui::Align2::CENTER_CENTER)
-            .default_pos(ctx.available_rect().center())
+            .constrain_to(ctx.content_rect().shrink(16.0))
+            .default_pos(ctx.content_rect().center())
             .show(ctx, |ui| {
-                ui.heading("Batch Encryption / Decryption");
-                ui.label("Convert multiple files at once using a keyfile.");
+                // === TOP ===
+                egui::TopBottomPanel::top("batch_top_panel")
+                    .frame(egui::Frame::NONE.inner_margin(4.0))
+                    .show_inside(ui, |ui| {
+                        ui.heading("Batch Encryption / Decryption");
+                        ui.label("Convert multiple files at once using a keyfile.");
+                    });
 
-                ui.separator();
+                // === BOTTOM ===
+                egui::TopBottomPanel::bottom("batch_bottom_panel")
+                    .frame(egui::Frame::NONE.inner_margin(4.0))
+                    .show_inside(ui, |ui| {
+                        let enabled = !self.batch_files.is_empty() && self.batch_keyfile.is_some();
 
-                ui.columns(2, |columns| {
-                    // LEFT COLUMN: Config
-                    columns[0].vertical(|ui| {
-                        // Keyfile Selection
-                        ui.heading("1. Keyfile");
+                        ui.add_enabled_ui(enabled, |ui| {
+                            ui.horizontal(|ui| {
+                                let btn_width = (ui.available_width() - ui.spacing().item_spacing.x) / 2.0;
+                                let btn_size = egui::vec2(btn_width, 32.0);
+
+                                if ui.add_sized(btn_size, egui::Button::new("🔒 Encrypt All")).clicked() {
+                                    self.status_message = "Batch encryption started...".to_string();
+                                    self.log_info("Batch encryption requested");
+
+                                    if let Some(keyfile) = self.batch_keyfile.clone() {
+                                        let mut success = 0;
+                                        let mut failed = 0;
+                                        let batch_files = self.batch_files.clone();
+                                        let batch_output_dir = self.batch_output_dir.clone();
+                                        let total = batch_files.len();
+
+                                        for file in &batch_files {
+                                            let output_dir = if let Some(d) = &batch_output_dir {
+                                                d.clone()
+                                            } else {
+                                                file.parent().unwrap_or(Path::new(".")).to_path_buf()
+                                            };
+
+                                            let file_name = file.file_name().unwrap_or_default();
+                                            let output_path = output_dir.join(format!("{}.sen", file_name.to_string_lossy()));
+
+                                            match std::fs::read_to_string(file) {
+                                                Ok(content) => {
+                                                    match encrypt_file(&content, &keyfile, &output_path) {
+                                                        Ok(_) => {
+                                                            success += 1;
+                                                            let masked_in = self.mask_directory_path(file);
+                                                            let masked_out = self.mask_directory_path(&output_path);
+                                                            if masked_in == "Secured" && masked_out == "Secured" {
+                                                                self.log_success("File encrypted successfully".to_string());
+                                                            } else {
+                                                                self.log_success(format!("Encrypted: {} -> {}", masked_in, masked_out));
+                                                            }
+                                                        }
+                                                        Err(e) => {
+                                                            failed += 1;
+                                                            self.log_error(format!(
+                                                                "Failed to encrypt {}: {}",
+                                                                self.mask_directory_path(file),
+                                                                e
+                                                            ));
+                                                        }
+                                                    }
+                                                }
+                                                Err(e) => {
+                                                    failed += 1;
+                                                    self.log_error(format!(
+                                                        "Failed to read {}: {}",
+                                                        self.mask_directory_path(file),
+                                                        e
+                                                    ));
+                                                }
+                                            }
+                                        }
+
+                                        self.status_message = format!("Batch Encrypt: {}/{} succeeded, {} failed", success, total, failed);
+                                    }
+                                }
+
+                                if ui.add_sized(btn_size, egui::Button::new("🔓 Decrypt All")).clicked() {
+                                    self.status_message = "Batch decryption started...".to_string();
+                                    self.log_info("Batch decryption requested");
+
+                                    if let Some(keyfile) = self.batch_keyfile.clone() {
+                                        let mut success = 0;
+                                        let mut failed = 0;
+                                        let batch_files = self.batch_files.clone();
+                                        let batch_output_dir = self.batch_output_dir.clone();
+                                        let total = batch_files.len();
+
+                                        for file in &batch_files {
+                                            let output_dir = if let Some(d) = &batch_output_dir {
+                                                d.clone()
+                                            } else {
+                                                file.parent().unwrap_or(Path::new(".")).to_path_buf()
+                                            };
+
+                                            let original_name = file.file_name().unwrap_or_default().to_string_lossy();
+                                            let new_name = if original_name.ends_with(".sen") {
+                                                original_name.trim_end_matches(".sen").to_string()
+                                            } else {
+                                                format!("{}.txt", original_name)
+                                            };
+
+                                            let mut output_path = output_dir.join(&new_name);
+                                            if output_path == *file {
+                                                output_path = output_dir.join(format!("{}.decrypted", new_name));
+                                            }
+
+                                            match decrypt_file(&keyfile, file) {
+                                                Ok(content) => {
+                                                    match std::fs::write(&output_path, content) {
+                                                        Ok(_) => {
+                                                            success += 1;
+                                                            let masked_in = self.mask_directory_path(file);
+                                                            let masked_out = self.mask_directory_path(&output_path);
+                                                            if masked_in == "Secured" && masked_out == "Secured" {
+                                                                self.log_success("File decrypted successfully".to_string());
+                                                            } else {
+                                                                self.log_success(format!("Decrypted: {} -> {}", masked_in, masked_out));
+                                                            }
+                                                        }
+                                                        Err(e) => {
+                                                            failed += 1;
+                                                            self.log_error(format!(
+                                                                "Failed to write {}: {}",
+                                                                self.mask_directory_path(&output_path),
+                                                                e
+                                                            ));
+                                                        }
+                                                    }
+                                                }
+                                                Err(e) => {
+                                                    failed += 1;
+                                                    self.log_error(format!(
+                                                        "Failed to decrypt {}: {}",
+                                                        self.mask_directory_path(file),
+                                                        e
+                                                    ));
+                                                }
+                                            }
+                                        }
+
+                                        self.status_message = format!("Batch Decrypt: {}/{} succeeded, {} failed", success, total, failed);
+                                    }
+                                }
+                            });
+                        });
+                    });
+
+                // === LEFT PANEL ===
+                egui::SidePanel::left("batch_left_panel")
+                    .resizable(true)
+                    .default_width(450.0)
+                    .width_range(300.0..=800.0)
+                    .frame(egui::Frame::NONE.inner_margin(4.0))
+                    .show_inside(ui, |ui| {
+                        ui.heading("Keyfile");
                         ui.horizontal_wrapped(|ui| {
                             if let Some(path) = &self.batch_keyfile {
                                 ui.label(
-                                    egui::RichText::new(format!(
-                                        "🔑 {}",
-                                        self.mask_keyfile_path(path)
-                                    ))
-                                    .color(self.current_theme.colors.success_color()),
+                                    egui::RichText::new(format!("🔑 {}", self.mask_keyfile_path(path)))
+                                        .color(self.current_theme.colors.success_color()),
                                 );
                             } else {
                                 ui.label(
@@ -52,11 +198,16 @@ impl EditorApp {
                         ui.separator();
                         ui.add_space(8.0);
 
-                        // Output Directory
-                        ui.heading("2. Output Directory");
+                        ui.heading("Output Directory");
                         ui.horizontal_wrapped(|ui| {
                             if let Some(path) = &self.batch_output_dir {
-                                ui.label(format!("📁 {}", self.mask_directory_path(path)));
+                                let masked = self.mask_directory_path(path);
+                                let color = if masked == "Secured" {
+                                    self.current_theme.colors.success_color()
+                                } else {
+                                    self.current_theme.colors.warning_color()
+                                };
+                                ui.label(egui::RichText::new(format!("📁 {}", masked)).color(color));
                             } else {
                                 ui.label("Same as input files (default)");
                             }
@@ -74,173 +225,13 @@ impl EditorApp {
                                 }
                             }
                         });
-
-                        ui.add_space(16.0);
-                        ui.separator();
-                        ui.add_space(8.0);
-
-                        // Actions
-                        ui.heading("3. Actions");
-                        let enabled = !self.batch_files.is_empty() && self.batch_keyfile.is_some();
-
-                        ui.vertical_centered_justified(|ui| {
-                            if ui
-                                .add_enabled(enabled, egui::Button::new("🔒 Encrypt All"))
-                                .clicked()
-                            {
-                                self.status_message = "Batch encryption started...".to_string();
-                                self.log_info("Batch encryption requested");
-
-                                if let Some(keyfile) = self.batch_keyfile.clone() {
-                                    let mut success = 0;
-                                    let mut failed = 0;
-                                    let batch_files = self.batch_files.clone();
-                                    let batch_output_dir = self.batch_output_dir.clone();
-                                    let total = batch_files.len();
-
-                                    for file in &batch_files {
-                                        // Determine output directory
-                                        let output_dir = if let Some(d) = &batch_output_dir {
-                                            d.clone()
-                                        } else {
-                                            file.parent().unwrap_or(Path::new(".")).to_path_buf()
-                                        };
-
-                                        // Determine output filename (append .sen)
-                                        let file_name = file.file_name().unwrap_or_default();
-                                        let output_path = output_dir
-                                            .join(format!("{}.sen", file_name.to_string_lossy()));
-
-                                        // Read content (assuming text)
-                                        match std::fs::read_to_string(file) {
-                                            Ok(content) => {
-                                                // Encrypt
-                                                match encrypt_file(&content, &keyfile, &output_path)
-                                                {
-                                                    Ok(_) => {
-                                                        success += 1;
-                                                        let masked_in = self.mask_directory_path(file);
-                                                        let masked_out = self.mask_directory_path(&output_path);
-                                                        if masked_in == "Secured" && masked_out == "Secured" {
-                                                            self.log_success("File encrypted successfully".to_string());
-                                                        } else {
-                                                            self.log_success(format!("Encrypted: {} -> {}", masked_in, masked_out));
-                                                        }
-                                                    }
-                                                    Err(e) => {
-                                                        failed += 1;
-                                                        self.log_error(format!(
-                                                            "Failed to encrypt {}: {}",
-                                                            self.mask_directory_path(file),
-                                                            e
-                                                        ));
-                                                    }
-                                                }
-                                            }
-                                            Err(e) => {
-                                                failed += 1;
-                                                self.log_error(format!(
-                                                    "Failed to read {}: {}",
-                                                    self.mask_directory_path(file),
-                                                    e
-                                                ));
-                                            }
-                                        }
-                                    }
-
-                                    self.status_message = format!(
-                                        "Batch Encrypt: {}/{} succeeded, {} failed",
-                                        success, total, failed
-                                    );
-                                }
-                            }
-
-                            if ui
-                                .add_enabled(enabled, egui::Button::new("🔓 Decrypt All"))
-                                .clicked()
-                            {
-                                self.status_message = "Batch decryption started...".to_string();
-                                self.log_info("Batch decryption requested");
-
-                                if let Some(keyfile) = self.batch_keyfile.clone() {
-                                    let mut success = 0;
-                                    let mut failed = 0;
-                                    let batch_files = self.batch_files.clone();
-                                    let batch_output_dir = self.batch_output_dir.clone();
-                                    let total = batch_files.len();
-
-                                    for file in &batch_files {
-                                        // Determine output directory
-                                        let output_dir = if let Some(d) = &batch_output_dir {
-                                            d.clone()
-                                        } else {
-                                            file.parent().unwrap_or(Path::new(".")).to_path_buf()
-                                        };
-
-                                        // Determine output filename (strip .sen or append .txt)
-                                        let original_name =
-                                            file.file_name().unwrap_or_default().to_string_lossy();
-                                        let new_name = if original_name.ends_with(".sen") {
-                                            original_name.trim_end_matches(".sen").to_string()
-                                        } else {
-                                            format!("{}.txt", original_name)
-                                        };
-
-                                        // Prevent overwriting source if names clash (e.g. decrypting file.txt to file.txt)
-                                        let mut output_path = output_dir.join(&new_name);
-                                        if output_path == *file {
-                                            output_path =
-                                                output_dir.join(format!("{}.decrypted", new_name));
-                                        }
-
-                                        // Decrypt
-                                        match decrypt_file(&keyfile, file) {
-                                            Ok(content) => {
-                                                // Write result
-                                                match std::fs::write(&output_path, content) {
-                                                    Ok(_) => {
-                                                        success += 1;
-                                                        let masked_in = self.mask_directory_path(file);
-                                                        let masked_out = self.mask_directory_path(&output_path);
-                                                        if masked_in == "Secured" && masked_out == "Secured" {
-                                                            self.log_success("File decrypted successfully".to_string());
-                                                        } else {
-                                                            self.log_success(format!("Decrypted: {} -> {}", masked_in, masked_out));
-                                                        }
-                                                    }
-                                                    Err(e) => {
-                                                        failed += 1;
-                                                        self.log_error(format!(
-                                                            "Failed to write {}: {}",
-                                                            self.mask_directory_path(&output_path),
-                                                            e
-                                                        ));
-                                                    }
-                                                }
-                                            }
-                                            Err(e) => {
-                                                failed += 1;
-                                                self.log_error(format!(
-                                                    "Failed to decrypt {}: {}",
-                                                    self.mask_directory_path(file),
-                                                    e
-                                                ));
-                                            }
-                                        }
-                                    }
-
-                                    self.status_message = format!(
-                                        "Batch Decrypt: {}/{} succeeded, {} failed",
-                                        success, total, failed
-                                    );
-                                }
-                            }
-                        });
                     });
 
-                    // RIGHT COLUMN: File List
-                    columns[1].vertical(|ui| {
-                        ui.heading("4. Input Files");
+                // === RIGHT/CENTER PANEL ===
+                egui::CentralPanel::default()
+                    .frame(egui::Frame::NONE.inner_margin(4.0))
+                    .show_inside(ui, |ui| {
+                        ui.heading("Input Files");
                         ui.horizontal(|ui| {
                             if ui.button("➕ Add Files...").clicked() {
                                 if let Some(files) = rfd::FileDialog::new().pick_files() {
@@ -259,9 +250,8 @@ impl EditorApp {
 
                         ui.add_space(4.0);
 
-                        let height = ui.available_height() - 20.0;
                         egui::ScrollArea::vertical()
-                            .max_height(height)
+                            .auto_shrink([false, false])
                             .show(ui, |ui| {
                                 if self.batch_files.is_empty() {
                                     ui.label("No files added.");
@@ -269,19 +259,12 @@ impl EditorApp {
                                     let mut to_remove = None;
                                     for (idx, file) in self.batch_files.iter().enumerate() {
                                         ui.horizontal(|ui| {
-                                            ui.label(
-                                                file.file_name()
-                                                    .unwrap_or_default()
-                                                    .to_string_lossy(),
-                                            );
-                                            ui.with_layout(
-                                                egui::Layout::right_to_left(egui::Align::Center),
-                                                |ui| {
-                                                    if ui.button("❌").clicked() {
-                                                        to_remove = Some(idx);
-                                                    }
-                                                },
-                                            );
+                                            ui.label(file.file_name().unwrap_or_default().to_string_lossy());
+                                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                                if ui.button("❌").clicked() {
+                                                    to_remove = Some(idx);
+                                                }
+                                            });
                                         });
                                     }
 
@@ -291,7 +274,6 @@ impl EditorApp {
                                 }
                             });
                     });
-                });
             });
 
         self.show_batch_converter = open;
