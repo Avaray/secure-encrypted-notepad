@@ -9,9 +9,13 @@ impl EditorApp {
 
         let content_rect = ctx.content_rect();
 
+        let mut window_frame = egui::Frame::window(&ctx.style());
+        window_frame.inner_margin = egui::Margin::same(0);
+
         egui::Window::new("Batch Converter")
-            .id(egui::Id::new("batch_converter_v6"))
+            .id(egui::Id::new("batch_converter_v7"))
             .open(&mut open)
+            .frame(window_frame)
             .resizable(true)
             .collapsible(false)
             .default_width(content_rect.width() * 0.5)
@@ -22,7 +26,8 @@ impl EditorApp {
             .show(ctx, |ui| {
                 // === TOP ===
                 egui::TopBottomPanel::top("batch_top_panel")
-                    .frame(egui::Frame::NONE.inner_margin(12.0))
+                    .resizable(false)
+                    .frame(egui::Frame::NONE.inner_margin(8.0))
                     .show_inside(ui, |ui| {
                         ui.heading("Batch Encryption / Decryption");
                         ui.label("Convert multiple files at once using a keyfile.");
@@ -30,7 +35,8 @@ impl EditorApp {
 
                 // === BOTTOM ===
                 egui::TopBottomPanel::bottom("batch_bottom_panel")
-                    .frame(egui::Frame::NONE.inner_margin(12.0))
+                    .resizable(false)
+                    .frame(egui::Frame::NONE.inner_margin(8.0))
                     .show_inside(ui, |ui| {
                         let enabled = !self.batch_files.is_empty() && self.batch_keyfile.is_some();
 
@@ -175,7 +181,7 @@ impl EditorApp {
                     .resizable(true)
                     .default_width(half_width)
                     .width_range((half_width * 0.2)..=(half_width * 1.8))
-                    .frame(egui::Frame::NONE.inner_margin(12.0))
+                    .frame(egui::Frame::NONE.inner_margin(8.0))
                     .show_inside(ui, |ui| {
                         let available_w = ui.available_width();
                         if available_w > 200.0 {
@@ -214,9 +220,9 @@ impl EditorApp {
                             }
                         });
 
-                        ui.add_space(8.0);
+                        ui.add_space(4.0);
                         ui.separator();
-                        ui.add_space(8.0);
+                        ui.add_space(4.0);
 
                         if ui.available_width() > 320.0 {
                             ui.horizontal(|ui| {
@@ -267,7 +273,7 @@ impl EditorApp {
 
                 // === RIGHT/CENTER PANEL ===
                 egui::CentralPanel::default()
-                    .frame(egui::Frame::NONE.inner_margin(12.0))
+                    .frame(egui::Frame::NONE.inner_margin(8.0))
                     .show_inside(ui, |ui| {
                         if ui.available_width() > 320.0 {
                             ui.horizontal(|ui| {
