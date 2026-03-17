@@ -235,9 +235,16 @@ impl EditorApp {
                 egui::CentralPanel::default()
                     .frame(egui::Frame::NONE.inner_margin(8.0))
                     .show_inside(ui, |ui| {
+                        let files_count = self.batch_files.len();
+                        let heading_text = if files_count > 0 {
+                            format!("Input Files ({})", files_count)
+                        } else {
+                            "Input Files".to_string()
+                        };
+
                         if ui.available_width() > 320.0 {
                             ui.horizontal(|ui| {
-                                ui.heading("Input Files");
+                                ui.heading(&heading_text);
                                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                     if ui.button("Clean List").clicked() {
                                         self.batch_files.clear();
@@ -254,7 +261,7 @@ impl EditorApp {
                                 });
                             });
                         } else {
-                            ui.heading("Input Files");
+                            ui.heading(&heading_text);
                             ui.horizontal(|ui| {
                                 if ui.button("Add Files").clicked() {
                                     if let Some(files) = rfd::FileDialog::new().pick_files() {
