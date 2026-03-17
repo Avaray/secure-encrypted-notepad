@@ -22,6 +22,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Batch Converter Window Resizing**: Add the ability to expand the Batch Converter window to fill the entire application window (e.g., via a toggle button next to the close button).
 - [ ] **Batch Converter List Layout Fix**: Fix the file list layout to prevent long filenames from pushing the "remove" (❌) buttons off-screen. Implement text truncation with ellipsis for filenames.
 - [ ] **System File Association**: Add an option in settings to associate `.sen` files with the application. Implementation order: Windows first, followed by Linux, and lastly macOS.
+- [ ] **Theme Editor Interaction Polish**: Disable text selection for color labels in the Theme Editor to allow scrolling by clicking and dragging on the labels (consistent with background interaction).
 
 ---
 
