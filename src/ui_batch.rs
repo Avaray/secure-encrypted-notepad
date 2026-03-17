@@ -70,12 +70,24 @@ impl EditorApp {
                     .frame(egui::Frame::NONE.inner_margin(8.0))
                     .show_inside(ui, |ui| {
                         // --- Mode Selector ---
-                        ui.heading("Mode");
-                        ui.horizontal(|ui| {
-                            ui.selectable_value(&mut self.batch_mode, BatchMode::Encrypt, "🔒 Encrypt");
-                            ui.selectable_value(&mut self.batch_mode, BatchMode::Decrypt, "🔓 Decrypt");
-                            ui.selectable_value(&mut self.batch_mode, BatchMode::Rotate, "🔄 Rotate");
-                        });
+                        let available_w = ui.available_width();
+                        if available_w > 370.0 {
+                            ui.horizontal(|ui| {
+                                ui.heading("Mode");
+                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                    ui.selectable_value(&mut self.batch_mode, BatchMode::Rotate, "🔄 Rotate");
+                                    ui.selectable_value(&mut self.batch_mode, BatchMode::Decrypt, "🔓 Decrypt");
+                                    ui.selectable_value(&mut self.batch_mode, BatchMode::Encrypt, "🔒 Encrypt");
+                                });
+                            });
+                        } else {
+                            ui.heading("Mode");
+                            ui.horizontal(|ui| {
+                                ui.selectable_value(&mut self.batch_mode, BatchMode::Encrypt, "🔒 Encrypt");
+                                ui.selectable_value(&mut self.batch_mode, BatchMode::Decrypt, "🔓 Decrypt");
+                                ui.selectable_value(&mut self.batch_mode, BatchMode::Rotate, "🔄 Rotate");
+                            });
+                        }
 
                         ui.add_space(4.0);
                         ui.separator();
@@ -230,7 +242,7 @@ impl EditorApp {
                                     if ui.button("Clean List").clicked() {
                                         self.batch_files.clear();
                                     }
-                                    if ui.button("➕ Add Files...").clicked() {
+                                    if ui.button("Add Files").clicked() {
                                         if let Some(files) = rfd::FileDialog::new().pick_files() {
                                             for file in files {
                                                 if !self.batch_files.contains(&file) {
@@ -244,7 +256,7 @@ impl EditorApp {
                         } else {
                             ui.heading("Input Files");
                             ui.horizontal(|ui| {
-                                if ui.button("➕ Add Files...").clicked() {
+                                if ui.button("Add Files").clicked() {
                                     if let Some(files) = rfd::FileDialog::new().pick_files() {
                                         for file in files {
                                             if !self.batch_files.contains(&file) {
