@@ -7,20 +7,22 @@ impl EditorApp {
     pub(crate) fn render_batch_converter_window(&mut self, ctx: &egui::Context) {
         let mut open = self.show_batch_converter;
 
+        let content_rect = ctx.content_rect();
+
         egui::Window::new("Batch Converter")
-            .id(egui::Id::new("batch_converter_v4"))
+            .id(egui::Id::new("batch_converter_v6"))
             .open(&mut open)
             .resizable(true)
             .collapsible(false)
-            .default_width(900.0)
-            .default_height(800.0)
+            .default_width(content_rect.width() * 0.5)
+            .default_height(content_rect.height() * 0.5)
             .pivot(egui::Align2::CENTER_CENTER)
             .constrain_to(ctx.content_rect().shrink(16.0))
             .default_pos(ctx.content_rect().center())
             .show(ctx, |ui| {
                 // === TOP ===
                 egui::TopBottomPanel::top("batch_top_panel")
-                    .frame(egui::Frame::NONE.inner_margin(4.0))
+                    .frame(egui::Frame::NONE.inner_margin(12.0))
                     .show_inside(ui, |ui| {
                         ui.heading("Batch Encryption / Decryption");
                         ui.label("Convert multiple files at once using a keyfile.");
@@ -28,7 +30,7 @@ impl EditorApp {
 
                 // === BOTTOM ===
                 egui::TopBottomPanel::bottom("batch_bottom_panel")
-                    .frame(egui::Frame::NONE.inner_margin(4.0))
+                    .frame(egui::Frame::NONE.inner_margin(12.0))
                     .show_inside(ui, |ui| {
                         let enabled = !self.batch_files.is_empty() && self.batch_keyfile.is_some();
 
@@ -168,13 +170,36 @@ impl EditorApp {
                     });
 
                 // === LEFT PANEL ===
+                let half_width = ui.available_width() / 2.0;
                 egui::SidePanel::left("batch_left_panel")
                     .resizable(true)
-                    .default_width(450.0)
-                    .width_range(300.0..=800.0)
-                    .frame(egui::Frame::NONE.inner_margin(4.0))
+                    .default_width(half_width)
+                    .width_range((half_width * 0.2)..=(half_width * 1.8))
+                    .frame(egui::Frame::NONE.inner_margin(12.0))
                     .show_inside(ui, |ui| {
-                        ui.heading("Keyfile");
+                        let available_w = ui.available_width();
+                        if available_w > 200.0 {
+                            ui.horizontal(|ui| {
+                                ui.heading("Keyfile");
+                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                    if ui.button("Select Keyfile...").clicked() {
+                                        if let Some(path) = rfd::FileDialog::new().pick_file() {
+                                            self.batch_keyfile = Some(path);
+                                        }
+                                    }
+                                });
+                            });
+                        } else {
+                            ui.heading("Keyfile");
+                            ui.horizontal(|ui| {
+                                if ui.button("Select Keyfile...").clicked() {
+                                    if let Some(path) = rfd::FileDialog::new().pick_file() {
+                                        self.batch_keyfile = Some(path);
+                                    }
+                                }
+                            });
+                        }
+                        
                         ui.horizontal_wrapped(|ui| {
                             if let Some(path) = &self.batch_keyfile {
                                 ui.label(
@@ -188,17 +213,43 @@ impl EditorApp {
                                 );
                             }
                         });
-                        if ui.button("Select Keyfile...").clicked() {
-                            if let Some(path) = rfd::FileDialog::new().pick_file() {
-                                self.batch_keyfile = Some(path);
-                            }
-                        }
 
                         ui.add_space(8.0);
                         ui.separator();
                         ui.add_space(8.0);
 
-                        ui.heading("Output Directory");
+                        if ui.available_width() > 320.0 {
+                            ui.horizontal(|ui| {
+                                ui.heading("Output Directory");
+                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                    if self.batch_output_dir.is_some() {
+                                        if ui.button("Clear").clicked() {
+                                            self.batch_output_dir = None;
+                                        }
+                                    }
+                                    if ui.button("Select Output Directory").clicked() {
+                                        if let Some(path) = rfd::FileDialog::new().pick_folder() {
+                                            self.batch_output_dir = Some(path);
+                                        }
+                                    }
+                                });
+                            });
+                        } else {
+                            ui.heading("Output Directory");
+                            ui.horizontal(|ui| {
+                                if ui.button("Select Output Directory").clicked() {
+                                    if let Some(path) = rfd::FileDialog::new().pick_folder() {
+                                        self.batch_output_dir = Some(path);
+                                    }
+                                }
+                                if self.batch_output_dir.is_some() {
+                                    if ui.button("Clear").clicked() {
+                                        self.batch_output_dir = None;
+                                    }
+                                }
+                            });
+                        }
+                        
                         ui.horizontal_wrapped(|ui| {
                             if let Some(path) = &self.batch_output_dir {
                                 let masked = self.mask_directory_path(path);
@@ -212,41 +263,47 @@ impl EditorApp {
                                 ui.label("Same as input files (default)");
                             }
                         });
-                        ui.horizontal(|ui| {
-                            if ui.button("Select Output Dir...").clicked() {
-                                if let Some(path) = rfd::FileDialog::new().pick_folder() {
-                                    self.batch_output_dir = Some(path);
-                                }
-                            }
-
-                            if self.batch_output_dir.is_some() {
-                                if ui.button("Clear").clicked() {
-                                    self.batch_output_dir = None;
-                                }
-                            }
-                        });
                     });
 
                 // === RIGHT/CENTER PANEL ===
                 egui::CentralPanel::default()
-                    .frame(egui::Frame::NONE.inner_margin(4.0))
+                    .frame(egui::Frame::NONE.inner_margin(12.0))
                     .show_inside(ui, |ui| {
-                        ui.heading("Input Files");
-                        ui.horizontal(|ui| {
-                            if ui.button("➕ Add Files...").clicked() {
-                                if let Some(files) = rfd::FileDialog::new().pick_files() {
-                                    for file in files {
-                                        if !self.batch_files.contains(&file) {
-                                            self.batch_files.push(file);
+                        if ui.available_width() > 320.0 {
+                            ui.horizontal(|ui| {
+                                ui.heading("Input Files");
+                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                    if ui.button("Clean List").clicked() {
+                                        self.batch_files.clear();
+                                    }
+                                    if ui.button("➕ Add Files...").clicked() {
+                                        if let Some(files) = rfd::FileDialog::new().pick_files() {
+                                            for file in files {
+                                                if !self.batch_files.contains(&file) {
+                                                    self.batch_files.push(file);
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            });
+                        } else {
+                            ui.heading("Input Files");
+                            ui.horizontal(|ui| {
+                                if ui.button("➕ Add Files...").clicked() {
+                                    if let Some(files) = rfd::FileDialog::new().pick_files() {
+                                        for file in files {
+                                            if !self.batch_files.contains(&file) {
+                                                self.batch_files.push(file);
+                                            }
                                         }
                                     }
                                 }
-                            }
-
-                            if ui.button("Clean List").clicked() {
-                                self.batch_files.clear();
-                            }
-                        });
+                                if ui.button("Clean List").clicked() {
+                                    self.batch_files.clear();
+                                }
+                            });
+                        }
 
                         ui.add_space(4.0);
 
