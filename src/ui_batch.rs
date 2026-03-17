@@ -1,4 +1,4 @@
-use crate::app_state::BatchMode;
+use crate::app_state::{BatchMode, KeyStatus};
 use crate::crypto::{decrypt_file, encrypt_file};
 use crate::EditorApp;
 use eframe::egui;
@@ -7,6 +7,11 @@ use std::path::Path;
 impl EditorApp {
     pub(crate) fn render_batch_converter_window(&mut self, ctx: &egui::Context) {
         let mut open = self.show_batch_converter;
+        
+        // Refresh access status for batch files
+        if open {
+            self.refresh_batch_file_access_status();
+        }
 
         let content_rect = ctx.content_rect();
 
@@ -288,8 +293,15 @@ impl EditorApp {
                                 } else {
                                     let mut to_remove = None;
                                     for (idx, file) in self.batch_files.iter().enumerate() {
+                                        let status = self.batch_file_access_cache.get(file).cloned().unwrap_or(KeyStatus::Unknown);
+                                        let text_color = match status {
+                                            KeyStatus::Decryptable => self.current_theme.colors.success_color(),
+                                            KeyStatus::WrongKey => self.current_theme.colors.error_color(),
+                                            _ => ui.visuals().text_color(),
+                                        };
+
                                         ui.horizontal(|ui| {
-                                            ui.label(file.file_name().unwrap_or_default().to_string_lossy());
+                                            ui.label(egui::RichText::new(file.file_name().unwrap_or_default().to_string_lossy()).color(text_color));
                                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                                 if ui.button("❌").clicked() {
                                                     to_remove = Some(idx);

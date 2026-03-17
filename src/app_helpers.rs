@@ -542,9 +542,100 @@ impl EditorApp {
             // If we got results, we need a repaint to show them
             if got_any {
                 ctx.request_repaint();
-                // Optionally log some progress or remove receiver if empty and thread finished
-                // Wait, mpsc channel doesn't tell us if it's "finished" easily unless we check for hung tx.
-                // But try_recv will error on empty.
+            }
+        }
+    }
+
+    /// Refresh access status for all files in the batch list (ASYNCHRONOUS)
+    pub(crate) fn refresh_batch_file_access_status(&mut self) {
+        // 1. Update/validate current batch key hash
+        let mut new_hash = None;
+        if let Some(kp) = &self.batch_keyfile {
+            if let Ok(hash) = crate::crypto::get_keyfile_hash(kp) {
+                new_hash = Some(hash);
+            }
+        }
+
+        let key_changed = new_hash != self.batch_current_key_hash;
+        if key_changed {
+            self.batch_current_key_hash = new_hash;
+            self.batch_file_access_cache.clear();
+        }
+
+        let key_hash = match self.batch_current_key_hash {
+            Some(h) => h,
+            None => {
+                self.batch_file_access_cache.clear();
+                return;
+            }
+        };
+
+        // 2. Prevent spawning multiple threads if one is already active
+        if self.batch_access_check_receiver.is_some() {
+            return;
+        }
+
+        // 3. Identify files that need checking
+        let mut paths_to_check = Vec::new();
+        for path in &self.batch_files {
+            if !self.batch_file_access_cache.contains_key(path) {
+                // Efficiency: Only background check .sen files
+                if path.extension().and_then(|s| s.to_str()) == Some("sen") {
+                    paths_to_check.push(path.clone());
+                } else {
+                    // Mark others as NotSen immediately (synchronously)
+                    self.batch_file_access_cache.insert(path.clone(), KeyStatus::NotSen);
+                }
+            }
+        }
+
+        if paths_to_check.is_empty() {
+            return;
+        }
+
+        // 4. Spawn background checking thread
+        let (tx, rx) = std::sync::mpsc::channel();
+        self.batch_access_check_receiver = Some(rx);
+
+        std::thread::spawn(move || {
+            for path in paths_to_check {
+                let status = match crate::crypto::check_key_compatibility(&key_hash, &path) {
+                    Ok(true) => KeyStatus::Decryptable,
+                    Ok(false) => KeyStatus::WrongKey,
+                    Err(e) => match e {
+                        crate::crypto::CryptoError::InvalidMagicNumber => KeyStatus::NotSen,
+                        _ => KeyStatus::WrongKey,
+                    },
+                };
+                let _ = tx.send((path, status));
+            }
+        });
+    }
+
+    /// Process results from background batch access checks (call every frame)
+    pub(crate) fn process_batch_access_check_results(&mut self, ctx: &egui::Context) {
+        if let Some(rx) = &self.batch_access_check_receiver {
+            let mut got_any = false;
+            let mut finished = false;
+            
+            // Try to receive results
+            while let Ok((path, status)) = rx.try_recv() {
+                self.batch_file_access_cache.insert(path, status);
+                got_any = true;
+            }
+
+            // Check if the sender has been dropped (thread finished)
+            // Note: try_recv returning Err(Disconnected) means finished
+            if let Err(std::sync::mpsc::TryRecvError::Disconnected) = rx.try_recv() {
+                finished = true;
+            }
+
+            if finished {
+                self.batch_access_check_receiver = None;
+            }
+
+            if got_any {
+                ctx.request_repaint();
             }
         }
     }
