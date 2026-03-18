@@ -1128,8 +1128,11 @@ let _ = self.settings.save();
                                         )
                                     };
                                     
+                                    let btn_font = egui::TextStyle::Button.resolve(ui.style());
+                                    let truncated_name = self.smart_truncate_text(ui, &display_name, btn_font, ui.available_width() - 4.0);
+                                    
                                     if ui
-                                        .add(egui::Button::new(&display_name).truncate())
+                                        .add(egui::Button::new(truncated_name))
                                         .clicked()
                                     {
                                         if is_parent {
@@ -1175,18 +1178,23 @@ let _ = self.settings.save();
                                             let mut job = egui::text::LayoutJob::default();
                                             let font_id = egui::TextStyle::Button.resolve(ui.style());
                                             
+                                            // Measure space taken by dot prefix
+                                            let prefix = "  ";
+                                            let prefix_w = ui.painter().layout_no_wrap(prefix.to_string(), font_id.clone(), egui::Color32::BLACK).rect.width();
+                                            let truncated_name = self.smart_truncate_text(ui, &display_name, font_id.clone(), ui.available_width() - prefix_w - 4.0);
+
                                             // Add 2 spaces to make room for the dot at the beginning
-                                            job.append("  ", 0.0, egui::text::TextFormat {
+                                            job.append(prefix, 0.0, egui::text::TextFormat {
                                                 font_id: font_id.clone(),
                                                 ..Default::default()
                                             });
-                                            job.append(&display_name, 0.0, egui::text::TextFormat {
+                                            job.append(&truncated_name, 0.0, egui::text::TextFormat {
                                                 color: ui.visuals().text_color(),
                                                 font_id,
                                                 ..Default::default()
                                             });
 
-                                            let button_resp = ui.add(egui::Button::new(job).truncate());
+                                            let button_resp = ui.add(egui::Button::new(job));
                                             
                                             // Draw the dot manually on top of the button's rectangle
                                             let dot_radius = 4.0;
@@ -1217,7 +1225,9 @@ let _ = self.settings.save();
                                                     ui.add(egui::Image::new(&self.icons.key).tint(icon_color).max_width(icon_size));
                                                 });
                                             });
-                                            if ui.add(egui::Button::new(&display_name).truncate()).clicked() {
+                                            let btn_font = egui::TextStyle::Button.resolve(ui.style());
+                                            let truncated_name = self.smart_truncate_text(ui, &display_name, btn_font, ui.available_width() - 20.0); // account for icon
+                                            if ui.add(egui::Button::new(truncated_name)).clicked() {
                                                 self.open_file(path.clone());
                                             }
                                         }
@@ -1233,7 +1243,9 @@ let _ = self.settings.save();
                                         } else {
                                             display_name = format!("📄 {}", display_name);
                                         }
-                                        if ui.add(egui::Button::new(&display_name).truncate()).clicked() {
+                                            let btn_font = egui::TextStyle::Button.resolve(ui.style());
+                                            let truncated_name = self.smart_truncate_text(ui, &display_name, btn_font, ui.available_width() - 4.0);
+                                            if ui.add(egui::Button::new(truncated_name)).clicked() {
                                             self.open_file(path.clone());
                                         }
                                     }

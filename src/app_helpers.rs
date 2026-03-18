@@ -421,7 +421,7 @@ impl EditorApp {
         for entry_res in read_dir {
             if let Ok(entry) = entry_res {
                 let path = entry.path();
-                if path.is_dir() && self.settings.show_subfolders {
+                if path.is_dir() {
                     child_folders.push(path);
                 } else if path.is_file() {
                     if let Some(ext) = path.extension() {
@@ -853,5 +853,48 @@ impl EditorApp {
             }
             self.log_info("Zen Mode disabled");
         }
+    }
+    /// Truncate text to fit width, eating any trailing dots before the ellipsis
+    pub(crate) fn smart_truncate_text(&self, ui: &egui::Ui, text: &str, font_id: egui::FontId, max_width: f32) -> String {
+        // Measure the full text to see if we need truncation
+        let galley = ui.painter().layout_no_wrap(text.to_string(), font_id.clone(), egui::Color32::BLACK);
+        if galley.rect.width() <= max_width {
+            return text.to_string();
+        }
+
+        let ellipsis = "...";
+        let ellipsis_galley = ui.painter().layout_no_wrap(ellipsis.to_string(), font_id.clone(), egui::Color32::BLACK);
+        let ellipsis_width = ellipsis_galley.rect.width();
+
+        let target_width = max_width - ellipsis_width;
+        if target_width <= 0.0 {
+            return ellipsis.to_string();
+        }
+
+        // Binary search for the best truncation point
+        let chars: Vec<char> = text.chars().collect();
+        let mut lo = 0;
+        let mut hi = chars.len();
+        let mut best_count = 0;
+
+        while lo <= hi {
+            let mid = (lo + hi) / 2;
+            let sub: String = chars[..mid].iter().collect();
+            let w = ui.painter().layout_no_wrap(sub, font_id.clone(), egui::Color32::BLACK).rect.width();
+            if w <= target_width {
+                best_count = mid;
+                lo = mid + 1;
+            } else {
+                hi = mid - 1;
+            }
+        }
+
+        let mut result: String = chars[..best_count].iter().collect();
+        // Eat the trailing dot(s) and spaces to avoid "...." or ". ..." look
+        while result.ends_with('.') || result.ends_with(' ') {
+            result.pop();
+        }
+
+        format!("{}{}", result, ellipsis)
     }
 }
