@@ -60,8 +60,11 @@ There are two ways to build a release binary:
 
 - `src/`: All Rust source code.
     - `crypto.rs`: Core logic for .sen file encryption (XChaCha20).
-    - `config_crypto.rs`: Encryption for sensitive paths in settings.
-    - `ui_*.rs`: GUI modules built with `egui`.
+    - `history.rs`: Management of document history and JSON metadata.
+    - `config_crypto.rs`: Encryption for sensitive paths in settings (AES-256).
+    - `app_actions.rs`: Implementation of application-level commands (Open, Save, etc.).
+    - `app_helpers.rs`: UI helpers, logging, and asynchronous background tasks.
+    - `ui_*.rs`: GUI panels and components built with `egui`.
 - `assets/`: Icons and static resources.
 - `docs/`: Technical documentation and research notes.
 

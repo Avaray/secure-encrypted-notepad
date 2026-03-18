@@ -2,6 +2,7 @@ use crate::app_state::{KeyStatus, LogLevel};
 use crate::history::HistoryEntry;
 use crate::EditorApp;
 use eframe::egui;
+use std::path::{Path, PathBuf};
 impl EditorApp {
     /// Render settings panel
     pub(crate) fn render_settings_panel(&mut self, ui: &mut egui::Ui) {
@@ -1051,8 +1052,23 @@ let _ = self.settings.save();
                         }
                         
                         let mut row_infos = Vec::new();
+                        let mut dir_stack: Vec<(PathBuf, usize)> = Vec::new();
 
                         for (_i, entry) in entries.iter().enumerate() {
+                            // Detect end of directories before processing the next entry
+                            while let Some((dir_path, _depth)) = dir_stack.last() {
+                                if !entry.path.starts_with(dir_path) {
+                                    let (finished_dir, finished_depth) = dir_stack.pop().unwrap();
+                                    self.render_scanning_spinner_if_needed(ui, &finished_dir, finished_depth, tree_on, tree_indent);
+                                } else {
+                                    break;
+                                }
+                            }
+
+                            if entry.is_dir {
+                                dir_stack.push((entry.path.clone(), entry.depth));
+                            }
+
                             let path = &entry.path;
                             let filename = path.file_name().unwrap_or_default().to_string_lossy();
 
@@ -1203,12 +1219,11 @@ let _ = self.settings.save();
                                     }
                                 }
                             });
-
                             if tree_on {
                                 let bottom_y = ui.cursor().top();
                                 let actual_bottom_y = bottom_y - ui.spacing().item_spacing.y;
                                 row_infos.push(RowData {
-                                    depth,
+                                    depth: entry.depth,
                                     is_dir: entry.is_dir,
                                     bottom_y: actual_bottom_y,
                                     mid_y: (top_y + actual_bottom_y) / 2.0,
@@ -1216,11 +1231,17 @@ let _ = self.settings.save();
                             }
                         }
 
+                        // Close remaining directories after the loop
+                        while let Some((dir_path, depth)) = dir_stack.pop() {
+                            self.render_scanning_spinner_if_needed(ui, &dir_path, depth, tree_on, tree_indent);
+                        }
+
                         // Pass 2: Draw the tree geometry based on layout positions
                         if tree_on && !row_infos.is_empty() {
                             let painter = ui.painter();
                             
                             for i in 0..row_infos.len() {
+
                                 let row = &row_infos[i];
                                 
                                 // Draw horizontal branch
@@ -1802,5 +1823,26 @@ let _ = self.settings.save();
                 }
             }
         }
+    }
+
+    fn render_scanning_spinner_if_needed(&self, ui: &mut egui::Ui, dir_path: &Path, depth: usize, tree_on: bool, tree_indent: f32) {
+        if self.is_directory_scanning(dir_path) {
+            ui.horizontal(|ui| {
+                if tree_on {
+                    ui.add_space((depth + 1) as f32 * tree_indent);
+                } else {
+                    ui.add_space(32.0); // Simple view doesn't use tree_indent
+                }
+                ui.add(egui::Spinner::new().size(12.0));
+                ui.label(egui::RichText::new("verifying...").italics().size(10.0).weak());
+            });
+        }
+    }
+
+    fn is_directory_scanning(&self, dir_path: &Path) -> bool {
+        if self.pending_access_checks.is_empty() {
+            return false;
+        }
+        self.pending_access_checks.iter().any(|p| p.starts_with(dir_path))
     }
 }

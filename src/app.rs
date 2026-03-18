@@ -25,6 +25,9 @@ pub struct EditorApp {
     /// Receiver for background file access checks
     pub(crate) access_check_receiver: Option<std::sync::mpsc::Receiver<(PathBuf, KeyStatus)>>,
 
+    /// Set of files currently being checked for access in the background
+    pub(crate) pending_access_checks: std::collections::HashSet<std::path::PathBuf>,
+
     /// Path to currently open file
     pub(crate) current_file_path: Option<PathBuf>,
 
@@ -232,6 +235,7 @@ impl EditorApp {
             current_key_hash: None,
             file_access_cache: HashMap::new(),
             access_check_receiver: None,
+            pending_access_checks: std::collections::HashSet::new(),
             current_file_path: None,
             status_message: status,
             settings: settings.clone(),

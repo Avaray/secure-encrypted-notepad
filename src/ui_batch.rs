@@ -38,7 +38,7 @@ impl EditorApp {
                     ui.label("(Encrypt, decrypt, or rotate keyfiles)");
                     
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button("✕").on_hover_text("Close and return to editor").clicked() {
+                        if ui.button("Exit Batch Converter").on_hover_text("Close and return to editor").clicked() {
                             self.show_batch_converter = false;
                         }
                     });
@@ -93,7 +93,32 @@ impl EditorApp {
 
                         ui.add_enabled_ui(enabled || is_running, |ui| {
                             let btn_size = egui::vec2(ui.available_width(), 32.0);
-                            if ui.add_sized(btn_size, egui::Button::new(format!("{} {}", icon, label))).clicked() && !is_running {
+                            
+                            // Use a customized button content if running
+                            let button_response = if is_running {
+                                ui.add_sized(btn_size, egui::Button::new(""))
+                            } else {
+                                ui.add_sized(btn_size, egui::Button::new(format!("{} {}", icon, label)))
+                            };
+
+                            if is_running {
+                                // Overlay spinner and text on the button
+                                let rect = button_response.rect;
+                                ui.scope_builder(egui::UiBuilder::new().max_rect(rect), |ui| {
+                                    // Manually center by calculating space needed
+                                    // Rough estimate of content width: spinner(16) + spacing(8) + text
+                                    let content_width = 16.0 + 8.0 + (label.len() as f32 * 7.0); // Estimate ~7px per char
+                                    let padding = (rect.width() - content_width) / 2.0;
+
+                                    ui.horizontal(|ui| {
+                                        ui.add_space(padding.max(0.0));
+                                        ui.add(egui::Spinner::new().size(16.0));
+                                        ui.label(egui::RichText::new(label).strong());
+                                    });
+                                });
+                            }
+
+                            if button_response.clicked() && !is_running {
                                 self.execute_batch_action();
                             }
                         });
@@ -533,7 +558,11 @@ impl EditorApp {
 
                 match decrypt_bytes(&keyfile, file) {
                     Ok(buffer) => {
-                        match std::fs::write(&output_path, buffer) {
+                        let content_str = String::from_utf8_lossy(&buffer);
+                        let doc = crate::history::DocumentWithHistory::from_file_content(&content_str);
+                        let final_content = doc.current_content;
+
+                        match std::fs::write(&output_path, final_content) {
                             Ok(_) => {
                                 success += 1;
                                 let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Success, format!("[Decrypt] Success: {}", file.file_name().unwrap_or_default().to_string_lossy())));

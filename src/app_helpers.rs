@@ -476,6 +476,7 @@ impl EditorApp {
         if key_changed {
             self.current_key_hash = new_hash;
             self.file_access_cache.clear();
+            self.pending_access_checks.clear();
             self.log_info("Keyfile changed, clearing access cache");
         }
 
@@ -492,8 +493,9 @@ impl EditorApp {
         for entry in &self.file_tree_entries {
             if !entry.is_dir {
                 if entry.path.extension().and_then(|s| s.to_str()) == Some("sen") {
-                    if !self.file_access_cache.contains_key(&entry.path) {
+                    if !self.file_access_cache.contains_key(&entry.path) && !self.pending_access_checks.contains(&entry.path) {
                         paths_to_check.push(entry.path.clone());
+                        self.pending_access_checks.insert(entry.path.clone());
                     }
                 }
             }
@@ -535,7 +537,8 @@ impl EditorApp {
             let mut got_any = false;
             // Drain as many results as possible in one frame (non-blocking)
             while let Ok((path, status)) = rx.try_recv() {
-                self.file_access_cache.insert(path, status);
+                self.file_access_cache.insert(path.clone(), status);
+                self.pending_access_checks.remove(&path);
                 got_any = true;
             }
 
