@@ -24,12 +24,8 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 
 **none**
 
-### 🔄 Batch Converter Improvements
+## 🔄 Batch Converter Improvements
 - [ ] **Layout Refinement**: Change the batch converter layout, specifically the top info section and close button. Move the main action button to the bottom of the left column.
 - [ ] **Toolbar Button Integration**: Move the batch converter toolbar button and ensure it highlights when active (like other panels).
-- [ ] **Quick Key Import**: Add a button to import the currently loaded application key into the batch converter's key fields. Only show this when a key is loaded in the main editor.
-- [ ] **Extension Persistence**: Save and restore the last used file extension in the application settings.
-
----
-
-*Last Updated: 2026-03-18*
+- [x] **Quick Key Import**: Add a button to import the currently loaded application key into the batch converter's key fields. Only show this when a key is loaded in the main editor.
+- [x] **Extension Persistence**: Save and restore the last used file extension in the application settings.
