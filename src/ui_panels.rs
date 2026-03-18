@@ -251,6 +251,14 @@ if ui
 {
 let _ = self.settings.save();
 }
+if ui
+.checkbox(&mut self.settings.hide_undecryptable_files, "Hide undecryptable files")
+.on_hover_text("Hide .sen files that cannot be opened with the currently loaded keyfile.")
+.changed()
+{
+let _ = self.settings.save();
+self.refresh_file_tree();
+}
 
 if ui
 .checkbox(&mut self.settings.hide_filename_in_title, "Hide filename in Window Title")
@@ -260,7 +268,7 @@ if ui
 let _ = self.settings.save();
 }
 if ui
-.checkbox(&mut self.settings.tree_style_file_tree, "Use Tree View (expandable)")
+.checkbox(&mut self.settings.tree_style_file_tree, "Use Expandable Tree View")
 .on_hover_text("Display folders hierarchically and toggle expansion on click")
 .changed()
 {
@@ -1045,9 +1053,23 @@ let _ = self.settings.save();
                         let mut row_infos = Vec::new();
 
                         for (_i, entry) in entries.iter().enumerate() {
-                            let top_y = ui.cursor().top();
                             let path = &entry.path;
                             let filename = path.file_name().unwrap_or_default().to_string_lossy();
+
+                            // Hide undecryptable files check
+                            if !entry.is_dir && filename.ends_with(".sen") {
+                                let status = self
+                                    .file_access_cache
+                                    .get(path)
+                                    .cloned()
+                                    .unwrap_or(KeyStatus::Unknown);
+
+                                if self.settings.hide_undecryptable_files && status != KeyStatus::Decryptable {
+                                    continue;
+                                }
+                            }
+
+                            let top_y = ui.cursor().top();
                             let depth = entry.depth;
 
                             ui.horizontal(|ui| {
