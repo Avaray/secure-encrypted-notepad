@@ -17,7 +17,7 @@ impl Default for ColorScheme {
 }
 
 /// Color scheme definition
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ThemeColors {
     pub background: [u8; 3],
     pub foreground: [u8; 3],
@@ -219,7 +219,7 @@ impl ThemeColors {
 }
 
 /// Complete theme definition
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Theme {
     pub name: String,
     pub colors: ThemeColors,

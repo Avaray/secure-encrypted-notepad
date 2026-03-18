@@ -1295,14 +1295,23 @@ let _ = self.settings.save();
                     if ui.button("💾 Save Theme").clicked() {
                         theme_to_save = Some(theme.clone());
                     }
-                    let is_builtin = theme.name == "Dark" || theme.name == "Light";
-                    let reset_text = if is_builtin {
-                        format!("↺ Reset to Default ({:?})", theme.color_scheme)
-                    } else {
-                        "↺ Reset to Saved".to_string()
-                    };
-                    if ui.button(reset_text).clicked() {
-                        should_reset = true;
+                    let mut modified = true;
+                    if let Some(original) = &self.original_editing_theme {
+                        if theme == original {
+                            modified = false;
+                        }
+                    }
+
+                    if modified {
+                        let is_builtin = theme.name == "Dark" || theme.name == "Light";
+                        let reset_text = if is_builtin {
+                            "↺ Reset to Default".to_string()
+                        } else {
+                            "↺ Reset to Saved".to_string()
+                        };
+                        if ui.button(reset_text).clicked() {
+                            should_reset = true;
+                        }
                     }
                 });
             }
@@ -1325,6 +1334,7 @@ let _ = self.settings.save();
                                 .clicked()
                             {
                                 self.editing_theme = Some(theme.clone());
+                                self.original_editing_theme = Some(theme.clone());
                                 self.current_theme = theme.clone();
                                 self.settings.theme_name = theme.name.clone();
                                 self.show_delete_theme_confirmation = false; // Reset confirmation on theme change
@@ -1336,7 +1346,8 @@ let _ = self.settings.save();
                 if ui.button("➕ New").clicked() {
                     let mut new_theme = self.current_theme.clone();
                     new_theme.name = format!("{} (Copy)", new_theme.name);
-                    self.editing_theme = Some(new_theme);
+                    self.editing_theme = Some(new_theme.clone());
+                    self.original_editing_theme = Some(new_theme);
                     self.show_delete_theme_confirmation = false; // Reset confirmation
                 }
                 // Delete button with confirmation
@@ -1815,6 +1826,7 @@ let _ = self.settings.save();
             match crate::theme::save_theme(&theme) {
                 Ok(_) => {
                     self.current_theme = theme.clone();
+                    self.original_editing_theme = Some(theme.clone());
                     self.settings.theme_name = theme.name.clone();
                     let _ = self.settings.save();
                     self.themes = crate::theme::load_themes();

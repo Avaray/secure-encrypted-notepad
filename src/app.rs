@@ -78,6 +78,8 @@ pub struct EditorApp {
 
     /// Theme being edited
     pub(crate) editing_theme: Option<Theme>,
+    /// Original theme state before editing started (used for reset check)
+    pub(crate) original_editing_theme: Option<Theme>,
 
     /// Currently highlighted line (1-indexed)
     pub(crate) highlighted_line: Option<usize>,
@@ -272,6 +274,11 @@ impl EditorApp {
                 false
             },
             editing_theme: if restore_all && settings.show_theme_editor {
+                Some(current_theme.clone())
+            } else {
+                None
+            },
+            original_editing_theme: if restore_all && settings.show_theme_editor {
                 Some(current_theme.clone())
             } else {
                 None
