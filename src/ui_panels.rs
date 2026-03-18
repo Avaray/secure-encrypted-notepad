@@ -1290,6 +1290,25 @@ let _ = self.settings.save();
             if !self.settings.hide_panel_headers {
                 ui.heading("Theme Editor");
             }
+            if let Some(theme) = &mut self.editing_theme {
+                ui.horizontal_wrapped(|ui| {
+                    if ui.button("💾 Save Theme").clicked() {
+                        theme_to_save = Some(theme.clone());
+                    }
+                    let is_builtin = theme.name == "Dark" || theme.name == "Light";
+                    let reset_text = if is_builtin {
+                        format!("↺ Reset to Default ({:?})", theme.color_scheme)
+                    } else {
+                        "↺ Reset to Saved".to_string()
+                    };
+                    if ui.button(reset_text).clicked() {
+                        should_reset = true;
+                    }
+                });
+            }
+
+            ui.separator();
+
             // Top bar: Theme selector and actions
             ui.horizontal(|ui| {
                 let current_name = self
@@ -1757,21 +1776,6 @@ let _ = self.settings.save();
                     theme.apply(ui.ctx());
                     self.current_theme = theme.clone();
                 }
-                ui.separator();
-                ui.horizontal_wrapped(|ui| {
-                    if ui.button("💾 Save Theme").clicked() {
-                        theme_to_save = Some(theme.clone());
-                    }
-                    let is_builtin = theme.name == "Dark" || theme.name == "Light";
-                    let reset_text = if is_builtin {
-                        format!("↺ Reset to Default ({:?})", theme.color_scheme)
-                    } else {
-                        "↺ Reset to Saved".to_string()
-                    };
-                    if ui.button(reset_text).clicked() {
-                        should_reset = true;
-                    }
-                });
             } else {
                 ui.label("No theme being edited");
             }
