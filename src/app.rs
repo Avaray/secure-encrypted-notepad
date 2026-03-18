@@ -955,14 +955,13 @@ impl eframe::App for EditorApp {
                     .min_height(24.0)
                     .show(ctx, |ui| {
                         ui.horizontal(|ui| {
+                            let fg_color = self.current_theme.colors.to_egui_color32(self.current_theme.colors.foreground);
+                            
                             ui.label(
                                 egui::RichText::new(&self.status_message)
-                                    .color(self.current_theme.colors.to_egui_color32(self.current_theme.colors.foreground))
+                                    .color(fg_color)
                             );
     
-                            if self.is_modified {
-                                ui.label(egui::RichText::new(" *").color(egui::Color32::YELLOW));
-                            }
                             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                 // Version info
                                 let version = format!("SEN {}", env!("CARGO_PKG_VERSION"));
@@ -1002,16 +1001,23 @@ impl eframe::App for EditorApp {
                                 ui.separator();
     
                                 // File indicator
+                                let fg_color = self.current_theme.colors.to_egui_color32(self.current_theme.colors.foreground);
+                                
                                 if let Some(path) = &self.current_file_path {
                                     ui.label(
                                         egui::RichText::new(path.file_name().unwrap_or_default().to_string_lossy())
-                                            .color(self.current_theme.colors.to_egui_color32(self.current_theme.colors.foreground))
+                                            .color(fg_color)
                                     );
                                 } else {
                                     ui.label(
                                         egui::RichText::new("Unsaved document")
-                                            .color(self.current_theme.colors.to_egui_color32(self.current_theme.colors.foreground))
+                                            .color(fg_color)
                                     );
+                                }
+
+                                if self.is_modified {
+                                    ui.add_space(4.0);
+                                    ui.label(egui::RichText::new("*").color(fg_color));
                                 }
                             });
                         });
