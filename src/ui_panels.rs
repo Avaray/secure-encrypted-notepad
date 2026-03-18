@@ -282,6 +282,7 @@ if ui
 {
 let _ = self.settings.save();
 self.refresh_file_tree();
+self.setup_watcher();
 }
 ui.add_space(8.0);
 ui.separator();

@@ -245,17 +245,17 @@ impl EditorApp {
     /// Setup file system watcher for the current directory
     pub(crate) fn setup_watcher(&mut self) {
         use notify::{RecursiveMode, Watcher};
-
+ 
         // Stop previous watcher if any
         self.watcher = None;
-
+ 
         let Some(dir) = &self.file_tree_dir else {
             return;
         };
-
+ 
         let (tx, rx) = std::sync::mpsc::channel();
         self.watcher_receiver = Some(rx);
-
+ 
         let mut watcher = match notify::recommended_watcher(move |res| {
             let _ = tx.send(res);
         }) {
@@ -265,12 +265,18 @@ impl EditorApp {
                 return;
             }
         };
-
-        if let Err(e) = watcher.watch(dir, RecursiveMode::NonRecursive) {
+ 
+        let mode = if self.settings.tree_style_file_tree {
+            RecursiveMode::Recursive
+        } else {
+            RecursiveMode::NonRecursive
+        };
+ 
+        if let Err(e) = watcher.watch(dir, mode) {
             self.log_error(format!("Failed to watch directory: {}", e));
             return;
         }
-
+ 
         self.watcher = Some(watcher);
     }
 
