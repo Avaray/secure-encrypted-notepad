@@ -419,11 +419,11 @@ impl EditorApp {
             match std::fs::write(&path, &content) {
                 Ok(_) => {
                     self.status_message = format!(
-                        "OK: Exported as plaintext: {}",
+                        "Exported as plaintext: {}",
                         self.mask_directory_path(&path)
                     );
                     self.log_info(format!(
-                        "OK: Exported {} bytes to {}",
+                        "Exported {} bytes to {}",
                         content.len(),
                         self.mask_directory_path(&path)
                     ));

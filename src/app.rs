@@ -201,6 +201,8 @@ pub struct EditorApp {
     pub(crate) zen_mode_applied: bool,
     /// Confirmation for theme deletion
     pub(crate) show_delete_theme_confirmation: bool,
+    /// Time when the application started (used for stable animations)
+    pub(crate) start_time: Instant,
 }
 
 impl EditorApp {
@@ -357,6 +359,7 @@ impl EditorApp {
             watcher_receiver: None,
             #[cfg(target_os = "windows")]
             cached_hwnd: None,
+            start_time: Instant::now(),
         }
     }
 
@@ -544,6 +547,11 @@ impl eframe::App for EditorApp {
             self.perform_autosave(true);
         }
         self.focused = is_focused;
+        
+        // Ensure smooth pulsing when locked
+        if self.keyfile_path.is_none() {
+            ctx.request_repaint();
+        }
 
         // Apply Zen mode fullscreen state on first frame if enabled from settings
         if !self.zen_mode_applied {
@@ -910,9 +918,11 @@ impl eframe::App for EditorApp {
                     .min_height(24.0)
                     .show(ctx, |ui| {
                         ui.horizontal(|ui| {
-                        ui.label(&self.status_message);
-                        // Version removed from batch mode status bar as requested
-                    });
+                            ui.label(
+                                egui::RichText::new(&self.status_message)
+                                    .color(self.current_theme.colors.to_egui_color32(self.current_theme.colors.foreground))
+                            );
+                        });
                 });
             }
 
@@ -945,54 +955,67 @@ impl eframe::App for EditorApp {
                     .min_height(24.0)
                     .show(ctx, |ui| {
                         ui.horizontal(|ui| {
-                        ui.label(&self.status_message);
-
-                        if self.is_modified {
-                            ui.label(egui::RichText::new(" *").color(egui::Color32::YELLOW));
-                        }
-
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            // Version info
-                            let version = format!("SEN {}", env!("CARGO_PKG_VERSION"));
-                            ui.add(
-                                egui::Label::new(
-                                    egui::RichText::new(version)
-                                        .color(self.current_theme.colors.info_color()),
-                                )
-                                .selectable(false),
+                            ui.label(
+                                egui::RichText::new(&self.status_message)
+                                    .color(self.current_theme.colors.to_egui_color32(self.current_theme.colors.foreground))
                             );
-
-                            ui.separator();
-
-                            // Keyfile indicator
-                            if let Some(path) = &self.keyfile_path {
-                                let icon_tint = self.current_theme.colors.success_color();
-                                let status_text = self.mask_keyfile_path(path);
-                                ui.add(
-                                    egui::Label::new(egui::RichText::new(status_text).color(icon_tint))
-                                        .selectable(false),
-                                );
-                            } else {
-                                let icon_tint = self.current_theme.colors.warning_color();
+    
+                            if self.is_modified {
+                                ui.label(egui::RichText::new(" *").color(egui::Color32::YELLOW));
+                            }
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                // Version info
+                                let version = format!("SEN {}", env!("CARGO_PKG_VERSION"));
                                 ui.add(
                                     egui::Label::new(
-                                        egui::RichText::new("No keyfile").color(icon_tint),
+                                        egui::RichText::new(version)
+                                            .color(self.current_theme.colors.info_color()),
                                     )
                                     .selectable(false),
                                 );
-                            }
-
-                            ui.separator();
-
-                            // File indicator
-                            if let Some(path) = &self.current_file_path {
-                                ui.label(path.file_name().unwrap_or_default().to_string_lossy());
-                            } else {
-                                ui.label("Unsaved document");
-                            }
+    
+                                ui.separator();
+    
+                                // Keyfile indicator
+                                if let Some(path) = &self.keyfile_path {
+                                    let icon_tint = self.current_theme.colors.success_color();
+                                    let status_text = self.mask_keyfile_path(path);
+                                    ui.add(
+                                        egui::Label::new(egui::RichText::new(status_text).color(icon_tint))
+                                            .selectable(false),
+                                    );
+                                } else {
+                                    let icon_tint = self.current_theme.colors.warning_color();
+                                     let pulse_alpha = if self.keyfile_path.is_none() {
+                                         (0.1 + 0.9 * (self.start_time.elapsed().as_secs_f32() * 3.0).cos().abs()) as f32
+                                     } else {
+                                         1.0
+                                     };
+                                     ui.add(
+                                         egui::Label::new(
+                                             egui::RichText::new("No keyfile").color(icon_tint.gamma_multiply(pulse_alpha)),
+                                         )
+                                         .selectable(false),
+                                     );
+                                }
+    
+                                ui.separator();
+    
+                                // File indicator
+                                if let Some(path) = &self.current_file_path {
+                                    ui.label(
+                                        egui::RichText::new(path.file_name().unwrap_or_default().to_string_lossy())
+                                            .color(self.current_theme.colors.to_egui_color32(self.current_theme.colors.foreground))
+                                    );
+                                } else {
+                                    ui.label(
+                                        egui::RichText::new("Unsaved document")
+                                            .color(self.current_theme.colors.to_egui_color32(self.current_theme.colors.foreground))
+                                    );
+                                }
+                            });
                         });
                     });
-                });
             }
 
             // File tree (left)

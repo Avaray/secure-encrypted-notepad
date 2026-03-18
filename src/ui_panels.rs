@@ -1194,7 +1194,12 @@ let _ = self.settings.save();
                                                 button_resp.rect.left() + 14.0,
                                                 button_resp.rect.center().y
                                             );
-                                            ui.painter().circle_filled(dot_center, dot_radius, color);
+                                            let pulse_alpha = if self.keyfile_path.is_none() {
+                                                (0.1 + 0.9 * (self.start_time.elapsed().as_secs_f32() * 3.0).cos().abs()) as f32
+                                            } else {
+                                                1.0
+                                            };
+                                            ui.painter().circle_filled(dot_center, dot_radius, color.gamma_multiply(pulse_alpha));
 
                                             if button_resp.clicked() {
                                                 self.open_file(path.clone());
@@ -1941,7 +1946,7 @@ let _ = self.settings.save();
                     self.settings.theme_name = theme.name.clone();
                     let _ = self.settings.save();
                     self.themes = crate::theme::load_themes();
-                    self.status_message = format!("OK: Theme saved: {}", theme.name);
+                    self.status_message = format!("Theme saved: {}", theme.name);
                     self.log_info(format!("Theme saved successfully: {}", theme.name));
                 }
                 Err(e) => {

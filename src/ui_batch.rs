@@ -82,7 +82,7 @@ impl EditorApp {
                                 BatchMode::Decrypt => "Decrypting",
                                 BatchMode::Rotate => "Rotating",
                             };
-                            (format!("{} {}/{} (OK: {}, ERR: {})", verb, self.batch_progress_count, self.batch_total_count, self.batch_success_count, self.batch_failed_count), mode_icon)
+                            (format!("{} {}/{}", verb, self.batch_progress_count, self.batch_total_count), mode_icon)
                         } else {
                             match self.batch_mode {
                                 BatchMode::Encrypt => ("Encrypt All".to_string(), "🔒"),
