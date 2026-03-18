@@ -389,6 +389,7 @@ impl EditorApp {
                                         let text_color = match status {
                                             KeyStatus::Decryptable => self.current_theme.colors.success_color(),
                                             KeyStatus::WrongKey => self.current_theme.colors.error_color(),
+                                            KeyStatus::Unknown => self.current_theme.colors.warning_color(),
                                             _ => ui.visuals().text_color(),
                                         };
 
