@@ -36,7 +36,7 @@ impl EditorApp {
                 ui.horizontal(|ui| {
                     ui.add(egui::Image::new(&self.icons.batch_convert).max_width(24.0));
                     ui.add_space(4.0);
-                    ui.heading("Batch File Converter");
+                    ui.heading("Batch Converter");
                     ui.add_space(8.0);
                     ui.label(egui::RichText::new("Encrypt, decrypt, or rotate multiple files").weak());
                     
