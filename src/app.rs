@@ -834,6 +834,7 @@ impl eframe::App for EditorApp {
         let mut left_panel_frame = content_frame.clone();
         // File tree still wants a little left padding for icons
         left_panel_frame.inner_margin.left = 8;
+        left_panel_frame.inner_margin.right = 0;
 
         let mut right_panel_frame = content_frame.clone();
         if self.settings.toolbar_position != crate::settings::ToolbarPosition::Right {

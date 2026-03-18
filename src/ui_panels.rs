@@ -1020,7 +1020,9 @@ let _ = self.settings.save();
     }
     /// Render file tree panel
     pub(crate) fn render_file_tree(&mut self, ui: &mut egui::Ui) {
+        ui.spacing_mut().item_spacing.x = 0.0;
         ui.vertical(|ui| {
+            ui.set_min_width(ui.available_width());
             if !self.settings.hide_panel_headers {
                 ui.heading("Files");
             }
@@ -1030,7 +1032,7 @@ let _ = self.settings.save();
                     egui::Frame::NONE
                         .inner_margin(egui::Margin {
                             left: 4,
-                            right: 16,
+                            right: 0,
                             top: 0,
                             bottom: 0,
                         })
