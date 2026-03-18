@@ -1434,8 +1434,10 @@ let _ = self.settings.save();
                                 bottom: 0,
                             })
                             .show(ui, |ui| {
-                                ui.heading("Colors");
-                        ui.add_space(4.0);
+                                if !self.settings.hide_panel_headers {
+                                    ui.heading("Colors");
+                                    ui.add_space(4.0);
+                                }
                         egui::Grid::new("all_theme_colors_grid")
                             .num_columns(2)
                             .spacing([20.0, 4.0])
