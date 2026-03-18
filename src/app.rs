@@ -80,6 +80,14 @@ pub struct EditorApp {
     pub(crate) editing_theme: Option<Theme>,
     /// Original theme state before editing started (used for reset check)
     pub(crate) original_editing_theme: Option<Theme>,
+    /// Copied color in Theme Editor
+    pub(crate) copied_color: Option<[u8; 3]>,
+    /// Last copied color ID for animation
+    pub(crate) last_copied_id: Option<egui::Id>,
+    /// Time when the last color was copied
+    pub(crate) last_copied_time: f64,
+
+
 
     /// Currently highlighted line (1-indexed)
     pub(crate) highlighted_line: Option<usize>,
@@ -283,6 +291,11 @@ impl EditorApp {
             } else {
                 None
             },
+            copied_color: None,
+            last_copied_id: None,
+            last_copied_time: 0.0,
+
+
             highlighted_line: None,
             show_goto_line: false,
             goto_line_input: String::new(),
@@ -1007,6 +1020,8 @@ impl eframe::App for EditorApp {
                     .frame(right_panel_frame.clone())
                     .resizable(true)
                     .default_width(self.settings.theme_editor_width)
+                    .min_width(100.0)
+                    .max_width(450.0)
                     .show(ctx, |ui| {
                         self.render_theme_editor_panel(ui);
                     });
