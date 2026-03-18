@@ -1411,8 +1411,7 @@ let _ = self.settings.save();
                 ui.separator();
                 egui::ScrollArea::vertical()
                     .auto_shrink([false, false])
-                    .max_height(ui.available_height() - 80.0)
-                                        .show(ui, |ui| {
+                    .show(ui, |ui| {
                         egui::Frame::NONE
                             .inner_margin(egui::Margin {
                                 left: 4,
