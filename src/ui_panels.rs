@@ -269,6 +269,13 @@ if ui
 let _ = self.settings.save();
 }
 if ui
+.checkbox(&mut self.settings.capitalize_tree_names, "Capitalize names")
+.on_hover_text("Always display file and folder names in UPPERCASE in the file tree.")
+.changed()
+{
+let _ = self.settings.save();
+}
+if ui
 .checkbox(&mut self.settings.tree_style_file_tree, "Use Expandable Tree View")
 .on_hover_text("Display folders hierarchically and toggle expansion on click")
 .changed()
@@ -1070,10 +1077,15 @@ let _ = self.settings.save();
                             }
 
                             let path = &entry.path;
-                            let filename = path.file_name().unwrap_or_default().to_string_lossy();
+                            let raw_filename = path.file_name().unwrap_or_default().to_string_lossy();
+                            let filename = if self.settings.capitalize_tree_names {
+                                raw_filename.to_uppercase()
+                            } else {
+                                raw_filename.to_string()
+                            };
 
                             // Hide undecryptable files check
-                            if !entry.is_dir && filename.ends_with(".sen") {
+                            if !entry.is_dir && raw_filename.to_lowercase().ends_with(".sen") {
                                 let status = self
                                     .file_access_cache
                                     .get(path)
@@ -1142,7 +1154,7 @@ let _ = self.settings.save();
                                         filename.to_string()
                                     };
 
-                                    if filename.ends_with(".sen") {
+                                    if raw_filename.to_lowercase().ends_with(".sen") {
                                         let status = self
                                             .file_access_cache
                                             .get(path)

@@ -168,6 +168,9 @@ pub struct Settings {
     /// Hide files that cannot be decrypted with current keyfile
     #[serde(default)]
     pub hide_undecryptable_files: bool,
+    /// Capitalize names in the file tree
+    #[serde(default)]
+    pub capitalize_tree_names: bool,
     /// Hide filename in window title/taskbar
     #[serde(default)]
     pub hide_filename_in_title: bool,
@@ -318,6 +321,7 @@ impl Default for Settings {
             show_subfolders: true,
             hide_sen_extension: false,
             hide_undecryptable_files: false,
+            capitalize_tree_names: false,
             hide_filename_in_title: false,
             hide_panel_headers: false,
             zen_mode: false,
