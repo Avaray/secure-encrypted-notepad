@@ -670,13 +670,13 @@ impl EditorApp {
                         self.batch_is_running = false;
                         finished = true;
                         
-                        let total = self.batch_total_count;
+
                         let mode_name = match self.batch_mode {
                             crate::app_state::BatchMode::Encrypt => "Encrypt",
                             crate::app_state::BatchMode::Decrypt => "Decrypt",
                             crate::app_state::BatchMode::Rotate => "Rotate",
                         };
-                        self.status_message = format!("Batch {}: {}/{} succeeded, {} failed", mode_name, success, total, failed);
+                        self.status_message = format!("Batch {}: {} succeeded, {} failed", mode_name, success, failed);
                     }
                 }
             }
