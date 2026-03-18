@@ -29,3 +29,16 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 *Items in this section represent confirmed issues or glitches that need to be addressed.*
 
 - [x] **Batch Converter Decryption Logic**: Fix the `decrypt` mode. Currently, it decrypts the entire file, but it should only extract and decrypt the most recent history entry.
+
+### 🔄 Batch Converter Improvements
+- [ ] **Layout Refinement**: Change the batch converter layout, specifically the top info section and close button. Move the main action button to the bottom of the left column.
+- [ ] **Toolbar Button Integration**: Move the batch converter toolbar button and ensure it highlights when active (like other panels).
+- [ ] **Status Bar Cleanup**: Remove the SEN version string from the batch converter's bottom status bar.
+- [ ] **Quick Key Import**: Add a button to import the currently loaded application key into the batch converter's key fields. Only show this when a key is loaded in the main editor.
+- [ ] **Vertical Centering Fix**: Adjust the Spinner size or positioning in the action button to ensure text is perfectly centered vertically.
+- [ ] **Extension Persistence**: Save and restore the last used file extension in the application settings.
+- [ ] **Documentation Deep Audit**: Perform a comprehensive documentation audit using a high-level thinking model.
+
+---
+
+*Last Updated: 2026-03-18*
