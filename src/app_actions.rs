@@ -42,6 +42,7 @@ impl EditorApp {
         self.current_file_path = None;
         self.is_modified = false;
         self.loaded_history_index = None;
+        self.show_autosave_restore = false;
         self.status_message = "New document created".to_string();
         self.log_info("New document created");
     }
@@ -79,13 +80,9 @@ impl EditorApp {
                 self.current_file_path = Some(path.clone());
                 self.is_modified = false;
                 self.loaded_history_index = None;
+                self.show_autosave_restore = self.document.autosave.is_some();
 
                 let history_count = self.document.get_visible_history().len();
-
-                // Check for internal auto-save slot
-                if self.document.autosave.is_some() {
-                    self.show_autosave_restore = true;
-                }
 
                 let masked_path = self.mask_directory_path(&path);
                 
