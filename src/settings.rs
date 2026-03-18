@@ -220,6 +220,10 @@ pub struct Settings {
     #[serde(default = "default_true")]
     pub cursor_blink: bool,
 
+    /// Last used batch converter output extension
+    #[serde(default)]
+    pub batch_last_extension: String,
+
     /// Volatile flag to indicate if this is the first run (no config file existed)
     #[serde(skip)]
     pub is_first_run: bool,
@@ -332,6 +336,7 @@ impl Default for Settings {
             toolbar_position: ToolbarPosition::Top,
             cursor_shape: crate::settings::CursorShape::Bar,
             cursor_blink: true,
+            batch_last_extension: String::new(),
             is_first_run: false,
         }
     }

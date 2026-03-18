@@ -310,7 +310,7 @@ impl EditorApp {
             batch_total_count: 0,
             batch_success_count: 0,
             batch_failed_count: 0,
-            batch_output_extension: String::new(),
+            batch_output_extension: settings.batch_last_extension.clone(),
             batch_progress_receiver: None,
             first_frame: true,
             start_maximized: settings.start_maximized,

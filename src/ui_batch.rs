@@ -175,6 +175,11 @@ impl EditorApp {
                                             self.batch_keyfile = Some(path);
                                         }
                                     }
+                                    if let Some(path) = &self.keyfile_path {
+                                        if ui.button("Load from Editor").on_hover_text("Use currently loaded key from the main app").clicked() {
+                                            self.batch_keyfile = Some(path.clone());
+                                        }
+                                    }
                                 });
                             });
                         } else {
@@ -183,6 +188,11 @@ impl EditorApp {
                                 if ui.button("Select keyfile").clicked() {
                                     if let Some(path) = rfd::FileDialog::new().pick_file() {
                                         self.batch_keyfile = Some(path);
+                                    }
+                                }
+                                if let Some(path) = &self.keyfile_path {
+                                    if ui.button("Load from Editor").on_hover_text("Use currently loaded key from the main app").clicked() {
+                                        self.batch_keyfile = Some(path.clone());
                                     }
                                 }
                             });
@@ -307,7 +317,9 @@ impl EditorApp {
                                 ui.add_space(8.0);
                                 let mut ext = self.batch_output_extension.clone();
                                 if ui.add(egui::TextEdit::singleline(&mut ext).hint_text("no extension")).changed() {
-                                    self.batch_output_extension = ext.trim_start_matches('.').to_string();
+                                    let new_ext = ext.trim_start_matches('.').to_string();
+                                    self.batch_output_extension = new_ext.clone();
+                                    self.settings.batch_last_extension = new_ext;
                                 }
                             });
                         }
