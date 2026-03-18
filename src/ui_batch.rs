@@ -106,13 +106,13 @@ impl EditorApp {
                                 let rect = button_response.rect;
                                 ui.scope_builder(egui::UiBuilder::new().max_rect(rect), |ui| {
                                     // Manually center by calculating space needed
-                                    // Rough estimate of content width: spinner(16) + spacing(8) + text
-                                    let content_width = 16.0 + 8.0 + (label.len() as f32 * 7.0); // Estimate ~7px per char
+                                    // Rough estimate of content width: spinner(12) + spacing(8) + text
+                                    let content_width = 12.0 + 8.0 + (label.len() as f32 * 7.0); // Estimate ~7px per char
                                     let padding = (rect.width() - content_width) / 2.0;
 
                                     ui.horizontal(|ui| {
                                         ui.add_space(padding.max(0.0));
-                                        ui.add(egui::Spinner::new().size(16.0));
+                                        ui.add(egui::Spinner::new().size(12.0));
                                         ui.label(egui::RichText::new(label).strong());
                                     });
                                 });

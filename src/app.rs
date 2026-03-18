@@ -890,10 +890,7 @@ impl eframe::App for EditorApp {
                     .show(ctx, |ui| {
                         ui.horizontal(|ui| {
                         ui.label(&self.status_message);
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            let version = format!("SEN {}", env!("CARGO_PKG_VERSION"));
-                            ui.label(version);
-                        });
+                        // Version removed from batch mode status bar as requested
                     });
                 });
             }
