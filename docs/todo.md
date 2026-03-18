@@ -22,6 +22,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **File Tree Real-time Monitoring**: Implement a file system watcher (e.g., using the `notify` crate, which is already in dependencies) for the file tree panel. This should automatically update the list of files when they are added, removed, or renamed in the currently open directory. Note: In "expandable" mode, this requires recursive watching of multiple directories simultaneously.
 - [ ] **File Tree Status Indicator Alignment**: Refine the position of the color dot (access indicator) in the file tree (expandable mode). Add a small left margin and reduce the right margin to better align it with the filename. Consider replacing the dot with a high-quality SVG icon in the future.
 - [ ] **Documentation Audit**: Verify the correctness and completeness of the instructions in `docs/development.md` and `docs/encryption_architecture.md`.
+- [ ] **Hide Undecryptable Files Toggle**: Add a toggle in the File Tree settings to show only files that can be decrypted with the currently loaded keyfile. Since file access is already checked in the background, this should be straightforward. Ensure the file tree is refreshed automatically whenever the keyfile changes.
 
 ---
 
