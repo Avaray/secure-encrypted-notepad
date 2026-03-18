@@ -34,11 +34,14 @@ impl EditorApp {
             }))
             .show_inside(ui, |ui| {
                 ui.horizontal(|ui| {
+                    ui.add(egui::Image::new(&self.icons.batch_convert).max_width(24.0));
+                    ui.add_space(4.0);
                     ui.heading("Batch File Converter");
-                    ui.label("(Encrypt, decrypt, or rotate keyfiles)");
+                    ui.add_space(8.0);
+                    ui.label(egui::RichText::new("Encrypt, decrypt, or rotate multiple files").weak());
                     
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button("Exit Batch Converter").on_hover_text("Close and return to editor").clicked() {
+                        if ui.button("❌").on_hover_text("Close and return to editor").clicked() {
                             self.show_batch_converter = false;
                         }
                     });
@@ -48,81 +51,7 @@ impl EditorApp {
         // Horizontal separator after header
         ui.separator();
 
-                // === TOP / MODE INFO ===
-                egui::TopBottomPanel::top("batch_top_info_panel")
-                    .resizable(false)
-                    .frame(egui::Frame::NONE.inner_margin(8.0))
-                    .show_inside(ui, |ui| {
-                        ui.label("Batch process multiple files at once. All operations are local and secure.");
-                    });
 
-                // === BOTTOM ===
-                egui::TopBottomPanel::bottom("batch_bottom_panel")
-                    .resizable(false)
-                    .frame(egui::Frame::NONE.inner_margin(8.0))
-                    .show_inside(ui, |ui| {
-                        let is_running = self.batch_is_running;
-                        let has_files = !self.batch_files.is_empty();
-                        let has_keyfile = self.batch_keyfile.is_some();
-                        let has_new_keyfile = self.batch_keyfile_new.is_some();
-
-                        let enabled = !is_running && match self.batch_mode {
-                            BatchMode::Encrypt | BatchMode::Decrypt => has_files && has_keyfile,
-                            BatchMode::Rotate => has_files && has_keyfile && has_new_keyfile,
-                        };
-
-                        let (label, icon) = if is_running {
-                            let mode_icon = match self.batch_mode {
-                                BatchMode::Encrypt => "🔒",
-                                BatchMode::Decrypt => "🔓",
-                                BatchMode::Rotate => "🔄",
-                            };
-                            let verb = match self.batch_mode {
-                                BatchMode::Encrypt => "Encrypting",
-                                BatchMode::Decrypt => "Decrypting",
-                                BatchMode::Rotate => "Rotating",
-                            };
-                            (format!("{} {}/{}", verb, self.batch_progress_count, self.batch_total_count), mode_icon)
-                        } else {
-                            match self.batch_mode {
-                                BatchMode::Encrypt => ("Encrypt All".to_string(), "🔒"),
-                                BatchMode::Decrypt => ("Decrypt All".to_string(), "🔓"),
-                                BatchMode::Rotate => ("Rotate All".to_string(), "🔄"),
-                            }
-                        };
-
-                        ui.add_enabled_ui(enabled || is_running, |ui| {
-                            let btn_size = egui::vec2(ui.available_width(), 32.0);
-                            
-                            // Use a customized button content if running
-                            let button_response = if is_running {
-                                ui.add_sized(btn_size, egui::Button::new(""))
-                            } else {
-                                ui.add_sized(btn_size, egui::Button::new(format!("{} {}", icon, label)))
-                            };
-
-                            if is_running {
-                                // Overlay spinner and text on the button
-                                let rect = button_response.rect;
-                                ui.scope_builder(egui::UiBuilder::new().max_rect(rect), |ui| {
-                                    // Manually center by calculating space needed
-                                    // Rough estimate of content width: spinner(12) + spacing(8) + text
-                                    let content_width = 12.0 + 8.0 + (label.len() as f32 * 7.0); // Estimate ~7px per char
-                                    let padding = (rect.width() - content_width) / 2.0;
-
-                                    ui.horizontal(|ui| {
-                                        ui.add_space(padding.max(0.0));
-                                        ui.add(egui::Spinner::new().size(12.0));
-                                        ui.label(egui::RichText::new(label).strong());
-                                    });
-                                });
-                            }
-
-                            if button_response.clicked() && !is_running {
-                                self.execute_batch_action();
-                            }
-                        });
-                    });
 
                 // === LEFT PANEL ===
                 let initial_width = ui.available_width() / 3.0;
@@ -323,6 +252,70 @@ impl EditorApp {
                                 }
                             });
                         }
+
+                        // --- Main Action Button ---
+                        ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
+                            ui.add_space(8.0);
+                            let is_running = self.batch_is_running;
+                            let has_files = !self.batch_files.is_empty();
+                            let has_keyfile = self.batch_keyfile.is_some();
+                            let has_new_keyfile = self.batch_keyfile_new.is_some();
+
+                            let enabled = !is_running && match self.batch_mode {
+                                BatchMode::Encrypt | BatchMode::Decrypt => has_files && has_keyfile,
+                                BatchMode::Rotate => has_files && has_keyfile && has_new_keyfile,
+                            };
+
+                            let (label, icon) = if is_running {
+                                let mode_icon = match self.batch_mode {
+                                    BatchMode::Encrypt => "🔒",
+                                    BatchMode::Decrypt => "🔓",
+                                    BatchMode::Rotate => "🔄",
+                                };
+                                let verb = match self.batch_mode {
+                                    BatchMode::Encrypt => "Encrypting",
+                                    BatchMode::Decrypt => "Decrypting",
+                                    BatchMode::Rotate => "Rotating",
+                                };
+                                (format!("{} {}/{}", verb, self.batch_progress_count, self.batch_total_count), mode_icon)
+                            } else {
+                                match self.batch_mode {
+                                    BatchMode::Encrypt => ("Encrypt All".to_string(), "🔒"),
+                                    BatchMode::Decrypt => ("Decrypt All".to_string(), "🔓"),
+                                    BatchMode::Rotate => ("Rotate All".to_string(), "🔄"),
+                                }
+                            };
+
+                            ui.add_enabled_ui(enabled || is_running, |ui| {
+                                let btn_size = egui::vec2(ui.available_width(), 36.0);
+                                
+                                // Use a customized button content if running
+                                let button_response = if is_running {
+                                    ui.add_sized(btn_size, egui::Button::new(""))
+                                } else {
+                                    ui.add_sized(btn_size, egui::Button::new(format!("{} {}", icon, label)))
+                                };
+
+                                if is_running {
+                                    // Overlay spinner and text on the button
+                                    let rect = button_response.rect;
+                                    ui.scope_builder(egui::UiBuilder::new().max_rect(rect), |ui| {
+                                        let content_width = 12.0 + 8.0 + (label.len() as f32 * 7.0); 
+                                        let padding = (rect.width() - content_width) / 2.0;
+
+                                        ui.horizontal(|ui| {
+                                            ui.add_space(padding.max(0.0));
+                                            ui.add(egui::Spinner::new().size(12.0));
+                                            ui.label(egui::RichText::new(label).strong());
+                                        });
+                                    });
+                                }
+
+                                if button_response.clicked() && !is_running {
+                                    self.execute_batch_action();
+                                }
+                            });
+                        });
                     });
 
                 // === RIGHT/CENTER PANEL ===
