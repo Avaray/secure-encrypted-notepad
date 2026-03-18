@@ -51,7 +51,7 @@ ui.add_space(8.0);
 // =========================================================================
 // 1. SECURITY
 // =========================================================================
-ui.heading("Security");
+ui.add(egui::Label::new(egui::RichText::new("Security").heading()).selectable(false));
 ui.horizontal(|ui| {
 if ui.button("Set Global Keyfile").clicked() {
 if let Some(path) = rfd::FileDialog::new().pick_file() {
@@ -77,7 +77,7 @@ self.log_info("Global keyfile set");
                     self.show_clear_keyfile_confirmation = true;
                 }
             } else {
-                ui.label(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color()));
+                ui.add(egui::Label::new(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color())).selectable(false));
                 if ui.button("Yes").clicked() {
                     self.settings.global_keyfile_path = None;
                     self.settings.keyfile_path_encrypted = None;
@@ -93,15 +93,15 @@ self.log_info("Global keyfile set");
         }
 });
 ui.horizontal(|ui| {
-ui.label("Current:");
+                ui.add(egui::Label::new("Current:").selectable(false));
 if let Some(path) = &self.settings.global_keyfile_path {
 if self.settings.show_keyfile_paths {
-ui.label(egui::RichText::new(path.to_string_lossy()).color(self.current_theme.colors.warning_color()));
+ui.add(egui::Label::new(egui::RichText::new(path.to_string_lossy()).color(self.current_theme.colors.warning_color())).selectable(false));
 } else {
-ui.label(egui::RichText::new("Secured").color(self.current_theme.colors.success_color()));
+ui.add(egui::Label::new(egui::RichText::new("Secured").color(self.current_theme.colors.success_color())).selectable(false));
 }
 } else {
-    ui.label(egui::RichText::new("None").color(self.current_theme.colors.info_color()));
+    ui.add(egui::Label::new(egui::RichText::new("None").color(self.current_theme.colors.info_color())).selectable(false));
 }
 });
 if ui
@@ -125,7 +125,7 @@ let _ = self.settings.save();
 }
 
 ui.add_space(8.0);
-ui.label(egui::RichText::new("Auto-Backup").strong());
+ui.add(egui::Label::new(egui::RichText::new("Auto-Backup").strong()).selectable(false));
 if ui.checkbox(&mut self.settings.auto_backup_enabled, "Enable Auto-Backup on Save")
     .on_hover_text("Automatically saves an encrypted copy to the backup directory on every successful save.")
     .changed() {
@@ -146,7 +146,7 @@ ui.horizontal(|ui| {
                 self.show_clear_backup_dir_confirmation = true;
             }
         } else {
-            ui.label(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color()));
+            ui.add(egui::Label::new(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color())).selectable(false));
             if ui.button("Yes").clicked() {
                 self.settings.auto_backup_dir = None;
                 self.settings.auto_backup_dir_encrypted = None;
@@ -161,15 +161,15 @@ ui.horizontal(|ui| {
     }
 });
 ui.horizontal(|ui| {
-    ui.label("Current:");
+    ui.add(egui::Label::new("Current:").selectable(false));
     if let Some(path) = &self.settings.auto_backup_dir {
         if self.settings.show_directory_paths {
-            ui.label(egui::RichText::new(path.to_string_lossy()).color(self.current_theme.colors.warning_color()));
+            ui.add(egui::Label::new(egui::RichText::new(path.to_string_lossy()).color(self.current_theme.colors.warning_color())).selectable(false));
         } else {
-            ui.label(egui::RichText::new("Secured").color(self.current_theme.colors.success_color()));
+            ui.add(egui::Label::new(egui::RichText::new("Secured").color(self.current_theme.colors.success_color())).selectable(false));
         }
     } else {
-        ui.label(egui::RichText::new("None").color(self.current_theme.colors.info_color()));
+        ui.add(egui::Label::new(egui::RichText::new("None").color(self.current_theme.colors.info_color())).selectable(false));
     }
 });
 
@@ -190,22 +190,22 @@ ui.add_space(8.0);
 // =========================================================================
 // 2. WORKSPACE / FILE TREE
 // =========================================================================
-ui.heading("Workspace / File Tree");
+ui.add(egui::Label::new(egui::RichText::new("Workspace / File Tree").heading()).selectable(false));
 // Starting directory setting
 ui.add_space(4.0);
 ui.horizontal_wrapped(|ui| {
-ui.label("Starting directory:");
+ui.add(egui::Label::new("Starting directory:").selectable(false));
 if let Some(ref dir) = self.settings.file_tree_starting_dir {
 if self.settings.show_directory_paths {
-ui.label(
+ui.add(egui::Label::new(
 egui::RichText::new(dir.display().to_string())
-.color(self.current_theme.colors.warning_color()),
-);
+.color(self.current_theme.colors.warning_color())
+).selectable(false));
 } else {
-ui.label(egui::RichText::new("Secured").color(self.current_theme.colors.success_color()));
+ui.add(egui::Label::new(egui::RichText::new("Secured").color(self.current_theme.colors.success_color())).selectable(false));
 }
 } else {
-ui.label(egui::RichText::new("Not set").color(self.current_theme.colors.info_color()));
+ui.add(egui::Label::new(egui::RichText::new("Not set").color(self.current_theme.colors.info_color())).selectable(false));
 }
 });
 ui.horizontal(|ui| {
@@ -224,7 +224,7 @@ self.log_info("Starting directory set");
                         self.show_clear_workspace_confirmation = true;
                     }
                 } else {
-                    ui.label(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color()));
+                    ui.add(egui::Label::new(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color())).selectable(false));
                     if ui.button("Yes").clicked() {
                         self.settings.file_tree_starting_dir = None;
                         self.settings.file_tree_dir_encrypted = None;
@@ -273,7 +273,7 @@ ui.add_space(8.0);
 // =========================================================================
 // 3. EDITOR
 // =========================================================================
-ui.heading("Editor");
+ui.add(egui::Label::new(egui::RichText::new("Editor").heading()).selectable(false));
 if ui
 .checkbox(&mut self.settings.show_line_numbers, "Show line numbers")
 .changed()
@@ -289,7 +289,7 @@ let _ = self.settings.save();
 }
 // Cursor settings
 ui.horizontal(|ui| {
-ui.label("Cursor Shape:");
+ui.add(egui::Label::new("Cursor Shape:").selectable(false));
 egui::ComboBox::from_id_salt("cursor_shape_combo")
 .selected_text(format!("{:?}", self.settings.cursor_shape))
 .show_ui(ui, |ui| {
@@ -315,7 +315,7 @@ if ui.checkbox(&mut self.settings.word_wrap, "Word wrap").changed() {
 let _ = self.settings.save();
 }
 ui.horizontal(|ui| {
-ui.label("Tab Size:");
+ui.add(egui::Label::new("Tab Size:").selectable(false));
                 if ui
                     .add(
                         egui::DragValue::new(&mut self.settings.tab_size)
@@ -335,7 +335,7 @@ let _ = self.settings.save();
 }
 
 ui.horizontal(|ui| {
-    ui.label("Comment Prefix:");
+    ui.add(egui::Label::new("Comment Prefix:").selectable(false));
     let mut changed = false;
     let original_inactive_stroke = ui.visuals().widgets.inactive.bg_stroke;
     ui.visuals_mut().widgets.inactive.bg_stroke = ui.visuals().widgets.hovered.bg_stroke;
@@ -368,7 +368,7 @@ ui.horizontal(|ui| {
 });
 // Max lines
 ui.horizontal(|ui| {
-ui.label("Max Lines Limit:");
+ui.add(egui::Label::new("Max Lines Limit:").selectable(false));
 let mut limit_val = self.settings.max_lines;
 if ui
 .add(
@@ -383,14 +383,14 @@ self.settings.max_lines = limit_val;
 let _ = self.settings.save();
 }
 if self.settings.max_lines == 0 {
-ui.label(egui::RichText::new("(No limit)").italics().weak());
+ui.add(egui::Label::new(egui::RichText::new("(No limit)").italics().weak()).selectable(false));
 }
 })
 .response
 .on_hover_text("Maximum number of lines allowed in the editor. Set to 0 to disable the limit.");
 // History capacity
 ui.horizontal(|ui| {
-ui.label("Default history limit:");
+ui.add(egui::Label::new("Default history limit:").selectable(false));
 if ui
 .add(
                         egui::DragValue::new(&mut self.settings.max_history_length)
@@ -409,12 +409,12 @@ ui.add_space(8.0);
 // =========================================================================
 // 4. RELIABILITY
 // =========================================================================
-ui.heading("Reliability");
+ui.add(egui::Label::new(egui::RichText::new("Reliability").heading()).selectable(false));
 ui.vertical(|ui| {
 ui.set_min_width(ui.available_width());
 ui.group(|ui| {
 ui.set_min_width(ui.available_width());
-ui.label("Auto Save");
+ui.add(egui::Label::new("Auto Save").selectable(false));
 if ui
 .checkbox(&mut self.settings.auto_save_on_focus_loss, "Auto-save on focus loss")
 .on_hover_text("Automatically saves inside the .sen file when application loses focus.")
@@ -430,7 +430,7 @@ let _ = self.settings.save();
 let _ = self.settings.save();
 }
                 ui.horizontal(|ui| {
-                    ui.label("Inactivity (seconds):");
+                    ui.add(egui::Label::new("Inactivity (seconds):").selectable(false));
                     if ui
                         .add(
                             egui::DragValue::new(&mut self.settings.auto_save_debounce_secs)
@@ -451,10 +451,10 @@ ui.add_space(8.0);
 // =========================================================================
 // 5. APPEARANCE
 // =========================================================================
-ui.heading("Appearance");
+ui.add(egui::Label::new(egui::RichText::new("Appearance").heading()).selectable(false));
 // Theme selection
 ui.horizontal(|ui| {
-ui.label("Theme:");
+ui.add(egui::Label::new("Theme:").selectable(false));
 egui::ComboBox::from_id_salt("theme_selector")
 .selected_text(&self.current_theme.name)
 .show_ui(ui, |ui| {
@@ -482,7 +482,7 @@ self.log_info("Themes refreshed");
 ui.separator();
 // UI font family with keyboard navigation
 ui.horizontal(|ui| {
-ui.label("UI Font:");
+ui.add(egui::Label::new("UI Font:").selectable(false));
 let _response = egui::ComboBox::from_id_salt("ui_font_selector")
 .selected_text(&self.available_fonts[self.ui_font_index])
 .show_ui(ui, |ui| {
@@ -539,7 +539,7 @@ self.settings.ui_font_family
 });
 // UI font size
 ui.horizontal(|ui| {
-ui.label("UI Font Size:");
+ui.add(egui::Label::new("UI Font Size:").selectable(false));
 if ui
 .add(
 egui::DragValue::new(&mut self.settings.ui_font_size)
@@ -556,7 +556,7 @@ self.style_dirty = true;
 ui.separator();
 // Editor font family
 ui.horizontal(|ui| {
-ui.label("Editor Font:");
+ui.add(egui::Label::new("Editor Font:").selectable(false));
 let _response = egui::ComboBox::from_id_salt("editor_font_selector")
 .selected_text(&self.available_fonts[self.editor_font_index])
 .show_ui(ui, |ui| {
@@ -613,7 +613,7 @@ self.settings.editor_font_family
 });
 // Editor font size
 ui.horizontal(|ui| {
-ui.label("Editor Font Size:");
+ui.add(egui::Label::new("Editor Font Size:").selectable(false));
 if ui
 .add(
 egui::DragValue::new(&mut self.settings.editor_font_size)
@@ -629,7 +629,7 @@ self.style_dirty = true;
 });
 // Line height multiplier
 ui.horizontal(|ui| {
-ui.label("Line Height:");
+ui.add(egui::Label::new("Line Height:").selectable(false));
 if ui
 .add(
 egui::Slider::new(&mut self.settings.line_height, 1.0..=2.5)
@@ -645,7 +645,7 @@ let _ = self.settings.save();
 });
 // Toolbar icon size
 ui.horizontal(|ui| {
-ui.label("Toolbar Icon Size:");
+ui.add(egui::Label::new("Toolbar Icon Size:").selectable(false));
 if ui
 .add(
 egui::DragValue::new(&mut self.settings.toolbar_icon_size)
@@ -659,7 +659,7 @@ let _ = self.settings.save();
 }
 });
 ui.horizontal(|ui| {
-ui.label("Toolbar Position:");
+ui.add(egui::Label::new("Toolbar Position:").selectable(false));
 let mut changed = false;
 changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Top, "Top").changed();
 changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Left, "Left").changed();
@@ -717,7 +717,7 @@ let _ = self.settings.save();
                 ui.heading("History");
             }
             ui.horizontal(|ui| {
-                ui.label("Max History for this file:");
+                ui.add(egui::Label::new("Max History for this file:").selectable(false));
                 let mut temp_limit = doc_max_limit;
                 if ui
                     .add(
@@ -739,21 +739,21 @@ let _ = self.settings.save();
                 ui.visuals().widgets.noninteractive.fg_stroke.color // Default weak color
             };
             
-            ui.label(
+            ui.add(egui::Label::new(
                 egui::RichText::new(format!(
                     "Current: {}/{} entries",
                     history_len, doc_max_limit
                 ))
                 .color(history_status_color),
-            );
+            ).selectable(false));
 
             if history_len > doc_max_limit {
                 let to_delete = history_len - doc_max_limit;
-                ui.label(
+                ui.add(egui::Label::new(
                     egui::RichText::new(format!("{} entries will be deleted upon save", to_delete))
                         .color(self.current_theme.colors.warning_color())
                         .small(),
-                );
+                ).selectable(false));
             }
 
             let history_area_id = ui.id().with("history_focus_area");
@@ -791,7 +791,7 @@ let _ = self.settings.save();
 
                 ui.horizontal(|ui| {
                     if self.show_clear_history_confirmation {
-                        ui.label(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color()));
+                        ui.add(egui::Label::new(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color())).selectable(false));
                         if ui.button("Yes").clicked() {
                             self.clear_all_history();
                             self.loaded_history_index = None;
@@ -853,7 +853,7 @@ let _ = self.settings.save();
                                 })
                                 .show(ui, |ui| {
                                     if history_len == 0 {
-                                ui.label("No history");
+                                ui.add(egui::Label::new("No history").selectable(false));
                             } else {
                                 let to_delete_count = if history_len > doc_max_limit {
                                     history_len - doc_max_limit
@@ -996,7 +996,7 @@ let _ = self.settings.save();
                         }
                     }
                     if visible_count == 0 && !self.debug_log.is_empty() {
-                        ui.label(egui::RichText::new("All entries filtered out.").italics().weak());
+                        ui.add(egui::Label::new(egui::RichText::new("All entries filtered out.").italics().weak()).selectable(false));
                     }
                 });
                 });
@@ -1122,8 +1122,8 @@ let _ = self.settings.save();
                                             let mut job = egui::text::LayoutJob::default();
                                             let font_id = egui::TextStyle::Button.resolve(ui.style());
                                             
-                                            // Add 3 spaces to make room for the dot at the beginning
-                                            job.append("   ", 0.0, egui::text::TextFormat {
+                                            // Add 2 spaces to make room for the dot at the beginning
+                                            job.append("  ", 0.0, egui::text::TextFormat {
                                                 font_id: font_id.clone(),
                                                 ..Default::default()
                                             });
@@ -1138,7 +1138,7 @@ let _ = self.settings.save();
                                             // Draw the dot manually on top of the button's rectangle
                                             let dot_radius = 4.0;
                                             let dot_center = egui::pos2(
-                                                button_resp.rect.left() + 10.0,
+                                                button_resp.rect.left() + 14.0,
                                                 button_resp.rect.center().y
                                             );
                                             ui.painter().circle_filled(dot_center, dot_radius, color);
@@ -1356,7 +1356,7 @@ let _ = self.settings.save();
                             .striped(false)
                             .show(ui, |ui| {
                                 // Background
-                                ui.label("Background:");
+                                ui.add(egui::Label::new("Background:").selectable(false));
                                 if ui
                                     .color_edit_button_srgb(&mut theme.colors.background)
                                     .changed()
@@ -1365,7 +1365,7 @@ let _ = self.settings.save();
                                 }
                                 ui.end_row();
                                 // Foreground
-                                ui.label("Foreground:");
+                                ui.add(egui::Label::new("Foreground:").selectable(false));
                                 if ui
                                     .color_edit_button_srgb(&mut theme.colors.foreground)
                                     .changed()
@@ -1374,7 +1374,7 @@ let _ = self.settings.save();
                                 }
                                 ui.end_row();
                                 // Editor Foreground
-                                ui.label("Editor Foreground:");
+                                ui.add(egui::Label::new("Editor Foreground:").selectable(false));
                                 ui.horizontal(|ui| {
                                     let mut editor_fg = theme
                                         .colors
@@ -1400,7 +1400,7 @@ let _ = self.settings.save();
                                 });
                                 ui.end_row();
                                 // Panel Background
-                                ui.label("Panel Background:");
+                                ui.add(egui::Label::new("Panel Background:").selectable(false));
                                 if ui
                                     .color_edit_button_srgb(&mut theme.colors.panel_background)
                                     .changed()
@@ -1409,7 +1409,7 @@ let _ = self.settings.save();
                                 }
                                 ui.end_row();
                                 // Surface
-                                ui.label("Surface:");
+                                ui.add(egui::Label::new("Surface:").selectable(false));
                                 ui.horizontal(|ui| {
                                     let mut surf = theme
                                         .colors
@@ -1432,7 +1432,7 @@ let _ = self.settings.save();
                                 });
                                 ui.end_row();
                                 // Surface Highlight
-                                ui.label("Surface Highlight:");
+                                ui.add(egui::Label::new("Surface Highlight:").selectable(false));
                                 ui.horizontal(|ui| {
                                     let mut surf_h =
                                         theme.colors.surface_highlight.unwrap_or_else(|| {
@@ -1461,7 +1461,7 @@ let _ = self.settings.save();
                                 ui.label("");
                                 ui.end_row();
                                 // Selection Background
-                                ui.label("Selection Background:");
+                                ui.add(egui::Label::new("Selection Background:").selectable(false));
                                 if ui
                                     .color_edit_button_srgb(&mut theme.colors.selection_background)
                                     .changed()
@@ -1470,7 +1470,7 @@ let _ = self.settings.save();
                                 }
                                 ui.end_row();
                                 // Cursor
-                                ui.label("Cursor Color:");
+                                ui.add(egui::Label::new("Cursor Color:").selectable(false));
                                 if ui
                                     .color_edit_button_srgb(&mut theme.colors.cursor)
                                     .changed()
@@ -1479,7 +1479,7 @@ let _ = self.settings.save();
                                 }
                                 ui.end_row();
                                 // Icon Hover
-                                ui.label("Icon Hover Tint:");
+                                ui.add(egui::Label::new("Icon Hover Tint:").selectable(false));
                                 if ui
                                     .color_edit_button_srgb(&mut theme.colors.icon_hover)
                                     .changed()
@@ -1488,7 +1488,7 @@ let _ = self.settings.save();
                                 }
                                 ui.end_row();
                                 // Icon Default (New)
-                                ui.label("Icon Default Tint:");
+                                ui.add(egui::Label::new("Icon Default Tint:").selectable(false));
                                 let mut icon_def = theme.colors.icon_color.unwrap_or(
                                     if theme.color_scheme == crate::theme::ColorScheme::Dark {
                                         [200, 200, 200]
@@ -1502,7 +1502,7 @@ let _ = self.settings.save();
                                 }
                                 ui.end_row();
                                 // Highlight (New)
-                                ui.label("Search Highlight:");
+                                ui.add(egui::Label::new("Search Highlight:").selectable(false));
                                 let mut highlight = theme.colors.highlight.unwrap_or(
                                     theme.colors.cursor, // fallback
                                 );
@@ -1524,7 +1524,7 @@ let _ = self.settings.save();
                                 });
                                 ui.end_row();
                                 // Button Background
-                                ui.label("Button Background:");
+                                ui.add(egui::Label::new("Button Background:").selectable(false));
                                 ui.horizontal(|ui| {
                                     let mut bg = theme.colors.button_bg.unwrap_or([60, 60, 60]); // Approx default
                                     if ui.color_edit_button_srgb(&mut bg).changed() {
@@ -1544,7 +1544,7 @@ let _ = self.settings.save();
                                 });
                                 ui.end_row();
                                 // Button Hover Background
-                                ui.label("Button Hover:");
+                                ui.add(egui::Label::new("Button Hover:").selectable(false));
                                 ui.horizontal(|ui| {
                                     let mut h_bg = theme
                                         .colors
@@ -1567,7 +1567,7 @@ let _ = self.settings.save();
                                 });
                                 ui.end_row();
                                 // Button Active Background
-                                ui.label("Button Active:");
+                                ui.add(egui::Label::new("Button Active:").selectable(false));
                                 ui.horizontal(|ui| {
                                     let mut a_bg = theme
                                         .colors
@@ -1590,7 +1590,7 @@ let _ = self.settings.save();
                                 });
                                 ui.end_row();
                                 // Button Foreground
-                                ui.label("Button Text:");
+                                ui.add(egui::Label::new("Button Text:").selectable(false));
                                 ui.horizontal(|ui| {
                                     let mut fg =
                                         theme.colors.button_fg.unwrap_or(theme.colors.foreground);
@@ -1611,7 +1611,7 @@ let _ = self.settings.save();
                                 });
                                 ui.end_row();
                                 // Separator
-                                ui.label("Separator:");
+                                ui.add(egui::Label::new("Separator:").selectable(false));
                                 ui.horizontal(|ui| {
                                     let mut sep = theme.colors.separator.unwrap_or([80, 80, 80]);
                                     if ui.color_edit_button_srgb(&mut sep).changed() {
@@ -1631,7 +1631,7 @@ let _ = self.settings.save();
                                 });
                                 ui.end_row();
                                 // Line Number Color
-                                ui.label("Line Numbers:");
+                                ui.add(egui::Label::new("Line Numbers:").selectable(false));
                                 if ui
                                     .color_edit_button_srgb(&mut theme.colors.line_number)
                                     .changed()
@@ -1640,7 +1640,7 @@ let _ = self.settings.save();
                                 }
                                 ui.end_row();
                                 // Comment Color
-                                ui.label("Comments:");
+                                ui.add(egui::Label::new("Comments:").selectable(false));
                                 if ui
                                     .color_edit_button_srgb(&mut theme.colors.comment)
                                     .changed()
@@ -1649,7 +1649,7 @@ let _ = self.settings.save();
                                 }
                                 ui.end_row();
                                 // Whitespace Symbols Color
-                                ui.label("Whitespace Symbols:");
+                                ui.add(egui::Label::new("Whitespace Symbols:").selectable(false));
                                 ui.horizontal(|ui| {
                                     let mut ws =
                                         theme.colors.whitespace_symbols.unwrap_or_else(|| {
@@ -1680,12 +1680,12 @@ let _ = self.settings.save();
                                 ui.label("");
                                 ui.end_row();
                                 // Status colors section
-                                ui.label("Info Color:");
+                                ui.add(egui::Label::new("Info Color:").selectable(false));
                                 if ui.color_edit_button_srgb(&mut theme.colors.info).changed() {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
-                                ui.label("Success Color:");
+                                ui.add(egui::Label::new("Success Color:").selectable(false));
                                 if ui
                                     .color_edit_button_srgb(&mut theme.colors.success)
                                     .changed()
@@ -1693,7 +1693,7 @@ let _ = self.settings.save();
                                     theme_changed = true;
                                 }
                                 ui.end_row();
-                                ui.label("Warning Color:");
+                                ui.add(egui::Label::new("Warning Color:").selectable(false));
                                 if ui
                                     .color_edit_button_srgb(&mut theme.colors.warning)
                                     .changed()
@@ -1701,7 +1701,7 @@ let _ = self.settings.save();
                                     theme_changed = true;
                                 }
                                 ui.end_row();
-                                ui.label("Error Color:");
+                                ui.add(egui::Label::new("Error Color:").selectable(false));
                                 if ui.color_edit_button_srgb(&mut theme.colors.error).changed() {
                                     theme_changed = true;
                                 }
