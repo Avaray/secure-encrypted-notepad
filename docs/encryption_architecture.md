@@ -22,10 +22,10 @@ The primary purpose of SEN is to keep your documents secure using keyfile-only a
 The document content is a UTF-8 string that combines the current text with history metadata:
 ```text
 [Current Text Content]
----SEN-HISTORY-JSON-V1---
+\n<>\n
 [JSON serialized History and Metadata]
 ```
-The marker `---SEN-HISTORY-JSON-V1---` separates the active document content from its structural history (last 50 changes) and creation timestamps.
+The marker `\n<>\n` separates the active document content from its structural history (last 100 changes by default) and auto-saves.
 
 ---
 

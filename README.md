@@ -44,8 +44,12 @@ For more detailed information, check out the following guides in the `/docs` dir
 SEN encrypts everything into a single `.sen` file. The file format securely bundles your text and your version history:
 
 ```text
-[4-byte magic "SEN"] + [32-byte salt] + [Encrypted Content & History] + [32-byte keyfile hash]
+[4-byte Magic: "SEN1"] + [32-byte Random Salt] + [Encrypted Payload (Nonce + Ciphertext + Tag)]
 ```
+
+Inside the **Encrypted Payload** (which can only be decrypted with the correct keyfile), SEN stores:
+1.  **32-byte Keyfile Hash**: Used for verification before revealing the content.
+2.  **Composite Document String**: Your text content followed by the `\n<>\n` separator and JSON-serialized history metadata.
 
 To read or write a document, you must provide the exact same keyfile used to create it. You can set a **Global Keyfile** in the settings so you don't have to manually load it every time.
 
