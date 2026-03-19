@@ -1,10 +1,17 @@
 use font_kit::source::SystemSource;
 use std::collections::BTreeSet;
 
-pub const PREFERRED_UI_FONTS: &[&str] = &["Inter", "Roboto", "Segoe UI", "San Francisco", "Arial"];
-pub const PREFERRED_EDITOR_FONTS: &[&str] = &[
-    "JetBrains Mono",
+pub const PREFERRED_UI_FONTS: &[&str] = &[
     "Fira Code",
+    "Inter",
+    "Roboto",
+    "Segoe UI",
+    "San Francisco",
+    "Arial",
+];
+pub const PREFERRED_EDITOR_FONTS: &[&str] = &[
+    "Fira Code",
+    "JetBrains Mono",
     "Cascadia Code",
     "Ubuntu Mono",
     "Consolas",

@@ -275,8 +275,8 @@ fn default_max_lines() -> usize {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            ui_font_size: 16.0,
-            editor_font_size: 14.0,
+            ui_font_size: 20.0,
+            editor_font_size: 20.0,
             line_height: 1.2,
             ui_font_family: "Proportional (Default)".to_string(),
             editor_font_family: "Monospace (Default)".to_string(),
