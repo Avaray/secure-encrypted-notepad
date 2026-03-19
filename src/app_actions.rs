@@ -62,9 +62,22 @@ impl EditorApp {
     /// Open file implementation
     pub(crate) fn perform_open_file(&mut self, path: PathBuf) {
         if self.keyfile_path.is_none() {
-            self.status_message = "Error: No keyfile loaded".to_string();
-            self.log_error("Attempted to open file without keyfile");
-            return;
+            let filename = path.file_name().unwrap_or_default().to_string_lossy();
+            self.status_message = format!("Opening {}: Please select a keyfile", filename);
+            self.log_warning(format!("Opening file requires a keyfile: {}", filename));
+
+            if let Some(kf_path) = rfd::FileDialog::new()
+                .set_title(format!("Select Keyfile for {}", filename))
+                .pick_file()
+            {
+                self.keyfile_path = Some(kf_path);
+                // Also update settings if we want to remember this?
+                // For now just for this session is safest.
+            } else {
+                self.status_message = format!("Opening cancelled: {}", filename);
+                self.log_info("Keyfile selection cancelled by user");
+                return;
+            }
         }
 
         let keyfile = self.keyfile_path.clone().unwrap();
@@ -433,6 +446,98 @@ impl EditorApp {
         } else {
             self.log_info("Export dialog cancelled");
         }
+    }
+
+    /// Set file association for .sen files (Windows/Linux)
+    pub(crate) fn associate_sen_files(&mut self) {
+        #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+        {
+            self.log_warning("Automatic file association is not supported on this platform. Please set it manually in your OS.");
+            return;
+        }
+
+        #[cfg(any(target_os = "windows", target_os = "linux"))]
+        match self.perform_association() {
+            Ok(_) => self.log_success("File association applied successfully!"),
+            Err(e) => {
+                self.log_error(format!("Failed to set file association: {}", e));
+                crate::sen_debug!("Association error: {}", e);
+            }
+        }
+    }
+
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
+    fn perform_association(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let exe_path = std::env::current_exe()?;
+
+        #[cfg(target_os = "windows")]
+        {
+            use winreg::enums::*;
+            use winreg::RegKey;
+
+            let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+            let classes = hkcu.open_subkey_with_flags("Software\\Classes", KEY_ALL_ACCESS)?;
+
+            // 1. .sen -> sen_file
+            let (dot_sen, _) = classes.create_subkey(".sen")?;
+            dot_sen.set_value("", &"sen_file")?;
+
+            // 2. sen_file -> commands
+            let (sen_file, _) = classes.create_subkey("sen_file")?;
+            sen_file.set_value("", &"Secure Encrypted Notepad Document")?;
+
+            let (default_icon, _) = classes.create_subkey("sen_file\\DefaultIcon")?;
+            let icon_str = format!("\"{}\",0", exe_path.display());
+            default_icon.set_value("", &icon_str)?;
+
+            let (shell_open_command, _) = classes.create_subkey("sen_file\\shell\\open\\command")?;
+            let command_str = format!("\"{}\" \"%1\"", exe_path.display());
+            shell_open_command.set_value("", &command_str)?;
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            use std::fs;
+            let home = dirs::home_dir().ok_or("Could not find home directory")?;
+
+            // 1. MIME Type
+            let mime_dir = home.join(".local/share/mime/packages");
+            fs::create_dir_all(&mime_dir)?;
+            let mime_content = r#"<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-sen">
+    <comment>Secure Encrypted Notepad Document</comment>
+    <glob pattern="*.sen"/>
+  </mime-type>
+</mime-info>"#;
+            fs::write(mime_dir.join("sen.xml"), mime_content)?;
+
+            // 2. Desktop Entry
+            let app_dir = home.join(".local/share/applications");
+            fs::create_dir_all(&app_dir)?;
+            let desktop_content = format!(
+                r#"[Desktop Entry]
+Type=Application
+Name=Secure Encrypted Notepad
+Exec={} %f
+MimeType=application/x-sen;
+Icon=text-x-generic
+Categories=Utility;TextEditor;
+Terminal=false"#,
+                exe_path.display()
+            );
+            fs::write(app_dir.join("sen.desktop"), desktop_content)?;
+
+            // 3. Update databases
+            let _ = std::process::Command::new("update-mime-database")
+                .arg(home.join(".local/share/mime"))
+                .status();
+            let _ = std::process::Command::new("update-desktop-database")
+                .arg(&app_dir)
+                .status();
+        }
+
+        Ok(())
     }
 
     /// Rotate keyfile — re-encrypt current file with a new keyfile

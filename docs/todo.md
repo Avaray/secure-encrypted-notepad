@@ -19,6 +19,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **System File Association**: Add an option in settings to associate `.sen` files with the application. Implementation order: Windows first, followed by Linux, and lastly macOS.
 - [ ] **Documentation Deep Audit**: Perform a comprehensive documentation audit using a high-level thinking model.
 - [ ] **About Panel (F1)**: Add a full-screen panel displaying program information, repository and bug-report links, author information, and financial support links.
+- [ ] **Font Autodetection List Polish**: Refine the preferred font lists (UI and Editor) for smart detection, as the current lists are early versions that need better selection.
 - [ ] **Cargo Workspace Refactoring**: Consider refactoring the project into a [workspace](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html) to better support future platforms like Android, allowing shared logic between desktop and mobile versions.
 
 ## 🐛 Bug Fixes (To Fix)
@@ -28,3 +29,4 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 ## 🔄 Batch Converter Improvements
 - [ ] **Layout Refinement**: Change the batch converter layout, specifically the top info section and close button. Move the main action button to the bottom of the left column.
 - [ ] **Toolbar Button Integration**: Move the batch converter toolbar button and ensure it highlights when active (like other panels).
+- [ ] **Left Column Blocks**: Refine headings and button groups in the left panel to behave as cohesive "blocks" with proper wrapping, ensuring a cleaner layout regardless of panel width.

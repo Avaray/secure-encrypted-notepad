@@ -70,9 +70,13 @@ fn main() -> Result<(), eframe::Error> {
         ..Default::default()
     };
 
+    let mut args = std::env::args();
+    let _cmd = args.next(); // Skip executable path
+    let file_to_open = args.next().map(std::path::PathBuf::from);
+
     eframe::run_native(
         "Secure Encrypted Notepad",
         options,
-        Box::new(move |cc| Ok(Box::new(EditorApp::new(cc, settings)))),
+        Box::new(move |cc| Ok(Box::new(EditorApp::new(cc, settings, file_to_open)))),
     )
 }

@@ -710,8 +710,37 @@ if ui
 .on_hover_text("If enabled, Zen mode will be restored on next launch if it was active when closing.")
 .changed()
 {
-let _ = self.settings.save();
-}
+                            let _ = self.settings.save();
+                        }
+
+                        ui.add_space(8.0);
+                        ui.separator();
+                        ui.add_space(8.0);
+                        
+                        // =========================================================================
+                        // 5. SYSTEM
+                        // =========================================================================
+                        ui.add(egui::Label::new(egui::RichText::new("System (Beta)").heading()).selectable(false));
+                        
+                        #[cfg(any(target_os = "windows", target_os = "linux"))]
+                        {
+                            ui.add_space(4.0);
+                            if ui.button("🔗 Associate .sen Files with this Editor")
+                                .on_hover_text("Associate .sen files with this executable. This allows you to open encrypted files by double-clicking them.")
+                                .clicked() {
+                                self.associate_sen_files();
+                            }
+                            ui.add(egui::Label::new(egui::RichText::new("Requires current executable to be in a stable location.").small().weak()).selectable(false));
+                        }
+                        
+                        #[cfg(target_os = "macos")]
+                        {
+                            ui.add_space(4.0);
+                            ui.add(egui::Label::new("File association on macOS must be set manually via 'Get Info' -> 'Open with' -> 'Change All'.").weak());
+                        }
+
+                        ui.add_space(8.0);
+
                             ui.add_space(4.0);
                         });
                 });

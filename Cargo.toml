@@ -50,6 +50,9 @@ keyring = "3"
 hex = "0.4"
 notify = "8.0"
 windows-sys = { version = "0.61.2", features = ["Win32_UI_WindowsAndMessaging", "Win32_Foundation", "Win32_System_Threading"] }
+[target.'cfg(windows)'.dependencies]
+winreg = "0.55"
+
 
 # ============================================================================
 # BUILD PROFILES - Optimized for compilation speed

@@ -27,19 +27,15 @@ impl EditorApp {
         egui::TopBottomPanel::top("batch_header_panel")
             .resizable(false)
             .frame(egui::Frame::NONE.inner_margin(egui::Margin {
-                left: 12,
+                left: 8,
                 right: 8,
                 top: 4,
                 bottom: 4,
             }))
             .show_inside(ui, |ui| {
                 ui.horizontal(|ui| {
-                    ui.add(egui::Image::new(&self.icons.batch_convert).max_width(24.0));
-                    ui.add_space(4.0);
-                    ui.heading("Batch Converter");
-                    ui.add_space(8.0);
-                    ui.label(egui::RichText::new("Encrypt, decrypt, or rotate multiple files").weak());
-                    
+                    ui.label(egui::RichText::new("Batch Converter - Encrypt, decrypt, or rotate keyfiles in multiple files"));
+
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if ui.button("❌").on_hover_text("Close and return to editor").clicked() {
                             self.show_batch_converter = false;
@@ -49,9 +45,7 @@ impl EditorApp {
             });
         
         // Horizontal separator after header
-        ui.separator();
-
-
+        // ui.separator();
 
                 // === LEFT PANEL ===
                 let initial_width = ui.available_width() / 3.0;

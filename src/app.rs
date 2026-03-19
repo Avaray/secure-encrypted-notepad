@@ -203,6 +203,8 @@ pub struct EditorApp {
     pub(crate) show_delete_theme_confirmation: bool,
     /// Time when the application started (used for stable animations)
     pub(crate) start_time: Instant,
+    /// File to open passed from command line (processed on first update)
+    pub(crate) pending_file_to_open: Option<PathBuf>,
 }
 
 impl EditorApp {
@@ -322,6 +324,7 @@ impl EditorApp {
             pending_action: PendingAction::None,
             text_cursor_range: None,
             loaded_history_index: None,
+            pending_file_to_open: None,
             available_fonts,
             ui_font_index,
             editor_font_index,
@@ -519,7 +522,11 @@ impl Default for EditorApp {
 }
 
 impl EditorApp {
-    pub fn new(cc: &eframe::CreationContext<'_>, mut settings: Settings) -> Self {
+    pub fn new(
+        cc: &eframe::CreationContext<'_>,
+        mut settings: Settings,
+        file_to_open: Option<std::path::PathBuf>,
+    ) -> Self {
         let mut system_log = None;
         // On first run, detect system theme preference
         if settings.is_first_run {
@@ -550,6 +557,9 @@ impl EditorApp {
         ));
         app.refresh_file_tree();
         app.setup_watcher();
+
+        app.pending_file_to_open = file_to_open;
+
         app
     }
 }
@@ -568,6 +578,11 @@ impl eframe::App for EditorApp {
         // Ensure smooth pulsing when locked
         if self.keyfile_path.is_none() {
             ctx.request_repaint();
+        }
+
+        // Process pending file to open from command line
+        if let Some(path) = self.pending_file_to_open.take() {
+            self.perform_open_file(path);
         }
 
         // Apply Zen mode fullscreen state on first frame if enabled from settings
