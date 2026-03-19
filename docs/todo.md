@@ -20,6 +20,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [x] **File Tree Real-time Monitoring**: Implement a file system watcher (e.g., using the `notify` crate, which is already in dependencies) for the file tree panel. This should automatically update the list of files when they are added, removed, or renamed in the currently open directory. Note: In "expandable" mode, this requires recursive watching of multiple directories simultaneously.
 - [x] **Smart Font Detection**: Automatically select high-quality system fonts (like JetBrains Mono or Inter) on the first run instead of falling back to default egui fonts.
 - [ ] **Documentation Deep Audit**: Perform a comprehensive documentation audit using a high-level thinking model.
+- [ ] **Cargo Workspace Refactoring**: Consider refactoring the project into a workspace to better support future platforms like Android, allowing shared logic between desktop and mobile versions.
 
 ## 🐛 Bug Fixes (To Fix)
 
