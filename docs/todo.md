@@ -18,7 +18,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Stealth Mode**: Option to save files without the `.sen` extension and without any identifying headers (pure binary noise) to make it impossible to identify the application associated with the file. By default, `.sen` files would load automatically in the file tree, while extensionless "stealth" files would require a background verification process (trial decryption) to be identified and marked.
 - [ ] **System File Association**: Add an option in settings to associate `.sen` files with the application. Implementation order: Windows first, followed by Linux, and lastly macOS.
 - [ ] **Documentation Deep Audit**: Perform a comprehensive documentation audit using a high-level thinking model.
-- [ ] **Cargo Workspace Refactoring**: Consider refactoring the project into a workspace to better support future platforms like Android, allowing shared logic between desktop and mobile versions.
+- [ ] **Cargo Workspace Refactoring**: Consider refactoring the project into a [workspace](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html) to better support future platforms like Android, allowing shared logic between desktop and mobile versions.
 
 ## 🐛 Bug Fixes (To Fix)
 
