@@ -17,7 +17,8 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Multicursor Support**: Implement multicursor functionality in the text editor.
 - [ ] **Stealth Mode**: Option to save files without the `.sen` extension and without any identifying headers (pure binary noise) to make it impossible to identify the application associated with the file. By default, `.sen` files would load automatically in the file tree, while extensionless "stealth" files would require a background verification process (trial decryption) to be identified and marked.
 - [ ] **System File Association**: Add an option in settings to associate `.sen` files with the application. Implementation order: Windows first, followed by Linux, and lastly macOS.
-- [ ] **File Tree Real-time Monitoring**: Implement a file system watcher (e.g., using the `notify` crate, which is already in dependencies) for the file tree panel. This should automatically update the list of files when they are added, removed, or renamed in the currently open directory. Note: In "expandable" mode, this requires recursive watching of multiple directories simultaneously.
+- [x] **File Tree Real-time Monitoring**: Implement a file system watcher (e.g., using the `notify` crate, which is already in dependencies) for the file tree panel. This should automatically update the list of files when they are added, removed, or renamed in the currently open directory. Note: In "expandable" mode, this requires recursive watching of multiple directories simultaneously.
+- [x] **Smart Font Detection**: Automatically select high-quality system fonts (like JetBrains Mono or Inter) on the first run instead of falling back to default egui fonts.
 - [ ] **Documentation Deep Audit**: Perform a comprehensive documentation audit using a high-level thinking model.
 
 ## 🐛 Bug Fixes (To Fix)
@@ -25,5 +26,5 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 **none**
 
 ## 🔄 Batch Converter Improvements
-- [ ] **Layout Refinement**: Change the batch converter layout, specifically the top info section and close button. Move the main action button to the bottom of the left column.
-- [ ] **Toolbar Button Integration**: Move the batch converter toolbar button and ensure it highlights when active (like other panels).
+- [x] **Layout Refinement**: Change the batch converter layout, specifically the top info section and close button. Move the main action button to the bottom of the left column.
+- [x] **Toolbar Button Integration**: Move the batch converter toolbar button and ensure it highlights when active (like other panels).

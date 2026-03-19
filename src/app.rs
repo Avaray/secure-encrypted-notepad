@@ -206,9 +206,26 @@ pub struct EditorApp {
 }
 
 impl EditorApp {
-    pub fn from_settings(settings: Settings) -> Self {
+    pub fn from_settings(mut settings: Settings) -> Self {
         let themes = load_themes();
         let available_fonts = crate::fonts::get_system_fonts();
+
+        // Smart font detection on first run
+        if settings.is_first_run {
+            if let Some(font) = crate::fonts::detect_best_font(
+                &available_fonts,
+                crate::fonts::PREFERRED_UI_FONTS,
+            ) {
+                settings.ui_font_family = font;
+            }
+            if let Some(font) = crate::fonts::detect_best_font(
+                &available_fonts,
+                crate::fonts::PREFERRED_EDITOR_FONTS,
+            ) {
+                settings.editor_font_family = font;
+            }
+            let _ = settings.save();
+        }
 
         let ui_font_index = available_fonts
             .iter()

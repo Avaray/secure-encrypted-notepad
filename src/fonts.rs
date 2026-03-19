@@ -1,6 +1,26 @@
 use font_kit::source::SystemSource;
 use std::collections::BTreeSet;
 
+pub const PREFERRED_UI_FONTS: &[&str] = &["Inter", "Roboto", "Segoe UI", "San Francisco", "Arial"];
+pub const PREFERRED_EDITOR_FONTS: &[&str] = &[
+    "JetBrains Mono",
+    "Fira Code",
+    "Cascadia Code",
+    "Ubuntu Mono",
+    "Consolas",
+    "Courier New",
+];
+
+/// Get list of available system fonts
+pub fn detect_best_font(available_fonts: &[String], preferences: &[&str]) -> Option<String> {
+    for pref in preferences {
+        if available_fonts.iter().any(|f| f == *pref) {
+            return Some(pref.to_string());
+        }
+    }
+    None
+}
+
 /// Get list of available system fonts
 pub fn get_system_fonts() -> Vec<String> {
     let mut fonts = BTreeSet::new();
