@@ -33,7 +33,6 @@ pub struct ThemeColors {
     pub button_hover_bg: Option<[u8; 3]>,
     #[serde(default)]
     pub button_active_bg: Option<[u8; 3]>,
-    pub panel_background: [u8; 3],
     pub selection_background: [u8; 3],
     pub cursor: [u8; 3],
     pub line_number: [u8; 3],
@@ -52,12 +51,54 @@ pub struct ThemeColors {
     /// Color for whitespace symbols (spaces, tabs, returns)
     #[serde(default)]
     pub whitespace_symbols: Option<[u8; 3]>,
-    /// Background color for elements like cards or secondary areas
+    
+    // --- Typography ---
     #[serde(default)]
-    pub surface: Option<[u8; 3]>,
-    /// Highlight color for surface elements
+    pub weak_text: Option<[u8; 3]>,
     #[serde(default)]
-    pub surface_highlight: Option<[u8; 3]>,
+    pub strong_text: Option<[u8; 3]>,
+    #[serde(default)]
+    pub hyperlink: Option<[u8; 3]>,
+
+    // --- Interactive Widgets ---
+    #[serde(default)]
+    pub checkbox_bg: Option<[u8; 3]>,
+    #[serde(default)]
+    pub checkbox_check: Option<[u8; 3]>,
+    #[serde(default)]
+    pub slider_rail: Option<[u8; 3]>,
+    #[serde(default)]
+    pub slider_thumb: Option<[u8; 3]>,
+    #[serde(default)]
+    pub scrollbar_bg: Option<[u8; 3]>,
+    #[serde(default)]
+    pub scrollbar_thumb: Option<[u8; 3]>,
+    #[serde(default)]
+    pub tooltip_bg: Option<[u8; 3]>,
+    #[serde(default)]
+    pub tooltip_text: Option<[u8; 3]>,
+
+    // --- Editor Additions ---
+    #[serde(default)]
+    pub text_edit_bg: Option<[u8; 3]>,
+    #[serde(default)]
+    pub focus_outline: Option<[u8; 3]>,
+    #[serde(default)]
+    pub selection_text: Option<[u8; 3]>,
+
+    // --- Geometry & Borders ---
+    #[serde(default)]
+    pub window_rounding: Option<f32>,
+    #[serde(default)]
+    pub button_rounding: Option<f32>,
+    #[serde(default)]
+    pub button_border_width: Option<f32>,
+    #[serde(default)]
+    pub button_border_color: Option<[u8; 3]>,
+    #[serde(default)]
+    pub separator_width: Option<f32>,
+    #[serde(default)]
+    pub shadow_color: Option<[u8; 3]>,
 }
 
 impl Default for ThemeColors {
@@ -77,7 +118,6 @@ impl ThemeColors {
             separator: None,
             button_hover_bg: None, // Derived usually which is good
             button_active_bg: None,
-            panel_background: [37, 37, 37],
             selection_background: [51, 51, 51],
             cursor: [255, 255, 255],
             line_number: [128, 128, 128],
@@ -90,8 +130,27 @@ impl ThemeColors {
             warning: [255, 152, 0],
             error: [244, 67, 54],
             whitespace_symbols: None,
-            surface: Some([45, 45, 45]),
-            surface_highlight: Some([60, 60, 60]),
+
+            weak_text: None,
+            strong_text: None,
+            hyperlink: None,
+            checkbox_bg: None,
+            checkbox_check: None,
+            slider_rail: None,
+            slider_thumb: None,
+            scrollbar_bg: None,
+            scrollbar_thumb: None,
+            tooltip_bg: None,
+            tooltip_text: None,
+            text_edit_bg: None,
+            focus_outline: None,
+            selection_text: None,
+            window_rounding: None,
+            button_rounding: None,
+            button_border_width: None,
+            button_border_color: None,
+            separator_width: None,
+            shadow_color: None,
         }
     }
 
@@ -105,7 +164,6 @@ impl ThemeColors {
             separator: None,
             button_hover_bg: None,
             button_active_bg: None,
-            panel_background: [245, 245, 245],
             selection_background: [173, 214, 255],
             cursor: [0, 0, 0],
             line_number: [128, 128, 128],
@@ -118,8 +176,27 @@ impl ThemeColors {
             warning: [230, 81, 0],
             error: [198, 40, 40],
             whitespace_symbols: None,
-            surface: Some([230, 230, 230]),
-            surface_highlight: Some([210, 210, 210]),
+
+            weak_text: None,
+            strong_text: None,
+            hyperlink: None,
+            checkbox_bg: None,
+            checkbox_check: None,
+            slider_rail: None,
+            slider_thumb: None,
+            scrollbar_bg: None,
+            scrollbar_thumb: None,
+            tooltip_bg: None,
+            tooltip_text: None,
+            text_edit_bg: None,
+            focus_outline: None,
+            selection_text: None,
+            window_rounding: None,
+            button_rounding: None,
+            button_border_width: None,
+            button_border_color: None,
+            separator_width: None,
+            shadow_color: None,
         }
     }
 
@@ -202,20 +279,6 @@ impl ThemeColors {
     pub fn error_color(&self) -> egui::Color32 {
         egui::Color32::from_rgb(self.error[0], self.error[1], self.error[2])
     }
-
-    #[allow(dead_code)]
-    pub fn surface_color(&self) -> egui::Color32 {
-        let c = self.surface.unwrap_or(self.panel_background);
-        egui::Color32::from_rgb(c[0], c[1], c[2])
-    }
-
-    #[allow(dead_code)]
-    pub fn surface_highlight_color(&self) -> egui::Color32 {
-        let c = self
-            .surface_highlight
-            .unwrap_or_else(|| self.surface.unwrap_or(self.panel_background));
-        egui::Color32::from_rgb(c[0], c[1], c[2])
-    }
 }
 
 /// Complete theme definition
@@ -251,14 +314,26 @@ impl Theme {
             egui::Visuals::dark()
         };
 
-        // Apply custom colors
-        visuals.window_fill = self.colors.to_egui_color32(self.colors.background);
-        visuals.panel_fill = self.colors.to_egui_color32(self.colors.panel_background);
-        visuals.extreme_bg_color = self.colors.to_egui_color32(self.colors.panel_background);
-        visuals.selection.bg_fill = self.colors.selection_color();
-        visuals.selection.stroke.color = self.colors.cursor_color();
+        // --- Apply Global Background ---
+        let bg_color = self.colors.to_egui_color32(self.colors.background);
+        visuals.window_fill = bg_color;
+        visuals.panel_fill = bg_color;
+        visuals.extreme_bg_color = bg_color;
 
-        // KLUCZOWE: Ustaw kolor kursora TextEdit
+        // Custom text edit background if defined
+        if let Some(c) = self.colors.text_edit_bg {
+            visuals.extreme_bg_color = self.colors.to_egui_color32(c);
+        }
+
+        visuals.selection.bg_fill = self.colors.selection_color();
+        
+        // Custom selection text color
+        if let Some(c) = self.colors.selection_text {
+            visuals.selection.stroke.color = self.colors.to_egui_color32(c);
+        } else {
+            visuals.selection.stroke.color = self.colors.cursor_color();
+        }
+
         visuals.text_cursor.stroke.color = self.colors.cursor_color();
 
         // Apply foreground (text) color
@@ -266,6 +341,17 @@ impl Theme {
         visuals.widgets.noninteractive.fg_stroke.color = foreground;
         visuals.widgets.active.fg_stroke.color = foreground;
         visuals.override_text_color = Some(foreground);
+
+        // Apply custom text colors
+        if let Some(c) = self.colors.weak_text {
+            visuals.widgets.inactive.fg_stroke.color = self.colors.to_egui_color32(c); // weak text fallback
+        }
+        if let Some(c) = self.colors.strong_text {
+            // Strong text is usually just a font change, but we can set a main color override if desired.
+        }
+        if let Some(c) = self.colors.hyperlink {
+            visuals.hyperlink_color = self.colors.to_egui_color32(c);
+        }
 
         // Apply Button Colors
         if let Some(bg) = self.colors.button_bg {
@@ -301,7 +387,53 @@ impl Theme {
             visuals.widgets.noninteractive.bg_stroke.color = sep_color; // Used for separators
         }
 
+        // Apply Focus Outline
+        if let Some(c) = self.colors.focus_outline {
+            visuals.selection.stroke = egui::Stroke::new(1.0, self.colors.to_egui_color32(c));
+        }
+
+        // Apply Shadow Color
+        if let Some(c) = self.colors.shadow_color {
+            visuals.window_shadow.color = self.colors.to_egui_color32(c);
+            visuals.popup_shadow.color = self.colors.to_egui_color32(c);
+        }
+
         ctx.set_visuals(visuals);
+
+        // --- Apply Global Style Additions ---
+        let mut style = (*ctx.style()).clone();
+        
+        if let Some(r) = self.colors.window_rounding {
+            style.visuals.window_corner_radius = egui::CornerRadius::same(r as u8);
+        }
+        
+        if let Some(r) = self.colors.button_rounding {
+            let radius = egui::CornerRadius::same(r as u8);
+            style.visuals.widgets.noninteractive.corner_radius = radius;
+            style.visuals.widgets.inactive.corner_radius = radius;
+            style.visuals.widgets.hovered.corner_radius = radius;
+            style.visuals.widgets.active.corner_radius = radius;
+            style.visuals.widgets.open.corner_radius = radius;
+        }
+
+        if let Some(w) = self.colors.button_border_width {
+            style.visuals.widgets.inactive.bg_stroke.width = w;
+            style.visuals.widgets.hovered.bg_stroke.width = w;
+            style.visuals.widgets.active.bg_stroke.width = w;
+        }
+
+        if let Some(c) = self.colors.button_border_color {
+            let stroke_color = self.colors.to_egui_color32(c);
+            style.visuals.widgets.inactive.bg_stroke.color = stroke_color;
+            style.visuals.widgets.hovered.bg_stroke.color = stroke_color;
+            style.visuals.widgets.active.bg_stroke.color = stroke_color;
+        }
+
+        if let Some(c) = self.colors.scrollbar_bg {
+            style.visuals.extreme_bg_color = self.colors.to_egui_color32(c); // Often used as scrollbar rail fallback
+        }
+
+        ctx.set_style(style);
     }
 }
 

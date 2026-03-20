@@ -1504,13 +1504,13 @@ if ui
                             .striped(false)
                             .show(ui, |ui| {
                                 // Background
-                                ui.add(egui::Label::new("Background:").selectable(false));
+                                ui.add(egui::Label::new("UI Background:").selectable(false));
                                 if render_color_edit_row(ui, &mut theme.colors.background, copied_color, last_copied_id, last_copied_time, egui::Id::new("bg_copy")) {
                                     theme_changed = true;
                                 }
                                 ui.end_row();
                                 // Foreground
-                                ui.add(egui::Label::new("Foreground:").selectable(false));
+                                ui.add(egui::Label::new("UI Foreground:").selectable(false));
                                 if render_color_edit_row(ui, &mut theme.colors.foreground, copied_color, last_copied_id, last_copied_time, egui::Id::new("fg_copy")) {
                                     theme_changed = true;
                                 }
@@ -1552,86 +1552,7 @@ if ui
                                     theme_changed = true;
                                 }
                                 ui.end_row();
-                                // Panel Background
-                                ui.add(egui::Label::new("Panel Background:").selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.panel_background, copied_color, last_copied_id, last_copied_time, egui::Id::new("panel_bg_copy")) {
-                                    theme_changed = true;
-                                }
-                                ui.end_row();
-                                // Surface
-                                ui.add(egui::Label::new("Surface:").selectable(false));
-                                let mut surf = theme
-                                    .colors
-                                    .surface
-                                    .unwrap_or(theme.colors.panel_background);
-                                ui.horizontal(|ui| {
-                                    if ui.color_edit_button_srgb(&mut surf).changed() {
-                                        theme.colors.surface = Some(surf);
-                                        theme_changed = true;
-                                    }
-                                    if theme.colors.surface.is_some() {
-                                        if ui
-                                            .button("↺")
-                                            .on_hover_text("Reset to Default")
-                                            .clicked()
-                                        {
-                                            theme.colors.surface = None;
-                                            theme_changed = true;
-                                        }
-                                    }
-                                });
-                                if let Some(new_color) = render_copy_paste_buttons(
-                                    ui,
-                                    surf,
-                                    copied_color,
-                                    last_copied_id,
-                                    last_copied_time,
-                                    egui::Id::new("surf_copy"),
-                                ) {
-                                    theme.colors.surface = Some(new_color);
-                                    theme_changed = true;
-                                }
-                                ui.end_row();
-                                // Surface Highlight
-                                ui.add(egui::Label::new("Surface Highlight:").selectable(false));
-                                let mut surf_h =
-                                    theme.colors.surface_highlight.unwrap_or_else(|| {
-                                        theme
-                                            .colors
-                                            .surface
-                                            .unwrap_or(theme.colors.panel_background)
-                                    });
-                                ui.horizontal(|ui| {
-                                    if ui.color_edit_button_srgb(&mut surf_h).changed() {
-                                        theme.colors.surface_highlight = Some(surf_h);
-                                        theme_changed = true;
-                                    }
-                                    if theme.colors.surface_highlight.is_some() {
-                                        if ui
-                                            .button("↺")
-                                            .on_hover_text("Reset to Default")
-                                            .clicked()
-                                        {
-                                            theme.colors.surface_highlight = None;
-                                            theme_changed = true;
-                                        }
-                                    }
-                                });
-                                if let Some(new_color) = render_copy_paste_buttons(
-                                    ui,
-                                    surf_h,
-                                    copied_color,
-                                    last_copied_id,
-                                    last_copied_time,
-                                    egui::Id::new("surf_h_copy"),
-                                ) {
-                                    theme.colors.surface_highlight = Some(new_color);
-                                    theme_changed = true;
-                                }
-                                ui.end_row();
-                                ui.label("");
-                                ui.label("");
-                                ui.end_row();
+                                // Removed Panel Background, Surface, and Surface Highlight
                                 // Selection Background
                                 ui.add(egui::Label::new("Selection Background:").selectable(false));
                                 if render_color_edit_row(ui, &mut theme.colors.selection_background, copied_color, last_copied_id, last_copied_time, egui::Id::new("selection_bg_copy")) {
@@ -1945,6 +1866,87 @@ if ui
                                     theme_changed = true;
                                 }
                                 ui.end_row();
+
+                                // --- HELPER CLOSURES FOR NEW OPTIONAL FIELDS ---
+                                let mut edit_optional_color = |label: &str, field: &mut Option<[u8; 3]>, default: [u8; 3], id_str: &str, ui: &mut egui::Ui| -> bool {
+                                    let mut changed = false;
+                                    ui.add(egui::Label::new(label).selectable(false));
+                                    let mut current = field.unwrap_or(default);
+                                    ui.horizontal(|ui| {
+                                        if ui.color_edit_button_srgb(&mut current).changed() {
+                                            *field = Some(current);
+                                            changed = true;
+                                        }
+                                        if field.is_some() {
+                                            if ui.button("↺").on_hover_text("Reset to Default").clicked() {
+                                                *field = None;
+                                                changed = true;
+                                            }
+                                        }
+                                    });
+                                    if let Some(new_color) = render_copy_paste_buttons(
+                                        ui,
+                                        current,
+                                        copied_color,
+                                        last_copied_id,
+                                        last_copied_time,
+                                        egui::Id::new(id_str),
+                                    ) {
+                                        *field = Some(new_color);
+                                        changed = true;
+                                    }
+                                    ui.end_row();
+                                    changed
+                                };
+
+                                let mut edit_optional_float = |label: &str, field: &mut Option<f32>, default: f32, range: std::ops::RangeInclusive<f32>, ui: &mut egui::Ui| -> bool {
+                                    let mut changed = false;
+                                    ui.add(egui::Label::new(label).selectable(false));
+                                    let mut current = field.unwrap_or(default);
+                                    ui.horizontal(|ui| {
+                                        if ui.add(egui::Slider::new(&mut current, range)).changed() {
+                                            *field = Some(current);
+                                            changed = true;
+                                        }
+                                        if field.is_some() {
+                                            if ui.button("↺").on_hover_text("Reset to Default").clicked() {
+                                                *field = None;
+                                                changed = true;
+                                            }
+                                        }
+                                    });
+                                    ui.label(""); // Empty label for copy/paste column
+                                    ui.end_row();
+                                    changed
+                                };
+
+                                ui.label(egui::RichText::new("--- TYPOGRAPHY ---").strong()); ui.label(""); ui.label(""); ui.end_row();
+                                if edit_optional_color("Weak Text:", &mut theme.colors.weak_text, [150, 150, 150], "weak_text_copy", ui) { theme_changed = true; }
+                                if edit_optional_color("Strong Text:", &mut theme.colors.strong_text, [255, 255, 255], "strong_text_copy", ui) { theme_changed = true; }
+                                if edit_optional_color("Hyperlinks:", &mut theme.colors.hyperlink, [90, 170, 255], "hyperlink_copy", ui) { theme_changed = true; }
+
+                                ui.label(egui::RichText::new("--- WIDGETS ---").strong()); ui.label(""); ui.label(""); ui.end_row();
+                                if edit_optional_color("Checkbox BG:", &mut theme.colors.checkbox_bg, [50, 50, 50], "chk_bg_copy", ui) { theme_changed = true; }
+                                if edit_optional_color("Checkbox Check:", &mut theme.colors.checkbox_check, [200, 200, 200], "chk_check_copy", ui) { theme_changed = true; }
+                                if edit_optional_color("Slider Rail:", &mut theme.colors.slider_rail, [60, 60, 60], "slide_rail_copy", ui) { theme_changed = true; }
+                                if edit_optional_color("Slider Thumb:", &mut theme.colors.slider_thumb, [180, 180, 180], "slide_thumb_copy", ui) { theme_changed = true; }
+                                if edit_optional_color("Scrollbar BG:", &mut theme.colors.scrollbar_bg, [30, 30, 30], "scroll_bg_copy", ui) { theme_changed = true; }
+                                if edit_optional_color("Scrollbar Thumb:", &mut theme.colors.scrollbar_thumb, [120, 120, 120], "scroll_thumb_copy", ui) { theme_changed = true; }
+                                if edit_optional_color("Tooltip BG:", &mut theme.colors.tooltip_bg, [20, 20, 20], "tooltip_bg_copy", ui) { theme_changed = true; }
+                                if edit_optional_color("Tooltip Text:", &mut theme.colors.tooltip_text, [220, 220, 220], "tooltip_txt_copy", ui) { theme_changed = true; }
+
+                                ui.label(egui::RichText::new("--- TEXT EDIT ---").strong()); ui.label(""); ui.label(""); ui.end_row();
+                                if edit_optional_color("Text Edit BG:", &mut theme.colors.text_edit_bg, [15, 15, 15], "text_edit_bg_copy", ui) { theme_changed = true; }
+                                if edit_optional_color("Focus Outline:", &mut theme.colors.focus_outline, [100, 150, 255], "focus_outline_copy", ui) { theme_changed = true; }
+                                if edit_optional_color("Selection Text:", &mut theme.colors.selection_text, [255, 255, 255], "sel_text_copy", ui) { theme_changed = true; }
+
+                                ui.label(egui::RichText::new("--- GEOMETRY ---").strong()); ui.label(""); ui.label(""); ui.end_row();
+                                if edit_optional_float("Window Rounding:", &mut theme.colors.window_rounding, 4.0, 0.0..=20.0, ui) { theme_changed = true; }
+                                if edit_optional_float("Button Rounding:", &mut theme.colors.button_rounding, 2.0, 0.0..=20.0, ui) { theme_changed = true; }
+                                if edit_optional_float("Button Border Width:", &mut theme.colors.button_border_width, 0.0, 0.0..=5.0, ui) { theme_changed = true; }
+                                if edit_optional_color("Button Border Color:", &mut theme.colors.button_border_color, [100, 100, 100], "btn_border_copy", ui) { theme_changed = true; }
+                                if edit_optional_float("Separator Width:", &mut theme.colors.separator_width, 1.0, 0.0..=10.0, ui) { theme_changed = true; }
+                                if edit_optional_color("Shadow Color:", &mut theme.colors.shadow_color, [0, 0, 0], "shadow_copy", ui) { theme_changed = true; }
                             });
                     });
                 });
