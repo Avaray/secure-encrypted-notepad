@@ -54,6 +54,10 @@ pub struct ThemeColors {
     
     // --- Typography ---
     #[serde(default)]
+    pub heading_text: Option<[u8; 3]>,
+    #[serde(default)]
+    pub label_text: Option<[u8; 3]>,
+    #[serde(default)]
     pub weak_text: Option<[u8; 3]>,
     #[serde(default)]
     pub strong_text: Option<[u8; 3]>,
@@ -80,6 +84,8 @@ pub struct ThemeColors {
 
     // --- Editor Additions ---
     #[serde(default)]
+    pub editor_background: Option<[u8; 3]>,
+    #[serde(default)]
     pub text_edit_bg: Option<[u8; 3]>,
     #[serde(default)]
     pub focus_outline: Option<[u8; 3]>,
@@ -95,6 +101,10 @@ pub struct ThemeColors {
     pub button_border_width: Option<f32>,
     #[serde(default)]
     pub button_border_color: Option<[u8; 3]>,
+    #[serde(default)]
+    pub button_padding_x: Option<f32>,
+    #[serde(default)]
+    pub button_padding_y: Option<f32>,
     #[serde(default)]
     pub separator_width: Option<f32>,
     #[serde(default)]
@@ -131,6 +141,8 @@ impl ThemeColors {
             error: [244, 67, 54],
             whitespace_symbols: None,
 
+            heading_text: None,
+            label_text: None,
             weak_text: None,
             strong_text: None,
             hyperlink: None,
@@ -142,6 +154,7 @@ impl ThemeColors {
             scrollbar_thumb: None,
             tooltip_bg: None,
             tooltip_text: None,
+            editor_background: None,
             text_edit_bg: None,
             focus_outline: None,
             selection_text: None,
@@ -149,6 +162,8 @@ impl ThemeColors {
             button_rounding: None,
             button_border_width: None,
             button_border_color: None,
+            button_padding_x: None,
+            button_padding_y: None,
             separator_width: None,
             shadow_color: None,
         }
@@ -177,6 +192,8 @@ impl ThemeColors {
             error: [198, 40, 40],
             whitespace_symbols: None,
 
+            heading_text: None,
+            label_text: None,
             weak_text: None,
             strong_text: None,
             hyperlink: None,
@@ -188,6 +205,7 @@ impl ThemeColors {
             scrollbar_thumb: None,
             tooltip_bg: None,
             tooltip_text: None,
+            editor_background: None,
             text_edit_bg: None,
             focus_outline: None,
             selection_text: None,
@@ -195,6 +213,8 @@ impl ThemeColors {
             button_rounding: None,
             button_border_width: None,
             button_border_color: None,
+            button_padding_x: None,
+            button_padding_y: None,
             separator_width: None,
             shadow_color: None,
         }
@@ -340,7 +360,14 @@ impl Theme {
         let foreground = self.colors.to_egui_color32(self.colors.foreground);
         visuals.widgets.noninteractive.fg_stroke.color = foreground;
         visuals.widgets.active.fg_stroke.color = foreground;
-        visuals.override_text_color = Some(foreground);
+        
+        // Remove override_text_color to allow selective coloring
+        visuals.override_text_color = None;
+
+        // Apply custom label color
+        if let Some(c) = self.colors.label_text {
+            visuals.widgets.noninteractive.fg_stroke.color = self.colors.to_egui_color32(c);
+        }
 
         // Apply custom text colors
         if let Some(c) = self.colors.weak_text {
@@ -427,6 +454,17 @@ impl Theme {
             style.visuals.widgets.inactive.bg_stroke.color = stroke_color;
             style.visuals.widgets.hovered.bg_stroke.color = stroke_color;
             style.visuals.widgets.active.bg_stroke.color = stroke_color;
+        }
+
+        if let Some(x) = self.colors.button_padding_x {
+            style.spacing.button_padding.x = x;
+        }
+        if let Some(y) = self.colors.button_padding_y {
+            style.spacing.button_padding.y = y;
+        }
+
+        if let Some(w) = self.colors.separator_width {
+            style.visuals.widgets.noninteractive.bg_stroke.width = w;
         }
 
         if let Some(c) = self.colors.scrollbar_bg {

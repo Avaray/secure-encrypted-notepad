@@ -944,6 +944,9 @@ impl eframe::App for EditorApp {
         }
 
         let mut central_panel_frame = content_frame.clone();
+        if let Some(bg) = self.current_theme.colors.editor_background {
+            central_panel_frame.fill = self.current_theme.colors.to_egui_color32(bg);
+        }
         let any_right_panel = self.show_settings_panel || self.show_debug_panel || self.show_history_panel || self.show_theme_editor;
         if self.settings.toolbar_position != crate::settings::ToolbarPosition::Right && !any_right_panel {
             central_panel_frame.inner_margin.right = 0;
@@ -1131,7 +1134,7 @@ impl eframe::App for EditorApp {
                     .resizable(true)
                     .default_width(self.settings.theme_editor_width)
                     .min_width(100.0)
-                    .max_width(450.0)
+                    .max_width(1200.0)
                     .show(ctx, |ui| {
                         self.render_theme_editor_panel(ui);
                     });
