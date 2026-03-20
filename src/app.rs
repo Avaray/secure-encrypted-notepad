@@ -205,6 +205,8 @@ pub struct EditorApp {
     pub(crate) start_time: Instant,
     /// File to open passed from command line (processed on first update)
     pub(crate) pending_file_to_open: Option<PathBuf>,
+    /// IPC queue for single-instance file forwarding
+    pub(crate) ipc_queue: Option<std::sync::Arc<std::sync::Mutex<Vec<PathBuf>>>>,
 }
 
 impl EditorApp {
@@ -325,6 +327,7 @@ impl EditorApp {
             text_cursor_range: None,
             loaded_history_index: None,
             pending_file_to_open: None,
+            ipc_queue: None,
             available_fonts,
             ui_font_index,
             editor_font_index,
@@ -526,6 +529,7 @@ impl EditorApp {
         cc: &eframe::CreationContext<'_>,
         mut settings: Settings,
         file_to_open: Option<std::path::PathBuf>,
+        ipc_queue: Option<std::sync::Arc<std::sync::Mutex<Vec<std::path::PathBuf>>>>,
     ) -> Self {
         let mut system_log = None;
         // On first run, detect system theme preference
@@ -559,6 +563,7 @@ impl EditorApp {
         app.setup_watcher();
 
         app.pending_file_to_open = file_to_open;
+        app.ipc_queue = ipc_queue;
 
         app
     }
@@ -583,6 +588,25 @@ impl eframe::App for EditorApp {
         // Process pending file to open from command line
         if let Some(path) = self.pending_file_to_open.take() {
             self.perform_open_file(path, true);
+        }
+
+        // Poll IPC queue for files forwarded from another instance
+        if let Some(ref queue) = self.ipc_queue {
+            let paths: Vec<PathBuf> = {
+                if let Ok(mut q) = queue.try_lock() {
+                    q.drain(..).collect()
+                } else {
+                    Vec::new()
+                }
+            };
+            for path in paths {
+                if self.is_modified {
+                    self.pending_action = crate::app_state::PendingAction::OpenFileFromIPC(path);
+                    self.show_close_confirmation = true;
+                } else {
+                    self.perform_open_file(path, false);
+                }
+            }
         }
 
         // Apply Zen mode fullscreen state on first frame if enabled from settings

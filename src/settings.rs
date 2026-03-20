@@ -227,6 +227,10 @@ pub struct Settings {
     #[serde(default)]
     pub batch_last_extension: String,
 
+    /// Single instance mode — prevent multiple SEN windows
+    #[serde(default = "default_true")]
+    pub single_instance: bool,
+
     /// Volatile flag to indicate if this is the first run (no config file existed)
     #[serde(skip)]
     pub is_first_run: bool,
@@ -341,6 +345,7 @@ impl Default for Settings {
             cursor_shape: crate::settings::CursorShape::Bar,
             cursor_blink: true,
             batch_last_extension: String::new(),
+            single_instance: true,
             is_first_run: false,
         }
     }

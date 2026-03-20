@@ -60,6 +60,7 @@ pub enum PendingAction {
     OpenDirectory,
     Exit,
     OpenFileFromTree(PathBuf),
+    OpenFileFromIPC(PathBuf),
     #[allow(dead_code)]
     ChangeDirectory(PathBuf),
 }

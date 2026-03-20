@@ -32,6 +32,7 @@ impl EditorApp {
                 // Exit is handled in update loop
             }
             PendingAction::OpenFileFromTree(path) => self.perform_open_file(path, false),
+            PendingAction::OpenFileFromIPC(path) => self.perform_open_file(path, false),
             PendingAction::ChangeDirectory(path) => self.perform_change_directory(path),
         }
     }

@@ -24,6 +24,7 @@ mod fonts;
 mod history;
 mod icons;
 mod settings;
+mod single_instance;
 mod theme;
 
 // Deklaracje modułów dla app
@@ -43,6 +44,23 @@ use app::EditorApp;
 
 fn main() -> Result<(), eframe::Error> {
     let settings = crate::settings::Settings::load();
+
+    let mut args = std::env::args();
+    let _cmd = args.next(); // Skip executable path
+    let file_to_open = args.next().map(std::path::PathBuf::from);
+
+    // Single instance check — must happen before creating the window
+    let ipc_queue = if settings.single_instance {
+        match single_instance::try_lock(&file_to_open) {
+            single_instance::LockResult::Acquired(queue) => Some(queue),
+            single_instance::LockResult::AlreadyRunning => {
+                // File path was forwarded to existing instance; exit silently.
+                std::process::exit(0);
+            }
+        }
+    } else {
+        None
+    };
 
     // Always set the last known non-maximized size as fallback geometry.
     // Do NOT use with_maximized(true) here — it has a race condition on Windows 10/11
@@ -70,13 +88,9 @@ fn main() -> Result<(), eframe::Error> {
         ..Default::default()
     };
 
-    let mut args = std::env::args();
-    let _cmd = args.next(); // Skip executable path
-    let file_to_open = args.next().map(std::path::PathBuf::from);
-
     eframe::run_native(
         "Secure Encrypted Notepad",
         options,
-        Box::new(move |cc| Ok(Box::new(EditorApp::new(cc, settings, file_to_open)))),
+        Box::new(move |cc| Ok(Box::new(EditorApp::new(cc, settings, file_to_open, ipc_queue)))),
     )
 }

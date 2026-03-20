@@ -741,6 +741,14 @@ if ui
 
                         ui.add_space(8.0);
 
+                        if ui
+                            .checkbox(&mut self.settings.single_instance, "Single instance mode")
+                            .on_hover_text("Prevent multiple SEN windows. When enabled, opening a .sen file while SEN is already running will load the file in the existing window. Requires restart.")
+                            .changed()
+                        {
+                            let _ = self.settings.save();
+                        }
+
                             ui.add_space(4.0);
                         });
                 });
