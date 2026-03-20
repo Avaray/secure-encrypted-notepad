@@ -299,7 +299,7 @@ impl EditorApp {
 
                         // Close Button
                         // Let's make it look prominent
-                        let close_btn = egui::Button::new(egui::RichText::new("   Close Panel (F1)   ").size(20.0))
+                        let close_btn = egui::Button::new(egui::RichText::new("Close (F1)").size(20.0))
                             .fill(ui.visuals().selection.bg_fill)
                             .corner_radius(4.0);
 
