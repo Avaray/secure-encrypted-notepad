@@ -221,4 +221,93 @@ impl EditorApp {
                 });
             });
     }
+
+    /// Render full-screen About panel
+    pub(crate) fn render_about_panel(&mut self, ctx: &egui::Context) {
+        if !self.show_about_panel {
+            return;
+        }
+
+        // Create a full-screen overlay area in the foreground
+        egui::Area::new(egui::Id::new("about_panel_area"))
+            .order(egui::Order::Foreground)
+            .anchor(egui::Align2::LEFT_TOP, egui::vec2(0.0, 0.0))
+            .show(ctx, |ui| {
+                #[allow(deprecated)]
+                let rect = ctx.screen_rect();
+                #[allow(deprecated)]
+                ui.allocate_ui_at_rect(rect, |ui| {
+                    // Fill background using the current window fill color
+                    ui.painter().rect_filled(rect, 0.0, ui.visuals().window_fill());
+
+                    // Center the inner content vertically and horizontally
+                    ui.vertical_centered(|ui| {
+                        ui.add_space(rect.height() * 0.15); // Dynamic top margin
+
+                        ui.add(
+                            egui::Label::new(egui::RichText::new("Secure Encrypted Notepad (SEN)").size(36.0).strong())
+                        );
+                        ui.add_space(10.0);
+                        ui.label(
+                            egui::RichText::new(format!("Version {}", env!("CARGO_PKG_VERSION")))
+                                .size(18.0)
+                                .weak(),
+                        );
+
+                        ui.add_space(40.0);
+                        
+                        // Author Info
+                        ui.heading("About the Author");
+                        ui.add_space(5.0);
+                        ui.label("Created by Avaray — building privacy-focused and minimal tools.");
+                        ui.add_space(20.0);
+
+                        // Links Section
+                        ui.heading("Links & Support");
+                        ui.add_space(10.0);
+                        
+                        ui.horizontal(|ui| {
+                            ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                                ui.hyperlink_to("🔗 GitHub Repository", "https://github.com/Avaray/secure-encrypted-notepad");
+                                ui.add_space(5.0);
+                                ui.hyperlink_to("🐛 Report a Bug / Issue", "https://github.com/Avaray/secure-encrypted-notepad/issues");
+                            });
+                        });
+                        
+                        ui.add_space(20.0);
+
+                        // Financial Support
+                        ui.heading("Support the Project");
+                        ui.add_space(5.0);
+                        ui.label("If you find this tool useful, consider supporting its development:");
+                        ui.add_space(5.0);
+                        ui.horizontal(|ui| {
+                            ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                                ui.hyperlink_to("💖 GitHub Sponsors", "https://github.com/sponsors/Avaray");
+                                ui.add_space(5.0);
+                                ui.hyperlink_to("🅿️ Patreon", "https://patreon.com/Avaray_");
+                                ui.add_space(5.0);
+                                ui.hyperlink_to("☕ Buy Me a Coffee", "https://buymeacoffee.com/avaray");
+                                ui.add_space(5.0);
+                                ui.hyperlink_to("🤝 Open Collective", "https://opencollective.com/avaray");
+                                ui.add_space(5.0);
+                                ui.hyperlink_to("🎈 Ko-fi", "https://ko-fi.com/avaray_");
+                            });
+                        });
+
+                        ui.add_space(50.0);
+
+                        // Close Button
+                        // Let's make it look prominent
+                        let close_btn = egui::Button::new(egui::RichText::new("   Close Panel (F1)   ").size(20.0))
+                            .fill(ui.visuals().selection.bg_fill)
+                            .corner_radius(4.0);
+
+                        if ui.add(close_btn).clicked() {
+                            self.show_about_panel = false;
+                        }
+                    });
+                });
+            });
+    }
 }

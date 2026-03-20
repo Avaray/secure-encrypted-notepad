@@ -207,6 +207,8 @@ pub struct EditorApp {
     pub(crate) pending_file_to_open: Option<PathBuf>,
     /// IPC queue for single-instance file forwarding
     pub(crate) ipc_queue: Option<std::sync::Arc<std::sync::Mutex<Vec<PathBuf>>>>,
+    /// Flag for About panel (F1)
+    pub(crate) show_about_panel: bool,
 }
 
 impl EditorApp {
@@ -322,6 +324,7 @@ impl EditorApp {
             highlighted_line: None,
             show_goto_line: false,
             goto_line_input: String::new(),
+            show_about_panel: false,
             show_close_confirmation: false,
             pending_action: PendingAction::None,
             text_cursor_range: None,
@@ -876,6 +879,17 @@ impl eframe::App for EditorApp {
             self.toggle_zen_mode(ctx);
         }
 
+        // F1: About Panel
+        if ctx.input(|i| i.key_pressed(egui::Key::F1)) {
+            self.show_about_panel = !self.show_about_panel;
+        }
+
+        // About Panel (full-screen overlay)
+        if self.show_about_panel {
+            self.render_about_panel(ctx);
+            // If the panel is open, we might not want to process other UI interaction, or we can just render it as an overlay.
+            // Since egui builds bottom-up and Overlays are top, we will just render it as an egui::Window covering the screen.
+        }
 
         // Go to Line Dialog
         self.render_goto_line_dialog(ctx);
