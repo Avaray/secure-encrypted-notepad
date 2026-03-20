@@ -18,6 +18,11 @@ pub struct Icons {
     pub rotate: TextureHandle,
     pub batch_convert: TextureHandle,
     pub zen: TextureHandle,
+    pub spon_github: TextureHandle,
+    pub spon_patreon: TextureHandle,
+    pub spon_bmc: TextureHandle,
+    pub spon_kofi: TextureHandle,
+    pub spon_oc: TextureHandle, // Use CibKoFi as temporary if Open Collective is missing or intended
 }
 
 impl Icons {
@@ -102,6 +107,31 @@ impl Icons {
                 ctx,
                 include_bytes!("../assets/IxEyeFocus.svg"),
                 "icon_zen",
+            ),
+            spon_github: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/sponsor/EntypoSocialGithub.svg"),
+                "spon_github",
+            ),
+            spon_patreon: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/sponsor/SimpleIconsPatreon.svg"),
+                "spon_patreon",
+            ),
+            spon_bmc: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/sponsor/SimpleIconsBuymeacoffee.svg"),
+                "spon_bmc",
+            ),
+            spon_kofi: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/sponsor/SimpleIconsKofi.svg"),
+                "spon_kofi",
+            ),
+            spon_oc: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/sponsor/CibKoFi.svg"), // If this is meant for something else, please correct me
+                "spon_oc",
             ),
         }
     }

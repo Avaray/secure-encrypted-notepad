@@ -222,6 +222,67 @@ impl EditorApp {
             });
     }
 
+    /// Helper to render a sponsor link with icon and text as a button
+    fn sponsor_link(ui: &mut egui::Ui, icon: &egui::TextureHandle, label: &str, url: &str) {
+        let icon_size = egui::vec2(40.0, 40.0);
+        let font_id = egui::FontId::proportional(24.0);
+        // Better way to get precise text width:
+        let text_layout = ui.painter().layout_no_wrap(label.to_string(), font_id.clone(), ui.visuals().widgets.noninteractive.fg_stroke.color);
+        let text_width = text_layout.rect.width();
+
+        let padding = 16.0;
+        let spacing = 12.0;
+        let btn_width = padding * 2.0 + icon_size.x + spacing + text_width;
+        let btn_size = egui::vec2(btn_width, 64.0);
+        
+        let (rect, response) = ui.allocate_exact_size(btn_size, egui::Sense::click());
+        
+        if response.clicked() {
+            ui.ctx().open_url(egui::OpenUrl::new_tab(url));
+        }
+
+        // Draw background
+        let bg_fill = if response.clicked() {
+            ui.visuals().widgets.active.bg_fill
+        } else if response.hovered() {
+            ui.visuals().widgets.hovered.bg_fill
+        } else {
+            ui.visuals().widgets.noninteractive.bg_fill.gamma_multiply(0.5)
+        };
+        
+        ui.painter().rect_filled(rect, 4.0, bg_fill);
+        
+        // Draw icon and text (centered as a unit)
+        let icon_rect = egui::Rect::from_center_size(
+            egui::pos2(rect.left() + padding + icon_size.x / 2.0, rect.center().y),
+            icon_size
+        );
+        
+        let tint = if response.hovered() {
+            ui.visuals().widgets.hovered.fg_stroke.color
+        } else {
+            ui.visuals().widgets.noninteractive.fg_stroke.color
+        };
+        
+        ui.painter().image(
+            icon.id(),
+            icon_rect,
+            egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
+            tint
+        );
+        
+        let text_pos = egui::pos2(icon_rect.right() + spacing, rect.center().y);
+        ui.painter().text(
+            text_pos,
+            egui::Align2::LEFT_CENTER,
+            label,
+            font_id,
+            tint
+        );
+        
+        response.on_hover_cursor(egui::CursorIcon::PointingHand);
+    }
+
     /// Render full-screen About panel
     pub(crate) fn render_about_panel(&mut self, ctx: &egui::Context) {
         if !self.show_about_panel {
@@ -245,13 +306,16 @@ impl EditorApp {
                         ui.add_space(rect.height() * 0.15); // Dynamic top margin
 
                         ui.add(
-                            egui::Label::new(egui::RichText::new("Secure Encrypted Notepad (SEN)").size(36.0).strong())
+                            egui::Label::new(
+                                egui::RichText::new("Secure Encrypted Notepad (SEN)")
+                                    .size(36.0)
+                                    .strong()
+                            )
                         );
                         ui.add_space(10.0);
                         ui.label(
                             egui::RichText::new(format!("Version {}", env!("CARGO_PKG_VERSION")))
-                                .size(18.0)
-                                .weak(),
+                                .color(self.current_theme.colors.info_color()),
                         );
 
                         ui.add_space(40.0);
@@ -280,18 +344,49 @@ impl EditorApp {
                         ui.heading("Support the Project");
                         ui.add_space(5.0);
                         ui.label("If you find this tool useful, consider supporting its development:");
-                        ui.add_space(5.0);
+                        ui.add_space(10.0);
+
+                        // List of buttons to draw
+                        let sponsors = [
+                            (&self.icons.spon_github, "GitHub Sponsors", "https://github.com/sponsors/Avaray"),
+                            (&self.icons.spon_patreon, "Patreon", "https://patreon.com/Avaray_"),
+                            (&self.icons.spon_bmc, "Buy Me a Coffee", "https://buymeacoffee.com/avaray"),
+                            (&self.icons.spon_oc, "Open Collective", "https://opencollective.com/avaray"),
+                            (&self.icons.spon_kofi, "Ko-fi", "https://ko-fi.com/avaray_"),
+                        ];
+
+                        // Exact total width calculation for a single row
+                        let mut total_buttons_width = 0.0;
+                        let item_spacing = 10.0;
+                        let font_id = egui::FontId::proportional(24.0);
+                        
+                        for (_, label, _) in &sponsors {
+                            let text_width = ui.painter().layout_no_wrap(label.to_string(), font_id.clone(), egui::Color32::WHITE).rect.width();
+                            let btn_width = 16.0 * 2.0 + 40.0 + 12.0 + text_width; // padding*2 + icon + spacing + text
+                            total_buttons_width += btn_width + item_spacing;
+                        }
+                        if total_buttons_width > 0.0 {
+                            total_buttons_width -= item_spacing; // Remove trailing spacing
+                        }
+
+                        // We constrain the wrapping block to either exactly fit all buttons in 1 row, 
+                        // or max 90% of screen width if it's too large, forcing a wrap.
+                        let block_width = total_buttons_width.min(rect.width() * 0.9);
+
+                        // Horizontal layout to push the block to the exact center
                         ui.horizontal(|ui| {
-                            ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                                ui.hyperlink_to("💖 GitHub Sponsors", "https://github.com/sponsors/Avaray");
-                                ui.add_space(5.0);
-                                ui.hyperlink_to("🅿️ Patreon", "https://patreon.com/Avaray_");
-                                ui.add_space(5.0);
-                                ui.hyperlink_to("☕ Buy Me a Coffee", "https://buymeacoffee.com/avaray");
-                                ui.add_space(5.0);
-                                ui.hyperlink_to("🤝 Open Collective", "https://opencollective.com/avaray");
-                                ui.add_space(5.0);
-                                ui.hyperlink_to("🎈 Ko-fi", "https://ko-fi.com/avaray_");
+                            let left_space = (ui.available_width() - block_width).max(0.0) / 2.0;
+                            ui.add_space(left_space);
+                            
+                            ui.vertical(|ui| {
+                                ui.set_max_width(block_width);
+                                
+                                ui.horizontal_wrapped(|ui| {
+                                    ui.spacing_mut().item_spacing = egui::vec2(item_spacing, item_spacing);
+                                    for (icon, label, url) in &sponsors {
+                                        Self::sponsor_link(ui, icon, label, url);
+                                    }
+                                });
                             });
                         });
 
