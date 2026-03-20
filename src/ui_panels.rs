@@ -720,7 +720,7 @@ if ui
                         // =========================================================================
                         // 5. SYSTEM
                         // =========================================================================
-                        ui.add(egui::Label::new(egui::RichText::new("System (Beta)").heading()).selectable(false));
+                        ui.add(egui::Label::new(egui::RichText::new("System").heading()).selectable(false));
                         
                         #[cfg(any(target_os = "windows", target_os = "linux"))]
                         {
