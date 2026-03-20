@@ -31,7 +31,7 @@ impl EditorApp {
             PendingAction::Exit => {
                 // Exit is handled in update loop
             }
-            PendingAction::OpenFileFromTree(path) => self.perform_open_file(path),
+            PendingAction::OpenFileFromTree(path) => self.perform_open_file(path, false),
             PendingAction::ChangeDirectory(path) => self.perform_change_directory(path),
         }
     }
@@ -54,13 +54,13 @@ impl EditorApp {
             .add_filter("All Files", &["*"])
             .pick_file()
         {
-            self.perform_open_file(path);
+            self.perform_open_file(path, false);
         } else {
         }
     }
 
     /// Open file implementation
-    pub(crate) fn perform_open_file(&mut self, path: PathBuf) {
+    pub(crate) fn perform_open_file(&mut self, path: PathBuf, exit_on_cancel: bool) {
         if self.keyfile_path.is_none() {
             let filename = path.file_name().unwrap_or_default().to_string_lossy();
             self.status_message = format!("Opening {}: Please select a keyfile", filename);
@@ -74,7 +74,9 @@ impl EditorApp {
                 // Also update settings if we want to remember this?
                 // For now just for this session is safest.
             } else {
-                self.status_message = format!("Opening cancelled: {}", filename);
+                if exit_on_cancel {
+                    std::process::exit(0);
+                }
                 self.log_info("Keyfile selection cancelled by user");
                 return;
             }
@@ -130,7 +132,9 @@ impl EditorApp {
                             self.mask_keyfile_path(&current_keyfile)
                         ));
                     } else {
-                        self.status_message = format!("Opening cancelled: {}", filename);
+                        if exit_on_cancel {
+                            std::process::exit(0);
+                        }
                         self.log_info("Keyfile selection cancelled by user");
                         break;
                     }

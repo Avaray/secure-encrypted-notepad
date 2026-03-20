@@ -582,7 +582,7 @@ impl eframe::App for EditorApp {
 
         // Process pending file to open from command line
         if let Some(path) = self.pending_file_to_open.take() {
-            self.perform_open_file(path);
+            self.perform_open_file(path, true);
         }
 
         // Apply Zen mode fullscreen state on first frame if enabled from settings
