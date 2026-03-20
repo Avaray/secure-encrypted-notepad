@@ -7,7 +7,7 @@ impl EditorApp {
             return;
         }
 
-        ui.horizontal_centered(|ui| {
+        crate::app_helpers::center_row(ui, |ui| {
             if ui.button("X").clicked() {
                 self.show_search_panel = false;
                 self.search_query.clear();

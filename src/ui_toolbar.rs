@@ -66,7 +66,7 @@ impl EditorApp {
     }
 
     fn render_toolbar_horizontal(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
+        crate::app_helpers::center_row(ui, |ui| {
             // Group 1: Files
             self.render_toolbar_file_group(ui);
             ui.separator();

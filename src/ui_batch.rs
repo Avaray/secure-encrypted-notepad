@@ -33,7 +33,7 @@ impl EditorApp {
                 bottom: 4,
             }))
             .show_inside(ui, |ui| {
-                ui.horizontal(|ui| {
+                crate::app_helpers::center_row(ui, |ui| {
                     ui.label(egui::RichText::new("Batch Converter - Encrypt, decrypt, or rotate keyfiles in multiple files"));
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -61,7 +61,7 @@ impl EditorApp {
                         // --- Mode Selector ---
                         let available_w = ui.available_width();
                         if available_w > 370.0 {
-                            ui.horizontal(|ui| {
+                            crate::app_helpers::center_row(ui, |ui| {
                                 ui.heading("Mode");
                                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                     ui.selectable_value(&mut self.batch_mode, BatchMode::Rotate, "🔄 Rotate");
@@ -71,7 +71,7 @@ impl EditorApp {
                             });
                         } else {
                             ui.heading("Mode");
-                            ui.horizontal(|ui| {
+                            crate::app_helpers::center_row(ui, |ui| {
                                 ui.selectable_value(&mut self.batch_mode, BatchMode::Encrypt, "🔒 Encrypt");
                                 ui.selectable_value(&mut self.batch_mode, BatchMode::Decrypt, "🔓 Decrypt");
                                 ui.selectable_value(&mut self.batch_mode, BatchMode::Rotate, "🔄 Rotate");
@@ -90,7 +90,7 @@ impl EditorApp {
 
                         let available_w = ui.available_width();
                         if available_w > 200.0 {
-                            ui.horizontal(|ui| {
+                            crate::app_helpers::center_row(ui, |ui| {
                                 ui.heading(keyfile_label);
                                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                     if ui.button("Select keyfile").clicked() {
@@ -107,7 +107,7 @@ impl EditorApp {
                             });
                         } else {
                             ui.heading(keyfile_label);
-                            ui.horizontal(|ui| {
+                            crate::app_helpers::center_row(ui, |ui| {
                                 if ui.button("Select keyfile").clicked() {
                                     if let Some(path) = rfd::FileDialog::new().pick_file() {
                                         self.batch_keyfile = Some(path);
@@ -142,7 +142,7 @@ impl EditorApp {
                             ui.add_space(4.0);
 
                             if available_w > 200.0 {
-                                ui.horizontal(|ui| {
+                                crate::app_helpers::center_row(ui, |ui| {
                                     ui.heading("New Keyfile");
                                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                         if ui.button("Select keyfile").clicked() {
@@ -154,7 +154,7 @@ impl EditorApp {
                                 });
                             } else {
                                 ui.heading("New Keyfile");
-                                ui.horizontal(|ui| {
+                                crate::app_helpers::center_row(ui, |ui| {
                                     if ui.button("Select keyfile").clicked() {
                                         if let Some(path) = rfd::FileDialog::new().pick_file() {
                                             self.batch_keyfile_new = Some(path);
@@ -184,7 +184,7 @@ impl EditorApp {
 
                         // --- Output Directory ---
                         if ui.available_width() > 320.0 {
-                            ui.horizontal(|ui| {
+                            crate::app_helpers::center_row(ui, |ui| {
                                 ui.heading("Output Directory");
                                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                     if self.batch_output_dir.is_some() {
@@ -201,7 +201,7 @@ impl EditorApp {
                             });
                         } else {
                             ui.heading("Output Directory");
-                            ui.horizontal(|ui| {
+                            crate::app_helpers::center_row(ui, |ui| {
                                 if ui.button("Select Output Directory").clicked() {
                                     if let Some(path) = rfd::FileDialog::new().pick_folder() {
                                         self.batch_output_dir = Some(path);
@@ -235,7 +235,7 @@ impl EditorApp {
                             ui.separator();
                             ui.add_space(4.0);
 
-                            ui.horizontal(|ui| {
+                            crate::app_helpers::center_row(ui, |ui| {
                                 ui.heading("Output Extension");
                                 ui.add_space(8.0);
                                 let mut ext = self.batch_output_extension.clone();
@@ -297,7 +297,7 @@ impl EditorApp {
                                         let content_width = 12.0 + 8.0 + (label.len() as f32 * 7.0); 
                                         let padding = (rect.width() - content_width) / 2.0;
 
-                                        ui.horizontal(|ui| {
+                                        crate::app_helpers::center_row(ui, |ui| {
                                             ui.add_space(padding.max(0.0));
                                             ui.add(egui::Spinner::new().size(12.0));
                                             ui.label(egui::RichText::new(label).strong());
@@ -327,7 +327,7 @@ impl EditorApp {
                         };
 
                         if ui.available_width() > 320.0 {
-                            ui.horizontal(|ui| {
+                            crate::app_helpers::center_row(ui, |ui| {
                                 ui.heading(&heading_text);
                                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                                     if ui.button("Clean List").clicked() {
@@ -346,7 +346,7 @@ impl EditorApp {
                             });
                         } else {
                             ui.heading(&heading_text);
-                            ui.horizontal(|ui| {
+                            crate::app_helpers::center_row(ui, |ui| {
                                 if ui.button("Add Files").clicked() {
                                     if let Some(files) = rfd::FileDialog::new().pick_files() {
                                         for file in files {
@@ -380,7 +380,7 @@ impl EditorApp {
                                             _ => ui.visuals().text_color(),
                                         };
 
-                                        ui.horizontal(|ui| {
+                                        crate::app_helpers::center_row(ui, |ui| {
                                             // Reserve button space first so long filenames can't push it off-screen.
                                             let btn_width = ui.spacing().interact_size.y
                                                 + ui.spacing().button_padding.x * 2.0;

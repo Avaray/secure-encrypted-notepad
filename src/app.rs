@@ -1001,7 +1001,7 @@ impl eframe::App for EditorApp {
                     .frame(status_bar_frame)
                     .min_height(24.0)
                     .show(ctx, |ui| {
-                        ui.horizontal(|ui| {
+                        crate::app_helpers::center_row(ui, |ui| {
                             ui.label(
                                 egui::RichText::new(&self.status_message)
                                     .color(self.current_theme.colors.to_egui_color32(self.current_theme.colors.foreground))
@@ -1038,7 +1038,7 @@ impl eframe::App for EditorApp {
                     .frame(status_bar_frame)
                     .min_height(24.0)
                     .show(ctx, |ui| {
-                        ui.horizontal(|ui| {
+                        crate::app_helpers::center_row(ui, |ui| {
                             let fg_color = self.current_theme.colors.to_egui_color32(self.current_theme.colors.foreground);
                             
                             ui.label(

@@ -904,3 +904,16 @@ impl EditorApp {
         format!("{}{}", result, ellipsis)
     }
 }
+
+pub fn center_row<R>(ui: &mut egui::Ui, add_contents: impl FnOnce(&mut egui::Ui) -> R) -> egui::InnerResponse<R> {
+    ui.horizontal(|ui| {
+        let font_id = egui::TextStyle::Button.resolve(ui.style());
+        let expected_height = (font_id.size + 2.0 * ui.spacing().button_padding.y).max(ui.spacing().interact_size.y);
+        
+        ui.allocate_ui_with_layout(
+            egui::vec2(ui.available_width(), expected_height),
+            egui::Layout::left_to_right(egui::Align::Center),
+            add_contents
+        ).inner
+    })
+}

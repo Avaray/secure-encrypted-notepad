@@ -16,7 +16,7 @@ impl EditorApp {
                     ui.label("You have unsaved changes. Do you want to save them?");
                     ui.separator();
 
-                    ui.horizontal(|ui| {
+                    crate::app_helpers::center_row(ui, |ui| {
                         if ui.button("Save").clicked() {
                             self.save_file();
                             if !self.is_modified {
@@ -74,7 +74,7 @@ impl EditorApp {
                     );
                     ui.add_space(8.0);
 
-                    ui.horizontal(|ui| {
+                    crate::app_helpers::center_row(ui, |ui| {
                         ui.label("Slide to the right to confirm:");
                         ui.spacing_mut().slider_width = ui.available_width();
                         ui.add(
@@ -86,7 +86,7 @@ impl EditorApp {
                     ui.add_space(8.0);
 
                     let is_confirmed = self.reset_slider_val >= 0.99;
-                    ui.horizontal(|ui| {
+                    crate::app_helpers::center_row(ui, |ui| {
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             ui.add_enabled_ui(is_confirmed, |ui| {
                                 if ui.button("OK").clicked() {
@@ -127,7 +127,7 @@ impl EditorApp {
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
-                ui.horizontal(|ui| {
+                crate::app_helpers::center_row(ui, |ui| {
                     ui.label("Line number:");
                     let response = ui.add(
                         egui::TextEdit::singleline(&mut self.goto_line_input).desired_width(100.0),
@@ -144,7 +144,7 @@ impl EditorApp {
                     }
                 });
 
-                ui.horizontal(|ui| {
+                crate::app_helpers::center_row(ui, |ui| {
                     if ui.button("Go").clicked() {
                         if let Ok(line_num) = self.goto_line_input.parse::<usize>() {
                             jump_to_line = Some(line_num);
@@ -201,7 +201,7 @@ impl EditorApp {
                 ));
                 ui.separator();
 
-                ui.horizontal(|ui| {
+                crate::app_helpers::center_row(ui, |ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if ui.button("Restore").clicked() {
                             if let Some(autosave) = self.document.autosave.take() {
@@ -330,7 +330,7 @@ impl EditorApp {
                         ui.heading("Links & Support");
                         ui.add_space(10.0);
                         
-                        ui.horizontal(|ui| {
+                        crate::app_helpers::center_row(ui, |ui| {
                             ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
                                 ui.hyperlink_to("🔗 GitHub Repository", "https://github.com/Avaray/secure-encrypted-notepad");
                                 ui.add_space(5.0);
@@ -374,7 +374,7 @@ impl EditorApp {
                         let block_width = total_buttons_width.min(rect.width() * 0.9);
 
                         // Horizontal layout to push the block to the exact center
-                        ui.horizontal(|ui| {
+                        crate::app_helpers::center_row(ui, |ui| {
                             let left_space = (ui.available_width() - block_width).max(0.0) / 2.0;
                             ui.add_space(left_space);
                             

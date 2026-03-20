@@ -8,7 +8,7 @@ impl EditorApp {
     pub(crate) fn render_settings_panel(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
 if !self.settings.hide_panel_headers {
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
 ui.heading("Settings");
 });
 }
@@ -23,7 +23,7 @@ ui.heading("Settings");
                             bottom: 0,
                         })
                         .show(ui, |ui| {
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
 if ui.button("Open Setting Folder").on_hover_text("Open settings folder").clicked() {
 if let Some(path) = crate::settings::Settings::get_config_dir() {
 #[cfg(target_os = "windows")]
@@ -53,7 +53,7 @@ ui.add_space(8.0);
 // 1. SECURITY
 // =========================================================================
 ui.add(egui::Label::new(egui::RichText::new("Security").heading()).selectable(false));
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
 if ui.button("Set Global Keyfile").clicked() {
 if let Some(path) = rfd::FileDialog::new().pick_file() {
 self.settings.global_keyfile_path = Some(path.clone());
@@ -93,7 +93,7 @@ self.log_info("Global keyfile set");
             }
         }
 });
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
                 ui.add(egui::Label::new("Current:").selectable(false));
 if let Some(path) = &self.settings.global_keyfile_path {
 if self.settings.show_keyfile_paths {
@@ -132,7 +132,7 @@ if ui.checkbox(&mut self.settings.auto_backup_enabled, "Enable Auto-Backup on Sa
     .changed() {
     let _ = self.settings.save();
 }
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
     if ui.button("Set Backup Directory").clicked() {
         if let Some(dir) = rfd::FileDialog::new().pick_folder() {
             self.settings.auto_backup_dir = Some(dir.clone());
@@ -161,7 +161,7 @@ ui.horizontal(|ui| {
         }
     }
 });
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
     ui.add(egui::Label::new("Current:").selectable(false));
     if let Some(path) = &self.settings.auto_backup_dir {
         if self.settings.show_directory_paths {
@@ -209,7 +209,7 @@ ui.add(egui::Label::new(egui::RichText::new("Secured").color(self.current_theme.
 ui.add(egui::Label::new(egui::RichText::new("Not set").color(self.current_theme.colors.info_color())).selectable(false));
 }
 });
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
 if ui.button("Set Starting Directory").clicked() {
 if let Some(dir) = rfd::FileDialog::new().pick_folder() {
 self.settings.file_tree_starting_dir = Some(dir.clone());
@@ -305,7 +305,7 @@ if ui
 let _ = self.settings.save();
 }
 // Cursor settings
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new("Cursor Shape:").selectable(false));
 egui::ComboBox::from_id_salt("cursor_shape_combo")
 .selected_text(format!("{:?}", self.settings.cursor_shape))
@@ -331,7 +331,7 @@ self.style_dirty = true;
 if ui.checkbox(&mut self.settings.word_wrap, "Word wrap").changed() {
 let _ = self.settings.save();
 }
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new("Tab Size:").selectable(false));
                 if ui
                     .add(
@@ -351,7 +351,7 @@ if ui
 let _ = self.settings.save();
 }
 
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
     ui.add(egui::Label::new("Comment Prefix:").selectable(false));
     let mut changed = false;
     let original_inactive_stroke = ui.visuals().widgets.inactive.bg_stroke;
@@ -384,7 +384,7 @@ ui.horizontal(|ui| {
     }
 });
 // Max lines
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new("Max Lines Limit:").selectable(false));
 let mut limit_val = self.settings.max_lines;
 if ui
@@ -406,7 +406,7 @@ ui.add(egui::Label::new(egui::RichText::new("(No limit)").italics().weak()).sele
 .response
 .on_hover_text("Maximum number of lines allowed in the editor. Set to 0 to disable the limit.");
 // History capacity
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new("Default history limit:").selectable(false));
 if ui
 .add(
@@ -446,7 +446,7 @@ let _ = self.settings.save();
 {
 let _ = self.settings.save();
 }
-                ui.horizontal(|ui| {
+                crate::app_helpers::center_row(ui, |ui| {
                     ui.add(egui::Label::new("Inactivity (seconds):").selectable(false));
                     if ui
                         .add(
@@ -470,7 +470,7 @@ ui.add_space(8.0);
 // =========================================================================
 ui.add(egui::Label::new(egui::RichText::new("Appearance").heading()).selectable(false));
 // Theme selection
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new("Theme:").selectable(false));
 egui::ComboBox::from_id_salt("theme_selector")
 .selected_text(&self.current_theme.name)
@@ -498,7 +498,7 @@ self.log_info("Themes refreshed");
 });
 ui.separator();
 // UI font family with keyboard navigation
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new("UI Font:").selectable(false));
 let _response = egui::ComboBox::from_id_salt("ui_font_selector")
 .selected_text(&self.available_fonts[self.ui_font_index])
@@ -555,7 +555,7 @@ self.settings.ui_font_family
 });
 });
 // UI font size
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new("UI Font Size:").selectable(false));
 if ui
 .add(
@@ -572,7 +572,7 @@ self.style_dirty = true;
 });
 ui.separator();
 // Editor font family
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new("Editor Font:").selectable(false));
 let _response = egui::ComboBox::from_id_salt("editor_font_selector")
 .selected_text(&self.available_fonts[self.editor_font_index])
@@ -629,7 +629,7 @@ self.settings.editor_font_family
 });
 });
 // Editor font size
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new("Editor Font Size:").selectable(false));
 if ui
 .add(
@@ -645,7 +645,7 @@ self.style_dirty = true;
 }
 });
 // Line height multiplier
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new("Line Height:").selectable(false));
 if ui
 .add(
@@ -661,7 +661,7 @@ let _ = self.settings.save();
 }
 });
 // Toolbar icon size
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new("Toolbar Icon Size:").selectable(false));
 if ui
 .add(
@@ -675,7 +675,7 @@ egui::DragValue::new(&mut self.settings.toolbar_icon_size)
 let _ = self.settings.save();
 }
 });
-ui.horizontal(|ui| {
+crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new("Toolbar Position:").selectable(false));
 let mut changed = false;
 changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Top, "Top").changed();
@@ -770,7 +770,7 @@ if ui
             if !self.settings.hide_panel_headers {
                 ui.heading("History");
             }
-            ui.horizontal(|ui| {
+            crate::app_helpers::center_row(ui, |ui| {
                 ui.add(egui::Label::new("Max History for this file:").selectable(false));
                 let mut temp_limit = doc_max_limit;
                 if ui
@@ -843,7 +843,7 @@ if ui
                     }
                 }
 
-                ui.horizontal(|ui| {
+                crate::app_helpers::center_row(ui, |ui| {
                     if self.show_clear_history_confirmation {
                         ui.add(egui::Label::new(egui::RichText::new("Are you sure?").color(self.current_theme.colors.error_color())).selectable(false));
                         if ui.button("Yes").clicked() {
@@ -919,7 +919,7 @@ if ui
                                     let is_loaded = self.loaded_history_index == Some(*original_index);
                                     let will_be_deleted = v_idx < to_delete_count;
                                     
-                                    ui.horizontal(|ui| {
+                                    crate::app_helpers::center_row(ui, |ui| {
                                         ui.spacing_mut().item_spacing.x = 4.0;
 
                                         // 1. Arrow column — fixed width, painted manually so it
@@ -1001,7 +1001,7 @@ if ui
             if !self.settings.hide_panel_headers {
                 ui.heading("Debug Log");
             }
-            ui.horizontal(|ui| {
+            crate::app_helpers::center_row(ui, |ui| {
                 if ui.button("Clear").clicked() {
                     self.debug_log.clear();
                 }
@@ -1140,7 +1140,7 @@ if ui
                             let top_y = ui.cursor().top();
                             let depth = entry.depth;
 
-                            ui.horizontal(|ui| {
+                            crate::app_helpers::center_row(ui, |ui| {
                                 if tree_on {
                                     // Spacing for depth
                                     ui.add_space(depth as f32 * tree_indent);
@@ -1389,7 +1389,7 @@ if ui
             ui.separator();
 
             // Top bar: Theme selector and actions
-            ui.horizontal(|ui| {
+            crate::app_helpers::center_row(ui, |ui| {
                 let current_name = self
                     .editing_theme
                     .as_ref()
@@ -1450,11 +1450,11 @@ if ui
                 let copied_color = &mut self.copied_color;
                 let last_copied_id = &mut self.last_copied_id;
                 let last_copied_time = &mut self.last_copied_time;
-                ui.horizontal(|ui| {
+                crate::app_helpers::center_row(ui, |ui| {
                     ui.label("Name:");
                     ui.add(egui::TextEdit::singleline(&mut theme.name).desired_width(100.0));
                 });
-                ui.horizontal(|ui| {
+                crate::app_helpers::center_row(ui, |ui| {
                     ui.label("Base Scheme:");
                     egui::ComboBox::from_id_salt("color_scheme_selector")
                         .width(100.0)
@@ -1505,11 +1505,11 @@ if ui
                             .show(ui, |ui| {
 
                                 // --- HELPER CLOSURES FOR NEW OPTIONAL FIELDS ---
-                                let mut edit_optional_color = |label: &str, field: &mut Option<[u8; 3]>, default: [u8; 3], id_str: &str, copied_color: &mut Option<[u8; 3]>, last_copied_id: &mut Option<egui::Id>, last_copied_time: &mut f64, ui: &mut egui::Ui| -> bool {
+                                let edit_optional_color = |label: &str, field: &mut Option<[u8; 3]>, default: [u8; 3], id_str: &str, copied_color: &mut Option<[u8; 3]>, last_copied_id: &mut Option<egui::Id>, last_copied_time: &mut f64, ui: &mut egui::Ui| -> bool {
                                     let mut changed = false;
                                     ui.add(egui::Label::new(label).selectable(false));
                                     let mut current = field.unwrap_or(default);
-                                    ui.horizontal(|ui| {
+                                    crate::app_helpers::center_row(ui, |ui| {
                                         if ui.color_edit_button_srgb(&mut current).changed() {
                                             *field = Some(current);
                                             changed = true;
@@ -1536,12 +1536,12 @@ if ui
                                     changed
                                 };
 
-                                let mut edit_optional_float = |label: &str, field: &mut Option<f32>, default: f32, range: std::ops::RangeInclusive<f32>, speed: f32, ui: &mut egui::Ui| -> bool {
+                                let edit_optional_float = |label: &str, field: &mut Option<f32>, default: f32, range: std::ops::RangeInclusive<f32>, speed: f32, ui: &mut egui::Ui| -> bool {
                                     let mut changed = false;
                                     ui.add(egui::Label::new(label).selectable(false));
                                     let mut current = field.unwrap_or(default);
-                                    ui.horizontal(|ui| {
-                                        if ui.add(egui::DragValue::new(&mut current).speed(speed).clamp_range(range)).changed() {
+                                    crate::app_helpers::center_row(ui, |ui| {
+                                        if ui.add(egui::DragValue::new(&mut current).speed(speed).range(range)).changed() {
                                             *field = Some(current);
                                             changed = true;
                                         }
@@ -1710,7 +1710,7 @@ if ui
 
     fn render_scanning_spinner_if_needed(&self, ui: &mut egui::Ui, dir_path: &Path, depth: usize, tree_on: bool, tree_indent: f32) {
         if self.is_directory_scanning(dir_path) {
-            ui.horizontal(|ui| {
+            crate::app_helpers::center_row(ui, |ui| {
                 if tree_on {
                     ui.add_space((depth + 1) as f32 * tree_indent);
                 } else {
@@ -1770,7 +1770,7 @@ fn render_copy_paste_buttons(
     row_id: egui::Id,
 ) -> Option<[u8; 3]> {
     let mut paste_color = None;
-    ui.horizontal(|ui| {
+    crate::app_helpers::center_row(ui, |ui| {
         // Animation logic
         let duration = 0.5;
         let time = ui.input(|i| i.time);

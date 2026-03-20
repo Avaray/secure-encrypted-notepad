@@ -373,7 +373,7 @@ impl Theme {
         if let Some(c) = self.colors.weak_text {
             visuals.widgets.inactive.fg_stroke.color = self.colors.to_egui_color32(c); // weak text fallback
         }
-        if let Some(c) = self.colors.strong_text {
+        if let Some(_c) = self.colors.strong_text {
             // Strong text is usually just a font change, but we can set a main color override if desired.
         }
         if let Some(c) = self.colors.hyperlink {
