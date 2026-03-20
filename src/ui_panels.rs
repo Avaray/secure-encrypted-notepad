@@ -1140,7 +1140,7 @@ if ui
                             let top_y = ui.cursor().top();
                             let depth = entry.depth;
 
-                            crate::app_helpers::center_row(ui, |ui| {
+                            ui.horizontal(|ui| {
                                 if tree_on {
                                     // Spacing for depth
                                     ui.add_space(depth as f32 * tree_indent);
