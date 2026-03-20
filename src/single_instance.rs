@@ -20,7 +20,7 @@ pub enum LockResult {
 #[cfg(target_os = "windows")]
 mod platform {
     use super::*;
-    use std::io::{BufRead, BufReader, Write};
+    use std::io::{BufRead, BufReader};
 
     const MUTEX_NAME: &str = "Global\\SEN_SingleInstance_Mutex";
     const PIPE_NAME: &str = r"\\.\pipe\sen_single_instance";
@@ -40,7 +40,7 @@ mod platform {
             )
         };
 
-        if handle == 0 {
+        if handle.is_null() {
             // Failed to create mutex — assume another instance
             if let Some(path) = file_to_open {
                 let _ = send_path(path);
@@ -67,8 +67,6 @@ mod platform {
         std::thread::Builder::new()
             .name("ipc-listener".to_string())
             .spawn(move || {
-                // Keep mutex handle alive for the lifetime of the process
-                let _handle = handle;
                 listen_for_connections(queue_clone);
             })
             .expect("Failed to spawn IPC listener thread");
@@ -110,7 +108,7 @@ mod platform {
                 let err = unsafe { windows_sys::Win32::Foundation::GetLastError() };
                 if err != 535 {
                     // ERROR_PIPE_CONNECTED = 535 is OK (client connected before we called ConnectNamedPipe)
-                    unsafe { CloseHandle(handle) };
+                    unsafe { windows_sys::Win32::Foundation::CloseHandle(handle) };
                     continue;
                 }
             }
@@ -168,7 +166,6 @@ mod platform {
     fn bring_to_foreground() {
         use windows_sys::Win32::UI::WindowsAndMessaging::*;
 
-        let class_name: Vec<u16> = "eframe\0".encode_utf16().collect();
         let window_title: Vec<u16> = "Secure Encrypted Notepad\0".encode_utf16().collect();
 
         unsafe {
