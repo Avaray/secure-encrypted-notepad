@@ -87,33 +87,54 @@ impl EditorApp {
             self.mask_keyfile_path(&keyfile)
         ));
 
-        match decrypt_file(&keyfile, &path) {
-            Ok(content) => {
-                self.document = DocumentWithHistory::from_file_content(&content);
-                self.current_file_path = Some(path.clone());
-                self.is_modified = false;
-                self.loaded_history_index = None;
-                self.show_autosave_restore = self.document.autosave.is_some();
+        let mut current_keyfile = keyfile;
+        loop {
+            match decrypt_file(&current_keyfile, &path) {
+                Ok(content) => {
+                    self.keyfile_path = Some(current_keyfile);
+                    self.document = DocumentWithHistory::from_file_content(&content);
+                    self.current_file_path = Some(path.clone());
+                    self.is_modified = false;
+                    self.loaded_history_index = None;
+                    self.show_autosave_restore = self.document.autosave.is_some();
 
-                let history_count = self.document.get_visible_history().len();
+                    let history_count = self.document.get_visible_history().len();
 
-                let masked_path = self.mask_directory_path(&path);
-                
-                self.status_message = if masked_path == "Secured" {
-                    format!("Opened file with {} history entries", history_count)
-                } else {
-                    format!("Opened: {} ({} history entries)", masked_path, history_count)
-                };
-                
-                self.log_info(if masked_path == "Secured" {
-                    format!("File opened successfully with {} history entries", history_count)
-                } else {
-                    format!("File opened successfully: {} ({} history entries)", masked_path, history_count)
-                });
-            }
-            Err(e) => {
-                self.status_message = format!("Error: {}", e);
-                self.log_error(format!("Failed to open file: {}", e));
+                    let masked_path = self.mask_directory_path(&path);
+                    
+                    self.status_message = if masked_path == "Secured" {
+                        format!("Opened file with {} history entries", history_count)
+                    } else {
+                        format!("Opened: {} ({} history entries)", masked_path, history_count)
+                    };
+                    
+                    self.log_info(if masked_path == "Secured" {
+                        format!("File opened successfully with {} history entries", history_count)
+                    } else {
+                        format!("File opened successfully: {} ({} history entries)", masked_path, history_count)
+                    });
+                    break;
+                }
+                Err(e) => {
+                    let filename = path.file_name().unwrap_or_default().to_string_lossy();
+                    self.status_message = format!("Wrong keyfile for {}", filename);
+                    self.log_warning(format!("Decryption failed: {} — prompting for different keyfile", e));
+
+                    if let Some(new_kf) = rfd::FileDialog::new()
+                        .set_title(format!("Wrong keyfile — Select correct keyfile for {}", filename))
+                        .pick_file()
+                    {
+                        current_keyfile = new_kf;
+                        self.log_info(format!(
+                            "Retrying with keyfile: {}",
+                            self.mask_keyfile_path(&current_keyfile)
+                        ));
+                    } else {
+                        self.status_message = format!("Opening cancelled: {}", filename);
+                        self.log_info("Keyfile selection cancelled by user");
+                        break;
+                    }
+                }
             }
         }
     }
@@ -493,6 +514,16 @@ impl EditorApp {
             let (shell_open_command, _) = classes.create_subkey("sen_file\\shell\\open\\command")?;
             let command_str = format!("\"{}\" \"%1\"", exe_path.display());
             shell_open_command.set_value("", &command_str)?;
+
+            // Force Explorer to refresh icon cache immediately
+            unsafe {
+                windows_sys::Win32::UI::Shell::SHChangeNotify(
+                    0x08000000, // SHCNE_ASSOCCHANGED
+                    0x0000,     // SHCNF_IDLIST
+                    std::ptr::null(),
+                    std::ptr::null(),
+                );
+            }
         }
 
         #[cfg(target_os = "linux")]
