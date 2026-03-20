@@ -600,6 +600,12 @@ impl eframe::App for EditorApp {
                 }
             };
             for path in paths {
+                // Request window focus to bring it to the foreground
+                ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+                ctx.send_viewport_cmd(egui::ViewportCommand::RequestUserAttention(
+                    egui::UserAttentionType::Informational,
+                ));
+
                 if self.is_modified {
                     self.pending_action = crate::app_state::PendingAction::OpenFileFromIPC(path);
                     self.show_close_confirmation = true;
