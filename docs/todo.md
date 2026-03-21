@@ -26,6 +26,8 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [x] **Language Selection Flags**: Add mini SVG flags next to language names in the settings dropdown (SVG files will be provided soon).
 - [x] **Add close buttons to panels**: Implement a close button for each side panel for easier navigation.
 - [ ] **Translation Polish**: Review and refine translations throughout the application to ensure consistency and correctness across all supported languages.
+- [ ] **Dynamic Panel Header Height**: Adjust the `render_panel_header` component to have a dynamic height that scales with the current font size. Currently, when font sizes are small, headers occupy too much vertical space relative to their content.
+
 
 ## 🐛 Bug Fixes (To Fix)
 - [ ] **Settings Slider Crash**: Investigate and fix application crashes occurring when rapidly dragging value-based sliders (e.g., Font Size, Line Height, Transparency) in the settings and theme panels.
