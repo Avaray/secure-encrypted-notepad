@@ -255,9 +255,9 @@ impl EditorApp {
         };
 
         let status = if keyfile_path.is_some() {
-            "Ready with global keyfile loaded".to_string()
+            t!("app.status_ready_global").to_string()
         } else {
-            "Ready - Load or generate a keyfile".to_string()
+            t!("app.status_ready_none").to_string()
         };
 
         let file_tree_dir = settings.file_tree_starting_dir.clone();
@@ -479,26 +479,26 @@ impl EditorApp {
                 // Set display affinity (try EXCLUDE_FROM_CAPTURE, fallback to MONITOR)
                 let result = unsafe { SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE) };
                 if result != 0 {
-                    self.log_info("Screen capture protection enabled");
+                    self.log_info(t!("app.log_capture_enabled"));
                 } else {
                     let result2 = unsafe { SetWindowDisplayAffinity(hwnd, WDA_MONITOR) };
                     if result2 != 0 {
-                        self.log_info("Screen capture protection enabled (fallback mode)");
+                        self.log_info(t!("app.log_capture_fallback"));
                     } else {
-                        self.log_error("Failed to enable screen capture protection");
+                        self.log_error(t!("app.log_capture_err"));
                     }
                 }
             } else {
                 // Disable protection
                 let result = unsafe { SetWindowDisplayAffinity(hwnd, WDA_NONE) };
                 if result != 0 {
-                    self.log_info("Screen capture protection disabled");
+                    self.log_info(t!("app.log_capture_disabled"));
                 } else {
-                    self.log_error("Failed to disable screen capture protection");
+                    self.log_error(t!("app.log_capture_err_disable"));
                 }
             }
         } else {
-            self.log_error("Cannot apply screen capture protection: HWND not found");
+            self.log_error(t!("app.log_capture_err_hwnd"));
         }
     }
 
@@ -540,11 +540,11 @@ impl EditorApp {
             let is_dark = cc.egui_ctx.style().visuals.dark_mode;
             if !is_dark {
                 settings.theme_name = "Light".to_string();
-                let msg = "First run: System detected Light mode, setting theme to Light";
+                let msg = t!("app.log_first_run_light");
                 crate::sen_debug!("{}", msg);
                 system_log = Some(msg.to_string());
             } else {
-                let msg = "First run: System detected Dark mode (default theme)";
+                let msg = t!("app.log_first_run_dark");
                 crate::sen_debug!("{}", msg);
                 system_log = Some(msg.to_string());
             }
@@ -558,10 +558,7 @@ impl EditorApp {
 
         app.icons = crate::icons::Icons::load(&cc.egui_ctx);
         app.current_theme.apply(&cc.egui_ctx);
-        app.log_info(format!(
-            "Application started (v{})",
-            env!("CARGO_PKG_VERSION")
-        ));
+        app.log_info(t!("app.log_started", version = env!("CARGO_PKG_VERSION")));
         app.refresh_file_tree();
         app.setup_watcher();
 

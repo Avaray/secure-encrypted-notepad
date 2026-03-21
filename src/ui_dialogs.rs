@@ -1,23 +1,24 @@
 use crate::app_state::PendingAction;
 use crate::EditorApp;
 use eframe::egui;
+use rust_i18n::t;
 
 impl EditorApp {
     /// Render confirmation dialog for unsaved changes
     pub(crate) fn render_confirmation_dialog(&mut self, ctx: &egui::Context) {
         // Unsaved changes dialog
         if self.show_close_confirmation {
-            egui::Window::new("Unsaved Changes")
+            egui::Window::new(t!("dialog.unsaved_title"))
                 .collapsible(false)
                 .resizable(false)
                 .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
                 .show(ctx, |ui| {
                     ui.set_max_width(300.0);
-                    ui.label("You have unsaved changes. Do you want to save them?");
+                    ui.label(t!("dialog.unsaved_msg"));
                     ui.separator();
 
                     crate::app_helpers::center_row(ui, |ui| {
-                        if ui.button("Save").clicked() {
+                        if ui.button(t!("dialog.btn_save")).clicked() {
                             self.save_file();
                             if !self.is_modified {
                                 self.show_close_confirmation = false;
@@ -31,7 +32,7 @@ impl EditorApp {
                             }
                         }
 
-                        if ui.button("Don't Save").clicked() {
+                        if ui.button(t!("dialog.btn_dont_save")).clicked() {
                             self.is_modified = false;
                             self.show_close_confirmation = false;
                             let action = self.pending_action.clone();
@@ -43,10 +44,10 @@ impl EditorApp {
                             }
                         } else {
                             // Save failed or cancelled
-                            self.status_message = "Save cancelled or failed".to_string();
+                            self.status_message = t!("dialog.save_failed").to_string();
                         }
 
-                        if ui.button("Cancel").clicked() {
+                        if ui.button(t!("dialog.btn_cancel")).clicked() {
                             self.show_close_confirmation = false;
                             self.pending_action = PendingAction::None;
                         }
@@ -56,7 +57,7 @@ impl EditorApp {
 
         // Settings reset dialog
         if self.show_reset_confirmation {
-            egui::Window::new("Reset All Settings")
+            egui::Window::new(t!("dialog.reset_title"))
                 .collapsible(false)
                 .resizable(false)
                 .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
@@ -64,18 +65,18 @@ impl EditorApp {
                     ui.set_max_width(400.0);
                     ui.add(
                         egui::Label::new(
-                            "This will restore all settings to their factory defaults.",
+                            t!("dialog.reset_msg"),
                         )
                         .wrap_mode(egui::TextWrapMode::Extend),
                     );
                     ui.add(
-                        egui::Label::new("This action cannot be undone.")
+                        egui::Label::new(t!("dialog.reset_undone"))
                             .wrap_mode(egui::TextWrapMode::Extend),
                     );
                     ui.add_space(8.0);
 
                     crate::app_helpers::center_row(ui, |ui| {
-                        ui.label("Slide to the right to confirm:");
+                        ui.label(t!("dialog.reset_slider"));
                         ui.spacing_mut().slider_width = ui.available_width();
                         ui.add(
                             egui::Slider::new(&mut self.reset_slider_val, 0.0..=1.0)
@@ -97,14 +98,14 @@ impl EditorApp {
                                     self.show_reset_confirmation = false;
                                     self.style_dirty = true; // Apply default fonts/sizes
                                     self.status_message =
-                                        "All settings have been reset to factory defaults".to_string();
+                                        t!("dialog.reset_success").to_string();
                                     self.log_warning(
-                                        "All settings have been reset to factory defaults",
+                                        t!("dialog.reset_success"),
                                     );
                                 }
                             });
 
-                            if ui.button("Cancel").clicked() {
+                            if ui.button(t!("dialog.btn_cancel")).clicked() {
                                 self.show_reset_confirmation = false;
                             }
                         });
@@ -122,13 +123,13 @@ impl EditorApp {
         let mut close = false;
         let mut jump_to_line: Option<usize> = None;
 
-        egui::Window::new("Go to Line")
+        egui::Window::new(t!("dialog.goto_title"))
             .collapsible(false)
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 crate::app_helpers::center_row(ui, |ui| {
-                    ui.label("Line number:");
+                    ui.label(t!("dialog.goto_label"));
                     let response = ui.add(
                         egui::TextEdit::singleline(&mut self.goto_line_input).desired_width(100.0),
                     );
@@ -145,15 +146,15 @@ impl EditorApp {
                 });
 
                 crate::app_helpers::center_row(ui, |ui| {
-                    if ui.button("Go").clicked() {
+                    if ui.button(t!("dialog.goto_btn")).clicked() {
                         if let Ok(line_num) = self.goto_line_input.parse::<usize>() {
                             jump_to_line = Some(line_num);
                         } else {
-                            self.status_message = "Invalid line number".to_string();
+                            self.status_message = t!("dialog.goto_invalid").to_string();
                         }
                     }
 
-                    if ui.button("Cancel").clicked() {
+                    if ui.button(t!("dialog.btn_cancel")).clicked() {
                         close = true;
                     }
                 });
@@ -164,11 +165,11 @@ impl EditorApp {
             let max_line = self.document.current_content.lines().count().max(1);
             if line_num > 0 && line_num <= max_line {
                 self.highlighted_line = Some(line_num);
-                self.log_info(format!("Jumped to line {}", line_num));
+                self.log_info(t!("dialog.goto_success", line = line_num));
                 close = true;
             } else {
-                self.status_message = format!("Line out of range (1-{})", max_line);
-                self.log_warning(format!("Line {} out of range (1-{})", line_num, max_line));
+                self.status_message = t!("dialog.goto_range_err", max = max_line).to_string();
+                self.log_warning(t!("dialog.goto_range_err", max = max_line));
             }
         }
 
@@ -189,32 +190,29 @@ impl EditorApp {
             .map(|a| a.timestamp.format("%Y-%m-%d %H:%M:%S").to_string())
             .unwrap_or_default();
 
-        egui::Window::new("Auto-save Found")
+        egui::Window::new(t!("dialog.autosave_title"))
             .collapsible(false)
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 ui.set_max_width(350.0);
-                ui.label(format!(
-                    "An auto-saved version was found ({}). Would you like to restore it?",
-                    timestamp_str
-                ));
+                ui.label(t!("dialog.autosave_msg", time = timestamp_str));
                 ui.separator();
 
                 crate::app_helpers::center_row(ui, |ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button("Restore").clicked() {
+                        if ui.button(t!("dialog.btn_restore")).clicked() {
                             if let Some(autosave) = self.document.autosave.take() {
                                 self.document.current_content = autosave.content;
                                 self.is_modified = true;
-                                self.log_info("Restored content from auto-save");
-                                self.status_message = "Auto-save restored".to_string();
+                                self.log_info(t!("dialog.autosave_restored_log"));
+                                self.status_message = t!("dialog.autosave_restored_msg").to_string();
                             }
                             self.show_autosave_restore = false;
                         }
-                        if ui.button("Discard").clicked() {
+                        if ui.button(t!("dialog.btn_discard")).clicked() {
                             self.document.clear_autosave();
-                            self.log_info("Auto-save discarded");
+                            self.log_info(t!("dialog.autosave_discarded_log"));
                             self.show_autosave_restore = false;
                         }
                     });
@@ -307,43 +305,43 @@ impl EditorApp {
 
                         ui.add(
                             egui::Label::new(
-                                egui::RichText::new("Secure Encrypted Notepad (SEN)")
+                                egui::RichText::new(t!("dialog.about_title"))
                                     .size(36.0)
                                     .strong()
                             )
                         );
                         ui.add_space(10.0);
                         ui.label(
-                            egui::RichText::new(format!("Version {}", env!("CARGO_PKG_VERSION")))
+                            egui::RichText::new(t!("dialog.about_version", version = env!("CARGO_PKG_VERSION")))
                                 .color(self.current_theme.colors.info_color()),
                         );
 
                         ui.add_space(40.0);
                         
                         // Author Info
-                        ui.heading("About the Author");
+                        ui.heading(t!("dialog.about_author_head"));
                         ui.add_space(5.0);
-                        ui.label("Created by Avaray — building privacy-focused and minimal tools.");
+                        ui.label(t!("dialog.about_author_body"));
                         ui.add_space(20.0);
 
                         // Links Section
-                        ui.heading("Links & Support");
+                        ui.heading(t!("dialog.about_links_head"));
                         ui.add_space(10.0);
                         
                         crate::app_helpers::center_row(ui, |ui| {
                             ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                                ui.hyperlink_to("🔗 GitHub Repository", "https://github.com/Avaray/secure-encrypted-notepad");
+                                ui.hyperlink_to(t!("dialog.about_github"), "https://github.com/Avaray/secure-encrypted-notepad");
                                 ui.add_space(5.0);
-                                ui.hyperlink_to("🐛 Report a Bug / Issue", "https://github.com/Avaray/secure-encrypted-notepad/issues");
+                                ui.hyperlink_to(t!("dialog.about_bug"), "https://github.com/Avaray/secure-encrypted-notepad/issues");
                             });
                         });
                         
                         ui.add_space(20.0);
 
                         // Financial Support
-                        ui.heading("Support the Project");
+                        ui.heading(t!("dialog.about_support_head"));
                         ui.add_space(5.0);
-                        ui.label("If you find this tool useful, consider supporting its development:");
+                        ui.label(t!("dialog.about_support_body"));
                         ui.add_space(10.0);
 
                         // List of buttons to draw
@@ -394,7 +392,7 @@ impl EditorApp {
 
                         // Close Button
                         // Let's make it look prominent
-                        let close_btn = egui::Button::new(egui::RichText::new("Close (F1 / ESC)").size(20.0))
+                        let close_btn = egui::Button::new(egui::RichText::new(t!("dialog.btn_close")).size(20.0))
                             .fill(ui.visuals().selection.bg_fill)
                             .corner_radius(4.0);
 

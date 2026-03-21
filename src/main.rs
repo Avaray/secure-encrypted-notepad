@@ -1,5 +1,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+#[macro_use]
+extern crate rust_i18n;
+
+// Initialize i18n with locale files from ./locales, fallback to English
+i18n!("locales", fallback = "en");
+
 /// Custom debug logging macro that only prints to console in debug builds.
 /// This prevents sensitive data leakage in release versions.
 #[allow(unused_macros)]
@@ -44,6 +50,9 @@ use app::EditorApp;
 
 fn main() -> Result<(), eframe::Error> {
     let settings = crate::settings::Settings::load();
+
+    // Set the UI language from saved settings
+    rust_i18n::set_locale(&settings.language);
 
     let mut args = std::env::args();
     let _cmd = args.next(); // Skip executable path

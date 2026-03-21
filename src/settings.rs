@@ -235,6 +235,10 @@ pub struct Settings {
     #[serde(default = "default_scroll_speed")]
     pub scroll_speed_multiplier: f32,
 
+    /// UI language (locale code: "en", "pl", "de")
+    #[serde(default = "default_language")]
+    pub language: String,
+
     /// Volatile flag to indicate if this is the first run (no config file existed)
     #[serde(skip)]
     pub is_first_run: bool,
@@ -242,6 +246,10 @@ pub struct Settings {
 
 fn default_scroll_speed() -> f32 {
     2.0
+}
+
+fn default_language() -> String {
+    "en".to_string()
 }
 
 fn default_window_width() -> f32 {
@@ -355,6 +363,7 @@ impl Default for Settings {
             batch_last_extension: String::new(),
             single_instance: true,
             scroll_speed_multiplier: default_scroll_speed(),
+            language: default_language(),
             is_first_run: false,
         }
     }

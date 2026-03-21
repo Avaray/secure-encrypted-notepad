@@ -1,5 +1,6 @@
 use crate::app_state::{FileTreeEntry, KeyStatus, LogEntry, LogLevel};
 use crate::EditorApp;
+use rust_i18n::t;
 use std::path::PathBuf;
 
 impl EditorApp {
@@ -230,15 +231,9 @@ impl EditorApp {
         }
 
         if lines_to_toggle.len() == 1 {
-            self.log_info(format!(
-                "Toggled comment on line {}",
-                lines_to_toggle[0] + 1
-            ));
+            self.log_info(t!("helpers.log_comment_line", line = lines_to_toggle[0] + 1));
         } else {
-            self.log_info(format!(
-                "Toggled comments on {} lines",
-                lines_to_toggle.len()
-            ));
+            self.log_info(t!("helpers.log_comment_lines", count = lines_to_toggle.len()));
         }
     }
 
@@ -261,7 +256,7 @@ impl EditorApp {
         }) {
             Ok(w) => w,
             Err(e) => {
-                self.log_error(format!("Failed to create watcher: {}", e));
+                self.log_error(t!("helpers.log_watcher_failed", e = e));
                 return;
             }
         };
@@ -273,7 +268,7 @@ impl EditorApp {
         };
  
         if let Err(e) = watcher.watch(dir, mode) {
-            self.log_error(format!("Failed to watch directory: {}", e));
+            self.log_error(t!("helpers.log_watch_dir_failed", e = e));
             return;
         }
  
@@ -318,9 +313,9 @@ impl EditorApp {
         let dir_opt = self.file_tree_dir.clone();
 
         if let Some(dir) = dir_opt {
-            self.log_info(format!(
-                "Refreshing file tree for: {}",
-                self.mask_directory_path(&dir)
+            self.log_info(t!(
+                "helpers.log_refresh_tree",
+                file = self.mask_directory_path(&dir)
             ));
             
             if self.settings.tree_style_file_tree {
@@ -391,7 +386,7 @@ impl EditorApp {
                         self.file_tree_entries.extend(files);
                     }
                     Err(_) => {
-                        self.log_error("Failed to read directory".to_string());
+                        self.log_error(t!("helpers.log_read_dir_failed"));
                     }
                 }
             }
@@ -399,16 +394,13 @@ impl EditorApp {
             let folder_count = self.file_tree_entries.iter().filter(|e| e.is_dir).count();
             let file_count = self.file_tree_entries.iter().filter(|e| !e.is_dir).count();
 
-            self.log_info(format!(
-                "Found {} folders and {} .sen files",
-                folder_count, file_count
-            ));
+            self.log_info(t!("helpers.log_tree_stats", folders = folder_count, files = file_count));
 
             // Refresh access status for the newly loaded tree
             self.refresh_file_access_status();
             
         } else {
-            self.log_info("No directory selected for file tree");
+            self.log_info(t!("helpers.log_tree_no_dir"));
         }
     }
 
@@ -483,7 +475,7 @@ impl EditorApp {
             self.current_key_hash = new_hash;
             self.file_access_cache.clear();
             self.pending_access_checks.clear();
-            self.log_info("Keyfile changed, clearing access cache");
+            self.log_info(t!("helpers.log_key_changed"));
         }
 
         let key_hash = match self.current_key_hash {
@@ -511,10 +503,7 @@ impl EditorApp {
             return;
         }
 
-        self.log_info(format!(
-            "Checking access for {} files in background...",
-            paths_to_check.len()
-        ));
+        self.log_info(t!("helpers.log_check_bg", count = paths_to_check.len()));
 
         // 3. Spawn background checking thread
         let (tx, rx) = std::sync::mpsc::channel();
@@ -677,12 +666,12 @@ impl EditorApp {
                         finished = true;
                         
 
-                        let mode_name = match self.batch_mode {
-                            crate::app_state::BatchMode::Encrypt => "Encrypt",
-                            crate::app_state::BatchMode::Decrypt => "Decrypt",
-                            crate::app_state::BatchMode::Rotate => "Rotate",
+                        let mode_key = match self.batch_mode {
+                            crate::app_state::BatchMode::Encrypt => t!("batch.mode_encrypt"),
+                            crate::app_state::BatchMode::Decrypt => t!("batch.mode_decrypt"),
+                            crate::app_state::BatchMode::Rotate => t!("batch.mode_rotate"),
                         };
-                        self.status_message = format!("Batch {}: {} succeeded, {} failed", mode_name, success, failed);
+                        self.status_message = t!("helpers.status_batch_finished", mode = mode_key, success = success, failed = failed).to_string();
                     }
                 }
             }
@@ -701,24 +690,24 @@ impl EditorApp {
     pub(crate) fn update_window_title(&self, ctx: &egui::Context) {
         let title = if self.settings.hide_filename_in_title {
             if self.is_modified {
-                "SEN *".to_string()
+                t!("helpers.title_sen_mod").to_string()
             } else {
-                "SEN".to_string()
+                t!("helpers.title_sen").to_string()
             }
         } else if let Some(path) = &self.current_file_path {
             let filename = path.file_name().unwrap_or_default().to_string_lossy();
             let display_name = filename.strip_suffix(".sen").unwrap_or(&filename);
             
             if self.is_modified {
-                format!("* {} - SEN", display_name)
+                t!("helpers.title_file_mod", file = display_name).to_string()
             } else {
-                format!("{} - SEN", display_name)
+                t!("helpers.title_file", file = display_name).to_string()
             }
         } else {
             if self.is_modified {
-                "* Untitled - SEN".to_string()
+                t!("helpers.title_untitled_mod", file = t!("helpers.title_untitled")).to_string()
             } else {
-                "Untitled - SEN".to_string()
+                t!("helpers.title_untitled").to_string()
             }
         };
 
@@ -849,7 +838,7 @@ impl EditorApp {
         if self.zen_mode {
             // Enter Fullscreen
             ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(true));
-            self.log_info("Zen Mode enabled");
+            self.log_info(t!("helpers.log_zen_on"));
         } else {
             // Exit Fullscreen
             ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(false));
@@ -857,7 +846,7 @@ impl EditorApp {
             if self.settings.start_maximized {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Maximized(true));
             }
-            self.log_info("Zen Mode disabled");
+            self.log_info(t!("helpers.log_zen_off"));
         }
     }
     /// Truncate text to fit width, eating any trailing dots before the ellipsis

@@ -2,6 +2,7 @@ use crate::app_state::PendingAction;
 use crate::crypto::{decrypt_file, encrypt_file, generate_keyfile};
 use crate::history::DocumentWithHistory;
 use crate::EditorApp;
+use rust_i18n::t;
 use std::path::PathBuf;
 
 impl EditorApp {
@@ -44,15 +45,15 @@ impl EditorApp {
         self.is_modified = false;
         self.loaded_history_index = None;
         self.show_autosave_restore = false;
-        self.status_message = "New document created".to_string();
-        self.log_info("New document created");
+        self.status_message = t!("actions.status_new").to_string();
+        self.log_info(t!("actions.log_new"));
     }
 
     /// Open file dialog implementation
     pub(crate) fn perform_open_file_dialog(&mut self) {
         if let Some(path) = rfd::FileDialog::new()
-            .add_filter("SEN Files", &["sen"])
-            .add_filter("All Files", &["*"])
+            .add_filter(t!("actions.filter_sen"), &["sen"])
+            .add_filter(t!("actions.filter_all"), &["*"])
             .pick_file()
         {
             self.perform_open_file(path, false);
@@ -64,11 +65,11 @@ impl EditorApp {
     pub(crate) fn perform_open_file(&mut self, path: PathBuf, exit_on_cancel: bool) {
         if self.keyfile_path.is_none() {
             let filename = path.file_name().unwrap_or_default().to_string_lossy();
-            self.status_message = format!("Opening {}: Please select a keyfile", filename);
-            self.log_warning(format!("Opening file requires a keyfile: {}", filename));
+            self.status_message = t!("actions.status_open_key_needed", file = filename).to_string();
+            self.log_warning(t!("actions.log_open_key_needed", file = filename));
 
             if let Some(kf_path) = rfd::FileDialog::new()
-                .set_title(format!("Select Keyfile for {}", filename))
+                .set_title(t!("actions.title_select_key", file = filename))
                 .pick_file()
             {
                 self.keyfile_path = Some(kf_path);
@@ -78,17 +79,14 @@ impl EditorApp {
                 if exit_on_cancel {
                     std::process::exit(0);
                 }
-                self.log_info("Keyfile selection cancelled by user");
+                self.log_info(t!("actions.log_open_cancel"));
                 return;
             }
         }
 
         let keyfile = self.keyfile_path.clone().unwrap();
-        self.log_info(format!("Opening file: {}", self.mask_directory_path(&path)));
-        self.log_info(format!(
-            "Using keyfile: {}",
-            self.mask_keyfile_path(&keyfile)
-        ));
+        self.log_info(t!("actions.log_opening", file = self.mask_directory_path(&path)));
+        self.log_info(t!("actions.log_using_key", file = self.mask_keyfile_path(&keyfile)));
 
         let mut current_keyfile = keyfile;
         loop {
@@ -106,37 +104,34 @@ impl EditorApp {
                     let masked_path = self.mask_directory_path(&path);
                     
                     self.status_message = if masked_path == "Secured" {
-                        format!("Opened file with {} history entries", history_count)
+                        t!("actions.status_opened_history", count = history_count).to_string()
                     } else {
-                        format!("Opened: {} ({} history entries)", masked_path, history_count)
+                        t!("actions.status_opened_file_history", file = masked_path, count = history_count).to_string()
                     };
                     
                     self.log_info(if masked_path == "Secured" {
-                        format!("File opened successfully with {} history entries", history_count)
+                        t!("actions.log_opened_history", count = history_count).to_string()
                     } else {
-                        format!("File opened successfully: {} ({} history entries)", masked_path, history_count)
+                        t!("actions.log_opened_file_history", file = masked_path, count = history_count).to_string()
                     });
                     break;
                 }
                 Err(e) => {
                     let filename = path.file_name().unwrap_or_default().to_string_lossy();
-                    self.status_message = format!("Wrong keyfile for {}", filename);
-                    self.log_warning(format!("Decryption failed: {} — prompting for different keyfile", e));
+                    self.status_message = t!("actions.status_wrong_key", file = filename).to_string();
+                    self.log_warning(t!("actions.log_dec_failed", e = e));
 
                     if let Some(new_kf) = rfd::FileDialog::new()
-                        .set_title(format!("Wrong keyfile — Select correct keyfile for {}", filename))
+                        .set_title(t!("actions.title_select_key", file = filename))
                         .pick_file()
                     {
                         current_keyfile = new_kf;
-                        self.log_info(format!(
-                            "Retrying with keyfile: {}",
-                            self.mask_keyfile_path(&current_keyfile)
-                        ));
+                        self.log_info(t!("actions.log_retry_key", file = self.mask_keyfile_path(&current_keyfile)));
                     } else {
                         if exit_on_cancel {
                             std::process::exit(0);
                         }
-                        self.log_info("Keyfile selection cancelled by user");
+                        self.log_info(t!("actions.log_open_cancel"));
                         break;
                     }
                 }
@@ -147,10 +142,7 @@ impl EditorApp {
     /// Open directory implementation
     pub(crate) fn perform_open_directory(&mut self) {
         if let Some(path) = rfd::FileDialog::new().pick_folder() {
-            self.log_info(format!(
-                "Opening directory: {}",
-                self.mask_directory_path(&path)
-            ));
+            self.log_info(t!("actions.log_open_dir", file = self.mask_directory_path(&path)));
             self.file_tree_dir = Some(path.clone());
 
             self.show_file_tree = true;
@@ -163,10 +155,7 @@ impl EditorApp {
 
     /// Change directory implementation
     pub(crate) fn perform_change_directory(&mut self, path: PathBuf) {
-        self.log_info(format!(
-            "Changing to directory: {}",
-            self.mask_directory_path(&path)
-        ));
+        self.log_info(t!("actions.log_change_dir", file = self.mask_directory_path(&path)));
         self.file_tree_dir = Some(path.clone());
 
         let _ = self.settings.save();
@@ -177,8 +166,8 @@ impl EditorApp {
     /// Save file
     pub(crate) fn save_file(&mut self) {
         if self.keyfile_path.is_none() {
-            self.status_message = "Error: No keyfile loaded".to_string();
-            self.log_error("Attempted to save without keyfile");
+            self.status_message = t!("actions.status_no_key").to_string();
+            self.log_error(t!("actions.log_save_no_key"));
             return;
         }
 
@@ -192,13 +181,13 @@ impl EditorApp {
     /// Save file as
     pub(crate) fn save_file_as(&mut self) {
         if self.keyfile_path.is_none() {
-            self.status_message = "Error: No keyfile loaded".to_string();
-            self.log_error("Attempted to save as without keyfile");
+            self.status_message = t!("actions.status_no_key").to_string();
+            self.log_error(t!("actions.log_save_as_no_key"));
             return;
         }
 
         let mut dialog = rfd::FileDialog::new()
-            .add_filter("SEN Files", &["sen"])
+            .add_filter(t!("actions.filter_sen"), &["sen"])
             .set_file_name("document.sen");
 
         // If a directory is open in the file tree, use it as default
@@ -215,12 +204,12 @@ impl EditorApp {
     /// Perform actual save
     pub(crate) fn perform_save(&mut self, path: PathBuf) {
         let keyfile = self.keyfile_path.clone().unwrap();
-        self.log_info(format!("Saving file: {}", self.mask_directory_path(&path)));
+        self.log_info(t!("actions.log_saving", file = self.mask_directory_path(&path)));
 
         // Save current state to history (snapshot) if modified
         if self.is_modified {
             self.document.add_snapshot(None);
-            self.log_info("Snapshot created automatically");
+            self.log_info(t!("actions.log_snapshot_auto"));
         }
 
         // Clear autosave slot on proper save
@@ -242,15 +231,15 @@ impl EditorApp {
                 let masked_path = self.mask_directory_path(&path);
                 
                 self.status_message = if masked_path == "Secured" {
-                    format!("Saved file with {} history entries", history_count)
+                    t!("actions.status_saved_history", count = history_count).to_string()
                 } else {
-                    format!("Saved: {} ({} history entries)", masked_path, history_count)
+                    t!("actions.status_saved_file_history", file = masked_path, count = history_count).to_string()
                 };
                 
                 self.log_success(if masked_path == "Secured" {
-                    "File saved successfully".to_string()
+                    t!("actions.log_save_success").to_string()
                 } else {
-                    format!("File saved successfully: {}", masked_path)
+                    t!("actions.log_save_file_success", file = masked_path).to_string()
                 });
                 
                 self.refresh_file_tree();
@@ -261,16 +250,17 @@ impl EditorApp {
                         if let Some(file_name) = path.file_name() {
                             let backup_path = backup_dir.join(file_name);
                             match std::fs::copy(&path, &backup_path) {
-                                Ok(_) => self.log_info(format!("Auto-backed up to {}", self.mask_directory_path(&backup_path))),
-                                Err(e) => self.log_error(format!("Auto-backup failed: {}", e)),
+                                Ok(_) => self.log_info(t!("actions.log_backup_success", file = self.mask_directory_path(&backup_path))),
+                                Err(e) => self.log_error(t!("actions.log_backup_failed", e = e)),
                             }
                         }
                     }
                 }
             }
             Err(e) => {
+                self.status_message = t!("actions.log_export_err", e = e).to_string(); // Re-use generic err? Actuallyactions.log_save_failed
                 self.status_message = format!("Error: {}", e);
-                self.log_error(format!("Save failed: {}", e));
+                self.log_error(t!("actions.log_save_failed", e = e));
             }
         }
     }
@@ -278,27 +268,21 @@ impl EditorApp {
     /// Load keyfile
     pub(crate) fn load_keyfile(&mut self) {
         if let Some(path) = rfd::FileDialog::new().pick_file() {
-            self.log_info(format!(
-                "Attempting to load keyfile: {}",
-                self.mask_keyfile_path(&path)
-            ));
+            self.log_info(t!("actions.log_load_key", file = self.mask_keyfile_path(&path)));
 
             match std::fs::metadata(&path) {
                 Ok(metadata) => {
                     let size = metadata.len();
 
                     if size == 0 {
-                        self.status_message = "Error: Keyfile is empty (0 bytes)".to_string();
-                        self.log_error("Keyfile is empty");
+                        self.status_message = t!("actions.status_key_empty").to_string();
+                        self.log_error(t!("actions.log_key_empty"));
                         return;
                     }
                     const MAX_KEYFILE_SIZE: u64 = 100 * 1024 * 1024; // 100 MB
                     if size > MAX_KEYFILE_SIZE {
-                        self.status_message = format!(
-                            "Error: Keyfile too large ({:.1} MB, max 100 MB)",
-                            size as f64 / (1024.0 * 1024.0)
-                        );
-                        self.log_error(format!("Keyfile too large: {} bytes", size));
+                        self.status_message = t!("actions.status_key_large", size = format!("{:.1}", size as f64 / (1024.0 * 1024.0))).to_string();
+                        self.log_error(t!("actions.log_key_large", size = size));
                         return;
                     }
 
@@ -308,25 +292,25 @@ impl EditorApp {
                             self.refresh_file_access_status();
                             let masked = self.mask_keyfile_path(&path);
                             self.status_message = if masked == "Secured" {
-                                "Valid keyfile loaded".to_string()
+                                t!("actions.status_key_valid").to_string()
                             } else {
-                                format!("Valid keyfile loaded: {}", masked)
+                                t!("actions.status_key_file_valid", file = masked).to_string()
                             };
                             self.log_info(if masked == "Secured" {
-                                "Valid keyfile loaded successfully".to_string()
+                                t!("actions.log_key_valid").to_string()
                             } else {
-                                format!("Valid keyfile loaded successfully: {}", masked)
+                                t!("actions.log_key_file_valid", file = masked).to_string()
                             });
                         }
                         Err(e) => {
-                            self.status_message = format!("Error: Cannot read keyfile: {}", e);
-                            self.log_error(format!("Cannot read keyfile: {}", e));
+                            self.status_message = t!("actions.status_key_read_err", e = e).to_string();
+                            self.log_error(t!("actions.log_key_read_err", e = e));
                         }
                     }
                 }
                 Err(e) => {
-                    self.status_message = format!("Error: Cannot access keyfile: {}", e);
-                    self.log_error(format!("Cannot access keyfile: {}", e));
+                    self.status_message = t!("actions.status_key_access_err", e = e).to_string();
+                    self.log_error(t!("actions.log_key_access_err", e = e));
                 }
             }
         }
@@ -335,10 +319,7 @@ impl EditorApp {
     /// Generate new keyfile
     pub(crate) fn generate_new_keyfile(&mut self) {
         if let Some(path) = rfd::FileDialog::new().set_file_name("keyfile").save_file() {
-            self.log_info(format!(
-                "Generating new keyfile: {}",
-                self.mask_keyfile_path(&path)
-            ));
+            self.log_info(t!("actions.log_gen_key", file = self.mask_keyfile_path(&path)));
 
             match generate_keyfile(&path) {
                 Ok(_) => {
@@ -346,19 +327,19 @@ impl EditorApp {
                     self.refresh_file_access_status();
                     let masked = self.mask_keyfile_path(&path);
                     self.status_message = if masked == "Secured" {
-                        "Keyfile generated successfully".to_string()
+                        t!("actions.status_gen_success").to_string()
                     } else {
-                        format!("Keyfile generated successfully: {}", masked)
+                        t!("actions.status_gen_file_success", file = masked).to_string()
                     };
                     self.log_info(if masked == "Secured" {
-                        "Keyfile generated successfully (256 bytes)".to_string()
+                        t!("actions.log_gen_success").to_string()
                     } else {
-                        format!("Keyfile generated successfully (256 bytes): {}", masked)
+                        t!("actions.log_gen_file_success", file = masked).to_string()
                     });
                 }
                 Err(e) => {
-                    self.status_message = format!("Error: {}", e);
-                    self.log_error(format!("Keyfile generation failed: {}", e));
+                    self.status_message = format!("Error: {}", e); // generic err?
+                    self.log_error(format!("Keyfile generation failed: {}", e)); // generic err?
                 }
             }
         }
@@ -368,8 +349,8 @@ impl EditorApp {
     pub(crate) fn load_history_version(&mut self, index: usize) {
         if self.document.load_version(index) {
             self.is_modified = true;
-            self.status_message = "Version loaded from history".to_string();
-            self.log_success(format!("Loaded history version #{}", index));
+            self.status_message = t!("actions.status_ver_loaded").to_string();
+            self.log_success(t!("actions.log_ver_loaded", index = index));
         }
     }
 
@@ -377,8 +358,8 @@ impl EditorApp {
     pub(crate) fn delete_history_entry(&mut self, index: usize) {
         if self.document.mark_entry_deleted(index) {
             self.is_modified = true;
-            self.status_message = "History entry marked for deletion (save to apply)".to_string();
-            self.log_info(format!("Marked history entry #{} for deletion", index));
+            self.status_message = t!("actions.status_hist_del").to_string();
+            self.log_info(t!("actions.log_hist_del", index = index));
         }
     }
 
@@ -388,8 +369,8 @@ impl EditorApp {
             self.is_modified = true;
             self.loaded_history_index = Some(index);
             self.status_message =
-                "Reverted to selected version, newer entries marked for deletion".to_string();
-            self.log_success(format!("Reverted to history version #{}", index));
+                t!("actions.status_revert_success").to_string();
+            self.log_success(t!("actions.log_revert_success", index = index));
         }
     }
 
@@ -399,11 +380,8 @@ impl EditorApp {
         self.document.mark_all_deleted();
         self.is_modified = true;
         self.loaded_history_index = None;
-        self.status_message = format!("Marked {} entries for deletion (save to apply)", count);
-        self.log_info(format!(
-            "Marked all history for deletion ({} entries)",
-            count
-        ));
+        self.status_message = t!("actions.status_hist_clear", count = count).to_string();
+        self.log_info(t!("actions.log_hist_clear", count = count));
     }
 
     /// Wrapper functions for UI
@@ -433,8 +411,8 @@ impl EditorApp {
     pub(crate) fn export_plaintext(&mut self) {
         let content = &self.document.current_content;
         if content.is_empty() {
-            self.status_message = "Nothing to export — document is empty".to_string();
-            self.log_warning("Export cancelled: empty document");
+            self.status_message = t!("actions.status_export_empty").to_string();
+            self.log_warning(t!("actions.log_export_empty"));
             return;
         }
 
@@ -447,30 +425,23 @@ impl EditorApp {
         };
 
         if let Some(path) = rfd::FileDialog::new()
-            .add_filter("Text Files", &["txt"])
-            .add_filter("All Files", &["*"])
+            .add_filter(t!("actions.filter_all"), &["*"])
             .set_file_name(&suggested_name)
             .save_file()
         {
             match std::fs::write(&path, &content) {
                 Ok(_) => {
-                    self.status_message = format!(
-                        "Exported as plaintext: {}",
-                        self.mask_directory_path(&path)
-                    );
-                    self.log_info(format!(
-                        "Exported {} bytes to {}",
-                        content.len(),
-                        self.mask_directory_path(&path)
-                    ));
+                    let masked = self.mask_directory_path(&path);
+                    self.status_message = t!("actions.status_exported", file = masked).to_string();
+                    self.log_info(t!("actions.log_exported", size = content.len(), file = masked));
                 }
                 Err(e) => {
-                    self.status_message = format!("Error exporting: {}", e);
-                    self.log_error(format!("Export failed: {}", e));
+                    self.status_message = t!("actions.status_export_err", e = e).to_string();
+                    self.log_error(t!("actions.log_export_err", e = e));
                 }
             }
         } else {
-            self.log_info("Export dialog cancelled");
+            self.log_info(t!("actions.log_export_cancel"));
         }
     }
 
@@ -478,15 +449,15 @@ impl EditorApp {
     pub(crate) fn associate_sen_files(&mut self) {
         #[cfg(not(any(target_os = "windows", target_os = "linux")))]
         {
-            self.log_warning("Automatic file association is not supported on this platform. Please set it manually in your OS.");
+            self.log_warning(t!("actions.log_assoc_not_supp"));
             return;
         }
 
         #[cfg(any(target_os = "windows", target_os = "linux"))]
         match self.perform_association() {
-            Ok(_) => self.log_success("File association applied successfully!"),
+            Ok(_) => self.log_success(t!("actions.log_assoc_success")),
             Err(e) => {
-                self.log_error(format!("Failed to set file association: {}", e));
+                self.log_error(t!("actions.log_assoc_failed", e = e));
                 crate::sen_debug!("Association error: {}", e);
             }
         }
@@ -580,44 +551,41 @@ Terminal=false"#,
     pub(crate) fn rotate_keyfile(&mut self) {
         // Must have an open, decrypted file
         if self.current_file_path.is_none() {
-            self.status_message = "Error: No file is open to rotate keyfile for".to_string();
-            self.log_error("Keyfile rotation requires an open file");
+            self.status_message = t!("actions.status_rotate_no_file").to_string();
+            self.log_error(t!("actions.log_rotate_no_file"));
             return;
         }
         if self.keyfile_path.is_none() {
-            self.status_message = "Error: No current keyfile loaded".to_string();
-            self.log_error("Keyfile rotation requires a current keyfile");
+            self.status_message = t!("actions.status_rotate_no_key").to_string();
+            self.log_error(t!("actions.log_rotate_no_key"));
             return;
         }
 
         // Ask user to select or generate a new keyfile
-        self.log_info("Selecting new keyfile for rotation...");
+        self.log_info(t!("actions.log_rotate_select"));
 
         if let Some(new_keyfile_path) = rfd::FileDialog::new()
-            .set_title("Select New Keyfile")
+            .set_title(t!("dialog.rotate_title"))
             .pick_file()
         {
             // Validate the new keyfile
             match std::fs::metadata(&new_keyfile_path) {
                 Ok(metadata) => {
                     if metadata.len() == 0 {
-                        self.status_message = "Error: New keyfile is empty".to_string();
-                        self.log_error("New keyfile is empty");
+                        self.status_message = t!("actions.log_key_empty").to_string(); // Re-use log?
+                        self.log_error(t!("actions.log_key_empty"));
                         return;
                     }
                     const MAX_KEYFILE_SIZE: u64 = 100 * 1024 * 1024;
                     if metadata.len() > MAX_KEYFILE_SIZE {
-                        self.status_message = format!(
-                            "Error: New keyfile too large ({:.1} MB, max 100 MB)",
-                            metadata.len() as f64 / (1024.0 * 1024.0)
-                        );
-                        self.log_error(format!("New keyfile too large: {} bytes", metadata.len()));
+                        self.status_message = t!("actions.status_key_large", size = format!("{:.1}", metadata.len() as f64 / (1024.0 * 1024.0))).to_string();
+                        self.log_error(t!("actions.log_key_large", size = metadata.len()));
                         return;
                     }
                 }
                 Err(e) => {
-                    self.status_message = format!("Error: Cannot read new keyfile: {}", e);
-                    self.log_error(format!("Cannot access new keyfile: {}", e));
+                    self.status_message = t!("actions.status_key_access_err", e = e).to_string();
+                    self.log_error(t!("actions.log_key_access_err", e = e));
                     return;
                 }
             }
@@ -641,24 +609,24 @@ Terminal=false"#,
                     let new_masked = self.mask_keyfile_path(&new_keyfile_path);
                     
                     self.status_message = if new_masked == "Secured" && old_name == "Secured" {
-                        "Keyfile rotated successfully".to_string()
+                        t!("actions.status_rotate_success").to_string()
                     } else {
-                        format!("Keyfile rotated successfully: {} → {}", old_name, new_masked)
+                        t!("actions.status_rotate_file_success", old = old_name, new = new_masked).to_string()
                     };
                     
                     self.log_success(if new_masked == "Secured" {
-                        "Keyfile rotated successfully".to_string()
+                        t!("actions.status_rotate_success").to_string()
                     } else {
-                        format!("Keyfile rotated successfully for {}", self.mask_directory_path(&file_path))
+                        t!("actions.log_rotate_success_file", file = self.mask_directory_path(&file_path))
                     });
                 }
                 Err(e) => {
-                    self.status_message = format!("Error during keyfile rotation: {}", e);
-                    self.log_error(format!("Keyfile rotation failed: {}", e));
+                    self.status_message = t!("actions.status_rotate_failed", e = e).to_string();
+                    self.log_error(t!("actions.log_rotate_failed", e = e));
                 }
             }
         } else {
-            self.log_info("Keyfile rotation cancelled");
+            self.log_info(t!("actions.log_rotate_cancel"));
         }
     }
 
@@ -701,15 +669,12 @@ Terminal=false"#,
         match encrypt_file(&file_content, &keyfile, &original_path) {
             Ok(_) => {
                 self.last_autosave_time = Some(now);
-                self.log_info(format!(
-                    "Auto-saved inside {}",
-                    self.mask_directory_path(&original_path)
-                ));
+                self.log_info(t!("actions.log_autosave_success", file = self.mask_directory_path(&original_path)));
             }
             Err(e) => {
                 // Revert autosave slot on failure to avoid stale data
                 self.document.clear_autosave();
-                self.log_error(format!("Auto-save failed: {}", e));
+                self.log_error(t!("actions.log_autosave_failed", e = e));
             }
         }
     }

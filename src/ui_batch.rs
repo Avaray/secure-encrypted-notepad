@@ -2,6 +2,7 @@ use crate::app_state::{BatchMode, KeyStatus};
 use crate::crypto::{decrypt_bytes, encrypt_bytes};
 use crate::EditorApp;
 use eframe::egui;
+use rust_i18n::t;
 use std::path::Path;
 
 impl EditorApp {
@@ -34,12 +35,12 @@ impl EditorApp {
             }))
             .show_inside(ui, |ui| {
                 crate::app_helpers::center_row(ui, |ui| {
-                    ui.label(egui::RichText::new("BATCH CONVERTER").strong().heading());
+                    ui.label(egui::RichText::new(t!("batch.title")).strong().heading());
                     ui.add_space(8.0);
-                    ui.label(egui::RichText::new("Shift file focus: Encrypt, decrypt, or rotate keyfiles in bulk.").weak());
+                    ui.label(egui::RichText::new(t!("batch.subtitle")).weak());
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button("❌ Close").on_hover_text("Return to Editor").clicked() {
+                        if ui.button(t!("batch.btn_close")).on_hover_text(t!("batch.btn_close_hover")).clicked() {
                             self.show_batch_converter = false;
                         }
                     });
@@ -63,18 +64,18 @@ impl EditorApp {
                         }
                         // --- Mode Selector ---
                         ui.vertical(|ui| {
-                            ui.label(egui::RichText::new("CONVERSION MODE").strong());
+                            ui.label(egui::RichText::new(t!("batch.mode_label")).strong());
                             ui.add_space(4.0);
                             crate::app_helpers::center_row(ui, |ui| {
-                                ui.selectable_value(&mut self.batch_mode, BatchMode::Encrypt, "🔒 Encrypt");
-                                ui.selectable_value(&mut self.batch_mode, BatchMode::Decrypt, "🔓 Decrypt");
-                                ui.selectable_value(&mut self.batch_mode, BatchMode::Rotate, "🔄 Rotate");
+                                ui.selectable_value(&mut self.batch_mode, BatchMode::Encrypt, t!("batch.mode_encrypt"));
+                                ui.selectable_value(&mut self.batch_mode, BatchMode::Decrypt, t!("batch.mode_decrypt"));
+                                ui.selectable_value(&mut self.batch_mode, BatchMode::Rotate, t!("batch.mode_rotate"));
                             });
                             ui.add_space(4.0);
                             let mode_desc = match self.batch_mode {
-                                BatchMode::Encrypt => "Pack plaintext into secure .sen files.",
-                                BatchMode::Decrypt => "Extract secured files back to readable format.",
-                                BatchMode::Rotate => "Re-encrypt multiple files with a new keyfile.",
+                                BatchMode::Encrypt => t!("batch.desc_encrypt"),
+                                BatchMode::Decrypt => t!("batch.desc_decrypt"),
+                                BatchMode::Rotate => t!("batch.desc_rotate"),
                             };
                             ui.label(egui::RichText::new(mode_desc).weak().small());
                         });
@@ -85,21 +86,21 @@ impl EditorApp {
 
                         // --- Keyfile Section ---
                         let keyfile_label = match self.batch_mode {
-                            BatchMode::Rotate => "OLD KEYFILE (Source)",
-                            _ => "KEYFILE",
+                            BatchMode::Rotate => t!("batch.key_old"),
+                            _ => t!("batch.key_label"),
                         };
 
                         ui.vertical(|ui| {
                             ui.label(egui::RichText::new(keyfile_label).strong());
                             ui.add_space(4.0);
                             crate::app_helpers::center_row(ui, |ui| {
-                                if ui.button("Select keyfile").clicked() {
+                                if ui.button(t!("batch.btn_select_key")).clicked() {
                                     if let Some(path) = rfd::FileDialog::new().pick_file() {
                                         self.batch_keyfile = Some(path);
                                     }
                                 }
                                 if let Some(path) = &self.keyfile_path {
-                                    if ui.button("Load from Editor").on_hover_text("Use currently loaded key from the main app").clicked() {
+                                    if ui.button(t!("batch.btn_load_editor")).on_hover_text(t!("batch.btn_load_editor_hover")).clicked() {
                                         self.batch_keyfile = Some(path.clone());
                                     }
                                 }
@@ -112,7 +113,7 @@ impl EditorApp {
                                             .color(self.current_theme.colors.success_color()),
                                     );
                                 } else {
-                                    ui.label(egui::RichText::new("No keyfile selected").weak());
+                                    ui.label(egui::RichText::new(t!("batch.key_none")).weak());
                                 }
                             });
                         });
@@ -124,10 +125,10 @@ impl EditorApp {
                             ui.add_space(12.0);
 
                             ui.vertical(|ui| {
-                                ui.label(egui::RichText::new("NEW KEYFILE (Target)").strong());
+                                ui.label(egui::RichText::new(t!("batch.key_new")).strong());
                                 ui.add_space(4.0);
                                 crate::app_helpers::center_row(ui, |ui| {
-                                    if ui.button("Select keyfile").clicked() {
+                                    if ui.button(t!("batch.btn_select_key")).clicked() {
                                         if let Some(path) = rfd::FileDialog::new().pick_file() {
                                             self.batch_keyfile_new = Some(path);
                                         }
@@ -141,7 +142,7 @@ impl EditorApp {
                                                 .color(self.current_theme.colors.success_color()),
                                         );
                                     } else {
-                                        ui.label(egui::RichText::new("No new keyfile selected").weak());
+                                        ui.label(egui::RichText::new(t!("batch.key_new_none")).weak());
                                     }
                                 });
                             });
@@ -153,18 +154,18 @@ impl EditorApp {
 
                         // --- Output Configuration ---
                         ui.vertical(|ui| {
-                            ui.label(egui::RichText::new("OUTPUT SETTINGS").strong());
+                            ui.label(egui::RichText::new(t!("batch.output_label")).strong());
                             ui.add_space(4.0);
                             
                             // Output Directory
                             crate::app_helpers::center_row(ui, |ui| {
-                                if ui.button("Select Output Directory").clicked() {
+                                if ui.button(t!("batch.btn_select_out")).clicked() {
                                     if let Some(path) = rfd::FileDialog::new().pick_folder() {
                                         self.batch_output_dir = Some(path);
                                     }
                                 }
                                 if self.batch_output_dir.is_some() {
-                                    if ui.button("🗑 Clear").clicked() {
+                                    if ui.button(t!("batch.btn_clear")).clicked() {
                                         self.batch_output_dir = None;
                                     }
                                 }
@@ -180,7 +181,7 @@ impl EditorApp {
                                     };
                                     ui.label(egui::RichText::new(format!("📁 {}", masked)).color(color));
                                 } else {
-                                    ui.label(egui::RichText::new("Same as input files (default)").weak());
+                                    ui.label(egui::RichText::new(t!("batch.output_default")).weak());
                                 }
                             });
 
@@ -188,7 +189,7 @@ impl EditorApp {
                             if self.batch_mode == BatchMode::Decrypt {
                                 ui.add_space(8.0);
                                 crate::app_helpers::center_row(ui, |ui| {
-                                    ui.label("Extension:");
+                                    ui.label(t!("batch.extension"));
                                     let mut ext = self.batch_output_extension.clone();
                                     if ui.add(egui::TextEdit::singleline(&mut ext).hint_text("txt")).changed() {
                                         let new_ext = ext.trim_start_matches('.').to_string();
@@ -219,16 +220,16 @@ impl EditorApp {
                                     BatchMode::Rotate => "🔄",
                                 };
                                 let verb = match self.batch_mode {
-                                    BatchMode::Encrypt => "Encrypting",
-                                    BatchMode::Decrypt => "Decrypting",
-                                    BatchMode::Rotate => "Rotating",
+                                    BatchMode::Encrypt => t!("batch.status_encrypt"),
+                                    BatchMode::Decrypt => t!("batch.status_decrypt"),
+                                    BatchMode::Rotate => t!("batch.status_rotate"),
                                 };
                                 (format!("{} {}/{}", verb, self.batch_progress_count, self.batch_total_count), mode_icon)
                             } else {
                                 match self.batch_mode {
-                                    BatchMode::Encrypt => ("Encrypt All".to_string(), "🔒"),
-                                    BatchMode::Decrypt => ("Decrypt All".to_string(), "🔓"),
-                                    BatchMode::Rotate => ("Rotate All".to_string(), "🔄"),
+                                    BatchMode::Encrypt => (t!("batch.btn_encrypt").to_string(), "🔒"),
+                                    BatchMode::Decrypt => (t!("batch.btn_decrypt").to_string(), "🔓"),
+                                    BatchMode::Rotate => (t!("batch.btn_rotate").to_string(), "🔄"),
                                 }
                             };
 
@@ -273,19 +274,19 @@ impl EditorApp {
                         }
                         let files_count = self.batch_files.len();
                         let heading_text = if files_count > 0 {
-                            format!("Input Files ({})", files_count)
+                            t!("batch.input_count", count = files_count)
                         } else {
-                            "Input Files".to_string()
+                            t!("batch.input_label").to_string()
                         };
 
                         if ui.available_width() > 320.0 {
                             crate::app_helpers::center_row(ui, |ui| {
                                 ui.heading(&heading_text);
                                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                    if ui.button("Clean List").clicked() {
+                                    if ui.button(t!("batch.btn_clean")).clicked() {
                                         self.batch_files.clear();
                                     }
-                                    if ui.button("Add Files").clicked() {
+                                    if ui.button(t!("batch.btn_add")).clicked() {
                                         if let Some(files) = rfd::FileDialog::new().pick_files() {
                                             for file in files {
                                                 if !self.batch_files.contains(&file) {
@@ -299,7 +300,7 @@ impl EditorApp {
                         } else {
                             ui.heading(&heading_text);
                             crate::app_helpers::center_row(ui, |ui| {
-                                if ui.button("Add Files").clicked() {
+                                if ui.button(t!("batch.btn_add")).clicked() {
                                     if let Some(files) = rfd::FileDialog::new().pick_files() {
                                         for file in files {
                                             if !self.batch_files.contains(&file) {
@@ -308,7 +309,7 @@ impl EditorApp {
                                         }
                                     }
                                 }
-                                if ui.button("Clean List").clicked() {
+                                if ui.button(t!("batch.btn_clean")).clicked() {
                                     self.batch_files.clear();
                                 }
                             });
@@ -320,7 +321,7 @@ impl EditorApp {
                             .auto_shrink([false, false])
                             .show(ui, |ui| {
                                 if self.batch_files.is_empty() {
-                                    ui.label("No files added.");
+                                    ui.label(t!("batch.files_none"));
                                 } else {
                                     let mut to_remove = None;
                                     for (idx, file) in self.batch_files.iter().enumerate() {
@@ -398,7 +399,7 @@ impl EditorApp {
         let batch_output_dir = self.batch_output_dir.clone();
 
         if let Err(e) = crate::crypto::get_keyfile_hash(&keyfile) {
-            let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, format!("Critical: Keyfile error: {}", e)));
+            let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_err_keyfile", e = e)));
             let _ = tx.send(crate::app_state::BatchProgressUpdate::Finished(0, 0));
             return;
         }
@@ -411,7 +412,7 @@ impl EditorApp {
                 // Heuristic Check: Is it already a SEN file?
                 if crate::crypto::is_sen_file(file) {
                     failed += 1;
-                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, format!("[Encrypt] Ignored: File is already encrypted (SEN header detected): {}", file.file_name().unwrap_or_default().to_string_lossy())));
+                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, t!("batch.log_enc_ignored_sen", file = file.file_name().unwrap_or_default().to_string_lossy())));
                     let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
                     continue;
                 }
@@ -430,7 +431,7 @@ impl EditorApp {
                         // Binary Check: Heuristic check if it's actually text
                         if !crate::crypto::is_buffer_text(&buffer) {
                              failed += 1;
-                             let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, format!("[Encrypt] Ignored: File appears to be binary (non-text): {}", file.file_name().unwrap_or_default().to_string_lossy())));
+                             let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, t!("batch.log_enc_ignored_binary", file = file.file_name().unwrap_or_default().to_string_lossy())));
                              let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
                              continue;
                         }
@@ -438,17 +439,17 @@ impl EditorApp {
                         match encrypt_bytes(&buffer, &keyfile, &output_path) {
                             Ok(_) => {
                                 success += 1;
-                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Success, format!("[Encrypt] Success: {}", file.file_name().unwrap_or_default().to_string_lossy())));
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Success, t!("batch.log_enc_success", file = file.file_name().unwrap_or_default().to_string_lossy())));
                             }
                             Err(e) => {
                                 failed += 1;
-                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, format!("[Encrypt] Failed {}: {}", file.file_name().unwrap_or_default().to_string_lossy(), e)));
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_enc_failed", file = file.file_name().unwrap_or_default().to_string_lossy(), e = e)));
                             }
                         }
                     }
                     Err(e) => {
                         failed += 1;
-                        let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, format!("[Encrypt] Read Error {}: {}", file.file_name().unwrap_or_default().to_string_lossy(), e)));
+                        let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_enc_read_err", file = file.file_name().unwrap_or_default().to_string_lossy(), e = e)));
                     }
                 }
                 let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
@@ -479,7 +480,7 @@ impl EditorApp {
                 // Heuristic Check: Is it a SEN file?
                 if !crate::crypto::is_sen_file(file) {
                     failed += 1;
-                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, format!("[Decrypt] Ignored: Not a recognized SEN file (invalid magic): {}", file.file_name().unwrap_or_default().to_string_lossy())));
+                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, t!("batch.log_dec_ignored_magic", file = file.file_name().unwrap_or_default().to_string_lossy())));
                     let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
                     continue;
                 }
@@ -517,17 +518,17 @@ impl EditorApp {
                         match std::fs::write(&output_path, final_content) {
                             Ok(_) => {
                                 success += 1;
-                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Success, format!("[Decrypt] Success: {}", file.file_name().unwrap_or_default().to_string_lossy())));
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Success, t!("batch.log_dec_success", file = file.file_name().unwrap_or_default().to_string_lossy())));
                             }
                             Err(e) => {
                                 failed += 1;
-                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, format!("[Decrypt] Write Error {}: {}", output_path.file_name().unwrap_or_default().to_string_lossy(), e)));
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_dec_write_err", file = output_path.file_name().unwrap_or_default().to_string_lossy(), e = e)));
                             }
                         }
                     }
                     Err(e) => {
                         failed += 1;
-                        let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, format!("[Decrypt] Error {}: {}", file.file_name().unwrap_or_default().to_string_lossy(), e)));
+                        let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_dec_err", file = file.file_name().unwrap_or_default().to_string_lossy(), e = e)));
                     }
                 }
                 let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
@@ -557,7 +558,7 @@ impl EditorApp {
                 // Heuristic Check: Is it a SEN file?
                 if !crate::crypto::is_sen_file(file) {
                     failed += 1;
-                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, format!("[Rotate] Ignored: Not a recognized SEN file (invalid magic): {}", file.file_name().unwrap_or_default().to_string_lossy())));
+                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, t!("batch.log_rot_ignored_magic", file = file.file_name().unwrap_or_default().to_string_lossy())));
                     let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
                     continue;
                 }
@@ -569,17 +570,17 @@ impl EditorApp {
                         match encrypt_bytes(&buffer, &new_keyfile, file) {
                             Ok(_) => {
                                 success += 1;
-                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Success, format!("[Rotate] Success: {}", file.file_name().unwrap_or_default().to_string_lossy())));
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Success, t!("batch.log_rot_success", file = file.file_name().unwrap_or_default().to_string_lossy())));
                             }
                             Err(e) => {
                                 failed += 1;
-                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, format!("[Rotate] Re-encrypt Error {}: {}", file.file_name().unwrap_or_default().to_string_lossy(), e)));
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_rot_enc_err", file = file.file_name().unwrap_or_default().to_string_lossy(), e = e)));
                             }
                         }
                     }
                     Err(e) => {
                         failed += 1;
-                        let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, format!("[Rotate] Decrypt Error {}: {}", file.file_name().unwrap_or_default().to_string_lossy(), e)));
+                        let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_rot_dec_err", file = file.file_name().unwrap_or_default().to_string_lossy(), e = e)));
                     }
                 }
                 let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));

@@ -15,7 +15,7 @@ impl EditorApp {
                 self.current_match_index = None;
             }
 
-            ui.label("Find:");
+            ui.label(rust_i18n::t!("search.find"));
             let original_cursor_color = ui.visuals().text_cursor.stroke.color;
             let original_selection_color = ui.visuals().selection.bg_fill;
             let original_inactive_stroke = ui.visuals().widgets.inactive.bg_stroke;
@@ -27,7 +27,7 @@ impl EditorApp {
 
             let output = egui::TextEdit::singleline(&mut self.search_query)
                 .desired_width(200.0)
-                .hint_text("Search...")
+                .hint_text(rust_i18n::t!("search.hint"))
                 .show(ui);
 
             let response = output.response.clone();
@@ -60,7 +60,7 @@ impl EditorApp {
                 response.request_focus();
             }
 
-            if ui.checkbox(&mut self.search_case_sensitive, "Aa").changed() {
+            if ui.checkbox(&mut self.search_case_sensitive, rust_i18n::t!("search.case_sensitive")).changed() {
                 self.perform_search();
             }
 
@@ -74,17 +74,17 @@ impl EditorApp {
             // Match count
             if !self.search_matches.is_empty() {
                 if let Some(idx) = self.current_match_index {
-                    ui.label(format!("{} of {}", idx + 1, self.search_matches.len()));
+                    ui.label(rust_i18n::t!("search.match_count", current = idx + 1, total = self.search_matches.len()));
                 } else {
-                    ui.label(format!("{} matches", self.search_matches.len()));
+                    ui.label(rust_i18n::t!("search.matches", count = self.search_matches.len()));
                 }
             } else if !self.search_query.is_empty() {
-                ui.label("No matches");
+                ui.label(rust_i18n::t!("search.no_matches"));
             }
 
             ui.separator();
 
-            ui.label("Replace:");
+            ui.label(rust_i18n::t!("search.replace"));
             let original_cursor_color = ui.visuals().text_cursor.stroke.color;
             let original_selection_color = ui.visuals().selection.bg_fill;
             let original_inactive_stroke = ui.visuals().widgets.inactive.bg_stroke;
@@ -95,7 +95,7 @@ impl EditorApp {
 
             let replace_output = egui::TextEdit::singleline(&mut self.replace_query)
                 .desired_width(200.0)
-                .hint_text("Text")
+                .hint_text(rust_i18n::t!("search.replace_hint"))
                 .show(ui);
 
             ui.visuals_mut().text_cursor.stroke.color = original_cursor_color;
@@ -111,10 +111,10 @@ impl EditorApp {
                 original_selection_color,
             );
 
-            if ui.button("Replace one").clicked() {
+            if ui.button(rust_i18n::t!("search.btn_replace_one")).clicked() {
                 self.replace_current();
             }
-            if ui.button("Replace all").clicked() {
+            if ui.button(rust_i18n::t!("search.btn_replace_all")).clicked() {
                 self.replace_all();
             }
         });
