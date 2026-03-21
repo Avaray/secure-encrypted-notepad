@@ -181,7 +181,14 @@ impl EditorApp {
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
-        if Self::icon_btn(ui, &self.icons.key, &*rust_i18n::t!("toolbar.load_keyfile") , false, bs, is, ht, dt).clicked() {
+        let mut load_key_tint = dt;
+        if self.keyfile_path.is_none() {
+            let pulse_alpha = (0.1 + 0.9 * (self.start_time.elapsed().as_secs_f32() * 3.0).cos().abs()) as f32;
+            load_key_tint = self.current_theme.colors.warning_color().gamma_multiply(pulse_alpha);
+            ui.ctx().request_repaint(); // Animation needs repaint
+        }
+
+        if Self::icon_btn(ui, &self.icons.key, &*rust_i18n::t!("toolbar.load_keyfile") , false, bs, is, ht, load_key_tint).clicked() {
             self.load_keyfile();
         }
         if Self::icon_btn(ui, &self.icons.rotate, &*rust_i18n::t!("toolbar.rotate_keyfile") , false, bs, is, ht, dt).clicked() {
