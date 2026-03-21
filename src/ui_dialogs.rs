@@ -131,7 +131,7 @@ impl EditorApp {
                 crate::app_helpers::center_row(ui, |ui| {
                     ui.label(t!("dialog.goto_label"));
                     let response = ui.add(
-                        egui::TextEdit::singleline(&mut self.goto_line_input).desired_width(100.0),
+                        egui::TextEdit::singleline(&mut self.goto_line_input).desired_width(100.0).margin(ui.spacing().button_padding),
                     );
 
                     // Auto-focus on open

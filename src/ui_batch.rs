@@ -41,7 +41,7 @@ impl EditorApp {
                     ui.label(egui::RichText::new(t!("batch.subtitle")).weak());
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button(t!("batch.btn_close")).on_hover_text(t!("batch.btn_close_hover")).clicked() {
+                        if ui.button(t!("batch.btn_close")).on_hover_text(t!("batch.close_tooltip")).clicked() {
                             self.show_batch_converter = false;
                         }
                     });
@@ -87,7 +87,7 @@ impl EditorApp {
 
                         // --- Keyfile Section ---
                         let keyfile_label = match self.batch_mode {
-                            BatchMode::Rotate => t!("batch.key_old"),
+                            BatchMode::Rotate => t!("batch.key_old_label"),
                             _ => t!("batch.key_label"),
                         };
 
@@ -101,7 +101,7 @@ impl EditorApp {
                                     }
                                 }
                                 if let Some(path) = &self.keyfile_path {
-                                    if ui.button(t!("batch.btn_load_editor")).on_hover_text(t!("batch.btn_load_editor_hover")).clicked() {
+                                    if ui.button(t!("batch.btn_load_editor")).on_hover_text(t!("batch.load_editor_tooltip")).clicked() {
                                         self.batch_keyfile = Some(path.clone());
                                     }
                                 }
@@ -126,7 +126,7 @@ impl EditorApp {
                             ui.add_space(12.0);
 
                             ui.vertical(|ui| {
-                                ui.label(egui::RichText::new(t!("batch.key_new")).strong());
+                                ui.label(egui::RichText::new(t!("batch.key_new_label")).strong());
                                 ui.add_space(4.0);
                                 crate::app_helpers::center_row(ui, |ui| {
                                     if ui.button(t!("batch.btn_select_key")).clicked() {
@@ -143,7 +143,7 @@ impl EditorApp {
                                                 .color(self.current_theme.colors.success_color()),
                                         );
                                     } else {
-                                        ui.label(egui::RichText::new(t!("batch.key_new_none")).weak());
+                                        ui.label(egui::RichText::new(t!("batch.key_none")).weak());
                                     }
                                 });
                             });
@@ -160,13 +160,13 @@ impl EditorApp {
                             
                             // Output Directory
                             crate::app_helpers::center_row(ui, |ui| {
-                                if ui.button(t!("batch.btn_select_out")).clicked() {
+                                if ui.button(t!("batch.btn_select_out_dir")).clicked() {
                                     if let Some(path) = rfd::FileDialog::new().pick_folder() {
                                         self.batch_output_dir = Some(path);
                                     }
                                 }
                                 if self.batch_output_dir.is_some() {
-                                    if ui.button(t!("batch.btn_clear")).clicked() {
+                                    if ui.button(t!("batch.btn_clear_out_dir")).clicked() {
                                         self.batch_output_dir = None;
                                     }
                                 }
@@ -190,9 +190,9 @@ impl EditorApp {
                             if self.batch_mode == BatchMode::Decrypt {
                                 ui.add_space(8.0);
                                 crate::app_helpers::center_row(ui, |ui| {
-                                    ui.label(t!("batch.extension"));
+                                    ui.label(t!("batch.extension_label"));
                                     let mut ext = self.batch_output_extension.clone();
-                                    if ui.add(egui::TextEdit::singleline(&mut ext).hint_text("txt")).changed() {
+                                    if ui.add(egui::TextEdit::singleline(&mut ext).hint_text("txt").margin(ui.spacing().button_padding)).changed() {
                                         let new_ext = ext.trim_start_matches('.').to_string();
                                         self.batch_output_extension = new_ext.clone();
                                         self.settings.batch_last_extension = new_ext;
@@ -221,9 +221,9 @@ impl EditorApp {
                                     BatchMode::Rotate => "🔄",
                                 };
                                 let verb = match self.batch_mode {
-                                    BatchMode::Encrypt => t!("batch.status_encrypt"),
-                                    BatchMode::Decrypt => t!("batch.status_decrypt"),
-                                    BatchMode::Rotate => t!("batch.status_rotate"),
+                                    BatchMode::Encrypt => t!("batch.running_encrypt"),
+                                    BatchMode::Decrypt => t!("batch.running_decrypt"),
+                                    BatchMode::Rotate => t!("batch.running_rotate"),
                                 };
                                 (format!("{} {}/{}", verb, self.batch_progress_count, self.batch_total_count), mode_icon)
                             } else {
@@ -275,7 +275,7 @@ impl EditorApp {
                         }
                         let files_count = self.batch_files.len();
                         let heading_text = if files_count > 0 {
-                            t!("batch.input_count", count = files_count).to_string()
+                            t!("batch.input_files_head", count = files_count).to_string()
                         } else {
                             t!("batch.input_label").to_string()
                         };
