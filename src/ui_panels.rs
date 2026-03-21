@@ -660,6 +660,24 @@ egui::Slider::new(&mut self.settings.line_height, 1.0..=2.5)
 let _ = self.settings.save();
 }
 });
+// Global Scroll Speed
+crate::app_helpers::center_row(ui, |ui| {
+    ui.add(egui::Label::new("Scroll Speed:").selectable(false));
+    let mut mult = self.settings.scroll_speed_multiplier;
+    if ui
+        .add(
+            egui::DragValue::new(&mut mult)
+                .speed(0.1)
+                .range(1.0..=10.0)
+                .clamp_existing_to_range(true),
+        )
+        .on_hover_text("Global multiplier for mouse wheel scrolling speed across all panels.")
+        .changed()
+    {
+        self.settings.scroll_speed_multiplier = mult;
+        let _ = self.settings.save();
+    }
+});
 // Toolbar icon size
 crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new("Toolbar Icon Size:").selectable(false));

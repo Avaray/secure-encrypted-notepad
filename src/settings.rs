@@ -231,9 +231,17 @@ pub struct Settings {
     #[serde(default = "default_true")]
     pub single_instance: bool,
 
+    /// Global scroll speed multiplier
+    #[serde(default = "default_scroll_speed")]
+    pub scroll_speed_multiplier: f32,
+
     /// Volatile flag to indicate if this is the first run (no config file existed)
     #[serde(skip)]
     pub is_first_run: bool,
+}
+
+fn default_scroll_speed() -> f32 {
+    1.0
 }
 
 fn default_window_width() -> f32 {
@@ -346,6 +354,7 @@ impl Default for Settings {
             cursor_blink: true,
             batch_last_extension: String::new(),
             single_instance: true,
+            scroll_speed_multiplier: default_scroll_speed(),
             is_first_run: false,
         }
     }

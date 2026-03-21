@@ -574,6 +574,23 @@ impl EditorApp {
 
 impl eframe::App for EditorApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Intercept global scroll speed
+        if (self.settings.scroll_speed_multiplier - 1.0).abs() > f32::EPSILON {
+            let mult = self.settings.scroll_speed_multiplier;
+            ctx.input_mut(|i| {
+                // Modify raw_scroll_delta
+                i.raw_scroll_delta *= mult;
+                // Modify smooth_scroll_delta which EG 0.28+ ScrollAreas read directly
+                i.smooth_scroll_delta *= mult;
+                // Modify events (ScrollArea usually reads this directly)
+                for event in &mut i.events {
+                    if let egui::Event::MouseWheel { delta, .. } = event {
+                        *delta *= mult;
+                    }
+                }
+            });
+        }
+
         // Detect focus loss
         let is_focused = ctx.input(|i| i.focused);
         if self.focused && !is_focused && self.settings.auto_save_on_focus_loss {
