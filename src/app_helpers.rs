@@ -118,10 +118,6 @@ impl EditorApp {
             ]
             .into();
 
-            // ✅ POPRAWKA: Ustaw spacing aby tekst był wycentrowany w pionie
-            // Button padding - zwiększ padding w pionie (drugi parametr)
-            style.spacing.button_padding = egui::vec2(6.0, 4.0);
-
             // Item spacing - zwiększ spacing w pionie
             style.spacing.item_spacing = egui::vec2(8.0, 6.0);
 
