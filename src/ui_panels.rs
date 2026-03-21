@@ -715,7 +715,7 @@ let mut changed = false;
             };
 
             ui.horizontal(|ui| {
-                ui.add(egui::Image::new(current_icon).max_width(20.0).maintain_aspect_ratio(true));
+                ui.add(egui::Image::new(current_icon).max_width(40.0).maintain_aspect_ratio(true));
                 egui::ComboBox::from_id_salt("language_selector")
                     .selected_text(current_label)
                     .show_ui(ui, |ui| {
