@@ -25,6 +25,10 @@ pub struct Icons {
     pub spon_oc: TextureHandle, // Use CibKoFi as temporary if Open Collective is missing or intended
     pub copy: TextureHandle,
     pub paste: TextureHandle,
+    
+    pub flag_en: TextureHandle,
+    pub flag_pl: TextureHandle,
+    pub flag_de: TextureHandle,
 }
 
 impl Icons {
@@ -144,6 +148,21 @@ impl Icons {
                 ctx,
                 include_bytes!("../assets/MaterialSymbolsPaste.svg"),
                 "icon_paste",
+            ),
+            flag_en: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/FlagEN.svg"),
+                "flag_en",
+            ),
+            flag_pl: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/FlagPL.svg"),
+                "flag_pl",
+            ),
+            flag_de: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/FlagDE.svg"),
+                "flag_de",
             ),
         }
     }

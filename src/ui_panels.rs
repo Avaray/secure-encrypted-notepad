@@ -708,17 +708,35 @@ crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new(rust_i18n::t!("settings.language")).selectable(false));
 let current_lang = self.settings.language.clone();
 let mut changed = false;
-egui::ComboBox::from_id_salt("language_selector")
-.selected_text(match current_lang.as_str() {
-"pl" => "Polski",
-"de" => "Deutsch",
-_ => "English",
-})
-.show_ui(ui, |ui| {
-if ui.selectable_value(&mut self.settings.language, "en".to_string(), "English").clicked() { changed = true; }
-if ui.selectable_value(&mut self.settings.language, "pl".to_string(), "Polski").clicked() { changed = true; }
-if ui.selectable_value(&mut self.settings.language, "de".to_string(), "Deutsch").clicked() { changed = true; }
-});
+            let (current_label, current_icon) = match current_lang.as_str() {
+                "pl" => ("Polski", &self.icons.flag_pl),
+                "de" => ("Deutsch", &self.icons.flag_de),
+                _ => ("English", &self.icons.flag_en),
+            };
+
+            ui.horizontal(|ui| {
+                ui.add(egui::Image::new(current_icon).max_width(20.0).maintain_aspect_ratio(true));
+                egui::ComboBox::from_id_salt("language_selector")
+                    .selected_text(current_label)
+                    .show_ui(ui, |ui| {
+                        let mut lang_row = |ui: &mut egui::Ui, code: &str, label: &str, icon: &egui::TextureHandle| {
+                            let is_selected = self.settings.language == code;
+                            let mut clicked = false;
+                            ui.horizontal(|ui| {
+                                ui.add(egui::Image::new(icon).max_width(22.0).maintain_aspect_ratio(true));
+                                if ui.selectable_label(is_selected, label).clicked() {
+                                    self.settings.language = code.to_string();
+                                    clicked = true;
+                                }
+                            });
+                            clicked
+                        };
+
+                        if lang_row(ui, "en", "English", &self.icons.flag_en) { changed = true; }
+                        if lang_row(ui, "pl", "Polski", &self.icons.flag_pl) { changed = true; }
+                        if lang_row(ui, "de", "Deutsch", &self.icons.flag_de) { changed = true; }
+                    });
+            });
 if changed {
 rust_i18n::set_locale(&self.settings.language);
 let _ = self.settings.save();
