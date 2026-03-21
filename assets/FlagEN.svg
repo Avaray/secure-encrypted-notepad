@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480">
-  <rect width="640" height="480" fill="#012169"/>
-  <path fill="#FFF" d="M75 0l245 181L565 0h75v60L400 240l240 180v60h-75L320 300 75 480H0v-60l240-180L0 60V0h75z"/>
-  <path fill="#C8102E" d="M424 281l189 137v62h-45L369 321l55-40zm-286 0L0 400v80h5l189-137-55-62zM640 0v5l-189 137 55 62L640 80V0zM0 0v76l189 137-55 62L0 120V0z"/>
-  <path fill="#FFF" d="M240 0v480h160V0H240zM0 160v160h640V160H0z"/>
-  <path fill="#C8102E" d="M0 192v96h640v-96H0zM272 0v480h96V0h-96z"/>
-</svg>
