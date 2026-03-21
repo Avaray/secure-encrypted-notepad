@@ -10,7 +10,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 
 - [x] **Internationalization (I18n)**: Add support for multiple application languages. (Implemented with EN, PL, DE support).
 - [ ] **Icon Refresh**: Replace current temporary icons with higher-quality, professionally designed ones.
-- [ ] **Theme System Refactoring**: Refactor the color system to allow customization of more editor components.
+- [ ] **Theme System Refactoring & Expansion**: Refactor the color system and add more granular controls. This includes independent color states for buttons (idle, hover, active) for backgrounds, borders, and text, as well as similar refinements for text inputs and other interactive elements. Consider adding drop-shadow support for components.
 - [ ] **Logo & App Icon**: Create a new professional logo for SEN and replace the current application icon.
 - [ ] **UI Icon Sets**: Add the ability to change icon sets from a dropdown in settings. This will allow users to choose between different visual styles for the application icons (folders, keys, files, etc.), requiring architectural changes to support dynamic icon loading.
 - [ ] **File Tree Icons Refresh**: Replace current folder and file icons in the file tree panel with high-quality SVG equivalents for better visual consistency.
