@@ -359,6 +359,8 @@ impl Theme {
         // Apply foreground (text) color
         let foreground = self.colors.to_egui_color32(self.colors.foreground);
         visuals.widgets.noninteractive.fg_stroke.color = foreground;
+        visuals.widgets.inactive.fg_stroke.color = foreground;
+        visuals.widgets.hovered.fg_stroke.color = foreground;
         visuals.widgets.active.fg_stroke.color = foreground;
         
         // Remove override_text_color to allow selective coloring
@@ -370,9 +372,7 @@ impl Theme {
         }
 
         // Apply custom text colors
-        if let Some(c) = self.colors.weak_text {
-            visuals.widgets.inactive.fg_stroke.color = self.colors.to_egui_color32(c); // weak text fallback
-        }
+        // Note: weak text is derived automatically by egui's alpha multiplier. Overriding `inactive` broke checkboxes.
         if let Some(_c) = self.colors.strong_text {
             // Strong text is usually just a font change, but we can set a main color override if desired.
         }
@@ -404,8 +404,8 @@ impl Theme {
         if let Some(fg) = self.colors.button_fg {
             let fg_color = self.colors.to_egui_color32(fg);
             visuals.widgets.inactive.fg_stroke.color = fg_color;
-            visuals.widgets.noninteractive.fg_stroke.color = fg_color; // Checkboxes text etc?
-                                                                       // We usually want button text to be distinct from main text if button bg is different.
+            visuals.widgets.hovered.fg_stroke.color = fg_color;
+            visuals.widgets.active.fg_stroke.color = fg_color;
         }
 
         // Apply Separator Color

@@ -725,8 +725,8 @@ if ui
                         #[cfg(any(target_os = "windows", target_os = "linux"))]
                         {
                             ui.add_space(4.0);
-                            if ui.button("🔗 Associate .sen files with this program")
-                                .on_hover_text("Associate .sen files with this executable. This allows you to open encrypted files by double-clicking them.")
+                            if ui.button("Associate .sen files with this program")
+                                .on_hover_text("Associate .sen files with this executable. This allows you to open encrypted files from file explorer.")
                                 .clicked() {
                                 self.associate_sen_files();
                             }
