@@ -1,5 +1,6 @@
 use egui::{ColorImage, Context, TextureHandle};
 
+#[allow(dead_code)]
 pub struct Icons {
     pub new_doc: TextureHandle,
     pub open: TextureHandle,

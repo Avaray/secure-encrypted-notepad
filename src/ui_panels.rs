@@ -704,18 +704,20 @@ let _ = self.settings.save();
 }
 });
 // Language Selector
-crate::app_helpers::center_row(ui, |ui| {
-ui.add(egui::Label::new(rust_i18n::t!("settings.language")).selectable(false));
-let current_lang = self.settings.language.clone();
-let mut changed = false;
+            let current_lang = self.settings.language.clone();
+            let mut changed = false;
             let (current_label, current_icon) = match current_lang.as_str() {
                 "pl" => ("Polski", &self.icons.flag_pl),
                 "de" => ("Deutsch", &self.icons.flag_de),
                 _ => ("English", &self.icons.flag_en),
             };
 
-            ui.horizontal(|ui| {
-                ui.add(egui::Image::new(current_icon).max_width(40.0).maintain_aspect_ratio(true));
+            let select_height = ui.spacing().interact_size.y.max(ui.text_style_height(&egui::TextStyle::Body) + 2.0 * ui.spacing().button_padding.y);
+
+            crate::app_helpers::center_row(ui, |ui| {
+                ui.add(egui::Label::new(rust_i18n::t!("settings.language")).selectable(false));
+                ui.add(egui::Image::new(current_icon).max_height(select_height).maintain_aspect_ratio(true));
+                
                 egui::ComboBox::from_id_salt("language_selector")
                     .selected_text(current_label)
                     .show_ui(ui, |ui| {
@@ -723,7 +725,7 @@ let mut changed = false;
                             let is_selected = self.settings.language == code;
                             let mut clicked = false;
                             ui.horizontal(|ui| {
-                                ui.add(egui::Image::new(icon).max_width(22.0).maintain_aspect_ratio(true));
+                                ui.add(egui::Image::new(icon).max_height(select_height).maintain_aspect_ratio(true));
                                 if ui.selectable_label(is_selected, label).clicked() {
                                     self.settings.language = code.to_string();
                                     clicked = true;
@@ -741,7 +743,6 @@ if changed {
 rust_i18n::set_locale(&self.settings.language);
 let _ = self.settings.save();
 }
-});
 if ui
 .checkbox(&mut self.settings.hide_panel_headers, rust_i18n::t!("settings.hide_panel_headers"))
 .on_hover_text(rust_i18n::t!("settings.hide_panel_headers_tooltip")) // I should add this key or omit tooltip if not in yaml, wait I'll check yaml

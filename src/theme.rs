@@ -514,12 +514,7 @@ impl Theme {
              visuals.selection.stroke.color = self.colors.to_egui_color32(c);
         }
 
-        if let Some(r) = self.colors.input_rounding {
-             // rounding for extreme_bg is not a separate field, 
-             // it's usually derived from window or widget rounding in egui.
-             // But we can set it on active widgets.
-             visuals.widgets.active.corner_radius = egui::CornerRadius::same(r as u8);
-        }
+
 
         ctx.set_visuals(visuals);
 
@@ -537,6 +532,13 @@ impl Theme {
             style.visuals.widgets.hovered.corner_radius = radius;
             style.visuals.widgets.active.corner_radius = radius;
             style.visuals.widgets.open.corner_radius = radius;
+        }
+
+        if let Some(r) = self.colors.input_rounding {
+            let radius = egui::CornerRadius::same(r as u8);
+            style.visuals.widgets.inactive.corner_radius = radius;
+            style.visuals.widgets.hovered.corner_radius = radius;
+            style.visuals.widgets.active.corner_radius = radius;
         }
 
         if let Some(w) = self.colors.button_border_width {

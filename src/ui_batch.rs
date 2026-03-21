@@ -15,6 +15,7 @@ impl EditorApp {
 
         let mut central_panel_frame = egui::Frame::NONE;
         central_panel_frame.inner_margin = egui::Margin::same(0);
+        central_panel_frame.fill = self.current_theme.colors.to_egui_color32(self.current_theme.colors.background);
 
         egui::CentralPanel::default()
             .frame(central_panel_frame)
