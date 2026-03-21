@@ -18,15 +18,13 @@ impl EditorApp {
             ui.label(rust_i18n::t!("search.find"));
             let original_cursor_color = ui.visuals().text_cursor.stroke.color;
             let original_selection_color = ui.visuals().selection.bg_fill;
-            let original_inactive_stroke = ui.visuals().widgets.inactive.bg_stroke;
 
             ui.visuals_mut().text_cursor.stroke.color = egui::Color32::TRANSPARENT;
             ui.visuals_mut().selection.bg_fill = egui::Color32::TRANSPARENT;
-            // Make border always visible like when hovered
-            ui.visuals_mut().widgets.inactive.bg_stroke = ui.visuals().widgets.hovered.bg_stroke;
 
             let output = egui::TextEdit::singleline(&mut self.search_query)
                 .desired_width(200.0)
+                .margin(ui.spacing().button_padding)
                 .hint_text(rust_i18n::t!("search.hint"))
                 .show(ui);
 
@@ -34,7 +32,6 @@ impl EditorApp {
 
             ui.visuals_mut().text_cursor.stroke.color = original_cursor_color;
             ui.visuals_mut().selection.bg_fill = original_selection_color;
-            ui.visuals_mut().widgets.inactive.bg_stroke = original_inactive_stroke;
 
             Self::render_custom_cursor(
                 ui,
@@ -87,20 +84,18 @@ impl EditorApp {
             ui.label(rust_i18n::t!("search.replace"));
             let original_cursor_color = ui.visuals().text_cursor.stroke.color;
             let original_selection_color = ui.visuals().selection.bg_fill;
-            let original_inactive_stroke = ui.visuals().widgets.inactive.bg_stroke;
 
             ui.visuals_mut().text_cursor.stroke.color = egui::Color32::TRANSPARENT;
             ui.visuals_mut().selection.bg_fill = egui::Color32::TRANSPARENT;
-            ui.visuals_mut().widgets.inactive.bg_stroke = ui.visuals().widgets.hovered.bg_stroke;
 
             let replace_output = egui::TextEdit::singleline(&mut self.replace_query)
                 .desired_width(200.0)
+                .margin(ui.spacing().button_padding)
                 .hint_text(rust_i18n::t!("search.replace_hint"))
                 .show(ui);
 
             ui.visuals_mut().text_cursor.stroke.color = original_cursor_color;
             ui.visuals_mut().selection.bg_fill = original_selection_color;
-            ui.visuals_mut().widgets.inactive.bg_stroke = original_inactive_stroke;
 
             Self::render_custom_cursor(
                 ui,

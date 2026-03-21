@@ -354,16 +354,11 @@ let _ = self.settings.save();
 crate::app_helpers::center_row(ui, |ui| {
     ui.add(egui::Label::new(rust_i18n::t!("settings.comment_prefix")).selectable(false));
     let mut changed = false;
-    let original_inactive_stroke = ui.visuals().widgets.inactive.bg_stroke;
-    ui.visuals_mut().widgets.inactive.bg_stroke = ui.visuals().widgets.hovered.bg_stroke;
-
     let response = ui.add(
         egui::TextEdit::singleline(&mut self.settings.comment_prefix)
             .desired_width(50.0)
-            .margin(egui::vec2(6.0, 4.0)) // Adding some margin helps it stand out like a generic border
+            .margin(ui.spacing().button_padding)
     );
-
-    ui.visuals_mut().widgets.inactive.bg_stroke = original_inactive_stroke;
     
     if response.changed() {
         changed = true;
@@ -1507,7 +1502,11 @@ if ui
                 let last_copied_time = &mut self.last_copied_time;
                 crate::app_helpers::center_row(ui, |ui| {
                     ui.label(rust_i18n::t!("theme.name_label"));
-                    ui.add(egui::TextEdit::singleline(&mut theme.name).desired_width(100.0));
+                    ui.add(
+                        egui::TextEdit::singleline(&mut theme.name)
+                            .desired_width(100.0)
+                            .margin(ui.spacing().button_padding)
+                    );
                 });
                 crate::app_helpers::center_row(ui, |ui| {
                     ui.label(rust_i18n::t!("theme.base_scheme"));
