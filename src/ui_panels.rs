@@ -38,7 +38,6 @@ let _ = std::process::Command::new("open").arg(path).spawn();
 }
 }
 }
-ui.separator();
 if ui.button(rust_i18n::t!("settings.reset_settings")).on_hover_text(rust_i18n::t!("settings.reset_settings_tooltip")).clicked() {
 self.show_reset_confirmation = true;
 self.reset_slider_val = 0.0;

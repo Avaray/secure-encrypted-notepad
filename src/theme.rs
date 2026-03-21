@@ -569,6 +569,15 @@ impl Theme {
             style.visuals.extreme_bg_color = self.colors.to_egui_color32(c); // Often used as scrollbar rail fallback
         }
 
+        // Increase checkbox (icon) size
+        style.spacing.icon_width = 26.0; 
+        style.spacing.icon_spacing = 10.0;
+
+        // Thicker checkmark (tick) icon
+        style.visuals.widgets.inactive.fg_stroke.width = 2.0;
+        style.visuals.widgets.hovered.fg_stroke.width = 2.2;
+        style.visuals.widgets.active.fg_stroke.width = 2.5;
+
         ctx.set_style(style);
     }
 }
