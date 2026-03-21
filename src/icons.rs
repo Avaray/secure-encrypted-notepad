@@ -25,10 +25,18 @@ pub struct Icons {
     pub spon_oc: TextureHandle, // Use CibKoFi as temporary if Open Collective is missing or intended
     pub copy: TextureHandle,
     pub paste: TextureHandle,
-    
     pub flag_en: TextureHandle,
     pub flag_pl: TextureHandle,
     pub flag_de: TextureHandle,
+    pub flag_ua: TextureHandle,
+    pub flag_cz: TextureHandle,
+    pub flag_sk: TextureHandle,
+    pub flag_fr: TextureHandle,
+    pub flag_es: TextureHandle,
+    pub flag_br: TextureHandle,
+    pub flag_jp: TextureHandle,
+    pub flag_cn: TextureHandle,
+    pub flag_nl: TextureHandle,
 }
 
 impl Icons {
@@ -151,18 +159,63 @@ impl Icons {
             ),
             flag_en: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/FlagEN.svg"),
+                include_bytes!("../assets/flags/EmojioneV1FlagForUnitedKingdom.svg"),
                 "flag_en",
             ),
             flag_pl: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/FlagPL.svg"),
+                include_bytes!("../assets/flags/EmojioneV1FlagForPoland.svg"),
                 "flag_pl",
             ),
             flag_de: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/FlagDE.svg"),
+                include_bytes!("../assets/flags/EmojioneV1FlagForGermany.svg"),
                 "flag_de",
+            ),
+            flag_ua: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/flags/EmojioneV1FlagForUkraine.svg"),
+                "flag_ua",
+            ),
+            flag_cz: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/flags/EmojioneV1FlagForCzechia.svg"),
+                "flag_cz",
+            ),
+            flag_sk: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/flags/EmojioneV1FlagForSlovakia.svg"),
+                "flag_sk",
+            ),
+            flag_fr: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/flags/EmojioneV1FlagForFrance.svg"),
+                "flag_fr",
+            ),
+            flag_es: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/flags/EmojioneV1FlagForSpain.svg"),
+                "flag_es",
+            ),
+            flag_br: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/flags/EmojioneV1FlagForBrazil.svg"),
+                "flag_br",
+            ),
+            flag_jp: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/flags/EmojioneV1FlagForJapan.svg"),
+                "flag_jp",
+            ),
+            flag_cn: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/flags/EmojioneV1FlagForChina.svg"),
+                "flag_cn",
+            ),
+            flag_nl: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/flags/EmojioneV1FlagForNetherlands.svg"),
+                "flag_nl",
             ),
         }
     }
