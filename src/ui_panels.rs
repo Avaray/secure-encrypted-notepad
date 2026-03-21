@@ -11,6 +11,7 @@ impl EditorApp {
             crate::app_helpers::center_row(ui, |ui| {
                 ui.heading(rust_i18n::t!("settings.settings"));
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.add_space(12.0);
                     if ui.button("❌").clicked() {
                         self.show_settings_panel = false;
                     }
@@ -828,6 +829,7 @@ if ui
                 crate::app_helpers::center_row(ui, |ui| {
                     ui.heading(rust_i18n::t!("history.title"));
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.add_space(12.0);
                         if ui.button("❌").clicked() {
                             self.show_history_panel = false;
                         }
@@ -1063,6 +1065,7 @@ if ui
                 crate::app_helpers::center_row(ui, |ui| {
                     ui.heading(rust_i18n::t!("debug.title"));
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.add_space(12.0);
                         if ui.button("❌").clicked() {
                             self.show_debug_panel = false;
                         }
@@ -1133,6 +1136,7 @@ if ui
                 crate::app_helpers::center_row(ui, |ui| {
                     ui.heading(rust_i18n::t!("file_tree.title"));
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.add_space(12.0);
                         if ui.button("❌").clicked() {
                             self.show_file_tree = false;
                         }
@@ -1436,6 +1440,7 @@ if ui
                 crate::app_helpers::center_row(ui, |ui| {
                     ui.heading(rust_i18n::t!("theme.title"));
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.add_space(12.0);
                         if ui.button("❌").clicked() {
                             self.show_theme_editor = false;
                         }
