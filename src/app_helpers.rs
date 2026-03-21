@@ -888,6 +888,52 @@ impl EditorApp {
 
         format!("{}{}", result, ellipsis)
     }
+
+    /// Reusable panel header with title, optional subtitle, close button and vertical centering
+    /// Returns true if the close button was clicked.
+    pub(crate) fn render_panel_header(
+        &self,
+        ui: &mut egui::Ui,
+        title: &str,
+        subtitle: Option<&str>,
+        add_separator: bool,
+    ) -> bool {
+        if self.settings.hide_panel_headers {
+            return false;
+        }
+
+        let mut close_clicked = false;
+
+        crate::app_helpers::center_row(ui, |ui| {
+            // Focus on vertical centering by ensuring enough row height
+            ui.set_min_height(32.0); 
+            
+            ui.heading(title);
+            
+            if let Some(sub) = subtitle {
+                ui.add_space(8.0);
+                ui.label(egui::RichText::new(sub).weak());
+            }
+
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.add_space(12.0); // Consistent padding from right edge
+                if ui.button("❌")
+                    .on_hover_text(rust_i18n::t!("app.close_panel"))
+                    .clicked() 
+                {
+                    close_clicked = true;
+                }
+            });
+        });
+        
+        if add_separator {
+            ui.add_space(4.0);
+            ui.separator();
+            ui.add_space(4.0);
+        }
+
+        close_clicked
+    }
 }
 
 pub fn center_row<R>(ui: &mut egui::Ui, add_contents: impl FnOnce(&mut egui::Ui) -> R) -> egui::InnerResponse<R> {

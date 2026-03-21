@@ -7,19 +7,8 @@ impl EditorApp {
     /// Render settings panel
     pub(crate) fn render_settings_panel(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
-        if !self.settings.hide_panel_headers {
-            crate::app_helpers::center_row(ui, |ui| {
-                ui.heading(rust_i18n::t!("settings.settings"));
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    ui.add_space(12.0);
-                    if ui.button("❌").clicked() {
-                        self.show_settings_panel = false;
-                    }
-                });
-            });
-            ui.add_space(4.0);
-            ui.separator();
-            ui.add_space(4.0);
+        if self.render_panel_header(ui, &rust_i18n::t!("settings.settings"), None, true) {
+            self.show_settings_panel = false;
         }
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
@@ -828,20 +817,9 @@ if ui
         let doc_max_limit = self.document.get_max_history_length();
 
         ui.vertical(|ui| {
-            if !self.settings.hide_panel_headers {
-                crate::app_helpers::center_row(ui, |ui| {
-                    ui.heading(rust_i18n::t!("history.title"));
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.add_space(12.0);
-                        if ui.button("❌").clicked() {
-                            self.show_history_panel = false;
-                        }
-                    });
-                });
-                ui.add_space(4.0);
-                ui.separator();
-                ui.add_space(4.0);
-            }
+                if self.render_panel_header(ui, &rust_i18n::t!("history.title"), None, true) {
+                    self.show_history_panel = false;
+                }
             crate::app_helpers::center_row(ui, |ui| {
                 ui.add(egui::Label::new(rust_i18n::t!("history.max_limit")).selectable(false));
                 let mut temp_limit = doc_max_limit;
@@ -1067,20 +1045,9 @@ if ui
     /// Render debug panel
     pub(crate) fn render_debug_panel(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
-            if !self.settings.hide_panel_headers {
-                crate::app_helpers::center_row(ui, |ui| {
-                    ui.heading(rust_i18n::t!("debug.title"));
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.add_space(12.0);
-                        if ui.button("❌").clicked() {
-                            self.show_debug_panel = false;
-                        }
-                    });
-                });
-                ui.add_space(4.0);
-                ui.separator();
-                ui.add_space(4.0);
-            }
+                if self.render_panel_header(ui, &rust_i18n::t!("debug.title"), None, true) {
+                    self.show_debug_panel = false;
+                }
             crate::app_helpers::center_row(ui, |ui| {
                 if ui.button(rust_i18n::t!("debug.clear")).clicked() {
                     self.debug_log.clear();
@@ -1141,20 +1108,9 @@ if ui
         ui.spacing_mut().item_spacing.x = 0.0;
         ui.vertical(|ui| {
             ui.set_min_width(ui.available_width());
-            if !self.settings.hide_panel_headers {
-                crate::app_helpers::center_row(ui, |ui| {
-                    ui.heading(rust_i18n::t!("file_tree.title"));
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.add_space(12.0);
-                        if ui.button("❌").clicked() {
-                            self.show_file_tree = false;
-                        }
-                    });
-                });
-                ui.add_space(4.0);
-                ui.separator();
-                ui.add_space(4.0);
-            }
+                if self.render_panel_header(ui, &rust_i18n::t!("file_tree.title"), None, true) {
+                    self.show_file_tree = false;
+                }
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
                                 .show(ui, |ui| {
@@ -1448,20 +1404,9 @@ if ui
         let mut theme_to_save: Option<crate::theme::Theme> = None;
         let mut should_reset = false;
         ui.vertical(|ui| {
-            if !self.settings.hide_panel_headers {
-                crate::app_helpers::center_row(ui, |ui| {
-                    ui.heading(rust_i18n::t!("theme.title"));
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.add_space(12.0);
-                        if ui.button("❌").clicked() {
-                            self.show_theme_editor = false;
-                        }
-                    });
-                });
-                ui.add_space(4.0);
-                ui.separator();
-                ui.add_space(4.0);
-            }
+                if self.render_panel_header(ui, &rust_i18n::t!("theme.title"), None, true) {
+                    self.show_theme_editor = false;
+                }
             if let Some(theme) = &mut self.editing_theme {
                 ui.horizontal_wrapped(|ui| {
                     if ui.button(format!("💾 {}", rust_i18n::t!("theme.save"))).clicked() {

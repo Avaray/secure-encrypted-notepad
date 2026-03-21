@@ -35,21 +35,16 @@ impl EditorApp {
                 bottom: 8,
             }))
             .show_inside(ui, |ui| {
-                crate::app_helpers::center_row(ui, |ui| {
-                    ui.label(egui::RichText::new(t!("batch.title")).strong().heading());
-                    ui.add_space(8.0);
-                    ui.label(egui::RichText::new(t!("batch.subtitle")).weak());
-
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button(t!("batch.btn_close")).on_hover_text(t!("batch.close_tooltip")).clicked() {
-                            self.show_batch_converter = false;
-                        }
-                    });
-                });
+                if self.render_panel_header(
+                    ui,
+                    &t!("batch.title"),
+                    Some(&t!("batch.subtitle")),
+                    false,
+                ) {
+                    self.show_batch_converter = false;
+                }
             });
         
-        ui.add_space(2.0);
-        ui.separator();
         ui.add_space(2.0);
 
                 // === LEFT PANEL ===
