@@ -24,7 +24,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Font Autodetection List Polish**: Refine the preferred font lists (UI and Editor) for smart detection, as the current lists are early versions that need better selection.
 - [ ] **Cargo Workspace Refactoring**: Consider refactoring the project into a [workspace](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html) to better support future platforms like Android, allowing shared logic between desktop and mobile versions.
 - [x] **Language Selection Flags**: Add mini SVG flags next to language names in the settings dropdown (SVG files will be provided soon).
-- [ ] **Add close buttons to panels**: Implement a close button for each side panel for easier navigation.
+- [x] **Add close buttons to panels**: Implement a close button for each side panel for easier navigation.
 - [ ] **Translation Polish**: Review and refine translations throughout the application to ensure consistency and correctness across all supported languages.
 
 ## 🐛 Bug Fixes (To Fix)
