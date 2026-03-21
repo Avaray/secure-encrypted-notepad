@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Instant;
 
-use crate::app_state::{BatchMode, FileTreeEntry, KeyStatus, LogEntry, PendingAction};
+use crate::app_state::{BatchMode, FileTreeEntry, KeyStatus, LogEntry, LogLevel, PendingAction};
 use crate::history::DocumentWithHistory;
 use crate::settings::Settings;
 use crate::theme::{load_themes, Theme};
@@ -232,6 +232,11 @@ impl EditorApp {
             }
             let _ = settings.save();
         }
+        
+        let mut debug_log = Vec::new();
+        if settings.is_first_run {
+            debug_log.push(LogEntry::new(LogLevel::Info, format!("System language detected: {}", settings.language)));
+        }
 
         let ui_font_index = available_fonts
             .iter()
@@ -296,7 +301,7 @@ impl EditorApp {
             zen_mode_applied: false,
             show_file_tree: settings.show_file_tree,
             is_modified: false,
-            debug_log: Vec::new(),
+            debug_log,
             file_tree_dir,
             file_tree_entries: Vec::new(),
             expanded_directories: std::collections::HashSet::new(),

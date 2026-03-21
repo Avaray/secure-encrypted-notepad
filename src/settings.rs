@@ -249,7 +249,14 @@ fn default_scroll_speed() -> f32 {
 }
 
 fn default_language() -> String {
-    "en".to_string()
+    let locale = sys_locale::get_locale().unwrap_or_else(|| "en".to_string()).to_lowercase();
+    if locale.starts_with("pl") {
+        "pl".to_string()
+    } else if locale.starts_with("de") {
+        "de".to_string()
+    } else {
+        "en".to_string()
+    }
 }
 
 fn default_window_width() -> f32 {
