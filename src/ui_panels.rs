@@ -642,14 +642,13 @@ self.style_dirty = true;
 // Line height multiplier
 crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new(rust_i18n::t!("settings.line_height")).selectable(false));
-if ui
-.add(
-egui::Slider::new(&mut self.settings.line_height, 1.0..=2.5)
-.step_by(0.05)
-.max_decimals(2)
-.min_decimals(2)
-.text("x"),
-)
+            if ui
+                .add(
+                    egui::DragValue::new(&mut self.settings.line_height)
+                        .speed(0.05)
+                        .range(1.0..=2.5)
+                        .max_decimals(2)
+                )
 .changed()
 {
 let _ = self.settings.save();
