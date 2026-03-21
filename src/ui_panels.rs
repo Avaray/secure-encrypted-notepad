@@ -7,11 +7,16 @@ impl EditorApp {
     /// Render settings panel
     pub(crate) fn render_settings_panel(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
-if !self.settings.hide_panel_headers {
-crate::app_helpers::center_row(ui, |ui| {
-ui.heading(rust_i18n::t!("settings.settings"));
-});
-}
+        if !self.settings.hide_panel_headers {
+            crate::app_helpers::center_row(ui, |ui| {
+                ui.heading(rust_i18n::t!("settings.settings"));
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.button("❌").clicked() {
+                        self.show_settings_panel = false;
+                    }
+                });
+            });
+        }
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
@@ -820,7 +825,14 @@ if ui
 
         ui.vertical(|ui| {
             if !self.settings.hide_panel_headers {
-                ui.heading(rust_i18n::t!("history.title"));
+                crate::app_helpers::center_row(ui, |ui| {
+                    ui.heading(rust_i18n::t!("history.title"));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button("❌").clicked() {
+                            self.show_history_panel = false;
+                        }
+                    });
+                });
             }
             crate::app_helpers::center_row(ui, |ui| {
                 ui.add(egui::Label::new(rust_i18n::t!("history.max_limit")).selectable(false));
@@ -1048,7 +1060,14 @@ if ui
     pub(crate) fn render_debug_panel(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
             if !self.settings.hide_panel_headers {
-                ui.heading(rust_i18n::t!("debug.title"));
+                crate::app_helpers::center_row(ui, |ui| {
+                    ui.heading(rust_i18n::t!("debug.title"));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button("❌").clicked() {
+                            self.show_debug_panel = false;
+                        }
+                    });
+                });
             }
             crate::app_helpers::center_row(ui, |ui| {
                 if ui.button(rust_i18n::t!("debug.clear")).clicked() {
@@ -1111,7 +1130,14 @@ if ui
         ui.vertical(|ui| {
             ui.set_min_width(ui.available_width());
             if !self.settings.hide_panel_headers {
-                ui.heading(rust_i18n::t!("file_tree.title"));
+                crate::app_helpers::center_row(ui, |ui| {
+                    ui.heading(rust_i18n::t!("file_tree.title"));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button("❌").clicked() {
+                            self.show_file_tree = false;
+                        }
+                    });
+                });
             }
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
@@ -1407,7 +1433,14 @@ if ui
         let mut should_reset = false;
         ui.vertical(|ui| {
             if !self.settings.hide_panel_headers {
-                ui.heading(rust_i18n::t!("theme.title"));
+                crate::app_helpers::center_row(ui, |ui| {
+                    ui.heading(rust_i18n::t!("theme.title"));
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button("❌").clicked() {
+                            self.show_theme_editor = false;
+                        }
+                    });
+                });
             }
             if let Some(theme) = &mut self.editing_theme {
                 ui.horizontal_wrapped(|ui| {

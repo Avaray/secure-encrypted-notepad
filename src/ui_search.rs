@@ -8,12 +8,14 @@ impl EditorApp {
         }
 
         crate::app_helpers::center_row(ui, |ui| {
-            if ui.button("X").clicked() {
-                self.show_search_panel = false;
-                self.search_query.clear();
-                self.search_matches.clear();
-                self.current_match_index = None;
-            }
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.button("❌").clicked() {
+                    self.show_search_panel = false;
+                    self.search_query.clear();
+                    self.search_matches.clear();
+                    self.current_match_index = None;
+                }
+            });
 
             ui.label(rust_i18n::t!("search.find"));
             let original_cursor_color = ui.visuals().text_cursor.stroke.color;
