@@ -484,21 +484,23 @@ impl EditorApp {
                 // Logic moved outside
             }
 
-            // UPDATE HIGHLIGHTING EVERY FRAME when TextEdit has focus
+            // UPDATE HIGHLIGHTING AND SCROLLING when TextEdit has focus
             if output.response.has_focus() {
                 if let Some(state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
                     if let Some(cursor_range_state) = state.cursor.char_range() {
                         let cursor_char_pos = cursor_range_state.primary.index;
-                        let _cursor_byte_pos = char_to_byte_idx(text_ptr, cursor_char_pos);
+                        let cursor_byte_pos = char_to_byte_idx(text_ptr, cursor_char_pos);
 
-                        // Detect if cursor is on an empty or blank line → schedule scroll reset
-                        if let Some(cursor_range_galley) = output.cursor_range {
-                            let cursor_rect =
-                                output.galley.pos_from_cursor(cursor_range_galley.primary);
-                            let screen_cursor_rect =
-                                cursor_rect.translate(output.galley_pos.to_vec2());
-                            let padded_rect = screen_cursor_rect.expand(4.0);
-                            ui.scroll_to_rect(padded_rect, None);
+                        // Only scroll to cursor manually if the cursor actually changed position since last frame
+                        if self.previous_cursor_byte_pos != Some(cursor_byte_pos) {
+                            if let Some(cursor_range_galley) = output.cursor_range {
+                                let cursor_rect =
+                                    output.galley.pos_from_cursor(cursor_range_galley.primary);
+                                let screen_cursor_rect =
+                                    cursor_rect.translate(output.galley_pos.to_vec2());
+                                let padded_rect = screen_cursor_rect.expand(4.0);
+                                ui.scroll_to_rect(padded_rect, None);
+                            }
                         }
                     }
                 }
