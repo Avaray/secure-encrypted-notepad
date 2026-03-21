@@ -98,6 +98,9 @@ settings.auto_save_debounce_tooltip: "Speichert automatisch nach einer Inaktivit
 settings.inactivity_secs: "Inactivity (seconds):"
 
 # Erscheinungsbild
+settings.settings: "Einstellungen"
+settings.open_folder: "Konfigurationsordner öffnen"
+settings.open_folder_tooltip: "Öffnet den Ordner, in dem Einstellungen und Designs gespeichert sind."
 settings.theme: "Design:"
 settings.refresh: "🔄 Aktualisieren"
 settings.ui_font: "UI-Schriftart:"
@@ -133,6 +136,7 @@ settings.associate_sen_tooltip: ".sen-Dateien mit dieser ausführbaren Datei ver
 # Gefahrenzone
 settings.danger_zone: "Gefahrenzone"
 settings.reset_settings: "Alle Einstellungen zurücksetzen"
+settings.reset_settings_tooltip: "Stellt alle Einstellungen auf die Werkseinstellungen zurück."
 settings.reset_tooltip: "Stellt alle Einstellungen auf die Werkseinstellungen zurück."
 settings.are_you_sure: "Bist du sicher?"
 settings.yes: "Ja"

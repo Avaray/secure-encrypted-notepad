@@ -45,82 +45,82 @@ impl Icons {
         Self {
             new_doc: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/MaterialSymbolsAddDiamondRounded.svg"),
+                include_bytes!("../assets/ui/MaterialSymbolsAddDiamondRounded.svg"),
                 "icon_new",
             ),
             open: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/MaterialSymbolsFolderOpen.svg"),
+                include_bytes!("../assets/ui/MaterialSymbolsFolderOpen.svg"),
                 "icon_open",
             ),
             open_folder: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/MaterialSymbolsLightFolderCopyRounded.svg"),
+                include_bytes!("../assets/ui/MaterialSymbolsLightFolderCopyRounded.svg"),
                 "icon_folder",
             ),
             save: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/IcSharpSave.svg"),
+                include_bytes!("../assets/ui/IcSharpSave.svg"),
                 "icon_save",
             ),
             save_as: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/MdiContentSaveSettings.svg"),
+                include_bytes!("../assets/ui/MdiContentSaveSettings.svg"),
                 "icon_save_as",
             ),
             key: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/MaterialSymbolsKeyVertical.svg"),
+                include_bytes!("../assets/ui/MaterialSymbolsKeyVertical.svg"),
                 "icon_key",
             ),
             generate: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/FluentMagicWand20Regular.svg"),
+                include_bytes!("../assets/ui/FluentMagicWand20Regular.svg"),
                 "icon_generate",
             ),
             settings: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/MaterialSymbolsSettingsRounded.svg"),
+                include_bytes!("../assets/ui/MaterialSymbolsSettingsRounded.svg"),
                 "icon_settings",
             ),
             history: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/UimHistory.svg"),
+                include_bytes!("../assets/ui/UimHistory.svg"),
                 "icon_history",
             ),
             debug: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/AntDesignBugFilled.svg"),
+                include_bytes!("../assets/ui/AntDesignBugFilled.svg"),
                 "icon_debug",
             ),
             file_tree: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/PhTreeViewFill.svg"),
+                include_bytes!("../assets/ui/PhTreeViewFill.svg"),
                 "icon_tree",
             ),
             theme: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/FamiconsColorFilterSharp.svg"),
+                include_bytes!("../assets/ui/FamiconsColorFilterSharp.svg"),
                 "icon_theme",
             ),
             export: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/MaterialSymbolsExportNotes.svg"),
+                include_bytes!("../assets/ui/MaterialSymbolsExportNotes.svg"),
                 "icon_export",
             ),
             rotate: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/LucideLabCoinsExchange.svg"),
+                include_bytes!("../assets/ui/LucideLabCoinsExchange.svg"),
                 "icon_rotate",
             ),
             batch_convert: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/MaterialSymbolsBatchConvert.svg"),
+                include_bytes!("../assets/ui/MaterialSymbolsBatchConvert.svg"),
                 "icon_batch_convert",
             ),
             zen: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/IxEyeFocus.svg"),
+                include_bytes!("../assets/ui/IxEyeFocus.svg"),
                 "icon_zen",
             ),
             spon_github: Self::load_svg(
@@ -150,12 +150,12 @@ impl Icons {
             ),
             copy: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/MaterialSymbolsCopy.svg"),
+                include_bytes!("../assets/ui/MaterialSymbolsCopy.svg"),
                 "icon_copy",
             ),
             paste: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/MaterialSymbolsPaste.svg"),
+                include_bytes!("../assets/ui/MaterialSymbolsPaste.svg"),
                 "icon_paste",
             ),
             flag_en: Self::load_svg(

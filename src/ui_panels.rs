@@ -17,6 +17,9 @@ impl EditorApp {
                     }
                 });
             });
+            ui.add_space(4.0);
+            ui.separator();
+            ui.add_space(4.0);
         }
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
@@ -835,6 +838,9 @@ if ui
                         }
                     });
                 });
+                ui.add_space(4.0);
+                ui.separator();
+                ui.add_space(4.0);
             }
             crate::app_helpers::center_row(ui, |ui| {
                 ui.add(egui::Label::new(rust_i18n::t!("history.max_limit")).selectable(false));
@@ -1071,6 +1077,9 @@ if ui
                         }
                     });
                 });
+                ui.add_space(4.0);
+                ui.separator();
+                ui.add_space(4.0);
             }
             crate::app_helpers::center_row(ui, |ui| {
                 if ui.button(rust_i18n::t!("debug.clear")).clicked() {
@@ -1142,6 +1151,9 @@ if ui
                         }
                     });
                 });
+                ui.add_space(4.0);
+                ui.separator();
+                ui.add_space(4.0);
             }
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
@@ -1446,6 +1458,9 @@ if ui
                         }
                     });
                 });
+                ui.add_space(4.0);
+                ui.separator();
+                ui.add_space(4.0);
             }
             if let Some(theme) = &mut self.editing_theme {
                 ui.horizontal_wrapped(|ui| {

@@ -99,6 +99,8 @@ settings.inactivity_secs: "Bezczynność (sekundy):"
 
 # Wygląd
 settings.settings: "Ustawienia"
+settings.open_folder: "Otwórz folder konfiguracji"
+settings.open_folder_tooltip: "Otwiera folder, w którym przechowywane są ustawienia i motywy."
 settings.theme: "Motyw:"
 settings.refresh: "🔄 Odśwież"
 settings.ui_font: "Czcionka UI:"
@@ -136,6 +138,7 @@ settings.assoc_macos: "Powiązanie plików na macOS musi być ustawione ręcznie
 # Strefa niebezpieczna
 settings.danger_zone: "Strefa niebezpieczna"
 settings.reset_settings: "Przywróć domyślne ustawienia"
+settings.reset_settings_tooltip: "Przywróci wszystkie ustawienia do wartości fabrycznych."
 settings.reset_tooltip: "Przywróci wszystkie ustawienia do wartości fabrycznych."
 settings.are_you_sure: "Na pewno?"
 settings.yes: "Tak"

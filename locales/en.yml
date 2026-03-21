@@ -99,6 +99,8 @@ settings.inactivity_secs: "Inactivity (seconds):"
 
 # Appearance
 settings.settings: "Settings"
+settings.open_folder: "Open Config Folder"
+settings.open_folder_tooltip: "Open the folder where settings and themes are stored."
 settings.theme: "Theme:"
 settings.refresh: "🔄 Refresh"
 settings.ui_font: "UI Font:"
@@ -136,6 +138,7 @@ settings.assoc_macos: "File association on macOS must be set manually via 'Get I
 # Danger Zone
 settings.danger_zone: "Danger Zone"
 settings.reset_settings: "Reset All Settings to Default"
+settings.reset_settings_tooltip: "This will restore all settings to their factory defaults."
 settings.reset_tooltip: "This will restore all settings to their factory defaults."
 settings.are_you_sure: "Are you sure?"
 settings.yes: "Yes"
