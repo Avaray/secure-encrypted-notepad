@@ -109,6 +109,30 @@ pub struct ThemeColors {
     pub separator_width: Option<f32>,
     #[serde(default)]
     pub shadow_color: Option<[u8; 3]>,
+    #[serde(default)]
+    pub shadow_blur: Option<f32>,
+
+    // --- Granular Button States ---
+    #[serde(default)]
+    pub button_hover_fg: Option<[u8; 3]>,
+    #[serde(default)]
+    pub button_active_fg: Option<[u8; 3]>,
+    #[serde(default)]
+    pub button_hover_border_color: Option<[u8; 3]>,
+    #[serde(default)]
+    pub button_active_border_color: Option<[u8; 3]>,
+
+    // --- Granular Input Fields ---
+    #[serde(default)]
+    pub input_bg: Option<[u8; 3]>,
+    #[serde(default)]
+    pub input_fg: Option<[u8; 3]>,
+    #[serde(default)]
+    pub input_border_color: Option<[u8; 3]>,
+    #[serde(default)]
+    pub input_focus_border_color: Option<[u8; 3]>,
+    #[serde(default)]
+    pub input_rounding: Option<f32>,
 }
 
 impl Default for ThemeColors {
@@ -166,6 +190,16 @@ impl ThemeColors {
             button_padding_y: None,
             separator_width: None,
             shadow_color: None,
+            shadow_blur: None,
+            button_hover_fg: None,
+            button_active_fg: None,
+            button_hover_border_color: None,
+            button_active_border_color: None,
+            input_bg: None,
+            input_fg: None,
+            input_border_color: None,
+            input_focus_border_color: None,
+            input_rounding: None,
         }
     }
 
@@ -217,6 +251,16 @@ impl ThemeColors {
             button_padding_y: None,
             separator_width: None,
             shadow_color: None,
+            shadow_blur: None,
+            button_hover_fg: None,
+            button_active_fg: None,
+            button_hover_border_color: None,
+            button_active_border_color: None,
+            input_bg: None,
+            input_fg: None,
+            input_border_color: None,
+            input_focus_border_color: None,
+            input_rounding: None,
         }
     }
 
@@ -424,6 +468,58 @@ impl Theme {
             visuals.window_shadow.color = self.colors.to_egui_color32(c);
             visuals.popup_shadow.color = self.colors.to_egui_color32(c);
         }
+        
+        if let Some(b) = self.colors.shadow_blur {
+            visuals.window_shadow.blur = b as u8;
+            visuals.popup_shadow.blur = b as u8;
+        }
+
+        // --- Apply Button States (Foreground & Border) ---
+        if let Some(fg) = self.colors.button_hover_fg {
+            visuals.widgets.hovered.fg_stroke.color = self.colors.to_egui_color32(fg);
+        }
+        if let Some(fg) = self.colors.button_active_fg {
+            visuals.widgets.active.fg_stroke.color = self.colors.to_egui_color32(fg);
+        }
+        if let Some(c) = self.colors.button_hover_border_color {
+            visuals.widgets.hovered.bg_stroke.color = self.colors.to_egui_color32(c);
+        }
+        if let Some(c) = self.colors.button_active_border_color {
+            visuals.widgets.active.bg_stroke.color = self.colors.to_egui_color32(c);
+        }
+
+        // --- Apply Input Field Styles ---
+        if let Some(bg) = self.colors.input_bg {
+            visuals.extreme_bg_color = self.colors.to_egui_color32(bg);
+            // Also apply to text_edit_bg if explicitly requested as input_bg
+            visuals.widgets.active.bg_fill = self.colors.to_egui_color32(bg); 
+            visuals.widgets.hovered.bg_fill = self.colors.to_egui_color32(bg);
+        }
+        
+        if let Some(fg) = self.colors.input_fg {
+            let color = self.colors.to_egui_color32(fg);
+            // extreme_bg has no fg, it uses widget fg usually.
+            // We set it on active/hovered to affect focused inputs.
+            visuals.widgets.active.fg_stroke.color = color;
+            visuals.widgets.hovered.fg_stroke.color = color;
+        }
+
+        if let Some(c) = self.colors.input_border_color {
+            let color = self.colors.to_egui_color32(c);
+            // This is tricky in egui. Inactive/noninteractive borders are often used.
+            visuals.widgets.noninteractive.bg_stroke.color = color;
+        }
+
+        if let Some(c) = self.colors.input_focus_border_color {
+             visuals.selection.stroke.color = self.colors.to_egui_color32(c);
+        }
+
+        if let Some(r) = self.colors.input_rounding {
+             // rounding for extreme_bg is not a separate field, 
+             // it's usually derived from window or widget rounding in egui.
+             // But we can set it on active widgets.
+             visuals.widgets.active.corner_radius = egui::CornerRadius::same(r as u8);
+        }
 
         ctx.set_visuals(visuals);
 
@@ -452,8 +548,6 @@ impl Theme {
         if let Some(c) = self.colors.button_border_color {
             let stroke_color = self.colors.to_egui_color32(c);
             style.visuals.widgets.inactive.bg_stroke.color = stroke_color;
-            style.visuals.widgets.hovered.bg_stroke.color = stroke_color;
-            style.visuals.widgets.active.bg_stroke.color = stroke_color;
         }
 
         if let Some(x) = self.colors.button_padding_x {

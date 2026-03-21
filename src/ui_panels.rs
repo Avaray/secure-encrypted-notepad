@@ -1541,6 +1541,7 @@ if ui
                             .show(ui, |ui| {
 
                                 // --- HELPER CLOSURES FOR NEW OPTIONAL FIELDS ---
+                                let icons = &self.icons;
                                 let edit_optional_color = |label: &str, field: &mut Option<[u8; 3]>, default: [u8; 3], id_str: &str, copied_color: &mut Option<[u8; 3]>, last_copied_id: &mut Option<egui::Id>, last_copied_time: &mut f64, ui: &mut egui::Ui| -> bool {
                                     let mut changed = false;
                                     ui.add(egui::Label::new(label).selectable(false));
@@ -1564,6 +1565,7 @@ if ui
                                         last_copied_id,
                                         last_copied_time,
                                         egui::Id::new(id_str),
+                                        icons,
                                     ) {
                                         *field = Some(new_color);
                                         changed = true;
@@ -1596,22 +1598,22 @@ if ui
                                 // --- CORE UI BACKGROUNDS & ACCENTS ---
                                 ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_core")).strong()); ui.label(""); ui.label(""); ui.end_row();
                                 ui.add(egui::Label::new(rust_i18n::t!("theme.bg")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.background, copied_color, last_copied_id, last_copied_time, egui::Id::new("bg_copy")) { theme_changed = true; }
+                                if render_color_edit_row(ui, &mut theme.colors.background, copied_color, last_copied_id, last_copied_time, egui::Id::new("bg_copy"), icons) { theme_changed = true; }
                                 ui.end_row();
                                 ui.add(egui::Label::new(rust_i18n::t!("theme.selection_bg")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.selection_background, copied_color, last_copied_id, last_copied_time, egui::Id::new("selection_bg_copy")) { theme_changed = true; }
+                                if render_color_edit_row(ui, &mut theme.colors.selection_background, copied_color, last_copied_id, last_copied_time, egui::Id::new("selection_bg_copy"), icons) { theme_changed = true; }
                                 ui.end_row();
                                 
                                 let icon_def = if theme.color_scheme == crate::theme::ColorScheme::Dark { [200, 200, 200] } else { [80, 80, 80] };
                                 if edit_optional_color(&rust_i18n::t!("theme.icon_default") , &mut theme.colors.icon_color, icon_def, "icon_def_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
                                 ui.add(egui::Label::new(rust_i18n::t!("theme.icon_hover")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.icon_hover, copied_color, last_copied_id, last_copied_time, egui::Id::new("icon_hover_copy")) { theme_changed = true; }
+                                if render_color_edit_row(ui, &mut theme.colors.icon_hover, copied_color, last_copied_id, last_copied_time, egui::Id::new("icon_hover_copy"), icons) { theme_changed = true; }
                                 ui.end_row();
 
                                 // --- TYPOGRAPHY ---
                                 ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_typography")).strong()); ui.label(""); ui.label(""); ui.end_row();
                                 ui.add(egui::Label::new(rust_i18n::t!("theme.fg")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.foreground, copied_color, last_copied_id, last_copied_time, egui::Id::new("fg_copy")) { theme_changed = true; }
+                                if render_color_edit_row(ui, &mut theme.colors.foreground, copied_color, last_copied_id, last_copied_time, egui::Id::new("fg_copy"), icons) { theme_changed = true; }
                                 ui.end_row();
                                 if edit_optional_color(&rust_i18n::t!("theme.headings") , &mut theme.colors.heading_text, [255, 255, 255], "heading_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
                                 if edit_optional_color(&rust_i18n::t!("theme.labels") , &mut theme.colors.label_text, [220, 220, 220], "label_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
@@ -1624,10 +1626,10 @@ if ui
                                 if edit_optional_color(&rust_i18n::t!("theme.editor_bg") , &mut theme.colors.editor_background, [10, 10, 10], "editor_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
                                 if edit_optional_color(&rust_i18n::t!("theme.editor_fg") , &mut theme.colors.editor_foreground, theme.colors.foreground, "editor_fg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
                                 ui.add(egui::Label::new(rust_i18n::t!("theme.line_numbers")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.line_number, copied_color, last_copied_id, last_copied_time, egui::Id::new("line_num_copy")) { theme_changed = true; }
+                                if render_color_edit_row(ui, &mut theme.colors.line_number, copied_color, last_copied_id, last_copied_time, egui::Id::new("line_num_copy"), icons) { theme_changed = true; }
                                 ui.end_row();
                                 ui.add(egui::Label::new(rust_i18n::t!("theme.cursor")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.cursor, copied_color, last_copied_id, last_copied_time, egui::Id::new("cursor_copy")) { theme_changed = true; }
+                                if render_color_edit_row(ui, &mut theme.colors.cursor, copied_color, last_copied_id, last_copied_time, egui::Id::new("cursor_copy"), icons) { theme_changed = true; }
                                 ui.end_row();
                                 if edit_optional_color(&rust_i18n::t!("theme.search_highlight") , &mut theme.colors.highlight, theme.colors.cursor, "highlight_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
                                 if edit_optional_color(&rust_i18n::t!("theme.whitespace") , &mut theme.colors.whitespace_symbols, [80,80,80], "whitespace_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
@@ -1635,14 +1637,26 @@ if ui
                                 // --- BUTTONS ---
                                 ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_buttons")).strong()); ui.label(""); ui.label(""); ui.end_row();
                                 if edit_optional_color(&rust_i18n::t!("theme.btn_bg") , &mut theme.colors.button_bg, [60, 60, 60], "btn_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.btn_hover") , &mut theme.colors.button_hover_bg, theme.colors.background, "btn_hover_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.btn_active") , &mut theme.colors.button_active_bg, theme.colors.background, "btn_active_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.btn_hover") , &mut theme.colors.button_hover_bg, [80, 80, 80], "btn_hover_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.btn_active") , &mut theme.colors.button_active_bg, [100, 100, 100], "btn_active_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
                                 if edit_optional_color(&rust_i18n::t!("theme.btn_fg") , &mut theme.colors.button_fg, theme.colors.foreground, "btn_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.btn_hover_fg") , &mut theme.colors.button_hover_fg, theme.colors.foreground, "btn_hover_fg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.btn_active_fg") , &mut theme.colors.button_active_fg, theme.colors.foreground, "btn_active_fg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
                                 if edit_optional_float(&rust_i18n::t!("theme.btn_rounding") , &mut theme.colors.button_rounding, 2.0, 0.0..=20.0, 0.1, ui) { theme_changed = true; }
                                 if edit_optional_color(&rust_i18n::t!("theme.btn_border") , &mut theme.colors.button_border_color, [100, 100, 100], "btn_border_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.btn_hover_border") , &mut theme.colors.button_hover_border_color, [120, 120, 120], "btn_hover_border_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.btn_active_border") , &mut theme.colors.button_active_border_color, [150, 150, 150], "btn_active_border_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
                                 if edit_optional_float(&rust_i18n::t!("theme.btn_border_width") , &mut theme.colors.button_border_width, 0.0, 0.0..=5.0, 0.05, ui) { theme_changed = true; }
                                 if edit_optional_float(&rust_i18n::t!("theme.btn_padding_x") , &mut theme.colors.button_padding_x, 4.0, 0.0..=40.0, 0.5, ui) { theme_changed = true; }
                                 if edit_optional_float(&rust_i18n::t!("theme.btn_padding_y") , &mut theme.colors.button_padding_y, 2.0, 0.0..=40.0, 0.5, ui) { theme_changed = true; }
+
+                                // --- INPUT ELEMENTS ---
+                                ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_inputs")).strong()); ui.label(""); ui.label(""); ui.end_row();
+                                if edit_optional_color(&rust_i18n::t!("theme.input_bg") , &mut theme.colors.input_bg, [30, 30, 30], "input_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.input_fg") , &mut theme.colors.input_fg, theme.colors.foreground, "input_fg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.input_border") , &mut theme.colors.input_border_color, [100, 100, 100], "input_border_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.input_focus_border") , &mut theme.colors.input_focus_border_color, [100, 150, 255], "input_focus_border_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_float(&rust_i18n::t!("theme.input_rounding") , &mut theme.colors.input_rounding, 2.0, 0.0..=20.0, 0.1, ui) { theme_changed = true; }
 
                                 // --- WIDGETS ---
                                 ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_widgets")).strong()); ui.label(""); ui.label(""); ui.end_row();
@@ -1664,23 +1678,24 @@ if ui
                                 ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_geometry")).strong()); ui.label(""); ui.label(""); ui.end_row();
                                 if edit_optional_float(&rust_i18n::t!("theme.window_rounding") , &mut theme.colors.window_rounding, 4.0, 0.0..=20.0, 0.1, ui) { theme_changed = true; }
                                 if edit_optional_color(&rust_i18n::t!("theme.shadow_color") , &mut theme.colors.shadow_color, [0, 0, 0], "shadow_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_float(&rust_i18n::t!("theme.shadow_blur") , &mut theme.colors.shadow_blur, 10.0, 0.0..=50.0, 0.5, ui) { theme_changed = true; }
 
                                 // --- SYNTAX ALERTS ---
                                 ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_syntax")).strong()); ui.label(""); ui.label(""); ui.end_row();
                                 ui.add(egui::Label::new(rust_i18n::t!("theme.comment")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.comment, copied_color, last_copied_id, last_copied_time, egui::Id::new("comment_copy")) { theme_changed = true; }
+                                if render_color_edit_row(ui, &mut theme.colors.comment, copied_color, last_copied_id, last_copied_time, egui::Id::new("comment_copy"), icons) { theme_changed = true; }
                                 ui.end_row();
                                 ui.add(egui::Label::new(rust_i18n::t!("theme.success_label")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.success, copied_color, last_copied_id, last_copied_time, egui::Id::new("success_copy")) { theme_changed = true; }
+                                if render_color_edit_row(ui, &mut theme.colors.success, copied_color, last_copied_id, last_copied_time, egui::Id::new("success_copy"), icons) { theme_changed = true; }
                                 ui.end_row();
                                 ui.add(egui::Label::new(rust_i18n::t!("theme.info_label")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.info, copied_color, last_copied_id, last_copied_time, egui::Id::new("info_copy")) { theme_changed = true; }
+                                if render_color_edit_row(ui, &mut theme.colors.info, copied_color, last_copied_id, last_copied_time, egui::Id::new("info_copy"), icons) { theme_changed = true; }
                                 ui.end_row();
                                 ui.add(egui::Label::new(rust_i18n::t!("theme.warning_label")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.warning, copied_color, last_copied_id, last_copied_time, egui::Id::new("warning_copy")) { theme_changed = true; }
+                                if render_color_edit_row(ui, &mut theme.colors.warning, copied_color, last_copied_id, last_copied_time, egui::Id::new("warning_copy"), icons) { theme_changed = true; }
                                 ui.end_row();
                                 ui.add(egui::Label::new(rust_i18n::t!("theme.error_label")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.error, copied_color, last_copied_id, last_copied_time, egui::Id::new("error_copy")) { theme_changed = true; }
+                                if render_color_edit_row(ui, &mut theme.colors.error, copied_color, last_copied_id, last_copied_time, egui::Id::new("error_copy"), icons) { theme_changed = true; }
                                 ui.end_row();
                             });
                     });
@@ -1774,6 +1789,7 @@ fn render_color_edit_row(
     last_copied_id: &mut Option<egui::Id>,
     last_copied_time: &mut f64,
     row_id: egui::Id,
+    icons: &crate::icons::Icons,
 ) -> bool {
     let mut changed = false;
     // Column 2: Picker
@@ -1789,6 +1805,7 @@ fn render_color_edit_row(
         last_copied_id,
         last_copied_time,
         row_id,
+        icons,
     ) {
         *color = new_color;
         changed = true;
@@ -1804,48 +1821,54 @@ fn render_copy_paste_buttons(
     last_copied_id: &mut Option<egui::Id>,
     last_copied_time: &mut f64,
     row_id: egui::Id,
+    icons: &crate::icons::Icons,
 ) -> Option<[u8; 3]> {
     let mut paste_color = None;
     crate::app_helpers::center_row(ui, |ui| {
-        // Animation logic
-        let duration = 0.5;
         let time = ui.input(|i| i.time);
-        let mut alpha = 0.0;
-        if Some(row_id) == *last_copied_id {
-            let elapsed = time - *last_copied_time;
-            if elapsed < duration {
-                // Flash/Fade effect: fast pulse then fade
-                alpha = (((elapsed * 20.0).sin() * 0.5 + 0.5) * (1.0 - elapsed / duration)).clamp(0.0, 1.0);
-                ui.ctx().request_repaint();
-            } else {
-                *last_copied_id = None;
+        
+        // --- 1. PASTE BUTTON (Left) ---
+        // Only visible when a color is in clipboard
+        if let Some(c) = *copied_color {
+            let paste_btn = egui::Button::image(egui::Image::new(&icons.paste)
+                .max_width(16.0)
+                .tint(ui.visuals().widgets.inactive.fg_stroke.color))
+                .frame(false);
+            let paste_res = ui.add(paste_btn).on_hover_text(rust_i18n::t!("theme.paste_color"));
+            if paste_res.clicked() {
+                paste_color = Some(c);
             }
+            ui.add_space(4.0); // Small gap between buttons
         }
 
-        let copy_btn = egui::Button::new("📋");
+        // --- 2. COPY BUTTON (Right) ---
+        // Infinite pulse if this is the source of copied color
+        let is_source = Some(row_id) == *last_copied_id;
+        let mut alpha = 0.0;
+        if is_source {
+            // Infinite pulse: fade in and out 
+            alpha = ((time * 3.0).sin() * 0.5 + 0.5) as f32;
+            ui.ctx().request_repaint();
+        }
 
-        let copy_res = if alpha > 0.0 {
-            let bg_color = ui.visuals().selection.bg_fill.gamma_multiply(alpha as f32);
-            ui.add(copy_btn.fill(bg_color))
+        let tint = if alpha > 0.0 {
+            ui.visuals().selection.bg_fill.gamma_multiply(alpha)
         } else {
-            ui.add(copy_btn.frame(false))
-        }
-        .on_hover_text(rust_i18n::t!("theme.copy_color"));
+            ui.visuals().widgets.inactive.fg_stroke.color
+        };
+        
+        let copy_btn = egui::Button::image(egui::Image::new(&icons.copy)
+            .max_width(16.0)
+            .tint(tint))
+            .frame(false);
+            
+        let copy_res = ui.add(copy_btn).on_hover_text(rust_i18n::t!("theme.copy_color"));
 
         if copy_res.clicked() {
             *copied_color = Some(current_color);
             *last_copied_id = Some(row_id);
             *last_copied_time = time;
             ui.ctx().request_repaint();
-        }
-
-        if let Some(c) = *copied_color {
-            let paste_res = ui
-                .add(egui::Button::new("📥").frame(false))
-                .on_hover_text(rust_i18n::t!("theme.paste_color"));
-            if paste_res.clicked() {
-                paste_color = Some(c);
-            }
         }
     });
     paste_color
