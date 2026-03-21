@@ -52,7 +52,7 @@ ui.add_space(8.0);
 // =========================================================================
 // 1. SECURITY
 // =========================================================================
-ui.add(egui::Label::new(rust_i18n::t!("settings.security")).heading().selectable(false));
+ui.heading(rust_i18n::t!("settings.security"));
 crate::app_helpers::center_row(ui, |ui| {
 if ui.button(rust_i18n::t!("settings.set_global_keyfile")).clicked() {
 if let Some(path) = rfd::FileDialog::new().pick_file() {
@@ -191,7 +191,7 @@ ui.add_space(8.0);
 // =========================================================================
 // 2. WORKSPACE / FILE TREE
 // =========================================================================
-ui.add(egui::Label::new(rust_i18n::t!("settings.workspace")).heading().selectable(false));
+ui.heading(rust_i18n::t!("settings.workspace"));
 // Starting directory setting
 ui.add_space(4.0);
 ui.horizontal_wrapped(|ui| {
@@ -290,7 +290,7 @@ ui.add_space(8.0);
 // =========================================================================
 // 3. EDITOR
 // =========================================================================
-ui.add(egui::Label::new(rust_i18n::t!("settings.editor")).heading().selectable(false));
+ui.heading(rust_i18n::t!("settings.editor"));
 if ui
 .checkbox(&mut self.settings.show_line_numbers, rust_i18n::t!("settings.show_line_numbers"))
 .changed()
@@ -426,7 +426,7 @@ ui.add_space(8.0);
 // =========================================================================
 // 4. RELIABILITY
 // =========================================================================
-ui.add(egui::Label::new(rust_i18n::t!("settings.reliability")).heading().selectable(false));
+ui.heading(rust_i18n::t!("settings.reliability"));
 ui.vertical(|ui| {
 ui.set_min_width(ui.available_width());
 ui.group(|ui| {
@@ -468,7 +468,7 @@ ui.add_space(8.0);
 // =========================================================================
 // 5. APPEARANCE
 // =========================================================================
-ui.add(egui::Label::new(rust_i18n::t!("settings.appearance")).heading().selectable(false));
+ui.heading(rust_i18n::t!("settings.appearance"));
 // Theme selection
 crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new(rust_i18n::t!("settings.theme")).selectable(false));
@@ -759,7 +759,7 @@ if ui
                         // =========================================================================
                         // 5. SYSTEM
                         // =========================================================================
-                        ui.add(egui::Label::new(rust_i18n::t!("settings.window_panels")).heading().selectable(false));
+                        ui.heading(rust_i18n::t!("settings.window_panels"));
                         
                         #[cfg(any(target_os = "windows", target_os = "linux"))]
                         {
@@ -1603,7 +1603,7 @@ if ui
                                 ui.end_row();
                                 
                                 let icon_def = if theme.color_scheme == crate::theme::ColorScheme::Dark { [200, 200, 200] } else { [80, 80, 80] };
-                                if edit_optional_color(rust_i18n::t!("theme.icon_default").as_str(), &mut theme.colors.icon_color, icon_def, "icon_def_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.icon_default") , &mut theme.colors.icon_color, icon_def, "icon_def_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
                                 ui.add(egui::Label::new(rust_i18n::t!("theme.icon_hover")).selectable(false));
                                 if render_color_edit_row(ui, &mut theme.colors.icon_hover, copied_color, last_copied_id, last_copied_time, egui::Id::new("icon_hover_copy")) { theme_changed = true; }
                                 ui.end_row();
@@ -1613,57 +1613,57 @@ if ui
                                 ui.add(egui::Label::new(rust_i18n::t!("theme.fg")).selectable(false));
                                 if render_color_edit_row(ui, &mut theme.colors.foreground, copied_color, last_copied_id, last_copied_time, egui::Id::new("fg_copy")) { theme_changed = true; }
                                 ui.end_row();
-                                if edit_optional_color(rust_i18n::t!("theme.headings").as_str(), &mut theme.colors.heading_text, [255, 255, 255], "heading_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.labels").as_str(), &mut theme.colors.label_text, [220, 220, 220], "label_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.weak_text").as_str(), &mut theme.colors.weak_text, [150, 150, 150], "weak_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.strong_text").as_str(), &mut theme.colors.strong_text, [255, 255, 255], "strong_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.hyperlinks").as_str(), &mut theme.colors.hyperlink, [90, 170, 255], "hyperlink_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.headings") , &mut theme.colors.heading_text, [255, 255, 255], "heading_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.labels") , &mut theme.colors.label_text, [220, 220, 220], "label_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.weak_text") , &mut theme.colors.weak_text, [150, 150, 150], "weak_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.strong_text") , &mut theme.colors.strong_text, [255, 255, 255], "strong_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.hyperlinks") , &mut theme.colors.hyperlink, [90, 170, 255], "hyperlink_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
 
                                 // --- MAIN TEXT EDITOR ---
                                 ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_editor")).strong()); ui.label(""); ui.label(""); ui.end_row();
-                                if edit_optional_color(rust_i18n::t!("theme.editor_bg").as_str(), &mut theme.colors.editor_background, [10, 10, 10], "editor_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.editor_fg").as_str(), &mut theme.colors.editor_foreground, theme.colors.foreground, "editor_fg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.editor_bg") , &mut theme.colors.editor_background, [10, 10, 10], "editor_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.editor_fg") , &mut theme.colors.editor_foreground, theme.colors.foreground, "editor_fg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
                                 ui.add(egui::Label::new(rust_i18n::t!("theme.line_numbers")).selectable(false));
                                 if render_color_edit_row(ui, &mut theme.colors.line_number, copied_color, last_copied_id, last_copied_time, egui::Id::new("line_num_copy")) { theme_changed = true; }
                                 ui.end_row();
                                 ui.add(egui::Label::new(rust_i18n::t!("theme.cursor")).selectable(false));
                                 if render_color_edit_row(ui, &mut theme.colors.cursor, copied_color, last_copied_id, last_copied_time, egui::Id::new("cursor_copy")) { theme_changed = true; }
                                 ui.end_row();
-                                if edit_optional_color(rust_i18n::t!("theme.search_highlight").as_str(), &mut theme.colors.highlight, theme.colors.cursor, "highlight_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.whitespace").as_str(), &mut theme.colors.whitespace_symbols, [80,80,80], "whitespace_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.search_highlight") , &mut theme.colors.highlight, theme.colors.cursor, "highlight_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.whitespace") , &mut theme.colors.whitespace_symbols, [80,80,80], "whitespace_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
 
                                 // --- BUTTONS ---
                                 ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_buttons")).strong()); ui.label(""); ui.label(""); ui.end_row();
-                                if edit_optional_color(rust_i18n::t!("theme.btn_bg").as_str(), &mut theme.colors.button_bg, [60, 60, 60], "btn_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.btn_hover").as_str(), &mut theme.colors.button_hover_bg, theme.colors.background, "btn_hover_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.btn_active").as_str(), &mut theme.colors.button_active_bg, theme.colors.background, "btn_active_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.btn_fg").as_str(), &mut theme.colors.button_fg, theme.colors.foreground, "btn_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_float(rust_i18n::t!("theme.btn_rounding").as_str(), &mut theme.colors.button_rounding, 2.0, 0.0..=20.0, 0.1, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.btn_border").as_str(), &mut theme.colors.button_border_color, [100, 100, 100], "btn_border_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_float(rust_i18n::t!("theme.btn_border_width").as_str(), &mut theme.colors.button_border_width, 0.0, 0.0..=5.0, 0.05, ui) { theme_changed = true; }
-                                if edit_optional_float(rust_i18n::t!("theme.btn_padding_x").as_str(), &mut theme.colors.button_padding_x, 4.0, 0.0..=40.0, 0.5, ui) { theme_changed = true; }
-                                if edit_optional_float(rust_i18n::t!("theme.btn_padding_y").as_str(), &mut theme.colors.button_padding_y, 2.0, 0.0..=40.0, 0.5, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.btn_bg") , &mut theme.colors.button_bg, [60, 60, 60], "btn_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.btn_hover") , &mut theme.colors.button_hover_bg, theme.colors.background, "btn_hover_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.btn_active") , &mut theme.colors.button_active_bg, theme.colors.background, "btn_active_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.btn_fg") , &mut theme.colors.button_fg, theme.colors.foreground, "btn_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_float(&rust_i18n::t!("theme.btn_rounding") , &mut theme.colors.button_rounding, 2.0, 0.0..=20.0, 0.1, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.btn_border") , &mut theme.colors.button_border_color, [100, 100, 100], "btn_border_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_float(&rust_i18n::t!("theme.btn_border_width") , &mut theme.colors.button_border_width, 0.0, 0.0..=5.0, 0.05, ui) { theme_changed = true; }
+                                if edit_optional_float(&rust_i18n::t!("theme.btn_padding_x") , &mut theme.colors.button_padding_x, 4.0, 0.0..=40.0, 0.5, ui) { theme_changed = true; }
+                                if edit_optional_float(&rust_i18n::t!("theme.btn_padding_y") , &mut theme.colors.button_padding_y, 2.0, 0.0..=40.0, 0.5, ui) { theme_changed = true; }
 
                                 // --- WIDGETS ---
                                 ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_widgets")).strong()); ui.label(""); ui.label(""); ui.end_row();
-                                if edit_optional_color(rust_i18n::t!("theme.chk_bg").as_str(), &mut theme.colors.checkbox_bg, [50, 50, 50], "chk_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.chk_check").as_str(), &mut theme.colors.checkbox_check, [200, 200, 200], "chk_check_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.slider_rail").as_str(), &mut theme.colors.slider_rail, [60, 60, 60], "slide_rail_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.slider_thumb").as_str(), &mut theme.colors.slider_thumb, [180, 180, 180], "slide_thumb_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.scroll_bg").as_str(), &mut theme.colors.scrollbar_bg, [30, 30, 30], "scroll_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.scroll_thumb").as_str(), &mut theme.colors.scrollbar_thumb, [120, 120, 120], "scroll_thumb_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.tooltip_bg").as_str(), &mut theme.colors.tooltip_bg, [20, 20, 20], "tooltip_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.tooltip_text").as_str(), &mut theme.colors.tooltip_text, [220, 220, 220], "tooltip_txt_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.text_edit_bg").as_str(), &mut theme.colors.text_edit_bg, [15, 15, 15], "text_edit_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.focus_outline").as_str(), &mut theme.colors.focus_outline, [100, 150, 255], "focus_outline_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.selection_text").as_str(), &mut theme.colors.selection_text, [255, 255, 255], "sel_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.separator").as_str(), &mut theme.colors.separator, [80, 80, 80], "sep_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_float(rust_i18n::t!("theme.separator_width").as_str(), &mut theme.colors.separator_width, 1.0, 0.0..=10.0, 0.1, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.chk_bg") , &mut theme.colors.checkbox_bg, [50, 50, 50], "chk_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.chk_check") , &mut theme.colors.checkbox_check, [200, 200, 200], "chk_check_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.slider_rail") , &mut theme.colors.slider_rail, [60, 60, 60], "slide_rail_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.slider_thumb") , &mut theme.colors.slider_thumb, [180, 180, 180], "slide_thumb_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.scroll_bg") , &mut theme.colors.scrollbar_bg, [30, 30, 30], "scroll_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.scroll_thumb") , &mut theme.colors.scrollbar_thumb, [120, 120, 120], "scroll_thumb_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.tooltip_bg") , &mut theme.colors.tooltip_bg, [20, 20, 20], "tooltip_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.tooltip_text") , &mut theme.colors.tooltip_text, [220, 220, 220], "tooltip_txt_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.text_edit_bg") , &mut theme.colors.text_edit_bg, [15, 15, 15], "text_edit_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.focus_outline") , &mut theme.colors.focus_outline, [100, 150, 255], "focus_outline_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.selection_text") , &mut theme.colors.selection_text, [255, 255, 255], "sel_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.separator") , &mut theme.colors.separator, [80, 80, 80], "sep_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_float(&rust_i18n::t!("theme.separator_width") , &mut theme.colors.separator_width, 1.0, 0.0..=10.0, 0.1, ui) { theme_changed = true; }
 
                                 // --- WINDOW & PANELS GEOMETRY ---
                                 ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_geometry")).strong()); ui.label(""); ui.label(""); ui.end_row();
-                                if edit_optional_float(rust_i18n::t!("theme.window_rounding").as_str(), &mut theme.colors.window_rounding, 4.0, 0.0..=20.0, 0.1, ui) { theme_changed = true; }
-                                if edit_optional_color(rust_i18n::t!("theme.shadow_color").as_str(), &mut theme.colors.shadow_color, [0, 0, 0], "shadow_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
+                                if edit_optional_float(&rust_i18n::t!("theme.window_rounding") , &mut theme.colors.window_rounding, 4.0, 0.0..=20.0, 0.1, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.shadow_color") , &mut theme.colors.shadow_color, [0, 0, 0], "shadow_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
 
                                 // --- SYNTAX ALERTS ---
                                 ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_syntax")).strong()); ui.label(""); ui.label(""); ui.end_row();
@@ -1733,11 +1733,11 @@ if ui
                     self.settings.theme_name = theme.name.clone();
                     let _ = self.settings.save();
                     self.themes = crate::theme::load_themes();
-                    self.status_message = rust_i18n::t!("theme.saved_msg", name = theme.name);
+                    self.status_message = rust_i18n::t!("theme.saved_msg", name = theme.name).to_string();
                     self.log_info(rust_i18n::t!("theme.saved_msg", name = theme.name));
                 }
                 Err(e) => {
-                    self.status_message = rust_i18n::t!("theme.save_error", error = e.to_string());
+                    self.status_message = rust_i18n::t!("theme.save_error", error = e.to_string()).to_string();
                     self.log_error(rust_i18n::t!("theme.save_error", error = e.to_string()));
                 }
             }

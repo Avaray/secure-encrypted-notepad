@@ -617,7 +617,7 @@ Terminal=false"#,
                     self.log_success(if new_masked == "Secured" {
                         t!("actions.status_rotate_success").to_string()
                     } else {
-                        t!("actions.log_rotate_success_file", file = self.mask_directory_path(&file_path))
+                        t!("actions.log_rotate_success_file", file = self.mask_directory_path(&file_path)).to_string()
                     });
                 }
                 Err(e) => {

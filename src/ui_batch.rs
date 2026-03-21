@@ -274,7 +274,7 @@ impl EditorApp {
                         }
                         let files_count = self.batch_files.len();
                         let heading_text = if files_count > 0 {
-                            t!("batch.input_count", count = files_count)
+                            t!("batch.input_count", count = files_count).to_string()
                         } else {
                             t!("batch.input_label").to_string()
                         };
@@ -399,7 +399,7 @@ impl EditorApp {
         let batch_output_dir = self.batch_output_dir.clone();
 
         if let Err(e) = crate::crypto::get_keyfile_hash(&keyfile) {
-            let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_err_keyfile", e = e)));
+            let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_err_keyfile", e = e).to_string()));
             let _ = tx.send(crate::app_state::BatchProgressUpdate::Finished(0, 0));
             return;
         }
@@ -412,7 +412,7 @@ impl EditorApp {
                 // Heuristic Check: Is it already a SEN file?
                 if crate::crypto::is_sen_file(file) {
                     failed += 1;
-                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, t!("batch.log_enc_ignored_sen", file = file.file_name().unwrap_or_default().to_string_lossy())));
+                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, t!("batch.log_enc_ignored_sen", file = file.file_name().unwrap_or_default().to_string_lossy()).to_string()));
                     let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
                     continue;
                 }
@@ -424,14 +424,14 @@ impl EditorApp {
                 };
 
                 let file_name = file.file_name().unwrap_or_default();
-                let output_path = output_dir.join(format!("{}.sen", file_name.to_string_lossy()));
+                let output_path = output_dir.join(format!("{}.sen", file_name.to_string_lossy().to_string()));
 
                 match std::fs::read(file) {
                     Ok(buffer) => {
                         // Binary Check: Heuristic check if it's actually text
                         if !crate::crypto::is_buffer_text(&buffer) {
                              failed += 1;
-                             let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, t!("batch.log_enc_ignored_binary", file = file.file_name().unwrap_or_default().to_string_lossy())));
+                             let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, t!("batch.log_enc_ignored_binary", file = file.file_name().unwrap_or_default().to_string_lossy()).to_string().to_string()));
                              let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
                              continue;
                         }
@@ -439,17 +439,17 @@ impl EditorApp {
                         match encrypt_bytes(&buffer, &keyfile, &output_path) {
                             Ok(_) => {
                                 success += 1;
-                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Success, t!("batch.log_enc_success", file = file.file_name().unwrap_or_default().to_string_lossy())));
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Success, t!("batch.log_enc_success", file = file.file_name().unwrap_or_default().to_string_lossy()).to_string()));
                             }
                             Err(e) => {
                                 failed += 1;
-                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_enc_failed", file = file.file_name().unwrap_or_default().to_string_lossy(), e = e)));
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_enc_failed", file = file.file_name().unwrap_or_default().to_string_lossy(), e = e).to_string()));
                             }
                         }
                     }
                     Err(e) => {
                         failed += 1;
-                        let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_enc_read_err", file = file.file_name().unwrap_or_default().to_string_lossy(), e = e)));
+                        let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_enc_read_err", file = file.file_name().unwrap_or_default().to_string_lossy(), e = e).to_string()));
                     }
                 }
                 let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
@@ -480,7 +480,7 @@ impl EditorApp {
                 // Heuristic Check: Is it a SEN file?
                 if !crate::crypto::is_sen_file(file) {
                     failed += 1;
-                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, t!("batch.log_dec_ignored_magic", file = file.file_name().unwrap_or_default().to_string_lossy())));
+                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, t!("batch.log_dec_ignored_magic", file = file.file_name().unwrap_or_default().to_string_lossy()).to_string()));
                     let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
                     continue;
                 }
@@ -518,17 +518,17 @@ impl EditorApp {
                         match std::fs::write(&output_path, final_content) {
                             Ok(_) => {
                                 success += 1;
-                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Success, t!("batch.log_dec_success", file = file.file_name().unwrap_or_default().to_string_lossy())));
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Success, t!("batch.log_dec_success", file = file.file_name().unwrap_or_default().to_string_lossy()).to_string()));
                             }
                             Err(e) => {
                                 failed += 1;
-                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_dec_write_err", file = output_path.file_name().unwrap_or_default().to_string_lossy(), e = e)));
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_dec_write_err", file = output_path.file_name().unwrap_or_default().to_string_lossy(), e = e).to_string()));
                             }
                         }
                     }
                     Err(e) => {
                         failed += 1;
-                        let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_dec_err", file = file.file_name().unwrap_or_default().to_string_lossy(), e = e)));
+                        let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_dec_err", file = file.file_name().unwrap_or_default().to_string_lossy(), e = e).to_string()));
                     }
                 }
                 let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
@@ -558,7 +558,7 @@ impl EditorApp {
                 // Heuristic Check: Is it a SEN file?
                 if !crate::crypto::is_sen_file(file) {
                     failed += 1;
-                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, t!("batch.log_rot_ignored_magic", file = file.file_name().unwrap_or_default().to_string_lossy())));
+                    let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Warning, t!("batch.log_rot_ignored_magic", file = file.file_name().unwrap_or_default().to_string_lossy()).to_string()));
                     let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
                     continue;
                 }
@@ -570,17 +570,17 @@ impl EditorApp {
                         match encrypt_bytes(&buffer, &new_keyfile, file) {
                             Ok(_) => {
                                 success += 1;
-                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Success, t!("batch.log_rot_success", file = file.file_name().unwrap_or_default().to_string_lossy())));
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Success, t!("batch.log_rot_success", file = file.file_name().unwrap_or_default().to_string_lossy()).to_string()));
                             }
                             Err(e) => {
                                 failed += 1;
-                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_rot_enc_err", file = file.file_name().unwrap_or_default().to_string_lossy(), e = e)));
+                                let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_rot_enc_err", file = file.file_name().unwrap_or_default().to_string_lossy(), e = e).to_string()));
                             }
                         }
                     }
                     Err(e) => {
                         failed += 1;
-                        let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_rot_dec_err", file = file.file_name().unwrap_or_default().to_string_lossy(), e = e)));
+                        let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(crate::app_state::LogLevel::Error, t!("batch.log_rot_dec_err", file = file.file_name().unwrap_or_default().to_string_lossy(), e = e).to_string()));
                     }
                 }
                 let _ = tx.send(crate::app_state::BatchProgressUpdate::Progress(i + 1, success, failed));
