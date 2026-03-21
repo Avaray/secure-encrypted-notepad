@@ -241,7 +241,7 @@ pub struct Settings {
 }
 
 fn default_scroll_speed() -> f32 {
-    1.0
+    2.0
 }
 
 fn default_window_width() -> f32 {
