@@ -116,6 +116,7 @@ settings.language: "Sprache:"
 
 # Fenster & Panels
 settings.window_panels: "Fenster & Panels"
+file_tree.title: "Dateien"
 settings.start_maximized: "Maximiert starten"
 settings.single_instance: "Einzelinstanzmodus"
 settings.single_instance_tooltip: "Verhindert das Öffnen mehrerer SEN-Fenster. Zusätzliche Dateien werden an die bestehende Instanz weitergeleitet."
@@ -133,6 +134,31 @@ settings.associate_sen_tooltip: ".sen-Dateien mit dieser ausführbaren Datei ver
 settings.danger_zone: "Gefahrenzone"
 settings.reset_settings: "Alle Einstellungen zurücksetzen"
 settings.reset_tooltip: "Stellt alle Einstellungen auf die Werkseinstellungen zurück."
+settings.are_you_sure: "Bist du sicher?"
+settings.yes: "Ja"
+settings.no: "Nein"
+
+# ═══════════════════════════════════════
+# VERLAUF-PANEL
+# ═══════════════════════════════════════
+history.title: "Verlauf"
+history.max_limit: "Max. Verlaufsbegrenzung (diese Datei):"
+history.log_limit_set: "Max. Verlaufsbegrenzung auf {limit} gesetzt"
+history.current_entries: "Verlaufseinträge: {current} / {max}"
+history.will_be_deleted: "Warnung: {count} älteste Einträge werden beim nächsten Speichern gelöscht."
+history.clear_all: "Gesamten Verlauf löschen"
+history.delete_entry: "Zum Löschen markieren"
+history.revert_entry: "Auf diese Version zurücksetzen"
+
+# ═══════════════════════════════════════
+# DEBUG-PANEL
+# ═══════════════════════════════════════
+debug.title: "Debug-Protokoll"
+debug.clear: "Logs leeren"
+debug.filter_info: "Info"
+debug.filter_success: "Erfolg"
+debug.filter_warning: "Warnung"
+debug.filter_error: "Fehler"
 
 # ═══════════════════════════════════════
 # SEARCH & REPLACE
@@ -247,6 +273,7 @@ batch.log_err_keyfile: "Kritischer Schlüsseldateifehler: {error}"
 # ═══════════════════════════════════════
 # THEME EDITOR
 # ═══════════════════════════════════════
+theme.title: "Theme Editor"
 theme.save: "Theme speichern"
 theme.reset_default: "Auf Standard zurücksetzen"
 theme.reset_saved: "Auf Gespeichertes zurücksetzen"

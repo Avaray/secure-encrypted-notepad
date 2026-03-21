@@ -117,6 +117,7 @@ settings.language: "Language:"
 
 # Window & Panels
 settings.window_panels: "Window & Panels"
+file_tree.title: "Files"
 settings.start_maximized: "Start Maximized"
 settings.single_instance: "Single Instance Mode"
 settings.single_instance_tooltip: "Prevent opening multiple SEN windows. Additional files will be forwarded to the existing instance."
@@ -136,6 +137,31 @@ settings.assoc_macos: "File association on macOS must be set manually via 'Get I
 settings.danger_zone: "Danger Zone"
 settings.reset_settings: "Reset All Settings to Default"
 settings.reset_tooltip: "This will restore all settings to their factory defaults."
+settings.are_you_sure: "Are you sure?"
+settings.yes: "Yes"
+settings.no: "No"
+
+# ═══════════════════════════════════════
+# HISTORY PANEL
+# ═══════════════════════════════════════
+history.title: "History"
+history.max_limit: "Max history limit (this file):"
+history.log_limit_set: "Max history limit set to {limit}"
+history.current_entries: "History entries: {current} / {max}"
+history.will_be_deleted: "Warning: {count} oldest entries will be deleted on next save."
+history.clear_all: "Clear all history"
+history.delete_entry: "Mark for deletion"
+history.revert_entry: "Revert to this version"
+
+# ═══════════════════════════════════════
+# DEBUG PANEL
+# ═══════════════════════════════════════
+debug.title: "Debug Log"
+debug.clear: "Clear Logs"
+debug.filter_info: "Info"
+debug.filter_success: "Success"
+debug.filter_warning: "Warning"
+debug.filter_error: "Error"
 
 # ═══════════════════════════════════════
 # SEARCH & REPLACE
@@ -250,6 +276,7 @@ batch.log_err_keyfile: "Critical: Keyfile error: {error}"
 # ═══════════════════════════════════════
 # THEME EDITOR
 # ═══════════════════════════════════════
+theme.title: "Theme Editor"
 theme.save: "Save Theme"
 theme.reset_default: "Reset to Default"
 theme.reset_saved: "Reset to Saved"

@@ -117,6 +117,7 @@ settings.language: "Język:"
 
 # Okno i panele
 settings.window_panels: "Okno i panele"
+file_tree.title: "Pliki"
 settings.start_maximized: "Uruchom zmaksymalizowane"
 settings.single_instance: "Tryb jednej instancji"
 settings.single_instance_tooltip: "Zapobiegaj otwieraniu wielu okien SEN. Dodatkowe pliki zostaną przekazane do istniejącej instancji."
@@ -136,6 +137,31 @@ settings.assoc_macos: "Powiązanie plików na macOS musi być ustawione ręcznie
 settings.danger_zone: "Strefa niebezpieczna"
 settings.reset_settings: "Przywróć domyślne ustawienia"
 settings.reset_tooltip: "Przywróci wszystkie ustawienia do wartości fabrycznych."
+settings.are_you_sure: "Na pewno?"
+settings.yes: "Tak"
+settings.no: "Nie"
+
+# ═══════════════════════════════════════
+# PANEL HISTORII
+# ═══════════════════════════════════════
+history.title: "Historia"
+history.max_limit: "Limit historii (ten plik):"
+history.log_limit_set: "Limit historii ustawiony na {limit}"
+history.current_entries: "Wpisy historii: {current} / {max}"
+history.will_be_deleted: "Uwaga: {count} najstarszych wpisów zostanie usuniętych przy zapisie."
+history.clear_all: "Wyczyść całą historię"
+history.delete_entry: "Oznacz do usunięcia"
+history.revert_entry: "Przywróć tę wersję"
+
+# ═══════════════════════════════════════
+# PANEL DEBUGOWANIA
+# ═══════════════════════════════════════
+debug.title: "Logi Debugowania"
+debug.clear: "Wyczyść logi"
+debug.filter_info: "Info"
+debug.filter_success: "Sukces"
+debug.filter_warning: "Ostrzeżenie"
+debug.filter_error: "Błąd"
 
 # ═══════════════════════════════════════
 # SEARCH & REPLACE
@@ -250,6 +276,7 @@ batch.log_err_keyfile: "Krytyczny błąd pliku klucza: {error}"
 # ═══════════════════════════════════════
 # THEME EDITOR
 # ═══════════════════════════════════════
+theme.title: "Edytor Motywów"
 theme.save: "Zapisz motyw"
 theme.reset_default: "Przywróć domyślne"
 theme.reset_saved: "Przywróć zapisane"

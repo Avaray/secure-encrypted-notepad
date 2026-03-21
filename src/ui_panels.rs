@@ -807,7 +807,7 @@ if ui
 
         ui.vertical(|ui| {
             if !self.settings.hide_panel_headers {
-                ui.heading(rust_i18n::t!("toolbar.history"));
+                ui.heading(rust_i18n::t!("history.title"));
             }
             crate::app_helpers::center_row(ui, |ui| {
                 ui.add(egui::Label::new(rust_i18n::t!("history.max_limit")).selectable(false));
@@ -1035,7 +1035,7 @@ if ui
     pub(crate) fn render_debug_panel(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
             if !self.settings.hide_panel_headers {
-                ui.heading(rust_i18n::t!("toolbar.debug"));
+                ui.heading(rust_i18n::t!("debug.title"));
             }
             crate::app_helpers::center_row(ui, |ui| {
                 if ui.button(rust_i18n::t!("debug.clear")).clicked() {
@@ -1098,7 +1098,7 @@ if ui
         ui.vertical(|ui| {
             ui.set_min_width(ui.available_width());
             if !self.settings.hide_panel_headers {
-                ui.heading(rust_i18n::t!("toolbar.files"));
+                ui.heading(rust_i18n::t!("file_tree.title"));
             }
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
@@ -1394,7 +1394,7 @@ if ui
         let mut should_reset = false;
         ui.vertical(|ui| {
             if !self.settings.hide_panel_headers {
-                ui.heading(rust_i18n::t!("toolbar.theme_editor"));
+                ui.heading(rust_i18n::t!("theme.title"));
             }
             if let Some(theme) = &mut self.editing_theme {
                 ui.horizontal_wrapped(|ui| {
