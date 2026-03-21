@@ -160,7 +160,7 @@ impl EditorApp {
         }
     }
 
-    /// Group 2: Export to Plaintext, Batch Convert.
+    /// Group 2: Export tasks.
     fn render_toolbar_batch_group(&mut self, ui: &mut egui::Ui) {
         let ico_s = self.settings.toolbar_icon_size;
         let bs = egui::vec2(ico_s + 4.0, ico_s + 4.0);
@@ -170,9 +170,6 @@ impl EditorApp {
 
         if Self::icon_btn(ui, &self.icons.export, "Export to Plaintext (.txt)", false, bs, is, ht, dt).clicked() {
             self.export_plaintext();
-        }
-        if Self::icon_btn(ui, &self.icons.batch_convert, "Batch Convert", false, bs, is, ht, dt).clicked() {
-            self.show_batch_converter = !self.show_batch_converter;
         }
     }
 
@@ -228,6 +225,9 @@ impl EditorApp {
             self.show_settings_panel = !self.show_settings_panel;
             self.settings.show_settings_panel = self.show_settings_panel;
         }
+        if Self::icon_btn(ui, &self.icons.batch_convert, "Toggle Batch Converter", self.show_batch_converter, bs, is, ht, dt).clicked() {
+            self.show_batch_converter = !self.show_batch_converter;
+        }
         if Self::icon_btn(ui, &self.icons.debug, "Toggle Debug", self.show_debug_panel, bs, is, ht, dt).clicked() {
             self.show_debug_panel = !self.show_debug_panel;
             self.settings.show_debug_panel = self.show_debug_panel;
@@ -250,6 +250,10 @@ impl EditorApp {
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
+        // 7. Batch Converter
+        if Self::icon_btn(ui, &self.icons.batch_convert, "Toggle Batch Converter", self.show_batch_converter, bs, is, ht, dt).clicked() {
+            self.show_batch_converter = !self.show_batch_converter;
+        }
         // 6. Debug
         if Self::icon_btn(ui, &self.icons.debug, "Toggle Debug", self.show_debug_panel, bs, is, ht, dt).clicked() {
             self.show_debug_panel = !self.show_debug_panel;

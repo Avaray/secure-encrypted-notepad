@@ -27,25 +27,28 @@ impl EditorApp {
         egui::TopBottomPanel::top("batch_header_panel")
             .resizable(false)
             .frame(egui::Frame::NONE.inner_margin(egui::Margin {
-                left: 8,
-                right: 8,
-                top: 4,
-                bottom: 4,
+                left: 12,
+                right: 12,
+                top: 8,
+                bottom: 8,
             }))
             .show_inside(ui, |ui| {
                 crate::app_helpers::center_row(ui, |ui| {
-                    ui.label(egui::RichText::new("Batch Converter - Encrypt, decrypt, or rotate keyfiles in multiple files"));
+                    ui.label(egui::RichText::new("BATCH CONVERTER").strong().heading());
+                    ui.add_space(8.0);
+                    ui.label(egui::RichText::new("Shift file focus: Encrypt, decrypt, or rotate keyfiles in bulk.").weak());
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button("❌").on_hover_text("Close and return to editor").clicked() {
+                        if ui.button("❌ Close").on_hover_text("Return to Editor").clicked() {
                             self.show_batch_converter = false;
                         }
                     });
                 });
             });
         
-        // Horizontal separator after header
-        // ui.separator();
+        ui.add_space(2.0);
+        ui.separator();
+        ui.add_space(2.0);
 
                 // === LEFT PANEL ===
                 let initial_width = ui.available_width() / 3.0;
@@ -59,54 +62,36 @@ impl EditorApp {
                             ui.disable();
                         }
                         // --- Mode Selector ---
-                        let available_w = ui.available_width();
-                        if available_w > 370.0 {
-                            crate::app_helpers::center_row(ui, |ui| {
-                                ui.heading("Mode");
-                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                    ui.selectable_value(&mut self.batch_mode, BatchMode::Rotate, "🔄 Rotate");
-                                    ui.selectable_value(&mut self.batch_mode, BatchMode::Decrypt, "🔓 Decrypt");
-                                    ui.selectable_value(&mut self.batch_mode, BatchMode::Encrypt, "🔒 Encrypt");
-                                });
-                            });
-                        } else {
-                            ui.heading("Mode");
+                        ui.vertical(|ui| {
+                            ui.label(egui::RichText::new("CONVERSION MODE").strong());
+                            ui.add_space(4.0);
                             crate::app_helpers::center_row(ui, |ui| {
                                 ui.selectable_value(&mut self.batch_mode, BatchMode::Encrypt, "🔒 Encrypt");
                                 ui.selectable_value(&mut self.batch_mode, BatchMode::Decrypt, "🔓 Decrypt");
                                 ui.selectable_value(&mut self.batch_mode, BatchMode::Rotate, "🔄 Rotate");
                             });
-                        }
+                            ui.add_space(4.0);
+                            let mode_desc = match self.batch_mode {
+                                BatchMode::Encrypt => "Pack plaintext into secure .sen files.",
+                                BatchMode::Decrypt => "Extract secured files back to readable format.",
+                                BatchMode::Rotate => "Re-encrypt multiple files with a new keyfile.",
+                            };
+                            ui.label(egui::RichText::new(mode_desc).weak().small());
+                        });
 
-                        ui.add_space(4.0);
+                        ui.add_space(12.0);
                         ui.separator();
-                        ui.add_space(4.0);
+                        ui.add_space(12.0);
 
                         // --- Keyfile Section ---
                         let keyfile_label = match self.batch_mode {
-                            BatchMode::Rotate => "Old Keyfile",
-                            _ => "Keyfile",
+                            BatchMode::Rotate => "OLD KEYFILE (Source)",
+                            _ => "KEYFILE",
                         };
 
-                        let available_w = ui.available_width();
-                        if available_w > 200.0 {
-                            crate::app_helpers::center_row(ui, |ui| {
-                                ui.heading(keyfile_label);
-                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                    if ui.button("Select keyfile").clicked() {
-                                        if let Some(path) = rfd::FileDialog::new().pick_file() {
-                                            self.batch_keyfile = Some(path);
-                                        }
-                                    }
-                                    if let Some(path) = &self.keyfile_path {
-                                        if ui.button("Load from Editor").on_hover_text("Use currently loaded key from the main app").clicked() {
-                                            self.batch_keyfile = Some(path.clone());
-                                        }
-                                    }
-                                });
-                            });
-                        } else {
-                            ui.heading(keyfile_label);
+                        ui.vertical(|ui| {
+                            ui.label(egui::RichText::new(keyfile_label).strong());
+                            ui.add_space(4.0);
                             crate::app_helpers::center_row(ui, |ui| {
                                 if ui.button("Select keyfile").clicked() {
                                     if let Some(path) = rfd::FileDialog::new().pick_file() {
@@ -119,41 +104,28 @@ impl EditorApp {
                                     }
                                 }
                             });
-                        }
-
-                        ui.horizontal_wrapped(|ui| {
-                            if let Some(path) = &self.batch_keyfile {
-                                ui.label(
-                                    egui::RichText::new(format!("🔑 {}", self.mask_keyfile_path(path)))
-                                        .color(self.current_theme.colors.success_color()),
-                                );
-                            } else {
-                                ui.label(
-                                    egui::RichText::new("No keyfile selected")
-                                        .color(self.current_theme.colors.warning_color()),
-                                );
-                            }
+                            ui.add_space(2.0);
+                            ui.horizontal_wrapped(|ui| {
+                                if let Some(path) = &self.batch_keyfile {
+                                    ui.label(
+                                        egui::RichText::new(format!("🔑 {}", self.mask_keyfile_path(path)))
+                                            .color(self.current_theme.colors.success_color()),
+                                    );
+                                } else {
+                                    ui.label(egui::RichText::new("No keyfile selected").weak());
+                                }
+                            });
                         });
 
                         // --- New Keyfile (Rotate mode only) ---
                         if self.batch_mode == BatchMode::Rotate {
-                            ui.add_space(4.0);
+                            ui.add_space(12.0);
                             ui.separator();
-                            ui.add_space(4.0);
+                            ui.add_space(12.0);
 
-                            if available_w > 200.0 {
-                                crate::app_helpers::center_row(ui, |ui| {
-                                    ui.heading("New Keyfile");
-                                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                        if ui.button("Select keyfile").clicked() {
-                                            if let Some(path) = rfd::FileDialog::new().pick_file() {
-                                                self.batch_keyfile_new = Some(path);
-                                            }
-                                        }
-                                    });
-                                });
-                            } else {
-                                ui.heading("New Keyfile");
+                            ui.vertical(|ui| {
+                                ui.label(egui::RichText::new("NEW KEYFILE (Target)").strong());
+                                ui.add_space(4.0);
                                 crate::app_helpers::center_row(ui, |ui| {
                                     if ui.button("Select keyfile").clicked() {
                                         if let Some(path) = rfd::FileDialog::new().pick_file() {
@@ -161,46 +133,30 @@ impl EditorApp {
                                         }
                                     }
                                 });
-                            }
-
-                            ui.horizontal_wrapped(|ui| {
-                                if let Some(path) = &self.batch_keyfile_new {
-                                    ui.label(
-                                        egui::RichText::new(format!("🔑 {}", self.mask_keyfile_path(path)))
-                                            .color(self.current_theme.colors.success_color()),
-                                    );
-                                } else {
-                                    ui.label(
-                                        egui::RichText::new("No new keyfile selected")
-                                            .color(self.current_theme.colors.warning_color()),
-                                    );
-                                }
-                            });
-                        }
-
-                        ui.add_space(4.0);
-                        ui.separator();
-                        ui.add_space(4.0);
-
-                        // --- Output Directory ---
-                        if ui.available_width() > 320.0 {
-                            crate::app_helpers::center_row(ui, |ui| {
-                                ui.heading("Output Directory");
-                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                    if self.batch_output_dir.is_some() {
-                                        if ui.button("Clear").clicked() {
-                                            self.batch_output_dir = None;
-                                        }
-                                    }
-                                    if ui.button("Select Output Directory").clicked() {
-                                        if let Some(path) = rfd::FileDialog::new().pick_folder() {
-                                            self.batch_output_dir = Some(path);
-                                        }
+                                ui.add_space(2.0);
+                                ui.horizontal_wrapped(|ui| {
+                                    if let Some(path) = &self.batch_keyfile_new {
+                                        ui.label(
+                                            egui::RichText::new(format!("🔑 {}", self.mask_keyfile_path(path)))
+                                                .color(self.current_theme.colors.success_color()),
+                                        );
+                                    } else {
+                                        ui.label(egui::RichText::new("No new keyfile selected").weak());
                                     }
                                 });
                             });
-                        } else {
-                            ui.heading("Output Directory");
+                        }
+
+                        ui.add_space(12.0);
+                        ui.separator();
+                        ui.add_space(12.0);
+
+                        // --- Output Configuration ---
+                        ui.vertical(|ui| {
+                            ui.label(egui::RichText::new("OUTPUT SETTINGS").strong());
+                            ui.add_space(4.0);
+                            
+                            // Output Directory
                             crate::app_helpers::center_row(ui, |ui| {
                                 if ui.button("Select Output Directory").clicked() {
                                     if let Some(path) = rfd::FileDialog::new().pick_folder() {
@@ -208,44 +164,40 @@ impl EditorApp {
                                     }
                                 }
                                 if self.batch_output_dir.is_some() {
-                                    if ui.button("Clear").clicked() {
+                                    if ui.button("🗑 Clear").clicked() {
                                         self.batch_output_dir = None;
                                     }
                                 }
                             });
-                        }
-
-                        ui.horizontal_wrapped(|ui| {
-                            if let Some(path) = &self.batch_output_dir {
-                                let masked = self.mask_directory_path(path);
-                                let color = if masked == "Secured" {
-                                    self.current_theme.colors.success_color()
+                            ui.add_space(2.0);
+                            ui.horizontal_wrapped(|ui| {
+                                if let Some(path) = &self.batch_output_dir {
+                                    let masked = self.mask_directory_path(path);
+                                    let color = if masked == "Secured" {
+                                        self.current_theme.colors.success_color()
+                                    } else {
+                                        self.current_theme.colors.warning_color()
+                                    };
+                                    ui.label(egui::RichText::new(format!("📁 {}", masked)).color(color));
                                 } else {
-                                    self.current_theme.colors.warning_color()
-                                };
-                                ui.label(egui::RichText::new(format!("📁 {}", masked)).color(color));
-                            } else {
-                                ui.label("Same as input files (default)");
-                            }
-                        });
-
-                        // --- Output Extension (Decrypt mode only) ---
-                        if self.batch_mode == BatchMode::Decrypt {
-                            ui.add_space(4.0);
-                            ui.separator();
-                            ui.add_space(4.0);
-
-                            crate::app_helpers::center_row(ui, |ui| {
-                                ui.heading("Output Extension");
-                                ui.add_space(8.0);
-                                let mut ext = self.batch_output_extension.clone();
-                                if ui.add(egui::TextEdit::singleline(&mut ext).hint_text("no extension")).changed() {
-                                    let new_ext = ext.trim_start_matches('.').to_string();
-                                    self.batch_output_extension = new_ext.clone();
-                                    self.settings.batch_last_extension = new_ext;
+                                    ui.label(egui::RichText::new("Same as input files (default)").weak());
                                 }
                             });
-                        }
+
+                            // Output Extension (Decrypt mode only)
+                            if self.batch_mode == BatchMode::Decrypt {
+                                ui.add_space(8.0);
+                                crate::app_helpers::center_row(ui, |ui| {
+                                    ui.label("Extension:");
+                                    let mut ext = self.batch_output_extension.clone();
+                                    if ui.add(egui::TextEdit::singleline(&mut ext).hint_text("txt")).changed() {
+                                        let new_ext = ext.trim_start_matches('.').to_string();
+                                        self.batch_output_extension = new_ext.clone();
+                                        self.settings.batch_last_extension = new_ext;
+                                    }
+                                });
+                            }
+                        });
 
                         // --- Main Action Button ---
                         ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {

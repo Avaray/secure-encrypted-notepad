@@ -28,6 +28,6 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 **none**
 
 ## 🔄 Batch Converter Improvements
-- [ ] **Layout Refinement**: Change the batch converter layout, specifically the top info section and close button. Move the main action button to the bottom of the left column.
-- [ ] **Toolbar Button Integration**: Move the batch converter toolbar button and ensure it highlights when active (like other panels).
-- [ ] **Left Column Blocks**: Refine headings and button groups in the left panel to behave as cohesive "blocks" with proper wrapping, ensuring a cleaner layout regardless of panel width.
+- [x] **Layout Refinement**: Change the batch converter layout, specifically the top info section and close button. Move the main action button to the bottom of the left column.
+- [x] **Toolbar Button Integration**: Move the batch converter toolbar button and ensure it highlights when active (like other panels).
+- [x] **Left Column Blocks**: Refine headings and button groups in the left panel to behave as cohesive "blocks" with proper wrapping, ensuring a cleaner layout regardless of panel width.
