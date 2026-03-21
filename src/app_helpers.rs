@@ -905,8 +905,9 @@ impl EditorApp {
         let mut close_clicked = false;
 
         crate::app_helpers::center_row(ui, |ui| {
-            // Focus on vertical centering by ensuring enough row height
-            ui.set_min_height(32.0); 
+            // Focus on vertical centering by ensuring enough row height based on current font
+            let heading_height = ui.text_style_height(&egui::TextStyle::Heading);
+            ui.set_min_height(heading_height + 4.0); 
             
             ui.heading(title);
             
@@ -914,7 +915,7 @@ impl EditorApp {
                 ui.add_space(8.0);
                 ui.label(egui::RichText::new(sub).weak());
             }
-
+ 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.add_space(12.0); // Consistent padding from right edge
                 if ui.button("❌")
@@ -927,9 +928,10 @@ impl EditorApp {
         });
         
         if add_separator {
-            ui.add_space(4.0);
+            let space = (self.settings.ui_font_size * 0.25).max(2.0).min(6.0);
+            ui.add_space(space);
             ui.separator();
-            ui.add_space(4.0);
+            ui.add_space(space);
         }
 
         close_clicked
