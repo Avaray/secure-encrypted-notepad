@@ -13,7 +13,6 @@ impl EditorApp {
                 .resizable(false)
                 .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
                 .show(ctx, |ui| {
-                    ui.set_max_width(300.0);
                     ui.label(t!("dialog.unsaved_msg"));
                     ui.separator();
 

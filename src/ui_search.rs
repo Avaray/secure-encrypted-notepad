@@ -8,15 +8,6 @@ impl EditorApp {
         }
 
         crate::app_helpers::center_row(ui, |ui| {
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.button("❌").clicked() {
-                    self.show_search_panel = false;
-                    self.search_query.clear();
-                    self.search_matches.clear();
-                    self.current_match_index = None;
-                }
-            });
-
             ui.label(rust_i18n::t!("search.find"));
             let original_cursor_color = ui.visuals().text_cursor.stroke.color;
             let original_selection_color = ui.visuals().selection.bg_fill;
@@ -114,6 +105,20 @@ impl EditorApp {
             if ui.button(rust_i18n::t!("search.btn_replace_all")).clicked() {
                 self.replace_all();
             }
+
+            // Close button on the far right
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.add_space(8.0);
+                if ui.button("❌")
+                    .on_hover_text(rust_i18n::t!("app.close_panel"))
+                    .clicked() 
+                {
+                    self.show_search_panel = false;
+                    self.search_query.clear();
+                    self.search_matches.clear();
+                    self.current_match_index = None;
+                }
+            });
         });
     }
 

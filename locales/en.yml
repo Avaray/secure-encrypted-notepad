@@ -185,7 +185,7 @@ search.btn_replace_all: "Replace all"
 # DIALOGS
 # ═══════════════════════════════════════
 dialog.unsaved_title: "Unsaved Changes"
-dialog.unsaved_msg: "You have unsaved changes. Do you want to save them?"
+dialog.unsaved_msg: "You have unsaved changes.\nDo you want to save them?"
 dialog.btn_save: "Save"
 dialog.btn_dont_save: "Don't Save"
 dialog.btn_cancel: "Cancel"
