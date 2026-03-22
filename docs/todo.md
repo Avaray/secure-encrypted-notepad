@@ -18,7 +18,6 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Font Autodetection List Polish**: Refine the preferred font lists (UI and Editor) for smart detection, as the current lists are early versions that need better selection.
 - [ ] **Cargo Workspace Refactoring**: Consider refactoring the project into a [workspace](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html) to better support future platforms like Android, allowing shared logic between desktop and mobile versions.
 - [ ] **Translation Polish**: Review and refine translations throughout the application to ensure consistency and correctness across all supported languages.
-- [ ] **Dynamic Panel Header Height**: Adjust the `render_panel_header` component to have a dynamic height that scales with the current font size. Currently, when font sizes are small, headers occupy too much vertical space relative to their content.
 
 
 ## 🐛 Bug Fixes (To Fix)
