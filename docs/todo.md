@@ -21,4 +21,5 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 
 
 ## 🐛 Bug Fixes (To Fix)
+
 - [ ] **Settings Slider Crash**: Investigate and fix application crashes occurring when rapidly dragging value-based sliders (e.g., Font Size, Line Height, Transparency) in the settings and theme panels.
