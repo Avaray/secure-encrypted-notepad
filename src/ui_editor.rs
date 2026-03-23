@@ -14,6 +14,26 @@ fn byte_to_char_idx(s: &str, byte_idx: usize) -> usize {
         .unwrap_or_else(|| s.chars().count())
 }
 
+fn find_urls(text: &str) -> Vec<std::ops::Range<usize>> {
+    let mut urls = Vec::new();
+    let mut start = 0;
+    while let Some(idx) = text[start..].find("http://").or_else(|| text[start..].find("https://")) {
+        let url_start = start + idx;
+        let mut url_end = url_start;
+        for (i, c) in text[url_start..].char_indices() {
+            if c.is_whitespace() || c == '<' || c == '>' || c == '"' || c == '\'' || c == '`' || c == ')' {
+                url_end = url_start + i;
+                break;
+            } else {
+                url_end = url_start + i + c.len_utf8();
+            }
+        }
+        urls.push(url_start..url_end);
+        start = url_end;
+    }
+    urls
+}
+
 impl EditorApp {
     pub(crate) fn render_editor(&mut self, ui: &mut egui::Ui) {
         let line_count = if self.document.current_content.is_empty() {
@@ -43,6 +63,10 @@ impl EditorApp {
         let search_query_len = self.search_query.len();
         let search_active = !self.search_query.is_empty() && !search_matches.is_empty();
         let highlight_color = self.current_theme.colors.highlight_color();
+        
+        // Capture link state for layouter
+        let link_matches: Vec<std::ops::Range<usize>> = find_urls(&self.document.current_content);
+        let link_color = self.current_theme.colors.hyperlink_color();
 
         // Optical adjustment: line numbers are right-aligned, which often makes the left padding
         // appear larger due to monospace font side-bearings and smaller numbers.
@@ -259,90 +283,102 @@ impl EditorApp {
                         foreground_color
                     };
 
-                    // Add the line content with search highlighting
-                    if search_active && !line.is_empty() {
-                        // Render line with search match highlighting
+                    if !line.is_empty() {
                         let line_start_byte = byte_offset;
                         let line_end_byte = byte_offset + line.len();
-                        let mut pos = 0usize; // position within the line
 
-                        for &match_start in &search_matches {
-                            let match_end = match_start + search_query_len;
-                            // Check if this match overlaps with current line
-                            if match_end <= line_start_byte || match_start >= line_end_byte {
+                        // 1. Identify URL segments overlapping the current line
+                        let mut line_links = Vec::new();
+                        for link_range in &link_matches {
+                            if link_range.end <= line_start_byte || link_range.start >= line_end_byte {
                                 continue;
                             }
-                            // Clamp to line boundaries
-                            let local_start = if match_start > line_start_byte {
-                                match_start - line_start_byte
-                            } else {
-                                0
-                            };
-                            let local_end = if match_end < line_end_byte {
-                                match_end - line_start_byte
-                            } else {
-                                line.len()
-                            };
-
-                            // Append text before match
-                            if local_start > pos {
-                                layout_job.append(
-                                    &line[pos..local_start],
-                                    0.0,
-                                    egui::TextFormat {
-                                        font_id: font_id.clone(),
-                                        color: content_color,
-                                        line_height,
-                                        valign: egui::Align::Center,
-                                        ..Default::default()
-                                    },
-                                );
-                            }
-                            // Append matched text with highlight background
-                            if local_end > local_start {
-                                layout_job.append(
-                                    &line[local_start..local_end],
-                                    0.0,
-                                    egui::TextFormat {
-                                        font_id: font_id.clone(),
-                                        color: content_color,
-                                        line_height,
-                                        valign: egui::Align::Center,
-                                        background: highlight_color,
-                                        ..Default::default()
-                                    },
-                                );
-                            }
-                            pos = local_end;
+                            let local_start = if link_range.start > line_start_byte { link_range.start - line_start_byte } else { 0 };
+                            let local_end = if link_range.end < line_end_byte { link_range.end - line_start_byte } else { line.len() };
+                            line_links.push(local_start..local_end);
                         }
-                        // Append remaining text after last match
+
+                        // 2. Build base segments grouping the line into (Content, IsLink) parts
+                        let mut base_segments = Vec::new();
+                        let mut pos = 0;
+                        for link_range in line_links {
+                            if link_range.start > pos {
+                                base_segments.push((pos..link_range.start, false));
+                            }
+                            if link_range.end > link_range.start {
+                                base_segments.push((link_range.start..link_range.end, true));
+                            }
+                            pos = link_range.end;
+                        }
                         if pos < line.len() {
-                            layout_job.append(
-                                &line[pos..],
-                                0.0,
-                                egui::TextFormat {
+                            base_segments.push((pos..line.len(), false));
+                        }
+
+                        // 3. Render segments, applying search highlights on top if overlapping
+                        for (seg_range, is_link) in base_segments {
+                            let seg_start_global = line_start_byte + seg_range.start;
+                            let seg_end_global = line_start_byte + seg_range.end;
+                            
+                            let base_color = if is_link && !is_comment { link_color } else { content_color };
+                            let underline = if is_link && !is_comment { egui::Stroke::new(1.0, link_color) } else { egui::Stroke::NONE };
+
+                            if search_active {
+                                let mut s_pos = seg_range.start;
+                                for &m_start in &search_matches {
+                                    let m_end = m_start + search_query_len;
+                                    if m_end <= seg_start_global || m_start >= seg_end_global { continue; }
+                                    
+                                    let local_s_start = s_pos.max(if m_start > line_start_byte { m_start - line_start_byte } else { 0 });
+                                    let local_s_end = seg_range.end.min(if m_end > line_start_byte { m_end - line_start_byte } else { 0 });
+                                    
+                                    // Segment BEFORE the highlight
+                                    if local_s_start > s_pos {
+                                        layout_job.append(&line[s_pos..local_s_start], 0.0, egui::TextFormat {
+                                            font_id: font_id.clone(),
+                                            color: base_color,
+                                            line_height,
+                                            valign: egui::Align::Center,
+                                            underline,
+                                            ..Default::default()
+                                        });
+                                    }
+                                    // Highlighted portion
+                                    if local_s_end > local_s_start {
+                                        layout_job.append(&line[local_s_start..local_s_end], 0.0, egui::TextFormat {
+                                            font_id: font_id.clone(),
+                                            color: base_color,
+                                            line_height,
+                                            valign: egui::Align::Center,
+                                            background: highlight_color,
+                                            underline,
+                                            ..Default::default()
+                                        });
+                                    }
+                                    s_pos = local_s_end;
+                                }
+                                // Segment AFTER the last highlight
+                                if s_pos < seg_range.end {
+                                    layout_job.append(&line[s_pos..seg_range.end], 0.0, egui::TextFormat {
+                                        font_id: font_id.clone(),
+                                        color: base_color,
+                                        line_height,
+                                        valign: egui::Align::Center,
+                                        underline,
+                                        ..Default::default()
+                                    });
+                                }
+                            } else {
+                                // Fast path: No search highlight filtering needed, write entire segment directly
+                                layout_job.append(&line[seg_range], 0.0, egui::TextFormat {
                                     font_id: font_id.clone(),
-                                    color: content_color,
+                                    color: base_color,
                                     line_height,
                                     valign: egui::Align::Center,
+                                    underline,
                                     ..Default::default()
-                                },
-                            );
+                                });
+                            }
                         }
-                        // Handle empty line edge case (pos == 0 and line is empty)
-                    } else {
-                        // No search highlighting - simple append
-                        layout_job.append(
-                            line,
-                            0.0,
-                            egui::TextFormat {
-                                font_id: font_id.clone(),
-                                color: content_color,
-                                line_height,
-                                valign: egui::Align::Center,
-                                ..Default::default()
-                            },
-                        );
                     }
 
                     // Add newline separator (except after the very last segment if text doesn't end with \n)
@@ -421,6 +457,29 @@ impl EditorApp {
                     layouter(ui, text_str.as_str(), wrap_width)
                 })
                 .show(ui);
+
+            // Handle URL hovering and CTRL + Click
+            if output.response.hovered() && ui.input(|i| i.modifiers.ctrl) {
+                if let Some(pos) = output.response.hover_pos() {
+                    let cursor = output.galley.cursor_from_pos(pos - output.galley_pos);
+                    let char_idx = cursor.index;
+                    let byte_idx = char_to_byte_idx(text_ptr, char_idx);
+                    
+                    for link_range in &link_matches {
+                        if link_range.contains(&byte_idx) {
+                            ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+                            if ui.input(|i| i.pointer.primary_clicked()) {
+                                let url = &text_ptr[link_range.clone()];
+                                ui.ctx().open_url(egui::OpenUrl {
+                                    url: url.to_string(),
+                                    new_tab: true,
+                                });
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
 
             // Restore colors for other widgets
             ui.visuals_mut().text_cursor.stroke.color = original_cursor_color;

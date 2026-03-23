@@ -325,6 +325,14 @@ impl ThemeColors {
             self.cursor_color().linear_multiply(0.35)
         }
     }
+    
+    pub fn hyperlink_color(&self) -> egui::Color32 {
+        if let Some(c) = self.hyperlink {
+            egui::Color32::from_rgb(c[0], c[1], c[2])
+        } else {
+            egui::Color32::from_rgb(90, 170, 255) // Default fallback generic blue
+        }
+    }
 
     pub fn comment_color(&self) -> egui::Color32 {
         egui::Color32::from_rgb(self.comment[0], self.comment[1], self.comment[2])
