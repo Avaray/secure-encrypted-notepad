@@ -1561,7 +1561,7 @@ if ui
                                     ui.add(egui::Label::new(label).selectable(false));
                                     let mut current = field.unwrap_or(default);
                                     crate::app_helpers::center_row(ui, |ui| {
-                                        if ui.color_edit_button_srgb(&mut current).changed() {
+                                        if custom_color_picker_button(ui, &mut current, egui::Id::new(id_str)) {
                                             *field = Some(current);
                                             changed = true;
                                         }
@@ -1810,7 +1810,7 @@ fn render_color_edit_row(
 ) -> bool {
     let mut changed = false;
     // Column 2: Picker
-    if ui.color_edit_button_srgb(color).changed() {
+    if custom_color_picker_button(ui, color, row_id.with("color_btn")) {
         changed = true;
     }
 
@@ -1896,4 +1896,81 @@ fn render_copy_paste_buttons(
         }
     });
     paste_color
+}
+
+/// Helper function to create a pixel-perfect, custom-sized color picker button.
+/// This sidesteps the rigid sizing constraints of `ui.color_edit_button_srgb`
+/// and matches the exact `interact_size.y` to align flawlessly with inputs and other buttons.
+fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: egui::Id) -> bool {
+    let btn_size = ui.spacing().interact_size.y;
+    let padding = ui.spacing().button_padding;
+    
+    // Compute minimum size for the inner color block, matching our icon sizing logic
+    let inner_size = (btn_size * 0.6).max(12.0);
+    
+    // Simulate what a standard egui::Button does: expand to fit content + padding
+    let desired_size = egui::vec2(
+        btn_size.max(inner_size + padding.x * 2.0),
+        btn_size.max(inner_size + padding.y * 2.0),
+    );
+
+    let mut color32 = egui::Color32::from_rgb(color[0], color[1], color[2]);
+    let (rect, response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
+    
+    if response.clicked() {
+        egui::Popup::toggle_id(ui.ctx(), popup_id);
+    }
+    
+    // Draw our custom perfectly-squared color button
+    if ui.is_rect_visible(rect) {
+        let visuals = ui.style().interact(&response);
+        
+        // Draw outer button background & stroke (respects hover/active states)
+        ui.painter().rect_filled(rect, visuals.corner_radius, visuals.bg_fill);
+        ui.painter().rect_stroke(rect, visuals.corner_radius, visuals.bg_stroke, egui::StrokeKind::Inside);
+        
+        // Draw inner color block respecting theme's button padding
+        let padding = ui.spacing().button_padding;
+        let inner_rect = rect.shrink2(padding);
+        
+        // Use a slightly smaller corner radius for the inner block to match aesthetics
+        // Fallback stroke around color to distinguish if it matches background
+        ui.painter().rect_filled(inner_rect, visuals.corner_radius.at_most(2), color32);
+        ui.painter().rect_stroke(
+            inner_rect, 
+            visuals.corner_radius.at_most(2), 
+            egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color), 
+            egui::StrokeKind::Inside
+        );
+    }
+    
+    let mut changed = false;
+    
+    // Manually handle the popup drawing to ensure compatibility
+    if egui::Popup::is_id_open(ui.ctx(), popup_id) {
+        let area = egui::Area::new(popup_id)
+            .order(egui::Order::Foreground)
+            .fixed_pos(rect.left_bottom() + egui::vec2(0.0, 4.0));
+            
+        let area_response = area.show(ui.ctx(), |ui| {
+            egui::Frame::popup(ui.style()).show(ui, |ui| {
+                if egui::color_picker::color_picker_color32(ui, &mut color32, egui::color_picker::Alpha::Opaque) {
+                    changed = true;
+                    color[0] = color32.r();
+                    color[1] = color32.g();
+                    color[2] = color32.b();
+                }
+            });
+        });
+
+        // Close popup logic if clicked outside
+        if ui.input(|i| i.pointer.any_pressed()) {
+            let pointer_pos = ui.input(|i| i.pointer.interact_pos()).unwrap_or_default();
+            if !area_response.response.rect.contains(pointer_pos) && !rect.contains(pointer_pos) {
+                egui::Popup::close_id(ui.ctx(), popup_id);
+            }
+        }
+    }
+    
+    changed
 }
