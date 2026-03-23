@@ -111,6 +111,12 @@ pub struct ThemeColors {
     pub shadow_color: Option<[u8; 3]>,
     #[serde(default)]
     pub shadow_blur: Option<f32>,
+    #[serde(default)]
+    pub shadow_spread: Option<f32>,
+    #[serde(default)]
+    pub shadow_offset_x: Option<f32>,
+    #[serde(default)]
+    pub shadow_offset_y: Option<f32>,
 
     // --- Granular Button States ---
     #[serde(default)]
@@ -191,6 +197,9 @@ impl ThemeColors {
             separator_width: None,
             shadow_color: None,
             shadow_blur: None,
+            shadow_spread: None,
+            shadow_offset_x: None,
+            shadow_offset_y: None,
             button_hover_fg: None,
             button_active_fg: None,
             button_hover_border_color: None,
@@ -252,6 +261,9 @@ impl ThemeColors {
             separator_width: None,
             shadow_color: None,
             shadow_blur: None,
+            shadow_spread: None,
+            shadow_offset_x: None,
+            shadow_offset_y: None,
             button_hover_fg: None,
             button_active_fg: None,
             button_hover_border_color: None,
@@ -472,6 +484,21 @@ impl Theme {
         if let Some(b) = self.colors.shadow_blur {
             visuals.window_shadow.blur = b as u8;
             visuals.popup_shadow.blur = b as u8;
+        }
+        
+        if let Some(s) = self.colors.shadow_spread {
+            visuals.window_shadow.spread = s as u8;
+            visuals.popup_shadow.spread = s as u8;
+        }
+
+        if let Some(x) = self.colors.shadow_offset_x {
+            visuals.window_shadow.offset[0] = x as i8;
+            visuals.popup_shadow.offset[0] = x as i8;
+        }
+        
+        if let Some(y) = self.colors.shadow_offset_y {
+            visuals.window_shadow.offset[1] = y as i8;
+            visuals.popup_shadow.offset[1] = y as i8;
         }
 
         // --- Apply Button States (Foreground & Border) ---

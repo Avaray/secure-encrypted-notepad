@@ -1692,7 +1692,10 @@ if ui
                                 ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_geometry")).strong()); ui.label(""); ui.label(""); ui.end_row();
                                 if edit_optional_float(&rust_i18n::t!("theme.window_rounding") , &mut theme.colors.window_rounding, 4.0, 0.0..=20.0, 0.1, ui) { theme_changed = true; }
                                 if edit_optional_color(&rust_i18n::t!("theme.shadow_color") , &mut theme.colors.shadow_color, [0, 0, 0], "shadow_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_float(&rust_i18n::t!("theme.shadow_blur") , &mut theme.colors.shadow_blur, 10.0, 0.0..=50.0, 0.5, ui) { theme_changed = true; }
+                                if edit_optional_float(&rust_i18n::t!("theme.shadow_blur") , &mut theme.colors.shadow_blur, 10.0, 0.0..=100.0, 0.5, ui) { theme_changed = true; }
+                                if edit_optional_float(&rust_i18n::t!("theme.shadow_spread") , &mut theme.colors.shadow_spread, 0.0, 0.0..=100.0, 0.5, ui) { theme_changed = true; }
+                                if edit_optional_float(&rust_i18n::t!("theme.shadow_offset_x") , &mut theme.colors.shadow_offset_x, 0.0, -100.0..=100.0, 0.5, ui) { theme_changed = true; }
+                                if edit_optional_float(&rust_i18n::t!("theme.shadow_offset_y") , &mut theme.colors.shadow_offset_y, 0.0, -100.0..=100.0, 0.5, ui) { theme_changed = true; }
 
                                 // --- SYNTAX ALERTS ---
                                 ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_syntax")).strong()); ui.label(""); ui.label(""); ui.end_row();
