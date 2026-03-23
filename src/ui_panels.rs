@@ -847,8 +847,6 @@ if ui
                 .color(history_status_color),
             ).selectable(false));
 
-            ui.checkbox(&mut self.show_history_diff, rust_i18n::t!("history.show_diff"));
-
             if history_len > doc_max_limit {
                 let to_delete = history_len - doc_max_limit;
                 ui.add(egui::Label::new(

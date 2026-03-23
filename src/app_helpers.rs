@@ -66,47 +66,6 @@ impl EditorApp {
         ctx.set_fonts(fonts);
     }
 
-    /// Compute a colored LayoutJob showing diff between two strings
-    pub(crate) fn compute_diff_layout_job(&self, old_text: &str, new_text: &str) -> egui::text::LayoutJob {
-        use similar::{ChangeTag, TextDiff};
-        let mut layout_job = egui::text::LayoutJob::default();
-        let font_id = egui::FontId::monospace(self.settings.editor_font_size);
-        
-        let diff = TextDiff::from_lines(old_text, new_text);
-
-        for change in diff.iter_all_changes() {
-            let (color, background, prefix) = match change.tag() {
-                ChangeTag::Delete => (
-                    self.current_theme.colors.error_color(),
-                    self.current_theme.colors.error_color().linear_multiply(0.15),
-                    "- "
-                ),
-                ChangeTag::Insert => (
-                    self.current_theme.colors.success_color(),
-                    self.current_theme.colors.success_color().linear_multiply(0.15),
-                    "+ "
-                ),
-                ChangeTag::Equal => (
-                    self.current_theme.colors.editor_foreground_color().linear_multiply(0.7),
-                    egui::Color32::TRANSPARENT,
-                    "  "
-                ),
-            };
-
-            layout_job.append(
-                &format!("{}{}", prefix, change.value()),
-                0.0,
-                egui::TextFormat {
-                    font_id: font_id.clone(),
-                    color,
-                    background,
-                    ..Default::default()
-                },
-            );
-        }
-        layout_job
-    }
-
     /// Update UI style + fonts based on settings
     pub(crate) fn apply_style(&self, ctx: &egui::Context) {
         self.load_custom_fonts(ctx);

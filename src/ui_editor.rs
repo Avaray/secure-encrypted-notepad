@@ -223,58 +223,6 @@ impl EditorApp {
             }
         }
 
-        // Viewport width is now simply the text_area width (the ScrollArea's own width)
-        let scrollbar_outer_margin = ui.style().spacing.scroll.bar_outer_margin
-            + ui.style().spacing.scroll.bar_width
-            + ui.style().spacing.scroll.bar_inner_margin;
-        // Added more right margin so text doesn't touch the edge (Editor Comfort Phase 2)
-        let text_right_padding = 120.0;
-        let viewport_width =
-            (text_area_rect.width() - scrollbar_outer_margin - text_right_padding).max(100.0);
-
-        // desired_width controls text wrapping:
-        //   word_wrap ON  -> wrap at viewport width
-        //   word_wrap OFF -> 0.0 so TextEdit sizes to actual content width;
-        //                   min_size ensures it fills the viewport for short/empty files,
-        //                   preventing a phantom horizontal scrollbar.
-        //                   The layouter already sets wrap.max_width = INFINITY independently.
-        let desired_width = if word_wrap { viewport_width } else { 0.0 };
-
-        let min_height = (text_area_rect.height() - scrollbar_outer_margin).max(100.0);
-
-        // Handle History Diff View
-        if let Some(loaded_idx) = self.loaded_history_index {
-            if self.show_history_diff {
-                let current_text = &self.document.current_content;
-                let mut previous_text = "";
-                
-                // Find the previous version in history that isn't deleted
-                if loaded_idx < self.document.history.len() {
-                    for i in (0..loaded_idx).rev() {
-                        if !self.document.history[i].deleted {
-                            previous_text = &self.document.history[i].content;
-                            break;
-                        }
-                    }
-                }
-
-                let layout_job = self.compute_diff_layout_job(previous_text, current_text);
-                
-                if word_wrap {
-                    egui::ScrollArea::vertical()
-                } else {
-                    egui::ScrollArea::both()
-                }
-                .id_salt("main_editor_diff")
-                .auto_shrink(false)
-                .scroll_offset(scroll_state.offset.into())
-                .show(&mut text_ui, |ui| {
-                    ui.add(egui::Label::new(layout_job));
-                });
-                return;
-            }
-        }
-
         // Use vertical-only scroll when word wrap is ON (no horizontal content to scroll).
         // Use both axes when word wrap is OFF so long lines can scroll horizontally.
         let scroll_output = if word_wrap {
@@ -302,13 +250,29 @@ impl EditorApp {
                 }
 
                 // Split text into lines & process each
-                let mut _line_idx = 0;
-                let mut byte_offset = 0;
-                let lines: Vec<&str> = text_str.split('\n').collect();
-                let num_lines = lines.len();
+                let mut byte_offset: usize = 0;
 
-                for (i, line) in lines.iter().enumerate() {
-                    let is_last = i == num_lines - 1;
+                // Handle empty text
+                if text_str.is_empty() {
+                    layout_job.append(
+                        "",
+                        0.0,
+                        egui::TextFormat {
+                            font_id: font_id.clone(),
+                            color: foreground_color,
+                            line_height,
+                            valign: egui::Align::Center,
+                            ..Default::default()
+                        },
+                    );
+                    return ui.fonts_mut(|f| f.layout_job(layout_job));
+                }
+
+                // Iterate lines, including trailing empty line after final \n
+                let mut lines_iter = text_str.split('\n').peekable();
+                let mut _line_idx = 0;
+                while let Some(line) = lines_iter.next() {
+                    let is_last = lines_iter.peek().is_none();
 
                     // Determine colors
                     let trimmed = line.trim_start();
@@ -446,6 +410,25 @@ impl EditorApp {
             if ui.memory(|mem| mem.has_focus(text_edit_id)) {
                 // We will handle Tab/Copy/Cut/SelectAll OUTSIDE the ScrollArea to avoid borrow checker issues
             }
+
+            // Viewport width is now simply the text_area width (the ScrollArea's own width)
+            let scrollbar_outer_margin = ui.style().spacing.scroll.bar_outer_margin
+                + ui.style().spacing.scroll.bar_width
+                + ui.style().spacing.scroll.bar_inner_margin;
+            // Added more right margin so text doesn't touch the edge (Editor Comfort Phase 2)
+            let text_right_padding = 120.0;
+            let viewport_width =
+                (text_area_rect.width() - scrollbar_outer_margin - text_right_padding).max(100.0);
+
+            // desired_width controls text wrapping:
+            //   word_wrap ON  -> wrap at viewport width
+            //   word_wrap OFF -> 0.0 so TextEdit sizes to actual content width;
+            //                   min_size ensures it fills the viewport for short/empty files,
+            //                   preventing a phantom horizontal scrollbar.
+            //                   The layouter already sets wrap.max_width = INFINITY independently.
+            let desired_width = if word_wrap { viewport_width } else { 0.0 };
+
+            let min_height = (text_area_rect.height() - scrollbar_outer_margin).max(100.0);
 
             // HACK: Hide default cursor and selection to draw our own
             let original_cursor_color = ui.visuals().text_cursor.stroke.color;

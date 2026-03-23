@@ -154,8 +154,6 @@ history.will_be_deleted: "Warnung: %{count} älteste Einträge werden beim näch
 history.clear_all: "Gesamten Verlauf löschen"
 history.delete_entry: "Zum Löschen markieren"
 history.revert_entry: "Auf diese Version zurücksetzen"
-history.show_diff: "Änderungen anzeigen (Diff)"
-history.no_history: "Keine Historie-Einträge gefunden."
 
 # ═══════════════════════════════════════
 # DEBUG-PANEL
