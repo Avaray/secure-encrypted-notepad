@@ -22,5 +22,8 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 
 ## 🐛 Bug Fixes (To Fix)
 
+- [ ] **Theme Editor UI Polish (Copy/Paste & Color Pickers)**: Ensure ideal alignment of grid elements in the theme editor.
+    - Fix sizes of copy/paste buttons (should be framed, squared, matching `interact_size.y` height).
+    - Replace the native `ui.color_edit_button_srgb` with custom buttons (e.g., `ui.add(egui::Button::image(...).fill(color))`). This allows forcing a square `min_size` matching the input height, eliminating the native selector's rigid dimensions.
+    - Use `egui::show_tooltip_for_rect` or `egui::Popup` with `egui::color_picker::color_picker_color32` to display the color adjustment interface only after clicking the custom button.
 - [ ] **Settings Slider Crash**: Investigate and fix application crashes occurring when rapidly dragging value-based sliders (e.g., Font Size, Line Height, Transparency) in the settings and theme panels.
-- [ ] **Theme Editor Copy/Paste Size**: Fix the sizing of copy/paste buttons in the theme editor; they should match the size of the adjacent "reset" button or input fields.
