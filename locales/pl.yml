@@ -185,7 +185,8 @@ search.btn_replace_all: "Zamień wszystkie"
 # DIALOGS
 # ═══════════════════════════════════════
 dialog.unsaved_title: "Niezapisane zmiany"
-dialog.unsaved_msg: "Masz niezapisane zmiany.\nCzy chcesz je zapisać?"
+dialog.unsaved_line1: "Masz niezapisane zmiany."
+dialog.unsaved_line2: "Czy chcesz je zapisać?"
 dialog.btn_save: "Zapisz"
 dialog.btn_dont_save: "Nie zapisuj"
 dialog.btn_cancel: "Anuluj"

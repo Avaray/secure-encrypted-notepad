@@ -183,7 +183,8 @@ search.btn_replace_all: "Alle ersetzen"
 # DIALOGS
 # ═══════════════════════════════════════
 dialog.unsaved_title: "Ungespeicherte Änderungen"
-dialog.unsaved_msg: "Sie haben ungespeicherte Änderungen.\nMöchten Sie diese speichern?"
+dialog.unsaved_line1: "Sie haben ungespeicherte Änderungen."
+dialog.unsaved_line2: "Möchten Sie diese speichern?"
 dialog.btn_save: "Speichern"
 dialog.btn_dont_save: "Nicht speichern"
 dialog.btn_cancel: "Abbrechen"

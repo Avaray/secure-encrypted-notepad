@@ -13,8 +13,18 @@ impl EditorApp {
                 .resizable(false)
                 .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
                 .show(ctx, |ui| {
-                    ui.label(t!("dialog.unsaved_msg"));
-                    ui.separator();
+                    let font_id = egui::TextStyle::Body.resolve(ui.style());
+                    let text1 = t!("dialog.unsaved_line1");
+                    let text2 = t!("dialog.unsaved_line2");
+                    
+                    let w1 = ui.painter().layout_no_wrap(text1.to_string(), font_id.clone(), egui::Color32::WHITE).rect.width();
+                    let w2 = ui.painter().layout_no_wrap(text2.to_string(), font_id, egui::Color32::WHITE).rect.width();
+                    
+                    ui.set_min_width(w1.max(w2));
+                    
+                    ui.label(text1);
+                    ui.label(text2);
+                    ui.add_space(8.0);
 
                     crate::app_helpers::center_row(ui, |ui| {
                         if ui.button(t!("dialog.btn_save")).clicked() {
