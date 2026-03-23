@@ -1950,13 +1950,25 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: 
             
         let area_response = area.show(ui.ctx(), |ui| {
             egui::Frame::popup(ui.style()).show(ui, |ui| {
-                ui.spacing_mut().slider_width = 256.0;
-                ui.set_min_width(256.0);
+                // Two-frame approach: measure the actual popup content width (driven by icon buttons)
+                // on frame 1, then set slider_width to match on frame 2+
+                let width_key = popup_id.with("measured_w");
+                let measured = ui.data(|d| d.get_temp::<f32>(width_key));
+                
+                // Use measured width from previous frame, or small default to let buttons determine width
+                ui.spacing_mut().slider_width = measured.unwrap_or(100.0);
                 if egui::color_picker::color_picker_color32(ui, &mut color32, egui::color_picker::Alpha::Opaque) {
                     changed = true;
                     color[0] = color32.r();
                     color[1] = color32.g();
                     color[2] = color32.b();
+                }
+                
+                // Store measured content width for next frame (stabilizes after 2 frames)
+                let actual_width = ui.min_rect().width();
+                if measured.is_none() || (actual_width - measured.unwrap_or(0.0)).abs() > 1.0 {
+                    ui.data_mut(|d| d.insert_temp(width_key, actual_width));
+                    ui.ctx().request_repaint();
                 }
             });
         });
