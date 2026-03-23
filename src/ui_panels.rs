@@ -1905,55 +1905,53 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: 
     let btn_size = ui.spacing().interact_size.y;
     let padding = ui.spacing().button_padding;
     
-    // Compute minimum size for the inner color block, matching our icon sizing logic
     let inner_size = (btn_size * 0.6).max(12.0);
-    
-    // Simulate what a standard egui::Button does: expand to fit content + padding
     let desired_size = egui::vec2(
         btn_size.max(inner_size + padding.x * 2.0),
         btn_size.max(inner_size + padding.y * 2.0),
     );
 
     let mut color32 = egui::Color32::from_rgb(color[0], color[1], color[2]);
-    let (rect, response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
+    let button_id = popup_id.with("btn");
+    let area_id = popup_id.with("area");
     
+    let rect = ui.allocate_exact_size(desired_size, egui::Sense::hover()).0;
+    let response = ui.interact(rect, button_id, egui::Sense::click());
+    
+    // Simple boolean state — completely independent of egui's Popup system
+    let is_open = ui.data(|d| d.get_temp::<bool>(popup_id).unwrap_or(false));
     if response.clicked() {
-        egui::Popup::toggle_id(ui.ctx(), popup_id);
+        ui.data_mut(|d| d.insert_temp(popup_id, !is_open));
     }
     
-    // Draw our custom perfectly-squared color button
+    // Draw button
     if ui.is_rect_visible(rect) {
         let visuals = ui.style().interact(&response);
-        
-        // Draw outer button background & stroke (respects hover/active states)
         ui.painter().rect_filled(rect, visuals.corner_radius, visuals.bg_fill);
         ui.painter().rect_stroke(rect, visuals.corner_radius, visuals.bg_stroke, egui::StrokeKind::Inside);
         
-        // Draw inner color block respecting theme's button padding
-        let padding = ui.spacing().button_padding;
         let inner_rect = rect.shrink2(padding);
-        
-        // Use a slightly smaller corner radius for the inner block to match aesthetics
-        // Fallback stroke around color to distinguish if it matches background
         ui.painter().rect_filled(inner_rect, visuals.corner_radius.at_most(2), color32);
         ui.painter().rect_stroke(
-            inner_rect, 
-            visuals.corner_radius.at_most(2), 
-            egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color), 
+            inner_rect,
+            visuals.corner_radius.at_most(2),
+            egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color),
             egui::StrokeKind::Inside
         );
     }
     
     let mut changed = false;
     
-    // Manually handle the popup drawing to ensure compatibility
-    if egui::Popup::is_id_open(ui.ctx(), popup_id) {
-        let area = egui::Area::new(popup_id)
+    if is_open {
+        let area = egui::Area::new(area_id)
             .order(egui::Order::Foreground)
-            .fixed_pos(rect.left_bottom() + egui::vec2(0.0, 4.0));
+            .default_pos(response.rect.left_bottom() + egui::vec2(0.0, 4.0))
+            .interactable(true);
             
         let area_response = area.show(ui.ctx(), |ui| {
             egui::Frame::popup(ui.style()).show(ui, |ui| {
+                ui.spacing_mut().slider_width = 256.0;
+                ui.set_min_width(256.0);
                 if egui::color_picker::color_picker_color32(ui, &mut color32, egui::color_picker::Alpha::Opaque) {
                     changed = true;
                     color[0] = color32.r();
@@ -1963,11 +1961,12 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: 
             });
         });
 
-        // Close popup logic if clicked outside
+        // Close only when clicking outside both button and popup
         if ui.input(|i| i.pointer.any_pressed()) {
-            let pointer_pos = ui.input(|i| i.pointer.interact_pos()).unwrap_or_default();
-            if !area_response.response.rect.contains(pointer_pos) && !rect.contains(pointer_pos) {
-                egui::Popup::close_id(ui.ctx(), popup_id);
+            if let Some(pos) = ui.input(|i| i.pointer.interact_pos()) {
+                if !area_response.response.rect.contains(pos) && !response.rect.contains(pos) {
+                    ui.data_mut(|d| d.insert_temp(popup_id, false));
+                }
             }
         }
     }
