@@ -23,3 +23,4 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 ## 🐛 Bug Fixes (To Fix)
 
 - [ ] **Settings Slider Crash**: Investigate and fix application crashes occurring when rapidly dragging value-based sliders (e.g., Font Size, Line Height, Transparency) in the settings and theme panels.
+- [ ] **Theme Editor Copy/Paste Size**: Fix the sizing of copy/paste buttons in the theme editor; they should match the size of the adjacent "reset" button or input fields.
