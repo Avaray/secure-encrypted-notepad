@@ -68,11 +68,12 @@ impl EditorApp {
         let link_matches: Vec<std::ops::Range<usize>> = find_urls(&self.document.current_content);
         let link_color = self.current_theme.colors.hyperlink_color();
 
-        // Optical adjustment: line numbers are right-aligned, which often makes the left padding
-        // appear larger due to monospace font side-bearings and smaller numbers.
-        // We use asymmetric padding to make it visually balanced.
-        let line_number_left_padding = 4.0;
-        let line_number_right_padding = 10.0;
+        // Line numbers are right-aligned so digits stack correctly.
+        // We set symmetric 8.0 padding here, but note that right-alignment naturally
+        // pushes smaller numbers to the left, leaving more empty space on the left side
+        // of the column when the total line count has multiple digits.
+        let line_number_left_padding = 0.0;
+        let line_number_right_padding = 8.0;
         let text_left_padding = 10.0;
 
         // Calculate precise width for line numbers
