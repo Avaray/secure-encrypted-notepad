@@ -156,6 +156,8 @@ history.will_be_deleted: "Warning: %{count} oldest entries will be deleted on ne
 history.clear_all: "Clear all history"
 history.delete_entry: "Mark for deletion"
 history.revert_entry: "Revert to this version"
+history.show_diff: "Show changes (Diff)"
+history.no_history: "No history entries found."
 
 # ═══════════════════════════════════════
 # DEBUG PANEL

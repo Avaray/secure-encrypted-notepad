@@ -156,6 +156,8 @@ history.will_be_deleted: "Uwaga: %{count} najstarszych wpisów zostanie usunięt
 history.clear_all: "Wyczyść całą historię"
 history.delete_entry: "Oznacz do usunięcia"
 history.revert_entry: "Przywróć tę wersję"
+history.show_diff: "Pokaż zmiany (Diff)"
+history.no_history: "Nie znaleziono wpisów historii."
 
 # ═══════════════════════════════════════
 # PANEL DEBUGOWANIA

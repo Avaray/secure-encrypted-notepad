@@ -110,6 +110,9 @@ pub struct EditorApp {
     /// Currently loaded history index (None = current document)
     pub(crate) loaded_history_index: Option<usize>,
 
+    /// Whether history should be displayed as a diff against the previous version
+    pub(crate) show_history_diff: bool,
+
     /// Available system fonts
     pub(crate) available_fonts: Vec<String>,
 
@@ -334,6 +337,7 @@ impl EditorApp {
             pending_action: PendingAction::None,
             text_cursor_range: None,
             loaded_history_index: None,
+            show_history_diff: true,
             pending_file_to_open: None,
             ipc_queue: None,
             available_fonts,
