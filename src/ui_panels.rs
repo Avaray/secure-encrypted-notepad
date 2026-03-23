@@ -1132,7 +1132,7 @@ if ui
                         let tree_on = self.settings.tree_style_file_tree;
                         let tree_indent: f32 = if tree_on { 24.0 } else { 0.0 };
                         let panel_left = ui.cursor().left();
-                        let line_color = ui.visuals().weak_text_color();
+                        let line_color = self.current_theme.colors.tree_line_color(ui.visuals());
                         let stroke = egui::Stroke::new(1.0, line_color);
 
                         // Collect mid_y positions for tree lines (two-pass to avoid overlap)
@@ -1361,12 +1361,21 @@ if ui
                                 let row = &row_infos[i];
                                 
                                 // Draw horizontal branch
-                                if row.depth > 0 {
-                                    let parent_depth = row.depth - 1;
-                                    let branch_start_x = panel_left + (parent_depth as f32) * tree_indent + 11.0;
-                                    let branch_end_x = panel_left + (row.depth as f32) * tree_indent - 1.0;
-                                    painter.line_segment([egui::pos2(branch_start_x, row.mid_y), egui::pos2(branch_end_x, row.mid_y)], stroke);
-                                }
+                                 if row.depth > 0 {
+                                     let parent_depth = row.depth - 1;
+                                     let parent_drop_x = panel_left + (parent_depth as f32) * tree_indent + 11.0;
+                                     let branch_start_x = parent_drop_x + stroke.width / 2.0;
+                                     let branch_end_x = panel_left + (row.depth as f32) * tree_indent - 1.0;
+                                     
+                                     painter.rect_filled(
+                                         egui::Rect::from_min_max(
+                                             egui::pos2(branch_start_x, row.mid_y - stroke.width / 2.0),
+                                             egui::pos2(branch_end_x, row.mid_y + stroke.width / 2.0)
+                                         ),
+                                         0.0,
+                                         stroke.color
+                                     );
+                                 }
                                 
                                 // Draw vertical drop line to children
                                 if row.is_dir {
@@ -1380,11 +1389,17 @@ if ui
                                             last_child_mid_y = Some(row_infos[j].mid_y);
                                         }
                                     }
-                                    
-                                    if let Some(end_y) = last_child_mid_y {
-                                        let drop_x = panel_left + (row.depth as f32) * tree_indent + 11.0;
-                                        painter.line_segment([egui::pos2(drop_x, row.bottom_y), egui::pos2(drop_x, end_y)], stroke);
-                                    }
+                                                if let Some(end_y) = last_child_mid_y {
+                                         let drop_x = panel_left + (row.depth as f32) * tree_indent + 11.0;
+                                         painter.rect_filled(
+                                             egui::Rect::from_min_max(
+                                                 egui::pos2(drop_x - stroke.width / 2.0, row.bottom_y),
+                                                 egui::pos2(drop_x + stroke.width / 2.0, end_y + stroke.width / 2.0)
+                                             ),
+                                             0.0,
+                                             stroke.color
+                                         );
+                                     }
                                 }
                             }
                         }
@@ -1687,6 +1702,7 @@ if ui
                                 if edit_optional_color(&rust_i18n::t!("theme.selection_text") , &mut theme.colors.selection_text, [255, 255, 255], "sel_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
                                 if edit_optional_color(&rust_i18n::t!("theme.separator") , &mut theme.colors.separator, [80, 80, 80], "sep_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
                                 if edit_optional_float(&rust_i18n::t!("theme.separator_width") , &mut theme.colors.separator_width, 1.0, 0.0..=10.0, 0.1, ui) { theme_changed = true; }
+                                if edit_optional_color(&rust_i18n::t!("theme.tree_line") , &mut theme.colors.tree_line, [100, 100, 100], "tree_line_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
 
                                 // --- WINDOW & PANELS GEOMETRY ---
                                 ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_geometry")).strong()); ui.label(""); ui.label(""); ui.end_row();

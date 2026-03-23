@@ -139,6 +139,9 @@ pub struct ThemeColors {
     pub input_focus_border_color: Option<[u8; 3]>,
     #[serde(default)]
     pub input_rounding: Option<f32>,
+    /// Color for tree view lines (indentation guides)
+    #[serde(default)]
+    pub tree_line: Option<[u8; 3]>,
 }
 
 impl Default for ThemeColors {
@@ -209,6 +212,7 @@ impl ThemeColors {
             input_border_color: None,
             input_focus_border_color: None,
             input_rounding: None,
+            tree_line: None,
         }
     }
 
@@ -273,6 +277,7 @@ impl ThemeColors {
             input_border_color: None,
             input_focus_border_color: None,
             input_rounding: None,
+            tree_line: None,
         }
     }
 
@@ -362,6 +367,14 @@ impl ThemeColors {
     #[allow(dead_code)]
     pub fn error_color(&self) -> egui::Color32 {
         egui::Color32::from_rgb(self.error[0], self.error[1], self.error[2])
+    }
+
+    pub fn tree_line_color(&self, ui_visuals: &egui::Visuals) -> egui::Color32 {
+        if let Some(c) = self.tree_line {
+            egui::Color32::from_rgb(c[0], c[1], c[2])
+        } else {
+            ui_visuals.weak_text_color()
+        }
     }
 }
 
