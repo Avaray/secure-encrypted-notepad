@@ -624,13 +624,7 @@ impl EditorApp {
             let painter = ui.painter();
             let font_id = egui::FontId::monospace(editor_font_size);
 
-            // Paint an opaque background over the gutter area to cover any scrollbar beneath
-            let gutter_bg_color = ui.visuals().panel_fill;
-            let gutter_bg_rect = egui::Rect::from_min_max(
-                egui::pos2(editor_left_edge, full_clip_rect.top()),
-                egui::pos2(separator_x, full_clip_rect.bottom()),
-            );
-            painter.rect_filled(gutter_bg_rect, 0.0, gutter_bg_color);
+            // Line numbers now sit cleanly on the CentralPanel background without interference.
 
             // Draw the vertical separator line
             painter.vline(
