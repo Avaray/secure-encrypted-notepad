@@ -17,16 +17,10 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Documentation Deep Audit**: Perform a comprehensive documentation audit using a high-level thinking model.
 - [ ] **Font Autodetection List Polish**: Refine the preferred font lists (UI and Editor) for smart detection, as the current lists are early versions that need better selection.
 - [ ] **Cargo Workspace Refactoring**: Consider refactoring the project into a [workspace](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html) to better support future platforms like Android, allowing shared logic between desktop and mobile versions.
-<<<<<<< HEAD
-- [x] **Editor Link Highlighting**: Automatically highlight URLs in the text editor. Allow users to open these links in their default web browser by clicking them while holding the `CTRL` key. Use the existing link color defined in the Theme Editor UI.
-- [x] **History Diff View**: Integrated the `similar` crate to display inline, color-coded text differences in the history panel. Added a "Show changes (Diff)" toggle for a read-only comparison view.
 - [ ] **History Revert Button**: Add a "Revert changes" button in the history panel. If the user marks entries for deletion (single or all) but hasn't saved the file yet, this button should appear and allow reverting history to its last saved state.
 - [ ] **Tree View Line Customization & Fix**: 
     - Add an option to customize the line color for the expandable file tree in the Theme Editor.
     - Fix the line drawing logic to prevent visual overlap artifacts. Currently, horizontal and vertical lines with transparency overlap at intersection points, making the color look darker. They should appear as a single, solid set of lines.
-=======
-- [ ] **Editor Link Highlighting**: Automatically highlight URLs in the text editor. Allow users to open these links in their default web browser by clicking them while holding the `CTRL` key. Use the existing link color defined in the Theme Editor UI.
->>>>>>> parent of 1af4edf (feat: implement history diff viewer)
 - [ ] **Translation Polish**: Review and refine translations throughout the application to ensure consistency and correctness across all supported languages.
 
 
