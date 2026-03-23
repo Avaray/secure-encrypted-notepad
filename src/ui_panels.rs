@@ -1843,19 +1843,25 @@ fn render_copy_paste_buttons(
     let mut paste_color = None;
     crate::app_helpers::center_row(ui, |ui| {
         let time = ui.input(|i| i.time);
+        let btn_size = ui.spacing().interact_size.y;
+        let icon_size = (btn_size * 0.6).max(12.0); // Balanced relative size
         
         // --- 1. PASTE BUTTON (Left) ---
         // Only visible when a color is in clipboard
         if let Some(c) = *copied_color {
             let paste_btn = egui::Button::image(egui::Image::new(&icons.paste)
-                .max_width(16.0)
+                .max_size(egui::vec2(icon_size, icon_size))
+                .maintain_aspect_ratio(true)
                 .tint(ui.visuals().widgets.inactive.fg_stroke.color))
-                .frame(false);
+                .min_size(egui::vec2(btn_size, btn_size));
             let paste_res = ui.add(paste_btn).on_hover_text(rust_i18n::t!("theme.paste_color"));
             if paste_res.clicked() {
                 paste_color = Some(c);
             }
-            ui.add_space(4.0); // Small gap between buttons
+            ui.add_space(4.0); // Keeps them grouped close in the column
+        } else {
+            // Invisible placeholder to prevent layout shifting
+            ui.add_space(btn_size + 4.0);
         }
 
         // --- 2. COPY BUTTON (Right) ---
@@ -1869,15 +1875,16 @@ fn render_copy_paste_buttons(
         }
 
         let tint = if alpha > 0.0 {
-            ui.visuals().selection.bg_fill.gamma_multiply(alpha)
+            ui.visuals().selection.bg_fill.gamma_multiply(alpha.max(0.4)) // Maintain some visibility
         } else {
             ui.visuals().widgets.inactive.fg_stroke.color
         };
         
         let copy_btn = egui::Button::image(egui::Image::new(&icons.copy)
-            .max_width(16.0)
+            .max_size(egui::vec2(icon_size, icon_size))
+            .maintain_aspect_ratio(true)
             .tint(tint))
-            .frame(false);
+            .min_size(egui::vec2(btn_size, btn_size));
             
         let copy_res = ui.add(copy_btn).on_hover_text(rust_i18n::t!("theme.copy_color"));
 
