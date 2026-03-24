@@ -214,7 +214,7 @@ impl DocumentWithHistory {
     /// Set maximum history length and mark excess as deleted (soft delete)
     pub fn set_max_history_length(&mut self, max_length: usize) {
         self.max_history_length = max_length.max(1); // At least 1
-        // Trim is deferred until save
+                                                     // Trim is deferred until save
     }
 
     /// Get maximum history length
@@ -349,10 +349,10 @@ mod tests {
         let mut doc = DocumentWithHistory::default();
         doc.current_content = "Normal content".to_string();
         doc.set_autosave("Autosaved content".to_string());
-        
+
         let serialized = doc.to_file_content();
         let loaded = DocumentWithHistory::from_file_content(&serialized);
-        
+
         assert_eq!(loaded.current_content, "Normal content");
         assert!(loaded.autosave.is_some());
         assert_eq!(loaded.autosave.unwrap().content, "Autosaved content");

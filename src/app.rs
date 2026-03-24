@@ -8,6 +8,17 @@ use crate::history::DocumentWithHistory;
 use crate::settings::Settings;
 use crate::theme::{load_themes, Theme};
 
+#[derive(Debug, Clone, Default)]
+pub struct LayoutState {
+    pub heights: std::collections::HashMap<String, f32>,
+}
+
+impl LayoutState {
+    pub fn get_height(&mut self, id: &str) -> &mut f32 {
+        self.heights.entry(id.to_string()).or_insert(0.0)
+    }
+}
+
 /// Application state
 pub struct EditorApp {
     /// Current document with embedded history
@@ -87,8 +98,6 @@ pub struct EditorApp {
     /// Time when the last color was copied
     pub(crate) last_copied_time: f64,
 
-
-
     /// Currently highlighted line (1-indexed)
     pub(crate) highlighted_line: Option<usize>,
 
@@ -150,7 +159,8 @@ pub struct EditorApp {
     pub(crate) batch_success_count: usize,
     pub(crate) batch_failed_count: usize,
     pub(crate) batch_output_extension: String,
-    pub(crate) batch_progress_receiver: Option<std::sync::mpsc::Receiver<crate::app_state::BatchProgressUpdate>>,
+    pub(crate) batch_progress_receiver:
+        Option<std::sync::mpsc::Receiver<crate::app_state::BatchProgressUpdate>>,
 
     // Window state tracking
     /// True only for the very first update() call — used for the first-frame maximize trick
@@ -191,7 +201,8 @@ pub struct EditorApp {
     /// File system watcher for the current directory
     pub(crate) watcher: Option<notify::RecommendedWatcher>,
     /// Receiver for file system events
-    pub(crate) watcher_receiver: Option<std::sync::mpsc::Receiver<Result<notify::Event, notify::Error>>>,
+    pub(crate) watcher_receiver:
+        Option<std::sync::mpsc::Receiver<Result<notify::Event, notify::Error>>>,
     /// Cached native window handle (Windows only, for SetWindowDisplayAffinity)
     #[cfg(target_os = "windows")]
     pub(crate) cached_hwnd: Option<windows_sys::Win32::Foundation::HWND>,
@@ -209,6 +220,8 @@ pub struct EditorApp {
     pub(crate) ipc_queue: Option<std::sync::Arc<std::sync::Mutex<Vec<PathBuf>>>>,
     /// Flag for About panel (F1)
     pub(crate) show_about_panel: bool,
+    /// Layout hints for vertical alignment (cached heights)
+    pub(crate) layout_state: LayoutState,
 }
 
 impl EditorApp {
@@ -218,10 +231,9 @@ impl EditorApp {
 
         // Smart font detection on first run
         if settings.is_first_run {
-            if let Some(font) = crate::fonts::detect_best_font(
-                &available_fonts,
-                crate::fonts::PREFERRED_UI_FONTS,
-            ) {
+            if let Some(font) =
+                crate::fonts::detect_best_font(&available_fonts, crate::fonts::PREFERRED_UI_FONTS)
+            {
                 settings.ui_font_family = font;
             }
             if let Some(font) = crate::fonts::detect_best_font(
@@ -232,10 +244,13 @@ impl EditorApp {
             }
             let _ = settings.save();
         }
-        
+
         let mut debug_log = Vec::new();
         if settings.is_first_run {
-            debug_log.push(LogEntry::new(LogLevel::Info, format!("System language detected: {}", settings.language)));
+            debug_log.push(LogEntry::new(
+                LogLevel::Info,
+                format!("System language detected: {}", settings.language),
+            ));
         }
 
         let ui_font_index = available_fonts
@@ -279,7 +294,7 @@ impl EditorApp {
             current_file_path: None,
             status_message: status,
             settings: settings.clone(),
-
+            start_time: Instant::now(),
             themes,
             current_theme: current_theme.clone(),
             show_settings_panel: if restore_all {
@@ -297,7 +312,11 @@ impl EditorApp {
             } else {
                 false
             },
-            zen_mode: if settings.remember_zen_mode { settings.zen_mode } else { false },
+            zen_mode: if settings.remember_zen_mode {
+                settings.zen_mode
+            } else {
+                false
+            },
             zen_mode_applied: false,
             show_file_tree: settings.show_file_tree,
             is_modified: false,
@@ -324,7 +343,6 @@ impl EditorApp {
             copied_color: None,
             last_copied_id: None,
             last_copied_time: 0.0,
-
 
             highlighted_line: None,
             show_goto_line: false,
@@ -390,7 +408,7 @@ impl EditorApp {
             watcher_receiver: None,
             #[cfg(target_os = "windows")]
             cached_hwnd: None,
-            start_time: Instant::now(),
+            layout_state: LayoutState::default(),
         }
     }
 
@@ -399,11 +417,11 @@ impl EditorApp {
     #[cfg(target_os = "windows")]
     pub(crate) fn find_own_hwnd(&mut self) {
         use windows_sys::Win32::Foundation::{HWND, LPARAM};
-        use windows_sys::Win32::UI::WindowsAndMessaging::{
-            EnumWindows, GetClassNameW, GetWindowLongW, GetWindowThreadProcessId,
-            IsWindowVisible, GWL_EXSTYLE,
-        };
         use windows_sys::Win32::System::Threading::GetCurrentProcessId;
+        use windows_sys::Win32::UI::WindowsAndMessaging::{
+            EnumWindows, GetClassNameW, GetWindowLongW, GetWindowThreadProcessId, IsWindowVisible,
+            GWL_EXSTYLE,
+        };
 
         const WS_EX_TOOLWINDOW: i32 = 0x00000080;
         const WS_EX_NOACTIVATE: i32 = 0x08000000;
@@ -452,8 +470,7 @@ impl EditorApp {
     #[cfg(target_os = "windows")]
     pub(crate) fn apply_screen_capture_protection(&mut self) {
         use windows_sys::Win32::UI::WindowsAndMessaging::{
-            GetWindowLongW, SetWindowDisplayAffinity,
-            SetWindowLongW, SetWindowPos, GWL_EXSTYLE,
+            GetWindowLongW, SetWindowDisplayAffinity, SetWindowLongW, SetWindowPos, GWL_EXSTYLE,
             SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER,
         };
         const WDA_NONE: u32 = 0x00000000;
@@ -475,8 +492,17 @@ impl EditorApp {
                     unsafe {
                         SetWindowLongW(hwnd, GWL_EXSTYLE, new_style);
                         SetWindowPos(
-                            hwnd, std::ptr::null_mut(), 0, 0, 0, 0,
-                            SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE,
+                            hwnd,
+                            std::ptr::null_mut(),
+                            0,
+                            0,
+                            0,
+                            0,
+                            SWP_FRAMECHANGED
+                                | SWP_NOMOVE
+                                | SWP_NOSIZE
+                                | SWP_NOZORDER
+                                | SWP_NOACTIVATE,
                         );
                     }
                 }
@@ -601,7 +627,7 @@ impl eframe::App for EditorApp {
             self.perform_autosave(true);
         }
         self.focused = is_focused;
-        
+
         // Ensure smooth pulsing when locked
         if self.keyfile_path.is_none() {
             ctx.request_repaint();
@@ -644,7 +670,6 @@ impl eframe::App for EditorApp {
             }
             self.zen_mode_applied = true;
         }
-
 
         // Process results from background file access checks
         self.process_access_check_results(ctx);
@@ -863,7 +888,6 @@ impl eframe::App for EditorApp {
                 }
             }
 
-
             // Ctrl+H: Replace
             if i.consume_shortcut(&egui::KeyboardShortcut::new(
                 egui::Modifiers::CTRL,
@@ -956,12 +980,17 @@ impl eframe::App for EditorApp {
         if let Some(bg) = self.current_theme.colors.editor_background {
             central_panel_frame.fill = self.current_theme.colors.to_egui_color32(bg);
         }
-        let any_right_panel = self.show_settings_panel || self.show_debug_panel || self.show_history_panel || self.show_theme_editor;
-        if self.settings.toolbar_position != crate::settings::ToolbarPosition::Right && !any_right_panel {
+        let any_right_panel = self.show_settings_panel
+            || self.show_debug_panel
+            || self.show_history_panel
+            || self.show_theme_editor;
+        if self.settings.toolbar_position != crate::settings::ToolbarPosition::Right
+            && !any_right_panel
+        {
             central_panel_frame.inner_margin.right = 0;
         }
 
-        // Calculation: 
+        // Calculation:
         // Vertical: icon_size + 4 (button) + 12 (6+6 margins) + 1 (separator) = icon_size + 17
         let toolbar_v_size = self.settings.toolbar_icon_size + 17.0;
         // Horizontal: icon_size + 4 (button) + 8 (4+4 top/bottom margins) + 1 (separator) = icon_size + 13
@@ -1011,11 +1040,14 @@ impl eframe::App for EditorApp {
                     .show(ctx, |ui| {
                         crate::app_helpers::center_row(ui, |ui| {
                             ui.label(
-                                egui::RichText::new(&self.status_message)
-                                    .color(self.current_theme.colors.to_egui_color32(self.current_theme.colors.foreground))
+                                egui::RichText::new(&self.status_message).color(
+                                    self.current_theme
+                                        .colors
+                                        .to_egui_color32(self.current_theme.colors.foreground),
+                                ),
                             );
                         });
-                });
+                    });
             }
 
             // Batch Converter takes over the REMAINING central area
@@ -1047,71 +1079,87 @@ impl eframe::App for EditorApp {
                     .min_height(24.0)
                     .show(ctx, |ui| {
                         crate::app_helpers::center_row(ui, |ui| {
-                            let fg_color = self.current_theme.colors.to_egui_color32(self.current_theme.colors.foreground);
-                            
-                            ui.label(
-                                egui::RichText::new(&self.status_message)
-                                    .color(fg_color)
-                            );
-    
-                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                // Version info
-                                let version = format!("SEN {}", env!("CARGO_PKG_VERSION"));
-                                ui.add(
-                                    egui::Label::new(
-                                        egui::RichText::new(version)
-                                            .color(self.current_theme.colors.info_color()),
-                                    )
-                                    .selectable(false),
-                                );
-    
-                                ui.separator();
-    
-                                // Keyfile indicator
-                                if let Some(path) = &self.keyfile_path {
-                                    let icon_tint = self.current_theme.colors.success_color();
-                                    let status_text = self.mask_keyfile_path(path);
-                                    ui.add(
-                                        egui::Label::new(egui::RichText::new(status_text).color(icon_tint))
-                                            .selectable(false),
-                                    );
-                                } else {
-                                    let icon_tint = self.current_theme.colors.warning_color();
-                                     let pulse_alpha = if self.keyfile_path.is_none() {
-                                         (0.1 + 0.9 * (self.start_time.elapsed().as_secs_f32() * 3.0).cos().abs()) as f32
-                                     } else {
-                                         1.0
-                                     };
-                                     ui.add(
-                                         egui::Label::new(
-                                             egui::RichText::new("No keyfile").color(icon_tint.gamma_multiply(pulse_alpha)),
-                                         )
-                                         .selectable(false),
-                                     );
-                                }
-    
-                                ui.separator();
-    
-                                // File indicator
-                                let fg_color = self.current_theme.colors.to_egui_color32(self.current_theme.colors.foreground);
-                                
-                                if let Some(path) = &self.current_file_path {
-                                    ui.label(
-                                        egui::RichText::new(path.file_name().unwrap_or_default().to_string_lossy())
-                                            .color(fg_color)
-                                    );
-                                } else {
-                                    ui.label(
-                                        egui::RichText::new("Unsaved document")
-                                            .color(fg_color)
-                                    );
-                                }
+                            let fg_color = self
+                                .current_theme
+                                .colors
+                                .to_egui_color32(self.current_theme.colors.foreground);
 
-                                if self.is_modified {
-                                    ui.add_space(4.0);
-                                    ui.label(egui::RichText::new("*").color(fg_color));
-                                }
-                            });
+                            ui.label(egui::RichText::new(&self.status_message).color(fg_color));
+
+                            ui.with_layout(
+                                egui::Layout::right_to_left(egui::Align::Center),
+                                |ui| {
+                                    // Version info
+                                    let version = format!("SEN {}", env!("CARGO_PKG_VERSION"));
+                                    ui.add(
+                                        egui::Label::new(
+                                            egui::RichText::new(version)
+                                                .color(self.current_theme.colors.info_color()),
+                                        )
+                                        .selectable(false),
+                                    );
+
+                                    ui.separator();
+
+                                    // Keyfile indicator
+                                    if let Some(path) = &self.keyfile_path {
+                                        let icon_tint = self.current_theme.colors.success_color();
+                                        let status_text = self.mask_keyfile_path(path);
+                                        ui.add(
+                                            egui::Label::new(
+                                                egui::RichText::new(status_text).color(icon_tint),
+                                            )
+                                            .selectable(false),
+                                        );
+                                    } else {
+                                        let icon_tint = self.current_theme.colors.warning_color();
+                                        let pulse_alpha = if self.keyfile_path.is_none() {
+                                            (0.1 + 0.9
+                                                * (self.start_time.elapsed().as_secs_f32() * 3.0)
+                                                    .cos()
+                                                    .abs())
+                                                as f32
+                                        } else {
+                                            1.0
+                                        };
+                                        ui.add(
+                                            egui::Label::new(
+                                                egui::RichText::new("No keyfile")
+                                                    .color(icon_tint.gamma_multiply(pulse_alpha)),
+                                            )
+                                            .selectable(false),
+                                        );
+                                    }
+
+                                    ui.separator();
+
+                                    // File indicator
+                                    let fg_color = self
+                                        .current_theme
+                                        .colors
+                                        .to_egui_color32(self.current_theme.colors.foreground);
+
+                                    if let Some(path) = &self.current_file_path {
+                                        ui.label(
+                                            egui::RichText::new(
+                                                path.file_name()
+                                                    .unwrap_or_default()
+                                                    .to_string_lossy(),
+                                            )
+                                            .color(fg_color),
+                                        );
+                                    } else {
+                                        ui.label(
+                                            egui::RichText::new("Unsaved document").color(fg_color),
+                                        );
+                                    }
+
+                                    if self.is_modified {
+                                        ui.add_space(4.0);
+                                        ui.label(egui::RichText::new("*").color(fg_color));
+                                    }
+                                },
+                            );
                         });
                     });
             }
@@ -1175,7 +1223,7 @@ impl eframe::App for EditorApp {
             // History panel (right)
             if self.show_history_panel && !self.zen_mode {
                 let mut history_panel_frame = right_panel_frame.clone();
-                // Restore right margin for symmetry, as history has its own internal border & scrollbar 
+                // Restore right margin for symmetry, as history has its own internal border & scrollbar
                 // and should not be flush with the screen edge.
                 history_panel_frame.inner_margin.right = history_panel_frame.inner_margin.left;
 

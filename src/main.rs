@@ -100,6 +100,13 @@ fn main() -> Result<(), eframe::Error> {
     eframe::run_native(
         "Secure Encrypted Notepad",
         options,
-        Box::new(move |cc| Ok(Box::new(EditorApp::new(cc, settings, file_to_open, ipc_queue)))),
+        Box::new(move |cc| {
+            Ok(Box::new(EditorApp::new(
+                cc,
+                settings,
+                file_to_open,
+                ipc_queue,
+            )))
+        }),
     )
 }

@@ -70,7 +70,7 @@ impl EditorApp {
             // Group 1: Files
             self.render_toolbar_file_group(ui);
             ui.separator();
-            
+
             // Group 2: Batch/Export
             self.render_toolbar_batch_group(ui);
             ui.separator();
@@ -142,20 +142,75 @@ impl EditorApp {
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
-        if Self::icon_btn(ui, &self.icons.new_doc, &rust_i18n::t!("toolbar.new"), false, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.new_doc,
+            &rust_i18n::t!("toolbar.new"),
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.new_document();
         }
-        if Self::icon_btn(ui, &self.icons.open, &rust_i18n::t!("toolbar.open"), false, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.open,
+            &rust_i18n::t!("toolbar.open"),
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.open_file_dialog();
         }
-        if Self::icon_btn(ui, &self.icons.open_folder, &rust_i18n::t!("toolbar.open_dir"), false, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.open_folder,
+            &rust_i18n::t!("toolbar.open_dir"),
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.open_directory();
         }
-        if Self::icon_btn(ui, &self.icons.save, &rust_i18n::t!("toolbar.save"), false, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.save,
+            &rust_i18n::t!("toolbar.save"),
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.save_file();
         }
         // User requested Save As to be in Group 1
-        if Self::icon_btn(ui, &self.icons.save_as, &rust_i18n::t!("toolbar.save_as"), false, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.save_as,
+            &rust_i18n::t!("toolbar.save_as"),
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.save_file_as();
         }
     }
@@ -168,7 +223,18 @@ impl EditorApp {
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
-        if Self::icon_btn(ui, &self.icons.export, &*rust_i18n::t!("toolbar.export") , false, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.export,
+            &*rust_i18n::t!("toolbar.export"),
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.export_plaintext();
         }
     }
@@ -183,18 +249,56 @@ impl EditorApp {
 
         let mut load_key_tint = dt;
         if self.keyfile_path.is_none() {
-            let pulse_alpha = (0.1 + 0.9 * (self.start_time.elapsed().as_secs_f32() * 3.0).cos().abs()) as f32;
-            load_key_tint = self.current_theme.colors.warning_color().gamma_multiply(pulse_alpha);
+            let pulse_alpha =
+                (0.1 + 0.9 * (self.start_time.elapsed().as_secs_f32() * 3.0).cos().abs()) as f32;
+            load_key_tint = self
+                .current_theme
+                .colors
+                .warning_color()
+                .gamma_multiply(pulse_alpha);
             ui.ctx().request_repaint(); // Animation needs repaint
         }
 
-        if Self::icon_btn(ui, &self.icons.key, &*rust_i18n::t!("toolbar.load_keyfile") , false, bs, is, ht, load_key_tint).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.key,
+            &*rust_i18n::t!("toolbar.load_keyfile"),
+            false,
+            bs,
+            is,
+            ht,
+            load_key_tint,
+        )
+        .clicked()
+        {
             self.load_keyfile();
         }
-        if Self::icon_btn(ui, &self.icons.rotate, &*rust_i18n::t!("toolbar.rotate_keyfile") , false, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.rotate,
+            &*rust_i18n::t!("toolbar.rotate_keyfile"),
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.rotate_keyfile();
         }
-        if Self::icon_btn(ui, &self.icons.generate, &*rust_i18n::t!("toolbar.generate_keyfile") , false, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.generate,
+            &*rust_i18n::t!("toolbar.generate_keyfile"),
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.generate_new_keyfile();
         }
     }
@@ -209,18 +313,62 @@ impl EditorApp {
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
-        if Self::icon_btn(ui, &self.icons.history, &*rust_i18n::t!("toolbar.toggle_history") , self.show_history_panel, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.history,
+            &*rust_i18n::t!("toolbar.toggle_history"),
+            self.show_history_panel,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_history_panel = !self.show_history_panel;
             self.settings.show_history_panel = self.show_history_panel;
         }
-        if Self::icon_btn(ui, &self.icons.file_tree, &*rust_i18n::t!("toolbar.toggle_file_tree") , self.show_file_tree, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.file_tree,
+            &*rust_i18n::t!("toolbar.toggle_file_tree"),
+            self.show_file_tree,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_file_tree = !self.show_file_tree;
             self.settings.show_file_tree = self.show_file_tree;
         }
-        if Self::icon_btn(ui, &self.icons.zen, &*rust_i18n::t!("toolbar.toggle_zen") , self.zen_mode, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.zen,
+            &*rust_i18n::t!("toolbar.toggle_zen"),
+            self.zen_mode,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.toggle_zen_mode(ui.ctx());
         }
-        if Self::icon_btn(ui, &self.icons.theme, &*rust_i18n::t!("toolbar.toggle_theme") , self.show_theme_editor, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.theme,
+            &*rust_i18n::t!("toolbar.toggle_theme"),
+            self.show_theme_editor,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_theme_editor = !self.show_theme_editor;
             self.settings.show_theme_editor = self.show_theme_editor;
             self.show_delete_theme_confirmation = false;
@@ -228,14 +376,47 @@ impl EditorApp {
                 self.editing_theme = Some(self.current_theme.clone());
             }
         }
-        if Self::icon_btn(ui, &self.icons.settings, &*rust_i18n::t!("toolbar.toggle_settings") , self.show_settings_panel, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.settings,
+            &*rust_i18n::t!("toolbar.toggle_settings"),
+            self.show_settings_panel,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_settings_panel = !self.show_settings_panel;
             self.settings.show_settings_panel = self.show_settings_panel;
         }
-        if Self::icon_btn(ui, &self.icons.batch_convert, &*rust_i18n::t!("toolbar.toggle_batch") , self.show_batch_converter, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.batch_convert,
+            &*rust_i18n::t!("toolbar.toggle_batch"),
+            self.show_batch_converter,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_batch_converter = !self.show_batch_converter;
         }
-        if Self::icon_btn(ui, &self.icons.debug, &*rust_i18n::t!("toolbar.toggle_debug") , self.show_debug_panel, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.debug,
+            &*rust_i18n::t!("toolbar.toggle_debug"),
+            self.show_debug_panel,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_debug_panel = !self.show_debug_panel;
             self.settings.show_debug_panel = self.show_debug_panel;
         }
@@ -258,21 +439,65 @@ impl EditorApp {
         let dt = self.current_theme.colors.icon_color();
 
         // 7. Batch Converter
-        if Self::icon_btn(ui, &self.icons.batch_convert, &*rust_i18n::t!("toolbar.toggle_batch") , self.show_batch_converter, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.batch_convert,
+            &*rust_i18n::t!("toolbar.toggle_batch"),
+            self.show_batch_converter,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_batch_converter = !self.show_batch_converter;
         }
         // 6. Debug
-        if Self::icon_btn(ui, &self.icons.debug, &*rust_i18n::t!("toolbar.toggle_debug") , self.show_debug_panel, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.debug,
+            &*rust_i18n::t!("toolbar.toggle_debug"),
+            self.show_debug_panel,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_debug_panel = !self.show_debug_panel;
             self.settings.show_debug_panel = self.show_debug_panel;
         }
         // 5. Settings
-        if Self::icon_btn(ui, &self.icons.settings, &*rust_i18n::t!("toolbar.toggle_settings") , self.show_settings_panel, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.settings,
+            &*rust_i18n::t!("toolbar.toggle_settings"),
+            self.show_settings_panel,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_settings_panel = !self.show_settings_panel;
             self.settings.show_settings_panel = self.show_settings_panel;
         }
         // 4. Theme Editor
-        if Self::icon_btn(ui, &self.icons.theme, &*rust_i18n::t!("toolbar.toggle_theme") , self.show_theme_editor, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.theme,
+            &*rust_i18n::t!("toolbar.toggle_theme"),
+            self.show_theme_editor,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_theme_editor = !self.show_theme_editor;
             self.settings.show_theme_editor = self.show_theme_editor;
             self.show_delete_theme_confirmation = false;
@@ -281,16 +506,49 @@ impl EditorApp {
             }
         }
         // 3. Zen Mode
-        if Self::icon_btn(ui, &self.icons.zen, &*rust_i18n::t!("toolbar.toggle_zen") , self.zen_mode, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.zen,
+            &*rust_i18n::t!("toolbar.toggle_zen"),
+            self.zen_mode,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.toggle_zen_mode(ui.ctx());
         }
         // 2. File Tree
-        if Self::icon_btn(ui, &self.icons.file_tree, &*rust_i18n::t!("toolbar.toggle_file_tree") , self.show_file_tree, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.file_tree,
+            &*rust_i18n::t!("toolbar.toggle_file_tree"),
+            self.show_file_tree,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_file_tree = !self.show_file_tree;
             self.settings.show_file_tree = self.show_file_tree;
         }
         // 1. History
-        if Self::icon_btn(ui, &self.icons.history, &*rust_i18n::t!("toolbar.toggle_history") , self.show_history_panel, bs, is, ht, dt).clicked() {
+        if Self::icon_btn(
+            ui,
+            &self.icons.history,
+            &*rust_i18n::t!("toolbar.toggle_history"),
+            self.show_history_panel,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
             self.show_history_panel = !self.show_history_panel;
             self.settings.show_history_panel = self.show_history_panel;
         }

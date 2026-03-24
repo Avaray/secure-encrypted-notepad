@@ -50,7 +50,13 @@ impl EditorApp {
                 response.request_focus();
             }
 
-            if ui.checkbox(&mut self.search_case_sensitive, rust_i18n::t!("search.case_sensitive")).changed() {
+            if ui
+                .checkbox(
+                    &mut self.search_case_sensitive,
+                    rust_i18n::t!("search.case_sensitive"),
+                )
+                .changed()
+            {
                 self.perform_search();
             }
 
@@ -64,9 +70,16 @@ impl EditorApp {
             // Match count
             if !self.search_matches.is_empty() {
                 if let Some(idx) = self.current_match_index {
-                    ui.label(rust_i18n::t!("search.match_count", current = idx + 1, total = self.search_matches.len()));
+                    ui.label(rust_i18n::t!(
+                        "search.match_count",
+                        current = idx + 1,
+                        total = self.search_matches.len()
+                    ));
                 } else {
-                    ui.label(rust_i18n::t!("search.matches", count = self.search_matches.len()));
+                    ui.label(rust_i18n::t!(
+                        "search.matches",
+                        count = self.search_matches.len()
+                    ));
                 }
             } else if !self.search_query.is_empty() {
                 ui.label(rust_i18n::t!("search.no_matches"));
@@ -109,9 +122,10 @@ impl EditorApp {
             // Close button on the far right
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.add_space(8.0);
-                if ui.button("❌")
+                if ui
+                    .button("❌")
                     .on_hover_text(rust_i18n::t!("app.close_panel"))
-                    .clicked() 
+                    .clicked()
                 {
                     self.show_search_panel = false;
                     self.search_query.clear();

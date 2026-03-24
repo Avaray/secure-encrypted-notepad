@@ -6,10 +6,12 @@ use std::path::{Path, PathBuf};
 impl EditorApp {
     /// Render settings panel
     pub(crate) fn render_settings_panel(&mut self, ui: &mut egui::Ui) {
+        let mut ls = std::mem::take(&mut self.layout_state);
         ui.vertical(|ui| {
-        if self.render_panel_header(ui, &rust_i18n::t!("settings.settings"), None, true) {
-            self.show_settings_panel = false;
-        }
+            let h = ls.get_height("settings_header");
+            if self.render_panel_header(ui, &rust_i18n::t!("settings.settings"), Some(&self.icons.settings), None, true, h) {
+                self.show_settings_panel = false;
+            }
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
@@ -50,7 +52,7 @@ ui.add_space(8.0);
 // 1. SECURITY
 // =========================================================================
 ui.heading(rust_i18n::t!("settings.security"));
-crate::app_helpers::center_row(ui, |ui| {
+crate::app_helpers::stateful_center_row(ui, ls.get_height("sec_pick_btns"), |ui| {
 if ui.button(rust_i18n::t!("settings.set_global_keyfile")).clicked() {
 if let Some(path) = rfd::FileDialog::new().pick_file() {
 self.settings.global_keyfile_path = Some(path.clone());
@@ -90,7 +92,7 @@ self.log_info("Global keyfile set");
             }
         }
 });
-crate::app_helpers::center_row(ui, |ui| {
+crate::app_helpers::stateful_center_row(ui, ls.get_height("sec_cur_path"), |ui| {
                 ui.add(egui::Label::new(rust_i18n::t!("settings.current")).selectable(false));
 if let Some(path) = &self.settings.global_keyfile_path {
 if self.settings.show_keyfile_paths {
@@ -158,7 +160,7 @@ crate::app_helpers::center_row(ui, |ui| {
         }
     }
 });
-crate::app_helpers::center_row(ui, |ui| {
+crate::app_helpers::stateful_center_row(ui, ls.get_height("bkp_cur_path"), |ui| {
     ui.add(egui::Label::new(rust_i18n::t!("settings.current")).selectable(false));
     if let Some(path) = &self.settings.auto_backup_dir {
         if self.settings.show_directory_paths {
@@ -191,8 +193,8 @@ ui.add_space(8.0);
 ui.heading(rust_i18n::t!("settings.workspace"));
 // Starting directory setting
 ui.add_space(4.0);
-ui.horizontal_wrapped(|ui| {
-ui.add(egui::Label::new(rust_i18n::t!("settings.starting_dir")).selectable(false));
+                    let h = ls.get_height("ws_start_dir");
+                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.starting_dir"), h, |ui| {
 if let Some(ref dir) = self.settings.file_tree_starting_dir {
 if self.settings.show_directory_paths {
 ui.add(egui::Label::new(
@@ -206,7 +208,7 @@ ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.secured")).c
 ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.not_set")).color(self.current_theme.colors.info_color())).selectable(false));
 }
 });
-crate::app_helpers::center_row(ui, |ui| {
+crate::app_helpers::stateful_center_row(ui, ls.get_height("ws_pick_btns"), |ui| {
 if ui.button(rust_i18n::t!("settings.set_starting_dir")).clicked() {
 if let Some(dir) = rfd::FileDialog::new().pick_folder() {
 self.settings.file_tree_starting_dir = Some(dir.clone());
@@ -462,8 +464,8 @@ ui.add_space(8.0);
 // =========================================================================
 ui.heading(rust_i18n::t!("settings.appearance"));
 // Theme selection
-crate::app_helpers::center_row(ui, |ui| {
-ui.add(egui::Label::new(rust_i18n::t!("settings.theme")).selectable(false));
+                    let h = ls.get_height("set_theme");
+                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.theme"), h, |ui| {
 egui::ComboBox::from_id_salt("theme_selector")
 .selected_text(&self.current_theme.name)
 .show_ui(ui, |ui| {
@@ -490,8 +492,8 @@ self.log_info("Themes refreshed");
 });
 ui.separator();
 // UI font family with keyboard navigation
-crate::app_helpers::center_row(ui, |ui| {
-ui.add(egui::Label::new(rust_i18n::t!("settings.ui_font")).selectable(false));
+                    let h = ls.get_height("set_ui_font");
+                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.ui_font"), h, |ui| {
 let _response = egui::ComboBox::from_id_salt("ui_font_selector")
 .selected_text(&self.available_fonts[self.ui_font_index])
 .show_ui(ui, |ui| {
@@ -546,9 +548,8 @@ self.settings.ui_font_family
 }
 });
 });
-// UI font size
-crate::app_helpers::center_row(ui, |ui| {
-ui.add(egui::Label::new(rust_i18n::t!("settings.ui_font_size")).selectable(false));
+                    let h = ls.get_height("set_ui_font_sz");
+                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.ui_font_size"), h, |ui| {
 if ui
 .add(
 egui::DragValue::new(&mut self.settings.ui_font_size)
@@ -563,9 +564,8 @@ self.style_dirty = true;
 }
 });
 ui.separator();
-// Editor font family
-crate::app_helpers::center_row(ui, |ui| {
-ui.add(egui::Label::new(rust_i18n::t!("settings.editor_font")).selectable(false));
+                    let h = ls.get_height("set_ed_font");
+                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.editor_font"), h, |ui| {
 let _response = egui::ComboBox::from_id_salt("editor_font_selector")
 .selected_text(&self.available_fonts[self.editor_font_index])
 .show_ui(ui, |ui| {
@@ -620,9 +620,8 @@ self.settings.editor_font_family
 }
 });
 });
-// Editor font size
-crate::app_helpers::center_row(ui, |ui| {
-ui.add(egui::Label::new(rust_i18n::t!("settings.editor_font_size")).selectable(false));
+                    let h = ls.get_height("set_ed_font_sz");
+                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.editor_font_size"), h, |ui| {
 if ui
 .add(
 egui::DragValue::new(&mut self.settings.editor_font_size)
@@ -636,9 +635,8 @@ let _ = self.settings.save();
 self.style_dirty = true;
 }
 });
-// Line height multiplier
-crate::app_helpers::center_row(ui, |ui| {
-ui.add(egui::Label::new(rust_i18n::t!("settings.line_height")).selectable(false));
+                    let h = ls.get_height("set_line_h");
+                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.line_height"), h, |ui| {
             if ui
                 .add(
                     egui::DragValue::new(&mut self.settings.line_height)
@@ -801,10 +799,12 @@ if ui
                             ui.add_space(4.0);
                         });
                 });
-});
+        });
+        self.layout_state = ls;
     }
     /// Render history panel
     pub(crate) fn render_history_panel(&mut self, ui: &mut egui::Ui) {
+        let mut ls = std::mem::take(&mut self.layout_state);
         // Zbierz wszystkie dane PRZED closure
         let visible_history: Vec<(usize, HistoryEntry)> = self
             .document
@@ -816,7 +816,8 @@ if ui
         let doc_max_limit = self.document.get_max_history_length();
 
         ui.vertical(|ui| {
-                if self.render_panel_header(ui, &rust_i18n::t!("history.title"), None, true) {
+                let h = ls.get_height("history_header");
+                if self.render_panel_header(ui, &rust_i18n::t!("history.title"), Some(&self.icons.history), None, true, h) {
                     self.show_history_panel = false;
                 }
             crate::app_helpers::center_row(ui, |ui| {
@@ -900,7 +901,7 @@ if ui
                         if ui.button(rust_i18n::t!("settings.no")).clicked() {
                             self.show_clear_history_confirmation = false;
                         }
-                    } else if ui.button(format!("🗑 {}", rust_i18n::t!("history.clear_all"))).clicked() {
+                    } else if ui.button(rust_i18n::t!("history.clear_all")).clicked() {
                         self.show_clear_history_confirmation = true;
                     }
                 });
@@ -977,7 +978,7 @@ if ui
                                             ui.painter().text(
                                                 arrow_rect.center(),
                                                 egui::Align2::CENTER_CENTER,
-                                                "▶",
+                                                ">",
                                                 egui::FontId::proportional(row_height),
                                                 self.current_theme.colors.success_color(),
                                             );
@@ -994,8 +995,8 @@ if ui
                                         let (label_res, delete_clicked, revert_clicked) = ui.with_layout(
                                             egui::Layout::right_to_left(egui::Align::Center),
                                             |ui| {
-                                                let del = ui.button("🗑").on_hover_text(rust_i18n::t!("history.delete_entry")).clicked();
-                                                let rev = ui.button("⏪").on_hover_text(rust_i18n::t!("history.revert_entry")).clicked();
+                                                let del = ui.button("X").on_hover_text(rust_i18n::t!("history.delete_entry")).clicked();
+                                                let rev = ui.button("R").on_hover_text(rust_i18n::t!("history.revert_entry")).clicked();
                                                 
                                                 let lbl = ui.with_layout(
                                                     egui::Layout::left_to_right(egui::Align::Center),
@@ -1040,24 +1041,54 @@ if ui
                 });
                 });
         });
+        self.layout_state = ls;
     }
     /// Render debug panel
     pub(crate) fn render_debug_panel(&mut self, ui: &mut egui::Ui) {
+        let mut ls = std::mem::take(&mut self.layout_state);
         ui.vertical(|ui| {
-                if self.render_panel_header(ui, &rust_i18n::t!("debug.title"), None, true) {
-                    self.show_debug_panel = false;
-                }
+            let h = ls.get_height("debug_header");
+            if self.render_panel_header(
+                ui,
+                &rust_i18n::t!("debug.title"),
+                Some(&self.icons.debug),
+                None,
+                true,
+                h,
+            ) {
+                self.show_debug_panel = false;
+            }
             crate::app_helpers::center_row(ui, |ui| {
                 if ui.button(rust_i18n::t!("debug.clear")).clicked() {
                     self.debug_log.clear();
                 }
-                
+
                 let mut changed = false;
-                changed |= ui.checkbox(&mut self.settings.debug_show_info, rust_i18n::t!("debug.filter_info")).changed();
-                changed |= ui.checkbox(&mut self.settings.debug_show_success, rust_i18n::t!("debug.filter_success")).changed();
-                changed |= ui.checkbox(&mut self.settings.debug_show_warning, rust_i18n::t!("debug.filter_warning")).changed();
-                changed |= ui.checkbox(&mut self.settings.debug_show_error, rust_i18n::t!("debug.filter_error")).changed();
-                
+                changed |= ui
+                    .checkbox(
+                        &mut self.settings.debug_show_info,
+                        rust_i18n::t!("debug.filter_info"),
+                    )
+                    .changed();
+                changed |= ui
+                    .checkbox(
+                        &mut self.settings.debug_show_success,
+                        rust_i18n::t!("debug.filter_success"),
+                    )
+                    .changed();
+                changed |= ui
+                    .checkbox(
+                        &mut self.settings.debug_show_warning,
+                        rust_i18n::t!("debug.filter_warning"),
+                    )
+                    .changed();
+                changed |= ui
+                    .checkbox(
+                        &mut self.settings.debug_show_error,
+                        rust_i18n::t!("debug.filter_error"),
+                    )
+                    .changed();
+
                 if changed {
                     let _ = self.settings.save();
                 }
@@ -1066,7 +1097,7 @@ if ui
             egui::ScrollArea::both()
                 .auto_shrink([false, false])
                 .stick_to_bottom(true)
-                                .show(ui, |ui| {
+                .show(ui, |ui| {
                     egui::Frame::NONE
                         .inner_margin(egui::Margin {
                             left: 4,
@@ -1076,43 +1107,64 @@ if ui
                         })
                         .show(ui, |ui| {
                             let mut visible_count = 0;
-                    for entry in &self.debug_log {
-                        let show = match entry.level {
-                            LogLevel::Info => self.settings.debug_show_info,
-                            LogLevel::Success => self.settings.debug_show_success,
-                            LogLevel::Warning => self.settings.debug_show_warning,
-                            LogLevel::Error => self.settings.debug_show_error,
-                        };
-                        
-                        if show {
-                            visible_count += 1;
-                            let color = match entry.level {
-                                LogLevel::Info => self.current_theme.colors.info_color(),
-                                LogLevel::Success => self.current_theme.colors.success_color(),
-                                LogLevel::Warning => self.current_theme.colors.warning_color(),
-                                LogLevel::Error => self.current_theme.colors.error_color(),
-                            };
-                            ui.colored_label(color, entry.display());
-                        }
-                    }
-                    if visible_count == 0 && !self.debug_log.is_empty() {
-                        ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("debug.all_filtered")).italics().weak()).selectable(false));
-                    }
-                });
+                            for entry in &self.debug_log {
+                                let show = match entry.level {
+                                    LogLevel::Info => self.settings.debug_show_info,
+                                    LogLevel::Success => self.settings.debug_show_success,
+                                    LogLevel::Warning => self.settings.debug_show_warning,
+                                    LogLevel::Error => self.settings.debug_show_error,
+                                };
+
+                                if show {
+                                    visible_count += 1;
+                                    let color = match entry.level {
+                                        LogLevel::Info => self.current_theme.colors.info_color(),
+                                        LogLevel::Success => {
+                                            self.current_theme.colors.success_color()
+                                        }
+                                        LogLevel::Warning => {
+                                            self.current_theme.colors.warning_color()
+                                        }
+                                        LogLevel::Error => self.current_theme.colors.error_color(),
+                                    };
+                                    ui.colored_label(color, entry.display());
+                                }
+                            }
+                            if visible_count == 0 && !self.debug_log.is_empty() {
+                                ui.add(
+                                    egui::Label::new(
+                                        egui::RichText::new(rust_i18n::t!("debug.all_filtered"))
+                                            .italics()
+                                            .weak(),
+                                    )
+                                    .selectable(false),
+                                );
+                            }
+                        });
                 });
         });
+        self.layout_state = ls;
     }
     /// Render file tree panel
     pub(crate) fn render_file_tree(&mut self, ui: &mut egui::Ui) {
-        ui.spacing_mut().item_spacing.x = 0.0;
+        let mut ls = std::mem::take(&mut self.layout_state);
+        let mut _scroll_to_path: Option<PathBuf> = None;
         ui.vertical(|ui| {
             ui.set_min_width(ui.available_width());
-                if self.render_panel_header(ui, &rust_i18n::t!("file_tree.title"), None, true) {
-                    self.show_file_tree = false;
-                }
+            let h = ls.get_height("tree_header");
+            if self.render_panel_header(
+                ui,
+                &rust_i18n::t!("file_tree.title"),
+                Some(&self.icons.file_tree),
+                None,
+                true,
+                h,
+            ) {
+                self.show_file_tree = false;
+            }
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
-                                .show(ui, |ui| {
+                .show(ui, |ui| {
                     egui::Frame::NONE
                         .inner_margin(egui::Margin {
                             left: 4,
@@ -1121,309 +1173,430 @@ if ui
                             bottom: 0,
                         })
                         .show(ui, |ui| {
-                    if let Some(dir) = &self.file_tree_dir {
-                        if self.settings.show_directory_paths {
-                            ui.label(dir.display().to_string());
-                            ui.separator();
-                        }
-                        let available_width = ui.available_width();
-                        ui.set_max_width(available_width);
-                        let entries = self.file_tree_entries.clone();
-                        let tree_on = self.settings.tree_style_file_tree;
-                        let tree_indent: f32 = if tree_on { 24.0 } else { 0.0 };
-                        let panel_left = ui.cursor().left();
-                        let line_color = self.current_theme.colors.tree_line_color(ui.visuals());
-                        let stroke = egui::Stroke::new(1.0, line_color);
-
-                        // Collect mid_y positions for tree lines (two-pass to avoid overlap)
-                        struct RowData {
-                            depth: usize,
-                            is_dir: bool,
-
-                            bottom_y: f32,
-                            mid_y: f32,
-                        }
-                        
-                        let mut row_infos = Vec::new();
-                        let mut dir_stack: Vec<(PathBuf, usize)> = Vec::new();
-
-                        for (_i, entry) in entries.iter().enumerate() {
-                            // Detect end of directories before processing the next entry
-                            while let Some((dir_path, _depth)) = dir_stack.last() {
-                                if !entry.path.starts_with(dir_path) {
-                                    let (finished_dir, finished_depth) = dir_stack.pop().unwrap();
-                                    self.render_scanning_spinner_if_needed(ui, &finished_dir, finished_depth, tree_on, tree_indent);
-                                } else {
-                                    break;
+                            if let Some(dir) = &self.file_tree_dir {
+                                if self.settings.show_directory_paths {
+                                    ui.label(dir.display().to_string());
+                                    ui.separator();
                                 }
-                            }
+                                let available_width = ui.available_width();
+                                ui.set_max_width(available_width);
+                                let entries = self.file_tree_entries.clone();
+                                let tree_on = self.settings.tree_style_file_tree;
+                                let tree_indent: f32 = if tree_on { 24.0 } else { 0.0 };
+                                let panel_left = ui.cursor().left();
+                                let line_color =
+                                    self.current_theme.colors.tree_line_color(ui.visuals());
+                                let stroke = egui::Stroke::new(1.0, line_color);
 
-                            if entry.is_dir {
-                                dir_stack.push((entry.path.clone(), entry.depth));
-                            }
+                                // Collect mid_y positions for tree lines (two-pass to avoid overlap)
+                                struct RowData {
+                                    depth: usize,
+                                    is_dir: bool,
 
-                            let path = &entry.path;
-                            let raw_filename = path.file_name().unwrap_or_default().to_string_lossy();
-                            let filename = if self.settings.capitalize_tree_names {
-                                raw_filename.to_uppercase()
-                            } else {
-                                raw_filename.to_string()
-                            };
-
-                            // Hide undecryptable files check
-                            if !entry.is_dir && raw_filename.to_lowercase().ends_with(".sen") {
-                                let status = self
-                                    .file_access_cache
-                                    .get(path)
-                                    .cloned()
-                                    .unwrap_or(KeyStatus::Unknown);
-
-                                if self.settings.hide_undecryptable_files && status != KeyStatus::Decryptable {
-                                    continue;
+                                    bottom_y: f32,
+                                    mid_y: f32,
                                 }
-                            }
 
-                            let top_y = ui.cursor().top();
-                            let depth = entry.depth;
+                                let mut row_infos = Vec::new();
+                                let mut dir_stack: Vec<(PathBuf, usize)> = Vec::new();
 
-                            ui.horizontal(|ui| {
-                                if tree_on {
-                                    // Spacing for depth
-                                    ui.add_space(depth as f32 * tree_indent);
-                                }
-                                ui.spacing_mut().item_spacing.x = 4.0;
-                                
-                                if entry.is_dir {
-                                    // Directory
-                                    let is_parent = self
-                                        .file_tree_dir
-                                        .as_ref()
-                                        .and_then(|d| d.parent())
-                                        .map(|p| p == path)
-                                        .unwrap_or(false);
-                                        
-                                    let display_name = if is_parent {
-                                        "📁 ..".to_string()
-                                    } else {
-                                        format!(
-                                            "{} {}",
-                                            if entry.is_expanded { "📂" } else { "📁" },
-                                            filename
-                                        )
-                                    };
-                                    
-                                    let btn_font = egui::TextStyle::Button.resolve(ui.style());
-                                    let truncated_name = self.smart_truncate_text(ui, &display_name, btn_font, ui.available_width() - 4.0);
-                                    
-                                    if ui
-                                        .add(egui::Button::new(truncated_name))
-                                        .clicked()
-                                    {
-                                        if is_parent {
-                                            self.change_directory(path.clone());
-                                        } else if tree_on {
-                                            // Toggle expansion
-                                            if entry.is_expanded {
-                                                self.expanded_directories.remove(path);
-                                            } else {
-                                                self.expanded_directories.insert(path.clone());
-                                            }
-                                            self.refresh_file_tree(); // Re-trigger build
+                                for (_i, entry) in entries.iter().enumerate() {
+                                    // Detect end of directories before processing the next entry
+                                    while let Some((dir_path, _depth)) = dir_stack.last() {
+                                        if !entry.path.starts_with(dir_path) {
+                                            let (finished_dir, finished_depth) =
+                                                dir_stack.pop().unwrap();
+                                            self.render_scanning_spinner_if_needed(
+                                                ui,
+                                                &finished_dir,
+                                                finished_depth,
+                                                tree_on,
+                                                tree_indent,
+                                            );
                                         } else {
-                                            self.change_directory(path.clone());
+                                            break;
                                         }
                                     }
-                                } else {
-                                    // File
-                                    let mut display_name = if self.settings.hide_sen_extension
-                                        && filename.to_lowercase().ends_with(".sen")
-                                    {
-                                        filename[..filename.len() - 4].to_string()
+
+                                    if entry.is_dir {
+                                        dir_stack.push((entry.path.clone(), entry.depth));
+                                    }
+
+                                    let path = &entry.path;
+                                    let raw_filename =
+                                        path.file_name().unwrap_or_default().to_string_lossy();
+                                    let filename = if self.settings.capitalize_tree_names {
+                                        raw_filename.to_uppercase()
                                     } else {
-                                        filename.to_string()
+                                        raw_filename.to_string()
                                     };
 
-                                    if raw_filename.to_lowercase().ends_with(".sen") {
+                                    // Hide undecryptable files check
+                                    if !entry.is_dir
+                                        && raw_filename.to_lowercase().ends_with(".sen")
+                                    {
                                         let status = self
                                             .file_access_cache
                                             .get(path)
                                             .cloned()
                                             .unwrap_or(KeyStatus::Unknown);
-                                            
+
+                                        if self.settings.hide_undecryptable_files
+                                            && status != KeyStatus::Decryptable
+                                        {
+                                            continue;
+                                        }
+                                    }
+
+                                    let top_y = ui.cursor().top();
+                                    let depth = entry.depth;
+
+                                    ui.horizontal(|ui| {
                                         if tree_on {
-                                            // Status indicator logic (manually drawn inside button frame)
-                                            let color = match status {
-                                                KeyStatus::Decryptable => self.current_theme.colors.success_color(),
-                                                KeyStatus::WrongKey => self.current_theme.colors.error_color(),
-                                                KeyStatus::Unknown => self.current_theme.colors.warning_color(),
-                                                _ => ui.visuals().weak_text_color(),
-                                            };
+                                            // Spacing for depth
+                                            ui.add_space(depth as f32 * tree_indent);
+                                        }
+                                        ui.spacing_mut().item_spacing.x = 4.0;
 
-                                            let mut job = egui::text::LayoutJob::default();
-                                            let font_id = egui::TextStyle::Button.resolve(ui.style());
-                                            
-                                            // Measure space taken by dot prefix
-                                            let prefix = "  ";
-                                            let prefix_w = ui.painter().layout_no_wrap(prefix.to_string(), font_id.clone(), egui::Color32::BLACK).rect.width();
-                                            let truncated_name = self.smart_truncate_text(ui, &display_name, font_id.clone(), ui.available_width() - prefix_w - 4.0);
+                                        if entry.is_dir {
+                                            // Directory
+                                            let is_parent = self
+                                                .file_tree_dir
+                                                .as_ref()
+                                                .and_then(|d| d.parent())
+                                                .map(|p| p == path)
+                                                .unwrap_or(false);
 
-                                            // Add 2 spaces to make room for the dot at the beginning
-                                            job.append(prefix, 0.0, egui::text::TextFormat {
-                                                font_id: font_id.clone(),
-                                                ..Default::default()
-                                            });
-                                            job.append(&truncated_name, 0.0, egui::text::TextFormat {
-                                                color: ui.visuals().text_color(),
-                                                font_id,
-                                                ..Default::default()
-                                            });
+                                            let display_name = filename.to_string();
 
-                                            let button_resp = ui.add(egui::Button::new(job));
-                                            
-                                            // Draw the dot manually on top of the button's rectangle
-                                            let dot_radius = 4.0;
-                                            let dot_center = egui::pos2(
-                                                button_resp.rect.left() + 14.0,
-                                                button_resp.rect.center().y
+                                            let btn_font =
+                                                egui::TextStyle::Button.resolve(ui.style());
+                                            let truncated_name = self.smart_truncate_text(
+                                                ui,
+                                                &display_name,
+                                                btn_font,
+                                                ui.available_width() - 4.0,
                                             );
-                                            let pulse_alpha = if self.keyfile_path.is_none() {
-                                                (0.1 + 0.9 * (self.start_time.elapsed().as_secs_f32() * 3.0).cos().abs()) as f32
+
+                                            if ui.add(egui::Button::new(truncated_name)).clicked() {
+                                                if is_parent {
+                                                    self.change_directory(path.clone());
+                                                } else if tree_on {
+                                                    // Toggle expansion
+                                                    if entry.is_expanded {
+                                                        self.expanded_directories.remove(path);
+                                                    } else {
+                                                        self.expanded_directories
+                                                            .insert(path.clone());
+                                                    }
+                                                    self.refresh_file_tree(); // Re-trigger build
+                                                } else {
+                                                    self.change_directory(path.clone());
+                                                }
+                                            }
+                                        } else {
+                                            // File
+                                            let display_name = if self.settings.hide_sen_extension
+                                                && filename.to_lowercase().ends_with(".sen")
+                                            {
+                                                filename[..filename.len() - 4].to_string()
                                             } else {
-                                                1.0
+                                                filename.to_string()
                                             };
-                                            ui.painter().circle_filled(dot_center, dot_radius, color.gamma_multiply(pulse_alpha));
 
-                                            if button_resp.clicked() {
-                                                self.open_file(path.clone());
-                                            }
-                                        } else {
-                                            // Simple View (Icon + Text)
-                                            let icon_color = match status {
-                                                KeyStatus::Decryptable => self.current_theme.colors.success_color(),
-                                                KeyStatus::WrongKey => self.current_theme.colors.error_color(),
-                                                _ => ui.visuals().text_color(),
-                                            };
-                                            let icon_size = ui.text_style_height(&egui::TextStyle::Body);
-                                            ui.allocate_ui(egui::vec2(icon_size, icon_size), |ui| {
-                                                ui.centered_and_justified(|ui| {
-                                                    ui.add(egui::Image::new(&self.icons.key).tint(icon_color).max_width(icon_size));
-                                                });
-                                            });
-                                            let btn_font = egui::TextStyle::Button.resolve(ui.style());
-                                            let truncated_name = self.smart_truncate_text(ui, &display_name, btn_font, ui.available_width() - 20.0); // account for icon
-                                            if ui.add(egui::Button::new(truncated_name)).clicked() {
-                                                self.open_file(path.clone());
+                                            if raw_filename.to_lowercase().ends_with(".sen") {
+                                                let status = self
+                                                    .file_access_cache
+                                                    .get(path)
+                                                    .cloned()
+                                                    .unwrap_or(KeyStatus::Unknown);
+
+                                                if tree_on {
+                                                    // Status indicator logic (manually drawn inside button frame)
+                                                    let color = match status {
+                                                        KeyStatus::Decryptable => self
+                                                            .current_theme
+                                                            .colors
+                                                            .success_color(),
+                                                        KeyStatus::WrongKey => {
+                                                            self.current_theme.colors.error_color()
+                                                        }
+                                                        KeyStatus::Unknown => self
+                                                            .current_theme
+                                                            .colors
+                                                            .warning_color(),
+                                                        _ => ui.visuals().weak_text_color(),
+                                                    };
+
+                                                    let mut job = egui::text::LayoutJob::default();
+                                                    let font_id =
+                                                        egui::TextStyle::Button.resolve(ui.style());
+
+                                                    // Measure space taken by dot prefix
+                                                    let prefix = "  ";
+                                                    let prefix_w = ui
+                                                        .painter()
+                                                        .layout_no_wrap(
+                                                            prefix.to_string(),
+                                                            font_id.clone(),
+                                                            egui::Color32::BLACK,
+                                                        )
+                                                        .rect
+                                                        .width();
+                                                    let truncated_name = self.smart_truncate_text(
+                                                        ui,
+                                                        &display_name,
+                                                        font_id.clone(),
+                                                        ui.available_width() - prefix_w - 4.0,
+                                                    );
+
+                                                    // Add 2 spaces to make room for the dot at the beginning
+                                                    job.append(
+                                                        prefix,
+                                                        0.0,
+                                                        egui::text::TextFormat {
+                                                            font_id: font_id.clone(),
+                                                            ..Default::default()
+                                                        },
+                                                    );
+                                                    job.append(
+                                                        &truncated_name,
+                                                        0.0,
+                                                        egui::text::TextFormat {
+                                                            color: ui.visuals().text_color(),
+                                                            font_id,
+                                                            ..Default::default()
+                                                        },
+                                                    );
+
+                                                    let button_resp =
+                                                        ui.add(egui::Button::new(job));
+
+                                                    // Draw the dot manually on top of the button's rectangle
+                                                    let dot_radius = 4.0;
+                                                    let dot_center = egui::pos2(
+                                                        button_resp.rect.left() + 14.0,
+                                                        button_resp.rect.center().y,
+                                                    );
+                                                    let pulse_alpha = if self.keyfile_path.is_none()
+                                                    {
+                                                        (0.1 + 0.9
+                                                            * (self
+                                                                .start_time
+                                                                .elapsed()
+                                                                .as_secs_f32()
+                                                                * 3.0)
+                                                                .cos()
+                                                                .abs())
+                                                            as f32
+                                                    } else {
+                                                        1.0
+                                                    };
+                                                    ui.painter().circle_filled(
+                                                        dot_center,
+                                                        dot_radius,
+                                                        color.gamma_multiply(pulse_alpha),
+                                                    );
+
+                                                    if button_resp.clicked() {
+                                                        self.open_file(path.clone());
+                                                    }
+                                                } else {
+                                                    // Simple View (Icon + Text)
+                                                    let icon_color = match status {
+                                                        KeyStatus::Decryptable => self
+                                                            .current_theme
+                                                            .colors
+                                                            .success_color(),
+                                                        KeyStatus::WrongKey => {
+                                                            self.current_theme.colors.error_color()
+                                                        }
+                                                        _ => ui.visuals().text_color(),
+                                                    };
+                                                    let icon_size = ui
+                                                        .text_style_height(&egui::TextStyle::Body);
+                                                    ui.allocate_ui(
+                                                        egui::vec2(icon_size, icon_size),
+                                                        |ui| {
+                                                            ui.centered_and_justified(|ui| {
+                                                                ui.add(
+                                                                    egui::Image::new(
+                                                                        &self.icons.key,
+                                                                    )
+                                                                    .tint(icon_color)
+                                                                    .max_width(icon_size),
+                                                                );
+                                                            });
+                                                        },
+                                                    );
+                                                    let btn_font =
+                                                        egui::TextStyle::Button.resolve(ui.style());
+                                                    let truncated_name = self.smart_truncate_text(
+                                                        ui,
+                                                        &display_name,
+                                                        btn_font,
+                                                        ui.available_width() - 20.0,
+                                                    ); // account for icon
+                                                    if ui
+                                                        .add(egui::Button::new(truncated_name))
+                                                        .clicked()
+                                                    {
+                                                        self.open_file(path.clone());
+                                                    }
+                                                }
+                                            } else {
+                                                // Non-SEN file
+                                                if !tree_on {
+                                                    let icon_size = ui
+                                                        .text_style_height(&egui::TextStyle::Body);
+                                                    ui.allocate_ui(
+                                                        egui::vec2(icon_size, icon_size),
+                                                        |ui| {
+                                                            ui.centered_and_justified(|ui| {
+                                                                ui.label("");
+                                                            });
+                                                        },
+                                                    );
+                                                }
+                                                let btn_font =
+                                                    egui::TextStyle::Button.resolve(ui.style());
+                                                let truncated_name = self.smart_truncate_text(
+                                                    ui,
+                                                    &display_name,
+                                                    btn_font,
+                                                    ui.available_width() - 4.0,
+                                                );
+                                                if ui
+                                                    .add(egui::Button::new(truncated_name))
+                                                    .clicked()
+                                                {
+                                                    self.open_file(path.clone());
+                                                }
                                             }
                                         }
-                                    } else {
-                                        // Non-SEN file
-                                        if !tree_on {
-                                            let icon_size = ui.text_style_height(&egui::TextStyle::Body);
-                                            ui.allocate_ui(egui::vec2(icon_size, icon_size), |ui| {
-                                                ui.centered_and_justified(|ui| {
-                                                    ui.label("📄");
-                                                });
-                                            });
-                                        } else {
-                                            display_name = format!("📄 {}", display_name);
+                                    });
+                                    if tree_on {
+                                        let bottom_y = ui.cursor().top();
+                                        let actual_bottom_y =
+                                            bottom_y - ui.spacing().item_spacing.y;
+                                        row_infos.push(RowData {
+                                            depth: entry.depth,
+                                            is_dir: entry.is_dir,
+                                            bottom_y: actual_bottom_y,
+                                            mid_y: (top_y + actual_bottom_y) / 2.0,
+                                        });
+                                    }
+                                }
+
+                                // Close remaining directories after the loop
+                                while let Some((dir_path, depth)) = dir_stack.pop() {
+                                    self.render_scanning_spinner_if_needed(
+                                        ui,
+                                        &dir_path,
+                                        depth,
+                                        tree_on,
+                                        tree_indent,
+                                    );
+                                }
+
+                                // Pass 2: Draw the tree geometry based on layout positions
+                                if tree_on && !row_infos.is_empty() {
+                                    let painter = ui.painter();
+
+                                    for i in 0..row_infos.len() {
+                                        let row = &row_infos[i];
+
+                                        // Draw horizontal branch
+                                        if row.depth > 0 {
+                                            let parent_depth = row.depth - 1;
+                                            let parent_drop_x = panel_left
+                                                + (parent_depth as f32) * tree_indent
+                                                + 11.0;
+                                            let branch_start_x = parent_drop_x + stroke.width / 2.0;
+                                            let branch_end_x =
+                                                panel_left + (row.depth as f32) * tree_indent - 1.0;
+
+                                            painter.rect_filled(
+                                                egui::Rect::from_min_max(
+                                                    egui::pos2(
+                                                        branch_start_x,
+                                                        row.mid_y - stroke.width / 2.0,
+                                                    ),
+                                                    egui::pos2(
+                                                        branch_end_x,
+                                                        row.mid_y + stroke.width / 2.0,
+                                                    ),
+                                                ),
+                                                0.0,
+                                                stroke.color,
+                                            );
                                         }
-                                            let btn_font = egui::TextStyle::Button.resolve(ui.style());
-                                            let truncated_name = self.smart_truncate_text(ui, &display_name, btn_font, ui.available_width() - 4.0);
-                                            if ui.add(egui::Button::new(truncated_name)).clicked() {
-                                            self.open_file(path.clone());
+
+                                        // Draw vertical drop line to children
+                                        if row.is_dir {
+                                            // Find the last direct child (depth == row.depth + 1)
+                                            let mut last_child_mid_y = None;
+                                            for j in (i + 1)..row_infos.len() {
+                                                if row_infos[j].depth <= row.depth {
+                                                    break;
+                                                }
+                                                if row_infos[j].depth == row.depth + 1 {
+                                                    last_child_mid_y = Some(row_infos[j].mid_y);
+                                                }
+                                            }
+                                            if let Some(end_y) = last_child_mid_y {
+                                                let drop_x = panel_left
+                                                    + (row.depth as f32) * tree_indent
+                                                    + 11.0;
+                                                painter.rect_filled(
+                                                    egui::Rect::from_min_max(
+                                                        egui::pos2(
+                                                            drop_x - stroke.width / 2.0,
+                                                            row.bottom_y,
+                                                        ),
+                                                        egui::pos2(
+                                                            drop_x + stroke.width / 2.0,
+                                                            end_y + stroke.width / 2.0,
+                                                        ),
+                                                    ),
+                                                    0.0,
+                                                    stroke.color,
+                                                );
+                                            }
                                         }
                                     }
                                 }
-                            });
-                            if tree_on {
-                                let bottom_y = ui.cursor().top();
-                                let actual_bottom_y = bottom_y - ui.spacing().item_spacing.y;
-                                row_infos.push(RowData {
-                                    depth: entry.depth,
-                                    is_dir: entry.is_dir,
-                                    bottom_y: actual_bottom_y,
-                                    mid_y: (top_y + actual_bottom_y) / 2.0,
-                                });
-                            }
-                        }
-
-                        // Close remaining directories after the loop
-                        while let Some((dir_path, depth)) = dir_stack.pop() {
-                            self.render_scanning_spinner_if_needed(ui, &dir_path, depth, tree_on, tree_indent);
-                        }
-
-                        // Pass 2: Draw the tree geometry based on layout positions
-                        if tree_on && !row_infos.is_empty() {
-                            let painter = ui.painter();
-                            
-                            for i in 0..row_infos.len() {
-
-                                let row = &row_infos[i];
-                                
-                                // Draw horizontal branch
-                                 if row.depth > 0 {
-                                     let parent_depth = row.depth - 1;
-                                     let parent_drop_x = panel_left + (parent_depth as f32) * tree_indent + 11.0;
-                                     let branch_start_x = parent_drop_x + stroke.width / 2.0;
-                                     let branch_end_x = panel_left + (row.depth as f32) * tree_indent - 1.0;
-                                     
-                                     painter.rect_filled(
-                                         egui::Rect::from_min_max(
-                                             egui::pos2(branch_start_x, row.mid_y - stroke.width / 2.0),
-                                             egui::pos2(branch_end_x, row.mid_y + stroke.width / 2.0)
-                                         ),
-                                         0.0,
-                                         stroke.color
-                                     );
-                                 }
-                                
-                                // Draw vertical drop line to children
-                                if row.is_dir {
-                                    // Find the last direct child (depth == row.depth + 1)
-                                    let mut last_child_mid_y = None;
-                                    for j in (i + 1)..row_infos.len() {
-                                        if row_infos[j].depth <= row.depth {
-                                            break;
-                                        }
-                                        if row_infos[j].depth == row.depth + 1 {
-                                            last_child_mid_y = Some(row_infos[j].mid_y);
-                                        }
-                                    }
-                                                if let Some(end_y) = last_child_mid_y {
-                                         let drop_x = panel_left + (row.depth as f32) * tree_indent + 11.0;
-                                         painter.rect_filled(
-                                             egui::Rect::from_min_max(
-                                                 egui::pos2(drop_x - stroke.width / 2.0, row.bottom_y),
-                                                 egui::pos2(drop_x + stroke.width / 2.0, end_y + stroke.width / 2.0)
-                                             ),
-                                             0.0,
-                                             stroke.color
-                                         );
-                                     }
+                            } else {
+                                ui.label(rust_i18n::t!("settings.no_dir_opened"));
+                                if ui.button(rust_i18n::t!("settings.open_dir")).clicked() {
+                                    self.open_directory();
                                 }
                             }
-                        }
-                    } else {
-                        ui.label(rust_i18n::t!("settings.no_dir_opened"));
-                        if ui.button(rust_i18n::t!("settings.open_dir")).clicked() {
-                            self.open_directory();
-                        }
-                    }
-                });
+                        });
                 });
         });
+        self.layout_state = ls;
     }
     /// Render theme editor panel
     pub(crate) fn render_theme_editor_panel(&mut self, ui: &mut egui::Ui) {
+        let mut ls = std::mem::take(&mut self.layout_state);
         let mut theme_to_save: Option<crate::theme::Theme> = None;
         let mut should_reset = false;
         ui.vertical(|ui| {
-                if self.render_panel_header(ui, &rust_i18n::t!("theme.title"), None, true) {
-                    self.show_theme_editor = false;
-                }
+            let h = ls.get_height("theme_header");
+            if self.render_panel_header(
+                ui,
+                &rust_i18n::t!("theme.title"),
+                Some(&self.icons.theme),
+                None,
+                true,
+                h,
+            ) {
+                self.show_theme_editor = false;
+            }
             if let Some(theme) = &mut self.editing_theme {
                 ui.horizontal_wrapped(|ui| {
-                    if ui.button(format!("💾 {}", rust_i18n::t!("theme.save"))).clicked() {
+                    if ui.button(rust_i18n::t!("theme.save")).clicked() {
                         theme_to_save = Some(theme.clone());
                     }
                     let mut modified = true;
@@ -1436,9 +1609,9 @@ if ui
                     if modified {
                         let is_builtin = theme.name == "Dark" || theme.name == "Light";
                         let reset_text = if is_builtin {
-                            format!("↺ {}", rust_i18n::t!("theme.reset_default"))
+                            rust_i18n::t!("theme.reset_default").to_string()
                         } else {
-                            format!("↺ {}", rust_i18n::t!("theme.reset_saved"))
+                            rust_i18n::t!("theme.reset_saved").to_string()
                         };
                         if ui.button(reset_text).clicked() {
                             should_reset = true;
@@ -1474,9 +1647,10 @@ if ui
                             }
                         }
                     });
-                if ui.button(format!("➕ {}", rust_i18n::t!("theme.new"))).clicked() {
+                if ui.button(rust_i18n::t!("theme.new")).clicked() {
                     let mut new_theme = self.current_theme.clone();
-                    new_theme.name = format!("{} {}", new_theme.name, rust_i18n::t!("theme.copy_suffix"));
+                    new_theme.name =
+                        format!("{} {}", new_theme.name, rust_i18n::t!("theme.copy_suffix"));
                     self.editing_theme = Some(new_theme.clone());
                     self.original_editing_theme = Some(new_theme);
                     self.show_delete_theme_confirmation = false; // Reset confirmation
@@ -1486,11 +1660,14 @@ if ui
                     let is_builtin = theme.name == "Dark" || theme.name == "Light";
                     if !is_builtin {
                         if !self.show_delete_theme_confirmation {
-                            if ui.button(format!("🗑 {}", rust_i18n::t!("theme.delete"))).clicked() {
+                            if ui.button(rust_i18n::t!("theme.delete")).clicked() {
                                 self.show_delete_theme_confirmation = true;
                             }
                         } else {
-                            ui.label(egui::RichText::new(rust_i18n::t!("settings.are_you_sure")).color(self.current_theme.colors.error_color()));
+                            ui.label(
+                                egui::RichText::new(rust_i18n::t!("settings.are_you_sure"))
+                                    .color(self.current_theme.colors.error_color()),
+                            );
                             if ui.button(rust_i18n::t!("settings.yes")).clicked() {
                                 let _ = crate::theme::delete_theme(&theme.name);
                                 self.themes = crate::theme::load_themes(); // Reload
@@ -1516,7 +1693,7 @@ if ui
                     ui.add(
                         egui::TextEdit::singleline(&mut theme.name)
                             .desired_width(ui.available_width() - 24.0)
-                            .margin(ui.spacing().button_padding)
+                            .margin(ui.spacing().button_padding),
                     );
                 });
                 crate::app_helpers::center_row(ui, |ui| {
@@ -1561,178 +1738,993 @@ if ui
                             .show(ui, |ui| {
                                 ui.heading(rust_i18n::t!("theme.colors_heading"));
                                 ui.add_space(4.0);
-                        egui::Grid::new("all_theme_colors_grid")
-                            .num_columns(3)
-                            .spacing([20.0, 4.0])
-                            .striped(false)
-                            .show(ui, |ui| {
+                                egui::Grid::new("all_theme_colors_grid")
+                                    .num_columns(3)
+                                    .spacing([20.0, 4.0])
+                                    .striped(false)
+                                    .show(ui, |ui| {
+                                        // --- HELPER CLOSURES FOR NEW OPTIONAL FIELDS ---
+                                        let icons = &self.icons;
+                                        let edit_optional_color =
+                                            |label: &str,
+                                             field: &mut Option<[u8; 3]>,
+                                             default: [u8; 3],
+                                             id_str: &str,
+                                             copied_color: &mut Option<[u8; 3]>,
+                                             last_copied_id: &mut Option<egui::Id>,
+                                             last_copied_time: &mut f64,
+                                             cached_height: &mut f32,
+                                             ui: &mut egui::Ui|
+                                             -> bool {
+                                                let mut changed = false;
+                                                ui.add(egui::Label::new(label).selectable(false));
+                                                let mut current = field.unwrap_or(default);
+                                                crate::app_helpers::stateful_center_row(
+                                                    ui,
+                                                    cached_height,
+                                                    |ui| {
+                                                        ui.spacing_mut().item_spacing.x = 4.0;
+                                                        if custom_color_picker_button(
+                                                            ui,
+                                                            &mut current,
+                                                            egui::Id::new(id_str),
+                                                        ) {
+                                                            *field = Some(current);
+                                                            changed = true;
+                                                        }
+                                                        if field.is_some() {
+                                                            if ui
+                                                                .button("↺")
+                                                                .on_hover_text(rust_i18n::t!(
+                                                                    "theme.reset_tooltip"
+                                                                ))
+                                                                .clicked()
+                                                            {
+                                                                *field = None;
+                                                                changed = true;
+                                                            }
+                                                        }
+                                                    },
+                                                );
+                                                if let Some(new_color) = render_copy_paste_buttons(
+                                                    ui,
+                                                    current,
+                                                    copied_color,
+                                                    last_copied_id,
+                                                    last_copied_time,
+                                                    egui::Id::new(id_str),
+                                                    icons,
+                                                    cached_height,
+                                                ) {
+                                                    *field = Some(new_color);
+                                                    changed = true;
+                                                }
+                                                ui.end_row();
+                                                changed
+                                            };
 
-                                // --- HELPER CLOSURES FOR NEW OPTIONAL FIELDS ---
-                                let icons = &self.icons;
-                                let edit_optional_color = |label: &str, field: &mut Option<[u8; 3]>, default: [u8; 3], id_str: &str, copied_color: &mut Option<[u8; 3]>, last_copied_id: &mut Option<egui::Id>, last_copied_time: &mut f64, ui: &mut egui::Ui| -> bool {
-                                    let mut changed = false;
-                                    ui.add(egui::Label::new(label).selectable(false));
-                                    let mut current = field.unwrap_or(default);
-                                    crate::app_helpers::center_row(ui, |ui| {
-                                        ui.spacing_mut().item_spacing.x = 4.0;
-                                        if custom_color_picker_button(ui, &mut current, egui::Id::new(id_str)) {
-                                            *field = Some(current);
-                                            changed = true;
+                                        let edit_optional_float =
+                                            |label: &str,
+                                             field: &mut Option<f32>,
+                                             default: f32,
+                                             range: std::ops::RangeInclusive<f32>,
+                                             speed: f32,
+                                             cached_height: &mut f32,
+                                             ui: &mut egui::Ui|
+                                             -> bool {
+                                                let mut changed = false;
+                                                ui.add(egui::Label::new(label).selectable(false));
+                                                let mut current = field.unwrap_or(default);
+                                                crate::app_helpers::stateful_center_row(
+                                                    ui,
+                                                    cached_height,
+                                                    |ui| {
+                                                        ui.spacing_mut().item_spacing.x = 4.0;
+                                                        if ui
+                                                            .add(
+                                                                egui::DragValue::new(&mut current)
+                                                                    .speed(speed)
+                                                                    .range(range),
+                                                            )
+                                                            .changed()
+                                                        {
+                                                            *field = Some(current);
+                                                            changed = true;
+                                                        }
+                                                        if field.is_some() {
+                                                            if ui
+                                                                .button("↺")
+                                                                .on_hover_text(rust_i18n::t!(
+                                                                    "theme.reset_tooltip"
+                                                                ))
+                                                                .clicked()
+                                                            {
+                                                                *field = None;
+                                                                changed = true;
+                                                            }
+                                                        }
+                                                    },
+                                                );
+                                                ui.label(""); // Empty label for copy/paste column
+                                                ui.end_row();
+                                                changed
+                                            };
+
+                                        // --- CORE UI BACKGROUNDS & ACCENTS ---
+                                        ui.label(
+                                            egui::RichText::new(rust_i18n::t!("theme.cat_core"))
+                                                .strong(),
+                                        );
+                                        ui.label("");
+                                        ui.label("");
+                                        ui.end_row();
+                                        ui.add(
+                                            egui::Label::new(rust_i18n::t!("theme.bg"))
+                                                .selectable(false),
+                                        );
+                                        if render_color_edit_row(
+                                            ui,
+                                            &mut theme.colors.background,
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            egui::Id::new("bg_copy"),
+                                            icons,
+                                            ls.get_height("th_bg"),
+                                        ) {
+                                            theme_changed = true;
                                         }
-                                        if field.is_some() {
-                                            if ui.button("↺").on_hover_text(rust_i18n::t!("theme.reset_tooltip")).clicked() {
-                                                *field = None;
-                                                changed = true;
-                                            }
+                                        ui.end_row();
+                                        ui.add(
+                                            egui::Label::new(rust_i18n::t!("theme.selection_bg"))
+                                                .selectable(false),
+                                        );
+                                        if render_color_edit_row(
+                                            ui,
+                                            &mut theme.colors.selection_background,
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            egui::Id::new("selection_bg_copy"),
+                                            icons,
+                                            ls.get_height("th_sel_bg"),
+                                        ) {
+                                            theme_changed = true;
                                         }
+                                        ui.end_row();
+
+                                        let icon_def = if theme.color_scheme
+                                            == crate::theme::ColorScheme::Dark
+                                        {
+                                            [200, 200, 200]
+                                        } else {
+                                            [80, 80, 80]
+                                        };
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.icon_default"),
+                                            &mut theme.colors.icon_color,
+                                            icon_def,
+                                            "icon_def_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_icon_def"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        ui.add(
+                                            egui::Label::new(rust_i18n::t!("theme.icon_hover"))
+                                                .selectable(false),
+                                        );
+                                        if render_color_edit_row(
+                                            ui,
+                                            &mut theme.colors.icon_hover,
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            egui::Id::new("icon_hover_copy"),
+                                            icons,
+                                            ls.get_height("th_icon_hov"),
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        ui.end_row();
+
+                                        // --- TYPOGRAPHY ---
+                                        ui.label(
+                                            egui::RichText::new(rust_i18n::t!(
+                                                "theme.cat_typography"
+                                            ))
+                                            .strong(),
+                                        );
+                                        ui.label("");
+                                        ui.label("");
+                                        ui.end_row();
+                                        ui.add(
+                                            egui::Label::new(rust_i18n::t!("theme.fg"))
+                                                .selectable(false),
+                                        );
+                                        if render_color_edit_row(
+                                            ui,
+                                            &mut theme.colors.foreground,
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            egui::Id::new("fg_copy"),
+                                            icons,
+                                            ls.get_height("th_fg"),
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        ui.end_row();
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.headings"),
+                                            &mut theme.colors.heading_text,
+                                            [255, 255, 255],
+                                            "heading_text_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_head"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.labels"),
+                                            &mut theme.colors.label_text,
+                                            [220, 220, 220],
+                                            "label_text_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_lbl"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.weak_text"),
+                                            &mut theme.colors.weak_text,
+                                            [150, 150, 150],
+                                            "weak_text_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_weak"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.strong_text"),
+                                            &mut theme.colors.strong_text,
+                                            [255, 255, 255],
+                                            "strong_text_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_strong"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.hyperlinks"),
+                                            &mut theme.colors.hyperlink,
+                                            [90, 170, 255],
+                                            "hyperlink_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_link"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+
+                                        // --- MAIN TEXT EDITOR ---
+                                        ui.label(
+                                            egui::RichText::new(rust_i18n::t!("theme.cat_editor"))
+                                                .strong(),
+                                        );
+                                        ui.label("");
+                                        ui.label("");
+                                        ui.end_row();
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.editor_bg"),
+                                            &mut theme.colors.editor_background,
+                                            [10, 10, 10],
+                                            "editor_bg_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_ed_bg"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.editor_fg"),
+                                            &mut theme.colors.editor_foreground,
+                                            theme.colors.foreground,
+                                            "editor_fg_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_ed_fg"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        ui.add(
+                                            egui::Label::new(rust_i18n::t!("theme.line_numbers"))
+                                                .selectable(false),
+                                        );
+                                        if render_color_edit_row(
+                                            ui,
+                                            &mut theme.colors.line_number,
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            egui::Id::new("line_num_copy"),
+                                            icons,
+                                            ls.get_height("th_ln_num"),
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        ui.end_row();
+                                        ui.add(
+                                            egui::Label::new(rust_i18n::t!("theme.cursor"))
+                                                .selectable(false),
+                                        );
+                                        if render_color_edit_row(
+                                            ui,
+                                            &mut theme.colors.cursor,
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            egui::Id::new("cursor_copy"),
+                                            icons,
+                                            ls.get_height("th_cursor"),
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        ui.end_row();
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.search_highlight"),
+                                            &mut theme.colors.highlight,
+                                            theme.colors.cursor,
+                                            "highlight_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_search"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.whitespace"),
+                                            &mut theme.colors.whitespace_symbols,
+                                            [80, 80, 80],
+                                            "whitespace_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_ws"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+
+                                        // --- BUTTONS ---
+                                        ui.label(
+                                            egui::RichText::new(rust_i18n::t!("theme.cat_buttons"))
+                                                .strong(),
+                                        );
+                                        ui.label("");
+                                        ui.label("");
+                                        ui.end_row();
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.btn_bg"),
+                                            &mut theme.colors.button_bg,
+                                            [60, 60, 60],
+                                            "btn_bg_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_btn_bg"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.btn_hover"),
+                                            &mut theme.colors.button_hover_bg,
+                                            [80, 80, 80],
+                                            "btn_hover_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_btn_hov"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.btn_active"),
+                                            &mut theme.colors.button_active_bg,
+                                            [100, 100, 100],
+                                            "btn_active_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_btn_act"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.btn_fg"),
+                                            &mut theme.colors.button_fg,
+                                            theme.colors.foreground,
+                                            "btn_text_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_btn_fg"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.btn_hover_fg"),
+                                            &mut theme.colors.button_hover_fg,
+                                            theme.colors.foreground,
+                                            "btn_hover_fg_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_btn_hov_fg"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.btn_active_fg"),
+                                            &mut theme.colors.button_active_fg,
+                                            theme.colors.foreground,
+                                            "btn_active_fg_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_btn_act_fg"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_float(
+                                            &rust_i18n::t!("theme.btn_rounding"),
+                                            &mut theme.colors.button_rounding,
+                                            2.0,
+                                            0.0..=20.0,
+                                            0.1,
+                                            ls.get_height("th_btn_round"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.btn_border"),
+                                            &mut theme.colors.button_border_color,
+                                            [100, 100, 100],
+                                            "btn_border_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_btn_brd"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.btn_hover_border"),
+                                            &mut theme.colors.button_hover_border_color,
+                                            [120, 120, 120],
+                                            "btn_hover_border_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_btn_hov_brd"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.btn_active_border"),
+                                            &mut theme.colors.button_active_border_color,
+                                            [150, 150, 150],
+                                            "btn_active_border_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_btn_act_brd"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_float(
+                                            &rust_i18n::t!("theme.btn_border_width"),
+                                            &mut theme.colors.button_border_width,
+                                            0.0,
+                                            0.0..=5.0,
+                                            0.05,
+                                            ls.get_height("th_btn_brd_w"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_float(
+                                            &rust_i18n::t!("theme.btn_padding_x"),
+                                            &mut theme.colors.button_padding_x,
+                                            4.0,
+                                            0.0..=40.0,
+                                            0.5,
+                                            ls.get_height("th_btn_pad_x"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_float(
+                                            &rust_i18n::t!("theme.btn_padding_y"),
+                                            &mut theme.colors.button_padding_y,
+                                            2.0,
+                                            0.0..=40.0,
+                                            0.5,
+                                            ls.get_height("th_btn_pad_y"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+
+                                        // --- INPUT ELEMENTS ---
+                                        ui.label(
+                                            egui::RichText::new(rust_i18n::t!("theme.cat_inputs"))
+                                                .strong(),
+                                        );
+                                        ui.label("");
+                                        ui.label("");
+                                        ui.end_row();
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.input_bg"),
+                                            &mut theme.colors.input_bg,
+                                            [30, 30, 30],
+                                            "input_bg_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_inp_bg"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.input_fg"),
+                                            &mut theme.colors.input_fg,
+                                            theme.colors.foreground,
+                                            "input_fg_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_inp_fg"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.input_border"),
+                                            &mut theme.colors.input_border_color,
+                                            [100, 100, 100],
+                                            "input_border_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_inp_brd"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.input_focus_border"),
+                                            &mut theme.colors.input_focus_border_color,
+                                            [100, 150, 255],
+                                            "input_focus_border_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_inp_foc_brd"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_float(
+                                            &rust_i18n::t!("theme.input_rounding"),
+                                            &mut theme.colors.input_rounding,
+                                            2.0,
+                                            0.0..=20.0,
+                                            0.1,
+                                            ls.get_height("th_inp_round"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+
+                                        // --- WIDGETS ---
+                                        ui.label(
+                                            egui::RichText::new(rust_i18n::t!("theme.cat_widgets"))
+                                                .strong(),
+                                        );
+                                        ui.label("");
+                                        ui.label("");
+                                        ui.end_row();
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.chk_bg"),
+                                            &mut theme.colors.checkbox_bg,
+                                            [50, 50, 50],
+                                            "chk_bg_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_chk_bg"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.chk_check"),
+                                            &mut theme.colors.checkbox_check,
+                                            [200, 200, 200],
+                                            "chk_check_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_chk_chk"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.slider_rail"),
+                                            &mut theme.colors.slider_rail,
+                                            [60, 60, 60],
+                                            "slide_rail_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_slide_rail"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.slider_thumb"),
+                                            &mut theme.colors.slider_thumb,
+                                            [180, 180, 180],
+                                            "slide_thumb_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_slide_thumb"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.scroll_bg"),
+                                            &mut theme.colors.scrollbar_bg,
+                                            [30, 30, 30],
+                                            "scroll_bg_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_scroll_bg"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.scroll_thumb"),
+                                            &mut theme.colors.scrollbar_thumb,
+                                            [120, 120, 120],
+                                            "scroll_thumb_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_scroll_thumb"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.tooltip_bg"),
+                                            &mut theme.colors.tooltip_bg,
+                                            [20, 20, 20],
+                                            "tooltip_bg_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_tooltip_bg"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.tooltip_text"),
+                                            &mut theme.colors.tooltip_text,
+                                            [220, 220, 220],
+                                            "tooltip_txt_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_tooltip_txt"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.text_edit_bg"),
+                                            &mut theme.colors.text_edit_bg,
+                                            [15, 15, 15],
+                                            "text_edit_bg_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_text_edit_bg"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.focus_outline"),
+                                            &mut theme.colors.focus_outline,
+                                            [100, 150, 255],
+                                            "focus_outline_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_foc_out"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.selection_text"),
+                                            &mut theme.colors.selection_text,
+                                            [255, 255, 255],
+                                            "sel_text_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_sel_txt"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.separator"),
+                                            &mut theme.colors.separator,
+                                            [80, 80, 80],
+                                            "sep_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_sep"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_float(
+                                            &rust_i18n::t!("theme.separator_width"),
+                                            &mut theme.colors.separator_width,
+                                            1.0,
+                                            0.0..=10.0,
+                                            0.1,
+                                            ls.get_height("th_sep_w"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.tree_line"),
+                                            &mut theme.colors.tree_line,
+                                            [100, 100, 100],
+                                            "tree_line_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_tree_line"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+
+                                        // --- WINDOW & PANELS GEOMETRY ---
+                                        ui.label(
+                                            egui::RichText::new(rust_i18n::t!(
+                                                "theme.cat_geometry"
+                                            ))
+                                            .strong(),
+                                        );
+                                        ui.label("");
+                                        ui.label("");
+                                        ui.end_row();
+                                        if edit_optional_float(
+                                            &rust_i18n::t!("theme.window_rounding"),
+                                            &mut theme.colors.window_rounding,
+                                            4.0,
+                                            0.0..=20.0,
+                                            0.1,
+                                            ls.get_height("th_win_round"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_color(
+                                            &rust_i18n::t!("theme.shadow_color"),
+                                            &mut theme.colors.shadow_color,
+                                            [0, 0, 0],
+                                            "shadow_copy",
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            ls.get_height("th_shadow"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_float(
+                                            &rust_i18n::t!("theme.shadow_blur"),
+                                            &mut theme.colors.shadow_blur,
+                                            20.0,
+                                            0.0..=100.0,
+                                            0.5,
+                                            ls.get_height("th_shadow_b"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_float(
+                                            &rust_i18n::t!("theme.shadow_spread"),
+                                            &mut theme.colors.shadow_spread,
+                                            0.0,
+                                            0.0..=100.0,
+                                            0.5,
+                                            ls.get_height("th_shadow_s"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_float(
+                                            &rust_i18n::t!("theme.shadow_offset_x"),
+                                            &mut theme.colors.shadow_offset_x,
+                                            0.0,
+                                            -100.0..=100.0,
+                                            0.5,
+                                            ls.get_height("th_shadow_ox"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        if edit_optional_float(
+                                            &rust_i18n::t!("theme.shadow_offset_y"),
+                                            &mut theme.colors.shadow_offset_y,
+                                            0.0,
+                                            -100.0..=100.0,
+                                            0.5,
+                                            ls.get_height("th_shadow_oy"),
+                                            ui,
+                                        ) {
+                                            theme_changed = true;
+                                        }
+
+                                        // --- SYNTAX ALERTS ---
+                                        ui.label(
+                                            egui::RichText::new(rust_i18n::t!("theme.cat_syntax"))
+                                                .strong(),
+                                        );
+                                        ui.label("");
+                                        ui.label("");
+                                        ui.end_row();
+                                        ui.add(
+                                            egui::Label::new(rust_i18n::t!("theme.comment"))
+                                                .selectable(false),
+                                        );
+                                        if render_color_edit_row(
+                                            ui,
+                                            &mut theme.colors.comment,
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            egui::Id::new("comment_copy"),
+                                            icons,
+                                            ls.get_height("th_comment"),
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        ui.end_row();
+                                        ui.add(
+                                            egui::Label::new(rust_i18n::t!("theme.success_label"))
+                                                .selectable(false),
+                                        );
+                                        if render_color_edit_row(
+                                            ui,
+                                            &mut theme.colors.success,
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            egui::Id::new("success_copy"),
+                                            icons,
+                                            ls.get_height("th_success"),
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        ui.end_row();
+                                        ui.add(
+                                            egui::Label::new(rust_i18n::t!("theme.info_label"))
+                                                .selectable(false),
+                                        );
+                                        if render_color_edit_row(
+                                            ui,
+                                            &mut theme.colors.info,
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            egui::Id::new("info_copy"),
+                                            icons,
+                                            ls.get_height("th_info"),
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        ui.end_row();
+                                        ui.add(
+                                            egui::Label::new(rust_i18n::t!("theme.warning_label"))
+                                                .selectable(false),
+                                        );
+                                        if render_color_edit_row(
+                                            ui,
+                                            &mut theme.colors.warning,
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            egui::Id::new("warning_copy"),
+                                            icons,
+                                            ls.get_height("th_warning"),
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        ui.end_row();
+                                        ui.add(
+                                            egui::Label::new(rust_i18n::t!("theme.error_label"))
+                                                .selectable(false),
+                                        );
+                                        if render_color_edit_row(
+                                            ui,
+                                            &mut theme.colors.error,
+                                            copied_color,
+                                            last_copied_id,
+                                            last_copied_time,
+                                            egui::Id::new("error_copy"),
+                                            icons,
+                                            ls.get_height("th_error"),
+                                        ) {
+                                            theme_changed = true;
+                                        }
+                                        ui.end_row();
                                     });
-                                    if let Some(new_color) = render_copy_paste_buttons(
-                                        ui,
-                                        current,
-                                        copied_color,
-                                        last_copied_id,
-                                        last_copied_time,
-                                        egui::Id::new(id_str),
-                                        icons,
-                                    ) {
-                                        *field = Some(new_color);
-                                        changed = true;
-                                    }
-                                    ui.end_row();
-                                    changed
-                                };
-
-                                let edit_optional_float = |label: &str, field: &mut Option<f32>, default: f32, range: std::ops::RangeInclusive<f32>, speed: f32, ui: &mut egui::Ui| -> bool {
-                                    let mut changed = false;
-                                    ui.add(egui::Label::new(label).selectable(false));
-                                    let mut current = field.unwrap_or(default);
-                                    crate::app_helpers::center_row(ui, |ui| {
-                                        ui.spacing_mut().item_spacing.x = 4.0;
-                                        if ui.add(egui::DragValue::new(&mut current).speed(speed).range(range)).changed() {
-                                            *field = Some(current);
-                                            changed = true;
-                                        }
-                                        if field.is_some() {
-                                            if ui.button("↺").on_hover_text(rust_i18n::t!("theme.reset_tooltip")).clicked() {
-                                                *field = None;
-                                                changed = true;
-                                            }
-                                        }
-                                    });
-                                    ui.label(""); // Empty label for copy/paste column
-                                    ui.end_row();
-                                    changed
-                                };
-
-                                // --- CORE UI BACKGROUNDS & ACCENTS ---
-                                ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_core")).strong()); ui.label(""); ui.label(""); ui.end_row();
-                                ui.add(egui::Label::new(rust_i18n::t!("theme.bg")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.background, copied_color, last_copied_id, last_copied_time, egui::Id::new("bg_copy"), icons) { theme_changed = true; }
-                                ui.end_row();
-                                ui.add(egui::Label::new(rust_i18n::t!("theme.selection_bg")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.selection_background, copied_color, last_copied_id, last_copied_time, egui::Id::new("selection_bg_copy"), icons) { theme_changed = true; }
-                                ui.end_row();
-                                
-                                let icon_def = if theme.color_scheme == crate::theme::ColorScheme::Dark { [200, 200, 200] } else { [80, 80, 80] };
-                                if edit_optional_color(&rust_i18n::t!("theme.icon_default") , &mut theme.colors.icon_color, icon_def, "icon_def_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                ui.add(egui::Label::new(rust_i18n::t!("theme.icon_hover")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.icon_hover, copied_color, last_copied_id, last_copied_time, egui::Id::new("icon_hover_copy"), icons) { theme_changed = true; }
-                                ui.end_row();
-
-                                // --- TYPOGRAPHY ---
-                                ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_typography")).strong()); ui.label(""); ui.label(""); ui.end_row();
-                                ui.add(egui::Label::new(rust_i18n::t!("theme.fg")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.foreground, copied_color, last_copied_id, last_copied_time, egui::Id::new("fg_copy"), icons) { theme_changed = true; }
-                                ui.end_row();
-                                if edit_optional_color(&rust_i18n::t!("theme.headings") , &mut theme.colors.heading_text, [255, 255, 255], "heading_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.labels") , &mut theme.colors.label_text, [220, 220, 220], "label_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.weak_text") , &mut theme.colors.weak_text, [150, 150, 150], "weak_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.strong_text") , &mut theme.colors.strong_text, [255, 255, 255], "strong_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.hyperlinks") , &mut theme.colors.hyperlink, [90, 170, 255], "hyperlink_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-
-                                // --- MAIN TEXT EDITOR ---
-                                ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_editor")).strong()); ui.label(""); ui.label(""); ui.end_row();
-                                if edit_optional_color(&rust_i18n::t!("theme.editor_bg") , &mut theme.colors.editor_background, [10, 10, 10], "editor_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.editor_fg") , &mut theme.colors.editor_foreground, theme.colors.foreground, "editor_fg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                ui.add(egui::Label::new(rust_i18n::t!("theme.line_numbers")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.line_number, copied_color, last_copied_id, last_copied_time, egui::Id::new("line_num_copy"), icons) { theme_changed = true; }
-                                ui.end_row();
-                                ui.add(egui::Label::new(rust_i18n::t!("theme.cursor")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.cursor, copied_color, last_copied_id, last_copied_time, egui::Id::new("cursor_copy"), icons) { theme_changed = true; }
-                                ui.end_row();
-                                if edit_optional_color(&rust_i18n::t!("theme.search_highlight") , &mut theme.colors.highlight, theme.colors.cursor, "highlight_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.whitespace") , &mut theme.colors.whitespace_symbols, [80,80,80], "whitespace_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-
-                                // --- BUTTONS ---
-                                ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_buttons")).strong()); ui.label(""); ui.label(""); ui.end_row();
-                                if edit_optional_color(&rust_i18n::t!("theme.btn_bg") , &mut theme.colors.button_bg, [60, 60, 60], "btn_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.btn_hover") , &mut theme.colors.button_hover_bg, [80, 80, 80], "btn_hover_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.btn_active") , &mut theme.colors.button_active_bg, [100, 100, 100], "btn_active_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.btn_fg") , &mut theme.colors.button_fg, theme.colors.foreground, "btn_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.btn_hover_fg") , &mut theme.colors.button_hover_fg, theme.colors.foreground, "btn_hover_fg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.btn_active_fg") , &mut theme.colors.button_active_fg, theme.colors.foreground, "btn_active_fg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_float(&rust_i18n::t!("theme.btn_rounding") , &mut theme.colors.button_rounding, 2.0, 0.0..=20.0, 0.1, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.btn_border") , &mut theme.colors.button_border_color, [100, 100, 100], "btn_border_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.btn_hover_border") , &mut theme.colors.button_hover_border_color, [120, 120, 120], "btn_hover_border_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.btn_active_border") , &mut theme.colors.button_active_border_color, [150, 150, 150], "btn_active_border_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_float(&rust_i18n::t!("theme.btn_border_width") , &mut theme.colors.button_border_width, 0.0, 0.0..=5.0, 0.05, ui) { theme_changed = true; }
-                                if edit_optional_float(&rust_i18n::t!("theme.btn_padding_x") , &mut theme.colors.button_padding_x, 4.0, 0.0..=40.0, 0.5, ui) { theme_changed = true; }
-                                if edit_optional_float(&rust_i18n::t!("theme.btn_padding_y") , &mut theme.colors.button_padding_y, 2.0, 0.0..=40.0, 0.5, ui) { theme_changed = true; }
-
-                                // --- INPUT ELEMENTS ---
-                                ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_inputs")).strong()); ui.label(""); ui.label(""); ui.end_row();
-                                if edit_optional_color(&rust_i18n::t!("theme.input_bg") , &mut theme.colors.input_bg, [30, 30, 30], "input_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.input_fg") , &mut theme.colors.input_fg, theme.colors.foreground, "input_fg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.input_border") , &mut theme.colors.input_border_color, [100, 100, 100], "input_border_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.input_focus_border") , &mut theme.colors.input_focus_border_color, [100, 150, 255], "input_focus_border_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_float(&rust_i18n::t!("theme.input_rounding") , &mut theme.colors.input_rounding, 2.0, 0.0..=20.0, 0.1, ui) { theme_changed = true; }
-
-                                // --- WIDGETS ---
-                                ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_widgets")).strong()); ui.label(""); ui.label(""); ui.end_row();
-                                if edit_optional_color(&rust_i18n::t!("theme.chk_bg") , &mut theme.colors.checkbox_bg, [50, 50, 50], "chk_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.chk_check") , &mut theme.colors.checkbox_check, [200, 200, 200], "chk_check_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.slider_rail") , &mut theme.colors.slider_rail, [60, 60, 60], "slide_rail_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.slider_thumb") , &mut theme.colors.slider_thumb, [180, 180, 180], "slide_thumb_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.scroll_bg") , &mut theme.colors.scrollbar_bg, [30, 30, 30], "scroll_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.scroll_thumb") , &mut theme.colors.scrollbar_thumb, [120, 120, 120], "scroll_thumb_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.tooltip_bg") , &mut theme.colors.tooltip_bg, [20, 20, 20], "tooltip_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.tooltip_text") , &mut theme.colors.tooltip_text, [220, 220, 220], "tooltip_txt_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.text_edit_bg") , &mut theme.colors.text_edit_bg, [15, 15, 15], "text_edit_bg_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.focus_outline") , &mut theme.colors.focus_outline, [100, 150, 255], "focus_outline_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.selection_text") , &mut theme.colors.selection_text, [255, 255, 255], "sel_text_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.separator") , &mut theme.colors.separator, [80, 80, 80], "sep_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_float(&rust_i18n::t!("theme.separator_width") , &mut theme.colors.separator_width, 1.0, 0.0..=10.0, 0.1, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.tree_line") , &mut theme.colors.tree_line, [100, 100, 100], "tree_line_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-
-                                // --- WINDOW & PANELS GEOMETRY ---
-                                ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_geometry")).strong()); ui.label(""); ui.label(""); ui.end_row();
-                                if edit_optional_float(&rust_i18n::t!("theme.window_rounding") , &mut theme.colors.window_rounding, 4.0, 0.0..=20.0, 0.1, ui) { theme_changed = true; }
-                                if edit_optional_color(&rust_i18n::t!("theme.shadow_color") , &mut theme.colors.shadow_color, [0, 0, 0], "shadow_copy", copied_color, last_copied_id, last_copied_time, ui) { theme_changed = true; }
-                                if edit_optional_float(&rust_i18n::t!("theme.shadow_blur") , &mut theme.colors.shadow_blur, 20.0, 0.0..=100.0, 0.5, ui) { theme_changed = true; }
-                                if edit_optional_float(&rust_i18n::t!("theme.shadow_spread") , &mut theme.colors.shadow_spread, 0.0, 0.0..=100.0, 0.5, ui) { theme_changed = true; }
-                                if edit_optional_float(&rust_i18n::t!("theme.shadow_offset_x") , &mut theme.colors.shadow_offset_x, 0.0, -100.0..=100.0, 0.5, ui) { theme_changed = true; }
-                                if edit_optional_float(&rust_i18n::t!("theme.shadow_offset_y") , &mut theme.colors.shadow_offset_y, 0.0, -100.0..=100.0, 0.5, ui) { theme_changed = true; }
-
-                                // --- SYNTAX ALERTS ---
-                                ui.label(egui::RichText::new(rust_i18n::t!("theme.cat_syntax")).strong()); ui.label(""); ui.label(""); ui.end_row();
-                                ui.add(egui::Label::new(rust_i18n::t!("theme.comment")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.comment, copied_color, last_copied_id, last_copied_time, egui::Id::new("comment_copy"), icons) { theme_changed = true; }
-                                ui.end_row();
-                                ui.add(egui::Label::new(rust_i18n::t!("theme.success_label")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.success, copied_color, last_copied_id, last_copied_time, egui::Id::new("success_copy"), icons) { theme_changed = true; }
-                                ui.end_row();
-                                ui.add(egui::Label::new(rust_i18n::t!("theme.info_label")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.info, copied_color, last_copied_id, last_copied_time, egui::Id::new("info_copy"), icons) { theme_changed = true; }
-                                ui.end_row();
-                                ui.add(egui::Label::new(rust_i18n::t!("theme.warning_label")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.warning, copied_color, last_copied_id, last_copied_time, egui::Id::new("warning_copy"), icons) { theme_changed = true; }
-                                ui.end_row();
-                                ui.add(egui::Label::new(rust_i18n::t!("theme.error_label")).selectable(false));
-                                if render_color_edit_row(ui, &mut theme.colors.error, copied_color, last_copied_id, last_copied_time, egui::Id::new("error_copy"), icons) { theme_changed = true; }
-                                ui.end_row();
                             });
                     });
-                });
                 // KLUCZOWA ZMIANA: Synchronizuj z current_theme natychmiast!
                 if theme_changed {
                     theme.apply(ui.ctx());
@@ -1781,18 +2773,28 @@ if ui
                     self.settings.theme_name = theme.name.clone();
                     let _ = self.settings.save();
                     self.themes = crate::theme::load_themes();
-                    self.status_message = rust_i18n::t!("theme.saved_msg", name = theme.name).to_string();
+                    self.status_message =
+                        rust_i18n::t!("theme.saved_msg", name = theme.name).to_string();
                     self.log_info(rust_i18n::t!("theme.saved_msg", name = theme.name));
                 }
                 Err(e) => {
-                    self.status_message = rust_i18n::t!("theme.save_error", error = e.to_string()).to_string();
+                    self.status_message =
+                        rust_i18n::t!("theme.save_error", error = e.to_string()).to_string();
                     self.log_error(rust_i18n::t!("theme.save_error", error = e.to_string()));
                 }
             }
         }
+        self.layout_state = ls;
     }
 
-    fn render_scanning_spinner_if_needed(&self, ui: &mut egui::Ui, dir_path: &Path, depth: usize, tree_on: bool, tree_indent: f32) {
+    fn render_scanning_spinner_if_needed(
+        &self,
+        ui: &mut egui::Ui,
+        dir_path: &Path,
+        depth: usize,
+        tree_on: bool,
+        tree_indent: f32,
+    ) {
         if self.is_directory_scanning(dir_path) {
             crate::app_helpers::center_row(ui, |ui| {
                 if tree_on {
@@ -1801,7 +2803,12 @@ if ui
                     ui.add_space(32.0); // Simple view doesn't use tree_indent
                 }
                 ui.add(egui::Spinner::new().size(12.0));
-                ui.label(egui::RichText::new(rust_i18n::t!("theme.verifying")).italics().size(10.0).weak());
+                ui.label(
+                    egui::RichText::new(rust_i18n::t!("theme.verifying"))
+                        .italics()
+                        .size(10.0)
+                        .weak(),
+                );
             });
         }
     }
@@ -1810,7 +2817,9 @@ if ui
         if self.pending_access_checks.is_empty() {
             return false;
         }
-        self.pending_access_checks.iter().any(|p| p.starts_with(dir_path))
+        self.pending_access_checks
+            .iter()
+            .any(|p| p.starts_with(dir_path))
     }
 }
 
@@ -1823,12 +2832,15 @@ fn render_color_edit_row(
     last_copied_time: &mut f64,
     row_id: egui::Id,
     icons: &crate::icons::Icons,
+    cached_height: &mut f32, // Added
 ) -> bool {
     let mut changed = false;
     // Column 2: Picker
-    if custom_color_picker_button(ui, color, row_id.with("color_btn")) {
-        changed = true;
-    }
+    crate::app_helpers::stateful_center_row(ui, cached_height, |ui| {
+        if custom_color_picker_button(ui, color, row_id.with("color_btn")) {
+            changed = true;
+        }
+    });
 
     // Column 3: Buttons
     if let Some(new_color) = render_copy_paste_buttons(
@@ -1839,6 +2851,7 @@ fn render_color_edit_row(
         last_copied_time,
         row_id,
         icons,
+        cached_height, // Pass it
     ) {
         *color = new_color;
         changed = true;
@@ -1855,22 +2868,27 @@ fn render_copy_paste_buttons(
     last_copied_time: &mut f64,
     row_id: egui::Id,
     icons: &crate::icons::Icons,
+    cached_height: &mut f32, // Added
 ) -> Option<[u8; 3]> {
     let mut paste_color = None;
-    crate::app_helpers::center_row(ui, |ui| {
+    crate::app_helpers::stateful_center_row(ui, cached_height, |ui| {
         let time = ui.input(|i| i.time);
         let btn_size = ui.spacing().interact_size.y;
         let icon_size = (btn_size * 0.6).max(12.0); // Balanced relative size
-        
+
         // --- 1. PASTE BUTTON (Left) ---
         // Only visible when a color is in clipboard
         if let Some(c) = *copied_color {
-            let paste_btn = egui::Button::image(egui::Image::new(&icons.paste)
-                .max_size(egui::vec2(icon_size, icon_size))
-                .maintain_aspect_ratio(true)
-                .tint(ui.visuals().widgets.inactive.fg_stroke.color))
-                .min_size(egui::vec2(btn_size, btn_size));
-            let paste_res = ui.add(paste_btn).on_hover_text(rust_i18n::t!("theme.paste_color"));
+            let paste_btn = egui::Button::image(
+                egui::Image::new(&icons.paste)
+                    .max_size(egui::vec2(icon_size, icon_size))
+                    .maintain_aspect_ratio(true)
+                    .tint(ui.visuals().widgets.inactive.fg_stroke.color),
+            )
+            .min_size(egui::vec2(btn_size, btn_size));
+            let paste_res = ui
+                .add(paste_btn)
+                .on_hover_text(rust_i18n::t!("theme.paste_color"));
             if paste_res.clicked() {
                 paste_color = Some(c);
             }
@@ -1883,26 +2901,33 @@ fn render_copy_paste_buttons(
         // --- 2. COPY BUTTON (Right) ---
         // Infinite pulse if this is the source of copied color
         let is_source = Some(row_id) == *last_copied_id;
-        let mut alpha = 0.0;
+        let mut alpha: f32 = 0.0;
         if is_source {
-            // Infinite pulse: fade in and out 
+            // Infinite pulse: fade in and out
             alpha = ((time * 3.0).sin() * 0.5 + 0.5) as f32;
             ui.ctx().request_repaint();
         }
 
         let tint = if alpha > 0.0 {
-            ui.visuals().selection.bg_fill.gamma_multiply(alpha.max(0.4)) // Maintain some visibility
+            ui.visuals()
+                .selection
+                .bg_fill
+                .gamma_multiply(alpha.max(0.4)) // Maintain some visibility
         } else {
             ui.visuals().widgets.inactive.fg_stroke.color
         };
-        
-        let copy_btn = egui::Button::image(egui::Image::new(&icons.copy)
-            .max_size(egui::vec2(icon_size, icon_size))
-            .maintain_aspect_ratio(true)
-            .tint(tint))
-            .min_size(egui::vec2(btn_size, btn_size));
-            
-        let copy_res = ui.add(copy_btn).on_hover_text(rust_i18n::t!("theme.copy_color"));
+
+        let copy_btn = egui::Button::image(
+            egui::Image::new(&icons.copy)
+                .max_size(egui::vec2(icon_size, icon_size))
+                .maintain_aspect_ratio(true)
+                .tint(tint),
+        )
+        .min_size(egui::vec2(btn_size, btn_size));
+
+        let copy_res = ui
+            .add(copy_btn)
+            .on_hover_text(rust_i18n::t!("theme.copy_color"));
 
         if copy_res.clicked() {
             *copied_color = Some(current_color);
@@ -1920,7 +2945,7 @@ fn render_copy_paste_buttons(
 fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: egui::Id) -> bool {
     let btn_size = ui.spacing().interact_size.y;
     let padding = ui.spacing().button_padding;
-    
+
     let inner_size = (btn_size * 0.6).max(12.0);
     let desired_size = egui::vec2(
         btn_size.max(inner_size + padding.x * 2.0),
@@ -1930,56 +2955,67 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: 
     let mut color32 = egui::Color32::from_rgb(color[0], color[1], color[2]);
     let button_id = popup_id.with("btn");
     let area_id = popup_id.with("area");
-    
+
     let rect = ui.allocate_exact_size(desired_size, egui::Sense::hover()).0;
     let response = ui.interact(rect, button_id, egui::Sense::click());
-    
+
     // Simple boolean state — completely independent of egui's Popup system
     let is_open = ui.data(|d| d.get_temp::<bool>(popup_id).unwrap_or(false));
     if response.clicked() {
         ui.data_mut(|d| d.insert_temp(popup_id, !is_open));
     }
-    
+
     // Draw button
     if ui.is_rect_visible(rect) {
         let visuals = ui.style().interact(&response);
-        ui.painter().rect_filled(rect, visuals.corner_radius, visuals.bg_fill);
-        ui.painter().rect_stroke(rect, visuals.corner_radius, visuals.bg_stroke, egui::StrokeKind::Inside);
-        
+        ui.painter()
+            .rect_filled(rect, visuals.corner_radius, visuals.bg_fill);
+        ui.painter().rect_stroke(
+            rect,
+            visuals.corner_radius,
+            visuals.bg_stroke,
+            egui::StrokeKind::Inside,
+        );
+
         let inner_rect = rect.shrink2(padding);
-        ui.painter().rect_filled(inner_rect, visuals.corner_radius.at_most(2), color32);
+        ui.painter()
+            .rect_filled(inner_rect, visuals.corner_radius.at_most(2), color32);
         ui.painter().rect_stroke(
             inner_rect,
             visuals.corner_radius.at_most(2),
             egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color),
-            egui::StrokeKind::Inside
+            egui::StrokeKind::Inside,
         );
     }
-    
+
     let mut changed = false;
-    
+
     if is_open {
         let area = egui::Area::new(area_id)
             .order(egui::Order::Foreground)
             .default_pos(response.rect.left_bottom() + egui::vec2(0.0, 4.0))
             .interactable(true);
-            
+
         let area_response = area.show(ui.ctx(), |ui| {
             egui::Frame::popup(ui.style()).show(ui, |ui| {
                 // Two-frame approach: measure the actual popup content width (driven by icon buttons)
                 // on frame 1, then set slider_width to match on frame 2+
                 let width_key = popup_id.with("measured_w");
                 let measured = ui.data(|d| d.get_temp::<f32>(width_key));
-                
+
                 // Use measured width from previous frame, or small default to let buttons determine width
                 ui.spacing_mut().slider_width = measured.unwrap_or(100.0);
-                if egui::color_picker::color_picker_color32(ui, &mut color32, egui::color_picker::Alpha::Opaque) {
+                if egui::color_picker::color_picker_color32(
+                    ui,
+                    &mut color32,
+                    egui::color_picker::Alpha::Opaque,
+                ) {
                     changed = true;
                     color[0] = color32.r();
                     color[1] = color32.g();
                     color[2] = color32.b();
                 }
-                
+
                 // Store measured content width for next frame (stabilizes after 2 frames)
                 let actual_width = ui.min_rect().width();
                 if measured.is_none() || (actual_width - measured.unwrap_or(0.0)).abs() > 1.0 {
@@ -1998,6 +3034,6 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: 
             }
         }
     }
-    
+
     changed
 }

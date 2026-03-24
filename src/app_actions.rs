@@ -85,8 +85,14 @@ impl EditorApp {
         }
 
         let keyfile = self.keyfile_path.clone().unwrap();
-        self.log_info(t!("actions.log_opening", file = self.mask_directory_path(&path)));
-        self.log_info(t!("actions.log_using_key", file = self.mask_keyfile_path(&keyfile)));
+        self.log_info(t!(
+            "actions.log_opening",
+            file = self.mask_directory_path(&path)
+        ));
+        self.log_info(t!(
+            "actions.log_using_key",
+            file = self.mask_keyfile_path(&keyfile)
+        ));
 
         let mut current_keyfile = keyfile;
         loop {
@@ -102,23 +108,34 @@ impl EditorApp {
                     let history_count = self.document.get_visible_history().len();
 
                     let masked_path = self.mask_directory_path(&path);
-                    
+
                     self.status_message = if masked_path == "Secured" {
                         t!("actions.status_opened_history", count = history_count).to_string()
                     } else {
-                        t!("actions.status_opened_file_history", file = masked_path, count = history_count).to_string()
+                        t!(
+                            "actions.status_opened_file_history",
+                            file = masked_path,
+                            count = history_count
+                        )
+                        .to_string()
                     };
-                    
+
                     self.log_info(if masked_path == "Secured" {
                         t!("actions.log_opened_history", count = history_count).to_string()
                     } else {
-                        t!("actions.log_opened_file_history", file = masked_path, count = history_count).to_string()
+                        t!(
+                            "actions.log_opened_file_history",
+                            file = masked_path,
+                            count = history_count
+                        )
+                        .to_string()
                     });
                     break;
                 }
                 Err(e) => {
                     let filename = path.file_name().unwrap_or_default().to_string_lossy();
-                    self.status_message = t!("actions.status_wrong_key", file = filename).to_string();
+                    self.status_message =
+                        t!("actions.status_wrong_key", file = filename).to_string();
                     self.log_warning(t!("actions.log_dec_failed", e = e));
 
                     if let Some(new_kf) = rfd::FileDialog::new()
@@ -126,7 +143,10 @@ impl EditorApp {
                         .pick_file()
                     {
                         current_keyfile = new_kf;
-                        self.log_info(t!("actions.log_retry_key", file = self.mask_keyfile_path(&current_keyfile)));
+                        self.log_info(t!(
+                            "actions.log_retry_key",
+                            file = self.mask_keyfile_path(&current_keyfile)
+                        ));
                     } else {
                         if exit_on_cancel {
                             std::process::exit(0);
@@ -142,7 +162,10 @@ impl EditorApp {
     /// Open directory implementation
     pub(crate) fn perform_open_directory(&mut self) {
         if let Some(path) = rfd::FileDialog::new().pick_folder() {
-            self.log_info(t!("actions.log_open_dir", file = self.mask_directory_path(&path)));
+            self.log_info(t!(
+                "actions.log_open_dir",
+                file = self.mask_directory_path(&path)
+            ));
             self.file_tree_dir = Some(path.clone());
 
             self.show_file_tree = true;
@@ -155,7 +178,10 @@ impl EditorApp {
 
     /// Change directory implementation
     pub(crate) fn perform_change_directory(&mut self, path: PathBuf) {
-        self.log_info(t!("actions.log_change_dir", file = self.mask_directory_path(&path)));
+        self.log_info(t!(
+            "actions.log_change_dir",
+            file = self.mask_directory_path(&path)
+        ));
         self.file_tree_dir = Some(path.clone());
 
         let _ = self.settings.save();
@@ -204,7 +230,10 @@ impl EditorApp {
     /// Perform actual save
     pub(crate) fn perform_save(&mut self, path: PathBuf) {
         let keyfile = self.keyfile_path.clone().unwrap();
-        self.log_info(t!("actions.log_saving", file = self.mask_directory_path(&path)));
+        self.log_info(t!(
+            "actions.log_saving",
+            file = self.mask_directory_path(&path)
+        ));
 
         // Save current state to history (snapshot) if modified
         if self.is_modified {
@@ -221,7 +250,7 @@ impl EditorApp {
             Ok(_) => {
                 self.current_file_path = Some(path.clone());
                 self.is_modified = false;
-                
+
                 // Commit trimmed history state after successful save
                 self.document.trim_to_limit();
                 // Filter out entries marked as deleted to fully synchronize
@@ -229,19 +258,24 @@ impl EditorApp {
 
                 let history_count = self.document.get_visible_history().len();
                 let masked_path = self.mask_directory_path(&path);
-                
+
                 self.status_message = if masked_path == "Secured" {
                     t!("actions.status_saved_history", count = history_count).to_string()
                 } else {
-                    t!("actions.status_saved_file_history", file = masked_path, count = history_count).to_string()
+                    t!(
+                        "actions.status_saved_file_history",
+                        file = masked_path,
+                        count = history_count
+                    )
+                    .to_string()
                 };
-                
+
                 self.log_success(if masked_path == "Secured" {
                     t!("actions.log_save_success").to_string()
                 } else {
                     t!("actions.log_save_file_success", file = masked_path).to_string()
                 });
-                
+
                 self.refresh_file_tree();
 
                 // Auto-Backup Logic
@@ -250,7 +284,10 @@ impl EditorApp {
                         if let Some(file_name) = path.file_name() {
                             let backup_path = backup_dir.join(file_name);
                             match std::fs::copy(&path, &backup_path) {
-                                Ok(_) => self.log_info(t!("actions.log_backup_success", file = self.mask_directory_path(&backup_path))),
+                                Ok(_) => self.log_info(t!(
+                                    "actions.log_backup_success",
+                                    file = self.mask_directory_path(&backup_path)
+                                )),
                                 Err(e) => self.log_error(t!("actions.log_backup_failed", e = e)),
                             }
                         }
@@ -268,7 +305,10 @@ impl EditorApp {
     /// Load keyfile
     pub(crate) fn load_keyfile(&mut self) {
         if let Some(path) = rfd::FileDialog::new().pick_file() {
-            self.log_info(t!("actions.log_load_key", file = self.mask_keyfile_path(&path)));
+            self.log_info(t!(
+                "actions.log_load_key",
+                file = self.mask_keyfile_path(&path)
+            ));
 
             match std::fs::metadata(&path) {
                 Ok(metadata) => {
@@ -281,7 +321,11 @@ impl EditorApp {
                     }
                     const MAX_KEYFILE_SIZE: u64 = 100 * 1024 * 1024; // 100 MB
                     if size > MAX_KEYFILE_SIZE {
-                        self.status_message = t!("actions.status_key_large", size = format!("{:.1}", size as f64 / (1024.0 * 1024.0))).to_string();
+                        self.status_message = t!(
+                            "actions.status_key_large",
+                            size = format!("{:.1}", size as f64 / (1024.0 * 1024.0))
+                        )
+                        .to_string();
                         self.log_error(t!("actions.log_key_large", size = size));
                         return;
                     }
@@ -303,7 +347,8 @@ impl EditorApp {
                             });
                         }
                         Err(e) => {
-                            self.status_message = t!("actions.status_key_read_err", e = e).to_string();
+                            self.status_message =
+                                t!("actions.status_key_read_err", e = e).to_string();
                             self.log_error(t!("actions.log_key_read_err", e = e));
                         }
                     }
@@ -319,7 +364,10 @@ impl EditorApp {
     /// Generate new keyfile
     pub(crate) fn generate_new_keyfile(&mut self) {
         if let Some(path) = rfd::FileDialog::new().set_file_name("keyfile").save_file() {
-            self.log_info(t!("actions.log_gen_key", file = self.mask_keyfile_path(&path)));
+            self.log_info(t!(
+                "actions.log_gen_key",
+                file = self.mask_keyfile_path(&path)
+            ));
 
             match generate_keyfile(&path) {
                 Ok(_) => {
@@ -339,7 +387,8 @@ impl EditorApp {
                 }
                 Err(e) => {
                     self.status_message = format!("Error: {}", e); // generic err?
-                    self.log_error(format!("Keyfile generation failed: {}", e)); // generic err?
+                    self.log_error(format!("Keyfile generation failed: {}", e));
+                    // generic err?
                 }
             }
         }
@@ -368,8 +417,7 @@ impl EditorApp {
         if self.document.revert_to_version(index) {
             self.is_modified = true;
             self.loaded_history_index = Some(index);
-            self.status_message =
-                t!("actions.status_revert_success").to_string();
+            self.status_message = t!("actions.status_revert_success").to_string();
             self.log_success(t!("actions.log_revert_success", index = index));
         }
     }
@@ -433,7 +481,11 @@ impl EditorApp {
                 Ok(_) => {
                     let masked = self.mask_directory_path(&path);
                     self.status_message = t!("actions.status_exported", file = masked).to_string();
-                    self.log_info(t!("actions.log_exported", size = content.len(), file = masked));
+                    self.log_info(t!(
+                        "actions.log_exported",
+                        size = content.len(),
+                        file = masked
+                    ));
                 }
                 Err(e) => {
                     self.status_message = t!("actions.status_export_err", e = e).to_string();
@@ -487,7 +539,8 @@ impl EditorApp {
             let icon_str = format!("\"{}\",0", exe_path.display());
             default_icon.set_value("", &icon_str)?;
 
-            let (shell_open_command, _) = classes.create_subkey("sen_file\\shell\\open\\command")?;
+            let (shell_open_command, _) =
+                classes.create_subkey("sen_file\\shell\\open\\command")?;
             let command_str = format!("\"{}\" \"%1\"", exe_path.display());
             shell_open_command.set_value("", &command_str)?;
 
@@ -578,7 +631,11 @@ Terminal=false"#,
                     }
                     const MAX_KEYFILE_SIZE: u64 = 100 * 1024 * 1024;
                     if metadata.len() > MAX_KEYFILE_SIZE {
-                        self.status_message = t!("actions.status_key_large", size = format!("{:.1}", metadata.len() as f64 / (1024.0 * 1024.0))).to_string();
+                        self.status_message = t!(
+                            "actions.status_key_large",
+                            size = format!("{:.1}", metadata.len() as f64 / (1024.0 * 1024.0))
+                        )
+                        .to_string();
                         self.log_error(t!("actions.log_key_large", size = metadata.len()));
                         return;
                     }
@@ -607,17 +664,26 @@ Terminal=false"#,
                     self.is_modified = false;
 
                     let new_masked = self.mask_keyfile_path(&new_keyfile_path);
-                    
+
                     self.status_message = if new_masked == "Secured" && old_name == "Secured" {
                         t!("actions.status_rotate_success").to_string()
                     } else {
-                        t!("actions.status_rotate_file_success", old = old_name, new = new_masked).to_string()
+                        t!(
+                            "actions.status_rotate_file_success",
+                            old = old_name,
+                            new = new_masked
+                        )
+                        .to_string()
                     };
-                    
+
                     self.log_success(if new_masked == "Secured" {
                         t!("actions.status_rotate_success").to_string()
                     } else {
-                        t!("actions.log_rotate_success_file", file = self.mask_directory_path(&file_path)).to_string()
+                        t!(
+                            "actions.log_rotate_success_file",
+                            file = self.mask_directory_path(&file_path)
+                        )
+                        .to_string()
                     });
                 }
                 Err(e) => {
@@ -661,7 +727,8 @@ Terminal=false"#,
         let keyfile = self.keyfile_path.clone().unwrap();
 
         // Store autosave content inside the document's autosave slot
-        self.document.set_autosave(self.document.current_content.clone());
+        self.document
+            .set_autosave(self.document.current_content.clone());
 
         // Re-encrypt the entire file in-place with the autosave slot included
         let file_content = self.document.to_file_content();
@@ -669,7 +736,10 @@ Terminal=false"#,
         match encrypt_file(&file_content, &keyfile, &original_path) {
             Ok(_) => {
                 self.last_autosave_time = Some(now);
-                self.log_info(t!("actions.log_autosave_success", file = self.mask_directory_path(&original_path)));
+                self.log_info(t!(
+                    "actions.log_autosave_success",
+                    file = self.mask_directory_path(&original_path)
+                ));
             }
             Err(e) => {
                 // Revert autosave slot on failure to avoid stale data

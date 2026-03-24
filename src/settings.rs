@@ -115,7 +115,7 @@ pub struct Settings {
 
     /// Show debug panel
     pub show_debug_panel: bool,
-    
+
     /// Debug log filters
     #[serde(default = "default_true")]
     pub debug_show_info: bool,
@@ -246,7 +246,9 @@ fn default_scroll_speed() -> f32 {
 }
 
 fn default_language() -> String {
-    let locale = sys_locale::get_locale().unwrap_or_else(|| "en".to_string()).to_lowercase();
+    let locale = sys_locale::get_locale()
+        .unwrap_or_else(|| "en".to_string())
+        .to_lowercase();
     if locale.starts_with("pl") {
         "pl".to_string()
     } else if locale.starts_with("de") {
@@ -331,7 +333,7 @@ impl Default for Settings {
             debug_show_success: true,
             debug_show_warning: true,
             debug_show_error: true,
-            
+
             show_settings_panel: false,
             show_history_panel: false,
             show_theme_editor: false,
@@ -689,8 +691,9 @@ mod tests {
     fn test_settings_default_serialization() {
         let settings = Settings::default();
         let serialized = toml::to_string(&settings).expect("Failed to serialize default settings");
-        let deserialized: Settings = toml::from_str(&serialized).expect("Failed to deserialize default settings");
-        
+        let deserialized: Settings =
+            toml::from_str(&serialized).expect("Failed to deserialize default settings");
+
         // Assert a few key fields to ensure serde works correctly
         assert_eq!(settings.theme_name, deserialized.theme_name);
         assert_eq!(settings.max_history_length, deserialized.max_history_length);

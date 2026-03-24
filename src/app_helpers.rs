@@ -199,7 +199,12 @@ impl EditorApp {
                     // Comment
                     if !trimmed.starts_with(&comment_prefix) {
                         let indent_count = line.len() - trimmed.len();
-                        new_lines.push(format!("{}{}{}", " ".repeat(indent_count), comment_prefix_space, trimmed));
+                        new_lines.push(format!(
+                            "{}{}{}",
+                            " ".repeat(indent_count),
+                            comment_prefix_space,
+                            trimmed
+                        ));
                     } else {
                         new_lines.push(line.to_string());
                     }
@@ -227,26 +232,32 @@ impl EditorApp {
         }
 
         if lines_to_toggle.len() == 1 {
-            self.log_info(t!("helpers.log_comment_line", line = lines_to_toggle[0] + 1));
+            self.log_info(t!(
+                "helpers.log_comment_line",
+                line = lines_to_toggle[0] + 1
+            ));
         } else {
-            self.log_info(t!("helpers.log_comment_lines", count = lines_to_toggle.len()));
+            self.log_info(t!(
+                "helpers.log_comment_lines",
+                count = lines_to_toggle.len()
+            ));
         }
     }
 
     /// Setup file system watcher for the current directory
     pub(crate) fn setup_watcher(&mut self) {
         use notify::{RecursiveMode, Watcher};
- 
+
         // Stop previous watcher if any
         self.watcher = None;
- 
+
         let Some(dir) = &self.file_tree_dir else {
             return;
         };
- 
+
         let (tx, rx) = std::sync::mpsc::channel();
         self.watcher_receiver = Some(rx);
- 
+
         let mut watcher = match notify::recommended_watcher(move |res| {
             let _ = tx.send(res);
         }) {
@@ -256,18 +267,18 @@ impl EditorApp {
                 return;
             }
         };
- 
+
         let mode = if self.settings.tree_style_file_tree {
             RecursiveMode::Recursive
         } else {
             RecursiveMode::NonRecursive
         };
- 
+
         if let Err(e) = watcher.watch(dir, mode) {
             self.log_error(t!("helpers.log_watch_dir_failed", e = e));
             return;
         }
- 
+
         self.watcher = Some(watcher);
     }
 
@@ -313,11 +324,11 @@ impl EditorApp {
                 "helpers.log_refresh_tree",
                 file = self.mask_directory_path(&dir)
             ));
-            
+
             if self.settings.tree_style_file_tree {
                 // Tree View (recursive lazy load)
                 let mut entries = Vec::new();
-                
+
                 let has_parent = dir.parent().is_some();
                 // Add parent directory ".." button at the top
                 if has_parent {
@@ -328,12 +339,11 @@ impl EditorApp {
                         depth: 0,
                     });
                 }
-                
+
                 let start_depth = if has_parent { 1 } else { 0 };
-                
+
                 self.build_tree_recursive(&dir, start_depth, &mut entries);
                 self.file_tree_entries = entries;
-                
             } else {
                 // Simple View (flat list)
                 match std::fs::read_dir(&dir) {
@@ -366,8 +376,18 @@ impl EditorApp {
                             }
                         }
 
-                        folders.sort_by(|a, b| a.path.file_name().unwrap_or_default().cmp(b.path.file_name().unwrap_or_default()));
-                        files.sort_by(|a, b| a.path.file_name().unwrap_or_default().cmp(b.path.file_name().unwrap_or_default()));
+                        folders.sort_by(|a, b| {
+                            a.path
+                                .file_name()
+                                .unwrap_or_default()
+                                .cmp(b.path.file_name().unwrap_or_default())
+                        });
+                        files.sort_by(|a, b| {
+                            a.path
+                                .file_name()
+                                .unwrap_or_default()
+                                .cmp(b.path.file_name().unwrap_or_default())
+                        });
 
                         if dir.parent().is_some() && self.settings.show_subfolders {
                             self.file_tree_entries.push(FileTreeEntry {
@@ -386,15 +406,18 @@ impl EditorApp {
                     }
                 }
             }
-            
+
             let folder_count = self.file_tree_entries.iter().filter(|e| e.is_dir).count();
             let file_count = self.file_tree_entries.iter().filter(|e| !e.is_dir).count();
 
-            self.log_info(t!("helpers.log_tree_stats", folders = folder_count, files = file_count));
+            self.log_info(t!(
+                "helpers.log_tree_stats",
+                folders = folder_count,
+                files = file_count
+            ));
 
             // Refresh access status for the newly loaded tree
             self.refresh_file_access_status();
-            
         } else {
             self.log_info(t!("helpers.log_tree_no_dir"));
         }
@@ -407,8 +430,10 @@ impl EditorApp {
         depth: usize,
         out_entries: &mut Vec<FileTreeEntry>,
     ) {
-        let Ok(read_dir) = std::fs::read_dir(dir) else { return };
-        
+        let Ok(read_dir) = std::fs::read_dir(dir) else {
+            return;
+        };
+
         let mut child_folders = Vec::new();
         let mut child_files = Vec::new();
 
@@ -427,9 +452,16 @@ impl EditorApp {
             }
         }
 
-        child_folders.sort_by(|a, b| a.file_name().unwrap_or_default().cmp(b.file_name().unwrap_or_default()));
-        child_files.sort_by(|a, b| a.file_name().unwrap_or_default().cmp(b.file_name().unwrap_or_default()));
-
+        child_folders.sort_by(|a, b| {
+            a.file_name()
+                .unwrap_or_default()
+                .cmp(b.file_name().unwrap_or_default())
+        });
+        child_files.sort_by(|a, b| {
+            a.file_name()
+                .unwrap_or_default()
+                .cmp(b.file_name().unwrap_or_default())
+        });
 
         for path in child_folders {
             let is_expanded = self.expanded_directories.contains(&path);
@@ -440,7 +472,7 @@ impl EditorApp {
                 is_expanded,
                 depth,
             });
-            
+
             if is_expanded {
                 self.build_tree_recursive(&path, depth + 1, out_entries);
             }
@@ -487,7 +519,9 @@ impl EditorApp {
         for entry in &self.file_tree_entries {
             if !entry.is_dir {
                 if entry.path.extension().and_then(|s| s.to_str()) == Some("sen") {
-                    if !self.file_access_cache.contains_key(&entry.path) && !self.pending_access_checks.contains(&entry.path) {
+                    if !self.file_access_cache.contains_key(&entry.path)
+                        && !self.pending_access_checks.contains(&entry.path)
+                    {
                         paths_to_check.push(entry.path.clone());
                         self.pending_access_checks.insert(entry.path.clone());
                     }
@@ -578,7 +612,8 @@ impl EditorApp {
                     paths_to_check.push(path.clone());
                 } else {
                     // Mark others as NotSen immediately (synchronously)
-                    self.batch_file_access_cache.insert(path.clone(), KeyStatus::NotSen);
+                    self.batch_file_access_cache
+                        .insert(path.clone(), KeyStatus::NotSen);
                 }
             }
         }
@@ -611,7 +646,7 @@ impl EditorApp {
         if let Some(rx) = &self.batch_access_check_receiver {
             let mut got_any = false;
             let mut finished = false;
-            
+
             // Try to receive results
             while let Ok((path, status)) = rx.try_recv() {
                 self.batch_file_access_cache.insert(path, status);
@@ -642,14 +677,12 @@ impl EditorApp {
             while let Ok(update) = rx.try_recv() {
                 got_any = true;
                 match update {
-                    crate::app_state::BatchProgressUpdate::Log(level, msg) => {
-                        match level {
-                            crate::app_state::LogLevel::Info => self.log_info(msg),
-                            crate::app_state::LogLevel::Success => self.log_success(msg),
-                            crate::app_state::LogLevel::Warning => self.log_warning(msg),
-                            crate::app_state::LogLevel::Error => self.log_error(msg),
-                        }
-                    }
+                    crate::app_state::BatchProgressUpdate::Log(level, msg) => match level {
+                        crate::app_state::LogLevel::Info => self.log_info(msg),
+                        crate::app_state::LogLevel::Success => self.log_success(msg),
+                        crate::app_state::LogLevel::Warning => self.log_warning(msg),
+                        crate::app_state::LogLevel::Error => self.log_error(msg),
+                    },
                     crate::app_state::BatchProgressUpdate::Progress(count, success, failed) => {
                         self.batch_progress_count = count;
                         self.batch_success_count = success;
@@ -660,14 +693,19 @@ impl EditorApp {
                         self.batch_failed_count = failed;
                         self.batch_is_running = false;
                         finished = true;
-                        
 
                         let mode_key = match self.batch_mode {
                             crate::app_state::BatchMode::Encrypt => t!("batch.mode_encrypt"),
                             crate::app_state::BatchMode::Decrypt => t!("batch.mode_decrypt"),
                             crate::app_state::BatchMode::Rotate => t!("batch.mode_rotate"),
                         };
-                        self.status_message = t!("helpers.status_batch_finished", mode = mode_key, success = success, failed = failed).to_string();
+                        self.status_message = t!(
+                            "helpers.status_batch_finished",
+                            mode = mode_key,
+                            success = success,
+                            failed = failed
+                        )
+                        .to_string();
                     }
                 }
             }
@@ -693,7 +731,7 @@ impl EditorApp {
         } else if let Some(path) = &self.current_file_path {
             let filename = path.file_name().unwrap_or_default().to_string_lossy();
             let display_name = filename.strip_suffix(".sen").unwrap_or(&filename);
-            
+
             if self.is_modified {
                 t!("helpers.title_file_mod", file = display_name).to_string()
             } else {
@@ -701,7 +739,11 @@ impl EditorApp {
             }
         } else {
             if self.is_modified {
-                t!("helpers.title_untitled_mod", file = t!("helpers.title_untitled")).to_string()
+                t!(
+                    "helpers.title_untitled_mod",
+                    file = t!("helpers.title_untitled")
+                )
+                .to_string()
             } else {
                 t!("helpers.title_untitled").to_string()
             }
@@ -830,7 +872,7 @@ impl EditorApp {
     pub(crate) fn toggle_zen_mode(&mut self, ctx: &egui::Context) {
         self.zen_mode = !self.zen_mode;
         self.settings.zen_mode = self.zen_mode;
-        
+
         if self.zen_mode {
             // Enter Fullscreen
             ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(true));
@@ -846,15 +888,27 @@ impl EditorApp {
         }
     }
     /// Truncate text to fit width, eating any trailing dots before the ellipsis
-    pub(crate) fn smart_truncate_text(&self, ui: &egui::Ui, text: &str, font_id: egui::FontId, max_width: f32) -> String {
+    pub(crate) fn smart_truncate_text(
+        &self,
+        ui: &egui::Ui,
+        text: &str,
+        font_id: egui::FontId,
+        max_width: f32,
+    ) -> String {
         // Measure the full text to see if we need truncation
-        let galley = ui.painter().layout_no_wrap(text.to_string(), font_id.clone(), egui::Color32::BLACK);
+        let galley =
+            ui.painter()
+                .layout_no_wrap(text.to_string(), font_id.clone(), egui::Color32::BLACK);
         if galley.rect.width() <= max_width {
             return text.to_string();
         }
 
         let ellipsis = "...";
-        let ellipsis_galley = ui.painter().layout_no_wrap(ellipsis.to_string(), font_id.clone(), egui::Color32::BLACK);
+        let ellipsis_galley = ui.painter().layout_no_wrap(
+            ellipsis.to_string(),
+            font_id.clone(),
+            egui::Color32::BLACK,
+        );
         let ellipsis_width = ellipsis_galley.rect.width();
 
         let target_width = max_width - ellipsis_width;
@@ -871,7 +925,11 @@ impl EditorApp {
         while lo <= hi {
             let mid = (lo + hi) / 2;
             let sub: String = chars[..mid].iter().collect();
-            let w = ui.painter().layout_no_wrap(sub, font_id.clone(), egui::Color32::BLACK).rect.width();
+            let w = ui
+                .painter()
+                .layout_no_wrap(sub, font_id.clone(), egui::Color32::BLACK)
+                .rect
+                .width();
             if w <= target_width {
                 best_count = mid;
                 lo = mid + 1;
@@ -895,58 +953,122 @@ impl EditorApp {
         &self,
         ui: &mut egui::Ui,
         title: &str,
+        icon: Option<&egui::TextureHandle>,
         subtitle: Option<&str>,
         add_separator: bool,
+        cached_height: &mut f32,
     ) -> bool {
-
         let mut close_clicked = false;
 
-        crate::app_helpers::center_row(ui, |ui| {
-            // Focus on vertical centering by ensuring enough row height based on current font
-            let heading_height = ui.text_style_height(&egui::TextStyle::Heading);
-            ui.set_min_height(heading_height + 4.0); 
-            
+        crate::app_helpers::stateful_center_row(ui, cached_height, |ui| {
+            if let Some(ic) = icon {
+                ui.add(egui::Image::new(ic).max_width(18.0).max_height(18.0));
+                ui.add_space(8.0);
+            }
+
             ui.heading(title);
-            
+
             if let Some(sub) = subtitle {
                 ui.add_space(8.0);
                 ui.label(egui::RichText::new(sub).weak());
             }
- 
+
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.add_space(12.0); // Consistent padding from right edge
-                if ui.button("❌")
+                if ui
+                    .button("X")
                     .on_hover_text(rust_i18n::t!("app.close_panel"))
-                    .clicked() 
+                    .clicked()
                 {
                     close_clicked = true;
                 }
             });
         });
-        
+
         if add_separator {
             let space = (self.settings.ui_font_size * 0.25).max(2.0).min(6.0);
             ui.add_space(space);
             ui.separator();
             ui.add_space(space);
         }
-
         close_clicked
     }
 }
 
-pub fn center_row<R>(ui: &mut egui::Ui, add_contents: impl FnOnce(&mut egui::Ui) -> R) -> egui::InnerResponse<R> {
+pub fn center_row<R>(
+    ui: &mut egui::Ui,
+    add_contents: impl FnOnce(&mut egui::Ui) -> R,
+) -> egui::InnerResponse<R> {
     // We use the base interaction height to provide a stable vertical axis
-    // for all elements in the row, preventing inconsistencies between 
+    // for all elements in the row, preventing inconsistencies between
     // plain labels and interactive widgets.
     let h = ui.spacing().interact_size.y;
-    
+
     ui.allocate_ui_with_layout(
         egui::vec2(ui.available_width(), h),
         egui::Layout::left_to_right(egui::Align::Center),
         |ui| {
             ui.spacing_mut().item_spacing.y = 0.0;
             add_contents(ui)
-        }
+        },
     )
+}
+
+/// A version of `center_row` that maintains a stable vertical axis by caching the height
+/// from the previous frame. This handles both expansion (growing widgets) and
+/// shrinking (decreasing padding) without one-frame lag or flickering.
+pub fn stateful_center_row<R>(
+    ui: &mut egui::Ui,
+    cached_height: &mut f32,
+    add_contents: impl FnOnce(&mut egui::Ui) -> R,
+) -> egui::InnerResponse<R> {
+    // Sane default for first frame if not set
+    if *cached_height < 1.0 {
+        *cached_height = ui.spacing().interact_size.y;
+    }
+
+    let result = ui.allocate_ui_with_layout(
+        egui::vec2(ui.available_width(), *cached_height),
+        egui::Layout::left_to_right(egui::Align::Center),
+        |ui| {
+            ui.spacing_mut().item_spacing.y = 0.0;
+
+            // Tworzymy scope, aby zmierzyć rzeczywisty rozmiar samej zawartości.
+            // Zwrócony rect będzie ignorował sztywną alokację rodzica.
+            let inner_resp = ui.scope(|ui| add_contents(ui));
+
+            (inner_resp.inner, inner_resp.response.rect.height())
+        },
+    );
+
+    // Update the cache for the next frame
+    if result.inner.1 > 0.0 {
+        *cached_height = result.inner.1;
+    }
+
+    egui::InnerResponse {
+        inner: result.inner.0,
+        response: result.response,
+    }
+}
+
+/// A standardized row for settings panels: [Label (120px)] | [Content (Fill)]
+pub fn render_settings_row<F>(
+    ui: &mut egui::Ui,
+    label: &str,
+    cached_height: &mut f32,
+    add_contents: F,
+) where
+    F: FnOnce(&mut egui::Ui),
+{
+    stateful_center_row(ui, cached_height, |ui| {
+        // Używamy interact_size.y zamiast cached_height — label NIE może
+        // pompować min_rect do starej wartości, bo to tworzy pętlę
+        // uniemożliwiającą kurczenie się rodzica przy zmniejszaniu paddingów.
+        ui.add_sized(
+            [120.0, ui.spacing().interact_size.y],
+            egui::Label::new(label).selectable(false),
+        );
+        add_contents(ui)
+    });
 }

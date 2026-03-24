@@ -51,7 +51,7 @@ pub struct ThemeColors {
     /// Color for whitespace symbols (spaces, tabs, returns)
     #[serde(default)]
     pub whitespace_symbols: Option<[u8; 3]>,
-    
+
     // --- Typography ---
     #[serde(default)]
     pub heading_text: Option<[u8; 3]>,
@@ -330,7 +330,7 @@ impl ThemeColors {
             self.cursor_color().linear_multiply(0.35)
         }
     }
-    
+
     pub fn hyperlink_color(&self) -> egui::Color32 {
         if let Some(c) = self.hyperlink {
             egui::Color32::from_rgb(c[0], c[1], c[2])
@@ -423,7 +423,7 @@ impl Theme {
         }
 
         visuals.selection.bg_fill = self.colors.selection_color();
-        
+
         // Custom selection text color
         if let Some(c) = self.colors.selection_text {
             visuals.selection.stroke.color = self.colors.to_egui_color32(c);
@@ -439,7 +439,7 @@ impl Theme {
         visuals.widgets.inactive.fg_stroke.color = foreground;
         visuals.widgets.hovered.fg_stroke.color = foreground;
         visuals.widgets.active.fg_stroke.color = foreground;
-        
+
         // Remove override_text_color to allow selective coloring
         visuals.override_text_color = None;
 
@@ -501,12 +501,12 @@ impl Theme {
             visuals.window_shadow.color = self.colors.to_egui_color32(c);
             visuals.popup_shadow.color = self.colors.to_egui_color32(c);
         }
-        
+
         if let Some(b) = self.colors.shadow_blur {
             visuals.window_shadow.blur = b as u8;
             visuals.popup_shadow.blur = b as u8;
         }
-        
+
         if let Some(s) = self.colors.shadow_spread {
             visuals.window_shadow.spread = s as u8;
             visuals.popup_shadow.spread = s as u8;
@@ -516,7 +516,7 @@ impl Theme {
             visuals.window_shadow.offset[0] = x as i8;
             visuals.popup_shadow.offset[0] = x as i8;
         }
-        
+
         if let Some(y) = self.colors.shadow_offset_y {
             visuals.window_shadow.offset[1] = y as i8;
             visuals.popup_shadow.offset[1] = y as i8;
@@ -540,10 +540,10 @@ impl Theme {
         if let Some(bg) = self.colors.input_bg {
             visuals.extreme_bg_color = self.colors.to_egui_color32(bg);
             // Also apply to text_edit_bg if explicitly requested as input_bg
-            visuals.widgets.active.bg_fill = self.colors.to_egui_color32(bg); 
+            visuals.widgets.active.bg_fill = self.colors.to_egui_color32(bg);
             visuals.widgets.hovered.bg_fill = self.colors.to_egui_color32(bg);
         }
-        
+
         if let Some(fg) = self.colors.input_fg {
             let color = self.colors.to_egui_color32(fg);
             // extreme_bg has no fg, it uses widget fg usually.
@@ -560,20 +560,18 @@ impl Theme {
         }
 
         if let Some(c) = self.colors.input_focus_border_color {
-             visuals.selection.stroke.color = self.colors.to_egui_color32(c);
+            visuals.selection.stroke.color = self.colors.to_egui_color32(c);
         }
-
-
 
         ctx.set_visuals(visuals);
 
         // --- Apply Global Style Additions ---
         let mut style = (*ctx.style()).clone();
-        
+
         if let Some(r) = self.colors.window_rounding {
             style.visuals.window_corner_radius = egui::CornerRadius::same(r as u8);
         }
-        
+
         if let Some(r) = self.colors.button_rounding {
             let radius = egui::CornerRadius::same(r as u8);
             style.visuals.widgets.noninteractive.corner_radius = radius;
@@ -617,7 +615,7 @@ impl Theme {
         }
 
         // Increase checkbox (icon) size
-        style.spacing.icon_width = 26.0; 
+        style.spacing.icon_width = 26.0;
         style.spacing.icon_spacing = 10.0;
 
         // Thicker checkmark (tick) icon

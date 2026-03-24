@@ -97,5 +97,5 @@ impl Default for BatchMode {
 pub enum BatchProgressUpdate {
     Log(LogLevel, String),
     Progress(usize, usize, usize), // (current_index, success_count, failed_count)
-    Finished(usize, usize), // (Success count, Failed count)
+    Finished(usize, usize),        // (Success count, Failed count)
 }

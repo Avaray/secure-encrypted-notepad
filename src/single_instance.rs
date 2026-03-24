@@ -2,7 +2,6 @@
 ///
 /// - Windows: Named Mutex for locking, Named Pipe for IPC.
 /// - Linux: Lock file with flock, Unix domain socket for IPC.
-
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
@@ -30,7 +29,10 @@ mod platform {
     pub fn try_lock(file_to_open: &Option<PathBuf>) -> LockResult {
         use windows_sys::Win32::Foundation::*;
 
-        let mutex_name: Vec<u16> = MUTEX_NAME.encode_utf16().chain(std::iter::once(0)).collect();
+        let mutex_name: Vec<u16> = MUTEX_NAME
+            .encode_utf16()
+            .chain(std::iter::once(0))
+            .collect();
 
         let handle = unsafe {
             windows_sys::Win32::System::Threading::CreateMutexW(
@@ -83,12 +85,12 @@ mod platform {
             let handle = unsafe {
                 windows_sys::Win32::System::Pipes::CreateNamedPipeW(
                     pipe_name.as_ptr(),
-                    0x00000003, // PIPE_ACCESS_DUPLEX
+                    0x00000003,              // PIPE_ACCESS_DUPLEX
                     0x00000004 | 0x00000002, // PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE
-                    1,     // max instances
-                    4096,  // out buffer
-                    4096,  // in buffer
-                    0,     // default timeout
+                    1,                       // max instances
+                    4096,                    // out buffer
+                    4096,                    // in buffer
+                    0,                       // default timeout
                     std::ptr::null(),
                 )
             };
@@ -139,11 +141,7 @@ mod platform {
         // Try to connect to the named pipe
         let mut attempts = 0;
         loop {
-            match OpenOptions::new()
-                .read(true)
-                .write(true)
-                .open(PIPE_NAME)
-            {
+            match OpenOptions::new().read(true).write(true).open(PIPE_NAME) {
                 Ok(mut file) => {
                     let path_str = format!("{}\n", path.display());
                     file.write_all(path_str.as_bytes())?;
@@ -154,7 +152,11 @@ mod platform {
                 Err(e) => {
                     attempts += 1;
                     if attempts >= 5 {
-                        crate::sen_debug!("IPC: Failed to connect to pipe after {} attempts: {}", attempts, e);
+                        crate::sen_debug!(
+                            "IPC: Failed to connect to pipe after {} attempts: {}",
+                            attempts,
+                            e
+                        );
                         return Err(e);
                     }
                     std::thread::sleep(std::time::Duration::from_millis(100));
@@ -198,10 +200,7 @@ mod platform {
         use std::os::unix::io::AsRawFd;
 
         // Try to acquire an exclusive flock
-        let lock_file = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .open(LOCK_PATH);
+        let lock_file = OpenOptions::new().create(true).write(true).open(LOCK_PATH);
 
         let lock_file = match lock_file {
             Ok(f) => f,
