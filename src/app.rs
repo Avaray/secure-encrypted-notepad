@@ -969,11 +969,12 @@ impl eframe::App for EditorApp {
         // Prep variants of the content frame that allow scrollbars to adhere to window edges
         let mut left_panel_frame = content_frame.clone();
         left_panel_frame.inner_margin.left = 8;
-        left_panel_frame.inner_margin.right = 0;
+        // Use a 4px buffer instead of 0 to prevent oscillating hover jitter on the splitter
+        left_panel_frame.inner_margin.right = 4;
 
         let mut right_panel_frame = content_frame.clone();
         if self.settings.toolbar_position != crate::settings::ToolbarPosition::Right {
-            right_panel_frame.inner_margin.right = 0;
+            right_panel_frame.inner_margin.right = 4; // Buffer for inter-panel splitters
         }
 
         let mut central_panel_frame = content_frame.clone();
@@ -987,7 +988,8 @@ impl eframe::App for EditorApp {
         if self.settings.toolbar_position != crate::settings::ToolbarPosition::Right
             && !any_right_panel
         {
-            central_panel_frame.inner_margin.right = 0;
+            // Use a 4px buffer instead of 0 to prevent oscillating hover jitter on the boundary
+            central_panel_frame.inner_margin.right = 4;
         }
 
         // Calculation:

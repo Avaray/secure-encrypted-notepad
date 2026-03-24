@@ -961,6 +961,7 @@ impl EditorApp {
         let mut close_clicked = false;
 
         crate::app_helpers::stateful_center_row(ui, cached_height, |ui| {
+            ui.add_space(12.0); // Consistent padding from left edge
             if let Some(ic) = icon {
                 ui.add(egui::Image::new(ic).max_width(18.0).max_height(18.0));
                 ui.add_space(8.0);

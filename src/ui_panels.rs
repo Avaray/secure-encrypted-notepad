@@ -1168,7 +1168,7 @@ if ui
                     egui::Frame::NONE
                         .inner_margin(egui::Margin {
                             left: 4,
-                            right: 0,
+                            right: 4,
                             top: 0,
                             bottom: 0,
                         })
