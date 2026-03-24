@@ -703,11 +703,17 @@ let _ = self.settings.save();
                 _ => ("English", &self.icons.flag_en),
             };
 
-            let select_height = ui.spacing().interact_size.y.max(ui.text_style_height(&egui::TextStyle::Body) + 2.0 * ui.spacing().button_padding.y);
+            let text_height = ui.text_style_height(&egui::TextStyle::Body);
 
             crate::app_helpers::center_row(ui, |ui| {
-                ui.add(egui::Label::new(rust_i18n::t!("settings.language")).selectable(false));
-                ui.add(egui::Image::new(current_icon).max_height(select_height).maintain_aspect_ratio(true));
+                ui.add(
+                    egui::Button::new(rust_i18n::t!("settings.language"))
+                        .frame(false) // Wyłącza tło i ramkę - wygląda jak czysty tekst!
+                        .sense(egui::Sense::hover()) // Sprawia, że nie da się w to kliknąć
+                );
+                
+                // Używamy text_height dla flagi
+                ui.add(egui::Image::new(current_icon).max_height(text_height).maintain_aspect_ratio(true));
                 
                 egui::ComboBox::from_id_salt("language_selector")
                     .selected_text(current_label)
@@ -716,7 +722,8 @@ let _ = self.settings.save();
                             let is_selected = self.settings.language == code;
                             let mut clicked = false;
                             ui.horizontal(|ui| {
-                                ui.add(egui::Image::new(icon).max_height(select_height).maintain_aspect_ratio(true));
+                                // Tutaj też używamy text_height
+                                ui.add(egui::Image::new(icon).max_height(text_height).maintain_aspect_ratio(true));
                                 if ui.selectable_label(is_selected, label).clicked() {
                                     self.settings.language = code.to_string();
                                     clicked = true;

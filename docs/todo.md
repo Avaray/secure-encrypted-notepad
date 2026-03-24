@@ -26,6 +26,8 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Refactor `center_row` Helper**: Improve or replace the `crate::app_helpers::center_row` helper to ensure consistent vertical centering.
     - It should act like Tailwind's `items-center`, ensuring all elements in the row are perfectly aligned vertically and stay in one line.
     - It must be robust enough for universal use: Settings options, panel headings (with close buttons), and other UI elements.
+    - **Current Status**: Previous attempts (nested `horizontal` + `with_layout`, `allocate_ui_with_layout`, using `Button` as `Label`) have not provided a perfect visual fix. Mathematical centering often results in baseline misalignment due to `egui`'s widget padding and `interact_size`.
+    - **Open Problem**: Achieving "perfect to the eye" vertical alignment for mixed labels and inputs without breaking parent container layouts (e.g., preventing headers from expanding to fill the application window).
     - Goal: A reliable, reusable solution for vertically centered horizontal layouts throughout the application.
 - [ ] **Theme Editor Color Audit & Smarter Defaults**: Reduce the manual effort required to create themes by implementing intelligent color defaults.
     - Many UI elements (e.g., separators) should automatically derive their default colors from primary sources like the application's text foreground color.
