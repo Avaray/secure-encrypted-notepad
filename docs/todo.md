@@ -48,3 +48,6 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
     - Identify the source of this asymmetry and ensure uniform horizontal margins.
     - Additionally, reduce top and bottom margins in the vertical position to ensure equal spacing on all sides and improved aesthetics.
     - **Note**: Ensure that the existing scrollability logic for menu bar icons (which kicks in when icon sizes/count exceed available space) remains functional and unaffected by margin changes.
+- [ ] **File Tree Auto-Resizing Bug**: Fix the issue where the file tree panel automatically expands horizontally when opening a directory containing long file or folder names.
+    - The panel should respect its user-defined or default width and not resize itself based on content length. 
+    - This behavior currently feels unnatural and disrupts the workspace layout.
