@@ -190,9 +190,6 @@ pub struct Settings {
     /// Start window in maximized mode
     #[serde(default)]
     pub start_maximized: bool,
-    /// Hide panel headers (Settings, History, etc.)
-    #[serde(default)]
-    pub hide_panel_headers: bool,
     /// Zen mode (minimalist UI, fullscreen)
     #[serde(default)]
     pub zen_mode: bool,
@@ -350,7 +347,6 @@ impl Default for Settings {
             hide_undecryptable_files: false,
             capitalize_tree_names: false,
             hide_filename_in_title: false,
-            hide_panel_headers: false,
             zen_mode: false,
             remember_zen_mode: false,
             max_history_length: 100,

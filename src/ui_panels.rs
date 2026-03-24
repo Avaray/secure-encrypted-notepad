@@ -742,13 +742,6 @@ rust_i18n::set_locale(&self.settings.language);
 let _ = self.settings.save();
 }
 if ui
-.checkbox(&mut self.settings.hide_panel_headers, rust_i18n::t!("settings.hide_panel_headers"))
-.on_hover_text(rust_i18n::t!("settings.hide_panel_headers_tooltip")) // I should add this key or omit tooltip if not in yaml, wait I'll check yaml
-.changed()
-{
-let _ = self.settings.save();
-}
-if ui
 .checkbox(&mut self.settings.preserve_all_panels, rust_i18n::t!("settings.preserve_panels"))
 .on_hover_text(rust_i18n::t!("settings.preserve_panels_tooltip"))
 .changed()
@@ -1566,10 +1559,8 @@ if ui
                                 bottom: 0,
                             })
                             .show(ui, |ui| {
-                                if !self.settings.hide_panel_headers {
-                                    ui.heading(rust_i18n::t!("theme.colors_heading"));
-                                    ui.add_space(4.0);
-                                }
+                                ui.heading(rust_i18n::t!("theme.colors_heading"));
+                                ui.add_space(4.0);
                         egui::Grid::new("all_theme_colors_grid")
                             .num_columns(3)
                             .spacing([20.0, 4.0])

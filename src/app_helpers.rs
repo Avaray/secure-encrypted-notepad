@@ -898,9 +898,6 @@ impl EditorApp {
         subtitle: Option<&str>,
         add_separator: bool,
     ) -> bool {
-        if self.settings.hide_panel_headers {
-            return false;
-        }
 
         let mut close_clicked = false;
 

@@ -22,7 +22,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
     - Add an option to customize the line color for the expandable file tree in the Theme Editor.
     - Fix the line drawing logic to prevent visual overlap artifacts. Currently, horizontal and vertical lines with transparency overlap at intersection points, making the color look darker. They should appear as a single, solid set of lines.
 - [ ] **Translation Polish**: Review and refine translations throughout the application to ensure consistency and correctness across all supported languages.
-- [ ] **Remove "Hide panel headers"**: Remove the "Hide panel headers" option and all related logic/UI from the side panels.
+- [x] **Remove "Hide panel headers"**: Remove the "Hide panel headers" option and all related logic/UI from the side panels.
 - [ ] **Refactor `center_row` Helper**: Improve or replace the `crate::app_helpers::center_row` helper to ensure consistent vertical centering.
     - It should act like Tailwind's `items-center`, ensuring all elements in the row are perfectly aligned vertically and stay in one line.
     - It must be robust enough for universal use: Settings options, panel headings (with close buttons), and other UI elements.
