@@ -926,26 +926,16 @@ impl eframe::App for EditorApp {
         self.render_autosave_restore_dialog(ctx);
 
         // Custom frame for toolbar (vertical positions)
-        let mut vertical_toolbar_frame = egui::Frame::side_top_panel(&ctx.style());
-        vertical_toolbar_frame.stroke = egui::Stroke::NONE;
-        vertical_toolbar_frame.inner_margin = egui::Margin {
-            left: 6,
-            right: 6,
-            top: 6,
-            bottom: 6,
-        };
+        // Using Frame::none() to avoid hidden window_margin from egui's default side_top_panel
+        let mut vertical_toolbar_frame = egui::Frame::NONE;
+        vertical_toolbar_frame.fill = ctx.style().visuals.panel_fill;
+        // 6px horizontal for more breathing room, 4px vertical for a slim profile
+        vertical_toolbar_frame.inner_margin = egui::Margin::symmetric(6, 4);
 
-        // Frame for horizontal bars (top toolbar, search, status) - slim vertical, wide horizontal
-        let mut bar_frame = egui::Frame::side_top_panel(&ctx.style());
-        bar_frame.stroke = egui::Stroke::NONE;
-        bar_frame.outer_margin = egui::Margin::ZERO;
-        bar_frame.shadow = egui::Shadow::NONE;
-        bar_frame.inner_margin = egui::Margin {
-            left: 6,
-            right: 6,
-            top: 6,
-            bottom: 6,
-        };
+        // Frame for horizontal bars (top toolbar, search, status)
+        let mut bar_frame = egui::Frame::NONE;
+        bar_frame.fill = ctx.style().visuals.panel_fill;
+        bar_frame.inner_margin = egui::Margin::symmetric(6, 4);
 
         // Standard frame for all full-content panels (side panels, central editor)
         let mut content_frame = egui::Frame::side_top_panel(&ctx.style());
@@ -954,7 +944,6 @@ impl eframe::App for EditorApp {
 
         // Prep variants of the content frame that allow scrollbars to adhere to window edges
         let mut left_panel_frame = content_frame.clone();
-        // File tree still wants a little left padding for icons
         left_panel_frame.inner_margin.left = 8;
         left_panel_frame.inner_margin.right = 0;
 
@@ -972,18 +961,17 @@ impl eframe::App for EditorApp {
             central_panel_frame.inner_margin.right = 0;
         }
 
-        // Button size in the toolbar is (ico_s + 4). Each frame adds its inner_margin
-        // on both sides to arrive at the total panel dimension:
-        //   bar_frame (Top):            top:6 + bottom:6 = 12  →  ico_s + 4 + 12 = ico_s + 16
-        //   vertical_toolbar_frame (Left/Right): left:6 + right:6 = 12  →  ico_s + 4 + 12 = ico_s + 16
-        let toolbar_size_h = self.settings.toolbar_icon_size + 16.0; // Top
-        let toolbar_size_v = self.settings.toolbar_icon_size + 16.0; // Left / Right
+        // Calculation: 
+        // Vertical: icon_size + 4 (button) + 12 (6+6 margins) + 1 (separator) = icon_size + 17
+        let toolbar_v_size = self.settings.toolbar_icon_size + 17.0;
+        // Horizontal: icon_size + 4 (button) + 8 (4+4 top/bottom margins) + 1 (separator) = icon_size + 13
+        let toolbar_h_size = self.settings.toolbar_icon_size + 13.0;
 
         match self.settings.toolbar_position {
             crate::settings::ToolbarPosition::Top => {
                 egui::TopBottomPanel::top("toolbar")
                     .frame(bar_frame.clone())
-                    .exact_height(toolbar_size_h)
+                    .exact_height(toolbar_h_size)
                     .resizable(false)
                     .show(ctx, |ui| {
                         self.render_toolbar(ui);
@@ -992,7 +980,7 @@ impl eframe::App for EditorApp {
             crate::settings::ToolbarPosition::Left => {
                 egui::SidePanel::left("toolbar")
                     .frame(vertical_toolbar_frame.clone())
-                    .exact_width(toolbar_size_v)
+                    .exact_width(toolbar_v_size)
                     .resizable(false)
                     .show(ctx, |ui| {
                         self.render_toolbar(ui);
@@ -1001,7 +989,7 @@ impl eframe::App for EditorApp {
             crate::settings::ToolbarPosition::Right => {
                 egui::SidePanel::right("toolbar")
                     .frame(vertical_toolbar_frame.clone())
-                    .exact_width(toolbar_size_v)
+                    .exact_width(toolbar_v_size)
                     .resizable(false)
                     .show(ctx, |ui| {
                         self.render_toolbar(ui);
