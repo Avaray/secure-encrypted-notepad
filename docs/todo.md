@@ -27,6 +27,11 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
     - It should act like Tailwind's `items-center`, ensuring all elements in the row are perfectly aligned vertically and stay in one line.
     - It must be robust enough for universal use: Settings options, panel headings (with close buttons), and other UI elements.
     - Goal: A reliable, reusable solution for vertically centered horizontal layouts throughout the application.
+- [ ] **Theme Editor Color Audit & Smarter Defaults**: Reduce the manual effort required to create themes by implementing intelligent color defaults.
+    - Many UI elements (e.g., separators) should automatically derive their default colors from primary sources like the application's text foreground color.
+    - Perform a thorough audit of the existing color set to identify opportunities for simplification and derivation.
+    - Goal: A more user-friendly theme creation process that doesn't sacrifice depth of customization.
+
 
 
 ## 🐛 Bug Fixes (To Fix)
