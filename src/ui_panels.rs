@@ -139,7 +139,7 @@ crate::app_helpers::center_row(ui, |ui| {
             self.log_info("Auto-backup directory set");
         }
     }
-    
+
     if self.settings.auto_backup_dir.is_some() {
         if !self.show_clear_backup_dir_confirmation {
             if ui.button(rust_i18n::t!("settings.clear")).clicked() {
@@ -358,11 +358,11 @@ crate::app_helpers::center_row(ui, |ui| {
             .desired_width(50.0)
             .margin(ui.spacing().button_padding)
     );
-    
+
     if response.changed() {
         changed = true;
     }
-    
+
     if response.lost_focus() {
         if self.settings.comment_prefix.trim().is_empty() {
             self.settings.comment_prefix = "//".to_string();
@@ -371,7 +371,7 @@ crate::app_helpers::center_row(ui, |ui| {
         }
         changed = true; // Save the trimmed state
     }
-    
+
     if changed {
         let _ = self.settings.save();
         self.style_dirty = true;
@@ -709,10 +709,10 @@ let _ = self.settings.save();
                         .frame(false) // Wyłącza tło i ramkę - wygląda jak czysty tekst!
                         .sense(egui::Sense::hover()) // Sprawia, że nie da się w to kliknąć
                 );
-                
+
                 // Używamy text_height dla flagi
                 ui.add(egui::Image::new(current_icon).max_height(text_height).maintain_aspect_ratio(true));
-                
+
                 egui::ComboBox::from_id_salt("language_selector")
                     .selected_text(current_label)
                     .show_ui(ui, |ui| {
@@ -763,12 +763,12 @@ if ui
                         ui.add_space(8.0);
                         ui.separator();
                         ui.add_space(8.0);
-                        
+
                         // =========================================================================
                         // 5. SYSTEM
                         // =========================================================================
                         ui.heading(rust_i18n::t!("settings.window_panels"));
-                        
+
                         #[cfg(any(target_os = "windows", target_os = "linux"))]
                         {
                             ui.add_space(4.0);
@@ -779,7 +779,7 @@ if ui
                             }
                             ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.assoc_warning")).small().weak()).selectable(false));
                         }
-                        
+
                         #[cfg(target_os = "macos")]
                         {
                             ui.add_space(4.0);
@@ -842,7 +842,7 @@ if ui
             } else {
                 ui.visuals().widgets.noninteractive.fg_stroke.color // Default weak color
             };
-            
+
             ui.add(egui::Label::new(
                 egui::RichText::new(rust_i18n::t!("history.current_entries", current = history_len, max = doc_max_limit))
                 .color(history_status_color),
@@ -965,7 +965,7 @@ if ui
                                 for (v_idx, (original_index, entry)) in visible_history.iter().enumerate().rev() {
                                     let is_loaded = self.loaded_history_index == Some(*original_index);
                                     let will_be_deleted = v_idx < to_delete_count;
-                                    
+
                                     crate::app_helpers::center_row(ui, |ui| {
                                         ui.spacing_mut().item_spacing.x = 4.0;
 
@@ -997,17 +997,17 @@ if ui
                                             |ui| {
                                                 let del = ui.button("X").on_hover_text(rust_i18n::t!("history.delete_entry")).clicked();
                                                 let rev = ui.button("R").on_hover_text(rust_i18n::t!("history.revert_entry")).clicked();
-                                                
+
                                                 let lbl = ui.with_layout(
                                                     egui::Layout::left_to_right(egui::Align::Center),
                                                     |ui| {
                                                         // Prevent text from wrapping to a new line and pushing the layout down
                                                         ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Truncate);
-                                                        
+
                                                         ui.selectable_label(is_loaded, rich_text)
                                                     },
                                                 ).inner;
-                                                
+
                                                 (lbl, del, rev)
                                             },
                                         ).inner;
@@ -1028,7 +1028,7 @@ if ui
                                                 self.loaded_history_index = None;
                                             }
                                         }
-                                        
+
                                         if revert_clicked {
                                             self.revert_to_history_version(*original_index);
                                             ui.memory_mut(|mem| mem.request_focus(history_area_id));
