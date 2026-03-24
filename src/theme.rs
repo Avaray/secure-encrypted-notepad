@@ -555,7 +555,6 @@ impl Theme {
         if let Some(c) = self.colors.input_border_color {
             let color = self.colors.to_egui_color32(c);
             let stroke = egui::Stroke::new(1.0, color);
-            visuals.widgets.noninteractive.bg_stroke = stroke;
             visuals.widgets.inactive.bg_stroke = stroke;
             visuals.widgets.hovered.bg_stroke = stroke;
         }
