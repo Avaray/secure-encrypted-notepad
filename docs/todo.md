@@ -23,6 +23,10 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
     - Fix the line drawing logic to prevent visual overlap artifacts. Currently, horizontal and vertical lines with transparency overlap at intersection points, making the color look darker. They should appear as a single, solid set of lines.
 - [ ] **Translation Polish**: Review and refine translations throughout the application to ensure consistency and correctness across all supported languages.
 - [ ] **Remove "Hide panel headers"**: Remove the "Hide panel headers" option and all related logic/UI from the side panels.
+- [ ] **Refactor `center_row` Helper**: Improve or replace the `crate::app_helpers::center_row` helper to ensure consistent vertical centering.
+    - It should act like Tailwind's `items-center`, ensuring all elements in the row are perfectly aligned vertically and stay in one line.
+    - It must be robust enough for universal use: Settings options, panel headings (with close buttons), and other UI elements.
+    - Goal: A reliable, reusable solution for vertically centered horizontal layouts throughout the application.
 
 
 ## 🐛 Bug Fixes (To Fix)
@@ -32,3 +36,8 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
     - Replace the native `ui.color_edit_button_srgb` with custom buttons (e.g., `ui.add(egui::Button::image(...).fill(color))`). This allows forcing a square `min_size` matching the input height, eliminating the native selector's rigid dimensions.
     - Use `egui::show_tooltip_for_rect` or `egui::Popup` with `egui::color_picker::color_picker_color32` to display the color adjustment interface only after clicking the custom button.
 - [ ] **Settings Slider Crash**: Investigate and fix application crashes occurring when rapidly dragging value-based sliders (e.g., Font Size, Line Height, Transparency) in the settings and theme panels.
+- [ ] **Menu Bar Margin Fix (Vertical Position)**: Fix inconsistent horizontal margins when the menu bar is positioned vertically (left/right side).
+    - When on the left, the left margin is larger than the right one; when on the right, the right margin is larger than the left one.
+    - Identify the source of this asymmetry and ensure uniform horizontal margins.
+    - Additionally, reduce top and bottom margins in the vertical position to ensure equal spacing on all sides and improved aesthetics.
+    - **Note**: Ensure that the existing scrollability logic for menu bar icons (which kicks in when icon sizes/count exceed available space) remains functional and unaffected by margin changes.
