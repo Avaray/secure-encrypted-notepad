@@ -1583,6 +1583,7 @@ if ui
                                     ui.add(egui::Label::new(label).selectable(false));
                                     let mut current = field.unwrap_or(default);
                                     crate::app_helpers::center_row(ui, |ui| {
+                                        ui.spacing_mut().item_spacing.x = 4.0;
                                         if custom_color_picker_button(ui, &mut current, egui::Id::new(id_str)) {
                                             *field = Some(current);
                                             changed = true;
@@ -1615,6 +1616,7 @@ if ui
                                     ui.add(egui::Label::new(label).selectable(false));
                                     let mut current = field.unwrap_or(default);
                                     crate::app_helpers::center_row(ui, |ui| {
+                                        ui.spacing_mut().item_spacing.x = 4.0;
                                         if ui.add(egui::DragValue::new(&mut current).speed(speed).range(range)).changed() {
                                             *field = Some(current);
                                             changed = true;

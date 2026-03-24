@@ -939,14 +939,17 @@ impl EditorApp {
 }
 
 pub fn center_row<R>(ui: &mut egui::Ui, add_contents: impl FnOnce(&mut egui::Ui) -> R) -> egui::InnerResponse<R> {
-    // Determine the base row height from the current style
+    // We use the base interaction height to provide a stable vertical axis
+    // for all elements in the row, preventing inconsistencies between 
+    // plain labels and interactive widgets.
     let h = ui.spacing().interact_size.y;
     
-    // Using allocate_ui with the style-defined height provides the 
-    // vertical context for horizontal_centered while allowing the row 
-    // to shrink or grow as the style (padding/font) changes.
-    ui.allocate_ui(egui::vec2(ui.available_width(), h), |ui| {
-        ui.spacing_mut().item_spacing.y = 0.0;
-        ui.horizontal_centered(add_contents).inner
-    })
+    ui.allocate_ui_with_layout(
+        egui::vec2(ui.available_width(), h),
+        egui::Layout::left_to_right(egui::Align::Center),
+        |ui| {
+            ui.spacing_mut().item_spacing.y = 0.0;
+            add_contents(ui)
+        }
+    )
 }
