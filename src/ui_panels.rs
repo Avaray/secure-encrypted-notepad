@@ -1285,14 +1285,37 @@ if ui
 
                                             let btn_font =
                                                 egui::TextStyle::Button.resolve(ui.style());
-                                            let truncated_name = self.smart_truncate_text(
-                                                ui,
-                                                &display_name,
-                                                btn_font,
-                                                (ui.available_width() - ui.spacing().button_padding.x * 2.0).max(20.0),
-                                            );
 
-                                            if ui.add(egui::Button::new(truncated_name)).clicked() {
+                                            let button_resp = {
+                                                let icon = if is_parent {
+                                                    &self.icons.folder_filled
+                                                } else if tree_on && entry.is_expanded {
+                                                    &self.icons.folder_open
+                                                } else {
+                                                    &self.icons.folder_filled
+                                                };
+                                                
+                                                let tint = self.current_theme.colors.icon_color();
+                                                let icon_size = ui.text_style_height(&egui::TextStyle::Button);
+
+                                                let truncated_name = self.smart_truncate_text(
+                                                    ui,
+                                                    &display_name,
+                                                    btn_font,
+                                                    (ui.available_width() - ui.spacing().button_padding.x * 2.0).max(20.0),
+                                                );
+
+                                                ui.add(egui::Button::image_and_text(
+                                                    egui::Image::new(icon)
+                                                        .shrink_to_fit()
+                                                        .maintain_aspect_ratio(true)
+                                                        .fit_to_exact_size(egui::vec2(icon_size, icon_size))
+                                                        .tint(tint),
+                                                    truncated_name
+                                                ))
+                                            };
+
+                                            if button_resp.clicked() {
                                                 if is_parent {
                                                     self.change_directory(path.clone());
                                                 } else if tree_on {

@@ -38,6 +38,8 @@ pub struct Icons {
     pub flag_jp: TextureHandle,
     pub flag_cn: TextureHandle,
     pub flag_nl: TextureHandle,
+    pub folder_filled: TextureHandle,
+    pub folder_open: TextureHandle,
 }
 
 impl Icons {
@@ -97,6 +99,16 @@ impl Icons {
                 ctx,
                 include_bytes!("../assets/ui/PhTreeViewFill.svg"),
                 "icon_tree",
+            ),
+            folder_filled: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/ui/QlementineIconsFolderFilled16.svg"),
+                "icon_folder_filled",
+            ),
+            folder_open: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/ui/QlementineIconsFolderOpen24.svg"),
+                "icon_folder_open",
             ),
             theme: Self::load_svg(
                 ctx,
