@@ -1057,41 +1057,86 @@ if ui
             ) {
                 self.show_debug_panel = false;
             }
-            crate::app_helpers::center_row(ui, |ui| {
-                if ui.button(rust_i18n::t!("debug.clear")).clicked() {
-                    self.debug_log.clear();
-                }
+            egui::Frame::NONE
+                .inner_margin(egui::Margin { left: 8, right: 12, top: 0, bottom: 0 })
+                .show(ui, |ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        ui.spacing_mut().item_spacing.x = 8.0;
 
-                let mut changed = false;
-                changed |= ui
-                    .checkbox(
-                        &mut self.settings.debug_show_info,
-                        rust_i18n::t!("debug.filter_info"),
-                    )
-                    .changed();
-                changed |= ui
-                    .checkbox(
-                        &mut self.settings.debug_show_success,
-                        rust_i18n::t!("debug.filter_success"),
-                    )
-                    .changed();
-                changed |= ui
-                    .checkbox(
-                        &mut self.settings.debug_show_warning,
-                        rust_i18n::t!("debug.filter_warning"),
-                    )
-                    .changed();
-                changed |= ui
-                    .checkbox(
-                        &mut self.settings.debug_show_error,
-                        rust_i18n::t!("debug.filter_error"),
-                    )
-                    .changed();
+                        // Clear button on the left
+                        if ui.button(rust_i18n::t!("debug.clear")).clicked() {
+                            self.debug_log.clear();
+                        }
 
-                if changed {
-                    let _ = self.settings.save();
-                }
-            });
+                        // Toggles on the right
+                        ui.with_layout(
+                            egui::Layout::right_to_left(egui::Align::Center).with_main_wrap(true),
+                            |ui| {
+                                let mut changed = false;
+
+                                // 4. Error
+                                let mut job = egui::text::LayoutJob::default();
+                                job.append(
+                                    &rust_i18n::t!("debug.filter_error"),
+                                    0.0,
+                                    egui::text::TextFormat {
+                                        font_id: egui::TextStyle::Button.resolve(ui.style()),
+                                        color: ui.visuals().text_color(),
+                                        underline: egui::Stroke::new(2.0, self.current_theme.colors.error_color()),
+                                        ..Default::default()
+                                    },
+                                );
+                                changed |= ui.checkbox(&mut self.settings.debug_show_error, job).changed();
+
+                                // 3. Warning
+                                let mut job = egui::text::LayoutJob::default();
+                                job.append(
+                                    &rust_i18n::t!("debug.filter_warning"),
+                                    0.0,
+                                    egui::text::TextFormat {
+                                        font_id: egui::TextStyle::Button.resolve(ui.style()),
+                                        color: ui.visuals().text_color(),
+                                        underline: egui::Stroke::new(2.0, self.current_theme.colors.warning_color()),
+                                        ..Default::default()
+                                    },
+                                );
+                                changed |= ui.checkbox(&mut self.settings.debug_show_warning, job).changed();
+
+                                // 2. Success
+                                let mut job = egui::text::LayoutJob::default();
+                                job.append(
+                                    &rust_i18n::t!("debug.filter_success"),
+                                    0.0,
+                                    egui::text::TextFormat {
+                                        font_id: egui::TextStyle::Button.resolve(ui.style()),
+                                        color: ui.visuals().text_color(),
+                                        underline: egui::Stroke::new(2.0, self.current_theme.colors.success_color()),
+                                        ..Default::default()
+                                    },
+                                );
+                                changed |= ui.checkbox(&mut self.settings.debug_show_success, job).changed();
+
+                                // 1. Info
+                                let mut job = egui::text::LayoutJob::default();
+                                job.append(
+                                    &rust_i18n::t!("debug.filter_info"),
+                                    0.0,
+                                    egui::text::TextFormat {
+                                        font_id: egui::TextStyle::Button.resolve(ui.style()),
+                                        color: ui.visuals().text_color(),
+                                        underline: egui::Stroke::new(2.0, self.current_theme.colors.info_color()),
+                                        ..Default::default()
+                                    },
+                                );
+                                changed |= ui.checkbox(&mut self.settings.debug_show_info, job).changed();
+
+                                if changed {
+                                    let _ = self.settings.save();
+                                }
+                            },
+                        );
+                    });
+                });
             ui.separator();
             egui::ScrollArea::both()
                 .auto_shrink([false, false])
