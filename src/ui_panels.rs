@@ -1277,7 +1277,11 @@ if ui
                                                 .map(|p| p == path)
                                                 .unwrap_or(false);
 
-                                            let display_name = filename.to_string();
+                                            let display_name = if is_parent {
+                                                "..".to_string()
+                                            } else {
+                                                filename.to_string()
+                                            };
 
                                             let btn_font =
                                                 egui::TextStyle::Button.resolve(ui.style());
