@@ -967,11 +967,15 @@ impl EditorApp {
                 ui.add_space(8.0);
             }
 
-            ui.heading(title);
+            let head_font = egui::TextStyle::Heading.resolve(ui.style());
+            let truncated_title = self.smart_truncate_text(ui, title, head_font, ui.available_width() - 80.0);
+            ui.heading(truncated_title);
 
             if let Some(sub) = subtitle {
                 ui.add_space(8.0);
-                ui.label(egui::RichText::new(sub).weak());
+                let sub_font = egui::TextStyle::Body.resolve(ui.style());
+                let truncated_sub = self.smart_truncate_text(ui, sub, sub_font, ui.available_width() - 150.0);
+                ui.label(egui::RichText::new(truncated_sub).weak());
             }
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {

@@ -1149,8 +1149,12 @@ if ui
     pub(crate) fn render_file_tree(&mut self, ui: &mut egui::Ui) {
         let mut ls = std::mem::take(&mut self.layout_state);
         let mut _scroll_to_path: Option<PathBuf> = None;
+        // ★ FIX: allow panel to shrink below its natural content size
+        ui.set_min_width(0.0);
         ui.vertical(|ui| {
-            ui.set_min_width(ui.available_width());
+            // Aggressively prevent expansion
+            ui.set_max_width(ui.available_width());
+            ui.set_min_width(0.0);
             let h = ls.get_height("tree_header");
             if self.render_panel_header(
                 ui,
@@ -1165,6 +1169,9 @@ if ui
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
+                    // ★ FIX: prevent ScrollArea from propagating content min_width to the panel
+                    ui.set_min_width(0.0);
+                    ui.set_max_width(ui.available_width());
                     egui::Frame::NONE
                         .inner_margin(egui::Margin {
                             left: 4,
@@ -1173,9 +1180,14 @@ if ui
                             bottom: 0,
                         })
                         .show(ui, |ui| {
+                            // ★ FIX: Frame inside ScrollArea must not impose min_width
+                            ui.set_min_width(0.0);
+                            ui.set_max_width(ui.available_width());
                             if let Some(dir) = &self.file_tree_dir {
                                 if self.settings.show_directory_paths {
-                                    ui.label(dir.display().to_string());
+                                    let sub_font = egui::TextStyle::Body.resolve(ui.style());
+                                    let truncated_dir = self.smart_truncate_text(ui, &dir.display().to_string(), sub_font, ui.available_width() - 12.0);
+                                    ui.label(truncated_dir);
                                     ui.separator();
                                 }
                                 let available_width = ui.available_width();
@@ -1275,7 +1287,7 @@ if ui
                                                 ui,
                                                 &display_name,
                                                 btn_font,
-                                                ui.available_width() - 4.0,
+                                                (ui.available_width() - ui.spacing().button_padding.x * 2.0).max(20.0),
                                             );
 
                                             if ui.add(egui::Button::new(truncated_name)).clicked() {
@@ -1347,7 +1359,7 @@ if ui
                                                         ui,
                                                         &display_name,
                                                         font_id.clone(),
-                                                        ui.available_width() - prefix_w - 4.0,
+                                                        (ui.available_width() - prefix_w - ui.spacing().button_padding.x * 2.0).max(10.0),
                                                     );
 
                                                     // Add 2 spaces to make room for the dot at the beginning
@@ -1435,8 +1447,8 @@ if ui
                                                         ui,
                                                         &display_name,
                                                         btn_font,
-                                                        ui.available_width() - 20.0,
-                                                    ); // account for icon
+                                                        (ui.available_width() - 20.0 - ui.spacing().button_padding.x * 2.0).max(10.0), // account for icon
+                                                    );
                                                     if ui
                                                         .add(egui::Button::new(truncated_name))
                                                         .clicked()
@@ -1464,7 +1476,7 @@ if ui
                                                     ui,
                                                     &display_name,
                                                     btn_font,
-                                                    ui.available_width() - 4.0,
+                                                    (ui.available_width() - ui.spacing().button_padding.x * 2.0).max(20.0),
                                                 );
                                                 if ui
                                                     .add(egui::Button::new(truncated_name))

@@ -1168,11 +1168,13 @@ impl eframe::App for EditorApp {
 
             // File tree (left)
             if self.show_file_tree && !self.zen_mode {
-                let panel_res = egui::SidePanel::left("file_tree")
+                #[allow(deprecated)]
+                let min_tree_width = ctx.screen_rect().width() * 0.10;
+                let panel_res = egui::SidePanel::left("file_tree_panel")
                     .frame(left_panel_frame)
                     .resizable(true)
+                    .min_width(min_tree_width)
                     .default_width(self.settings.file_tree_width)
-                    .width_range(150.0..=f32::INFINITY)
                     .show(ctx, |ui| {
                         self.render_file_tree(ui);
                     });
