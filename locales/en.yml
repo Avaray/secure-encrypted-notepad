@@ -168,6 +168,7 @@ debug.filter_info: "Info"
 debug.filter_success: "Success"
 debug.filter_warning: "Warning"
 debug.filter_error: "Error"
+debug.all_filtered: "No logs found or all filtered."
 
 # ═══════════════════════════════════════
 # SEARCH & REPLACE

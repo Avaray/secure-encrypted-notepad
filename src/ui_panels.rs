@@ -1194,7 +1194,7 @@ if ui
                                     ui.colored_label(color, entry.display());
                                 }
                             }
-                            if visible_count == 0 && !self.debug_log.is_empty() {
+                            if visible_count == 0 {
                                 ui.add(
                                     egui::Label::new(
                                         egui::RichText::new(rust_i18n::t!("debug.all_filtered"))
