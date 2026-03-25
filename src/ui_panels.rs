@@ -1076,13 +1076,18 @@ if ui
 
                                 // 4. Error
                                 let mut job = egui::text::LayoutJob::default();
+                                let error_uline = if self.settings.debug_show_error {
+                                    self.current_theme.colors.error_color()
+                                } else {
+                                    ui.visuals().widgets.noninteractive.bg_stroke.color
+                                };
                                 job.append(
                                     &rust_i18n::t!("debug.filter_error"),
                                     0.0,
                                     egui::text::TextFormat {
                                         font_id: egui::TextStyle::Button.resolve(ui.style()),
                                         color: ui.visuals().text_color(),
-                                        underline: egui::Stroke::new(2.0, self.current_theme.colors.error_color()),
+                                        underline: egui::Stroke::new(2.0, error_uline),
                                         ..Default::default()
                                     },
                                 );
@@ -1090,13 +1095,18 @@ if ui
 
                                 // 3. Warning
                                 let mut job = egui::text::LayoutJob::default();
+                                let warning_uline = if self.settings.debug_show_warning {
+                                    self.current_theme.colors.warning_color()
+                                } else {
+                                    ui.visuals().widgets.noninteractive.bg_stroke.color
+                                };
                                 job.append(
                                     &rust_i18n::t!("debug.filter_warning"),
                                     0.0,
                                     egui::text::TextFormat {
                                         font_id: egui::TextStyle::Button.resolve(ui.style()),
                                         color: ui.visuals().text_color(),
-                                        underline: egui::Stroke::new(2.0, self.current_theme.colors.warning_color()),
+                                        underline: egui::Stroke::new(2.0, warning_uline),
                                         ..Default::default()
                                     },
                                 );
@@ -1104,13 +1114,18 @@ if ui
 
                                 // 2. Success
                                 let mut job = egui::text::LayoutJob::default();
+                                let success_uline = if self.settings.debug_show_success {
+                                    self.current_theme.colors.success_color()
+                                } else {
+                                    ui.visuals().widgets.noninteractive.bg_stroke.color
+                                };
                                 job.append(
                                     &rust_i18n::t!("debug.filter_success"),
                                     0.0,
                                     egui::text::TextFormat {
                                         font_id: egui::TextStyle::Button.resolve(ui.style()),
                                         color: ui.visuals().text_color(),
-                                        underline: egui::Stroke::new(2.0, self.current_theme.colors.success_color()),
+                                        underline: egui::Stroke::new(2.0, success_uline),
                                         ..Default::default()
                                     },
                                 );
@@ -1118,13 +1133,18 @@ if ui
 
                                 // 1. Info
                                 let mut job = egui::text::LayoutJob::default();
+                                let info_uline = if self.settings.debug_show_info {
+                                    self.current_theme.colors.info_color()
+                                } else {
+                                    ui.visuals().widgets.noninteractive.bg_stroke.color
+                                };
                                 job.append(
                                     &rust_i18n::t!("debug.filter_info"),
                                     0.0,
                                     egui::text::TextFormat {
                                         font_id: egui::TextStyle::Button.resolve(ui.style()),
                                         color: ui.visuals().text_color(),
-                                        underline: egui::Stroke::new(2.0, self.current_theme.colors.info_color()),
+                                        underline: egui::Stroke::new(2.0, info_uline),
                                         ..Default::default()
                                     },
                                 );
