@@ -29,9 +29,11 @@ impl EditorApp {
 
     fn render_batch_converter_body(&mut self, ui: &mut egui::Ui) {
         let mut ls = std::mem::take(&mut self.layout_state);
+
         // --- Unified Header ---
         egui::TopBottomPanel::top("batch_header_panel")
             .resizable(false)
+            .show_separator_line(true)
             .frame(egui::Frame::NONE.inner_margin(egui::Margin {
                 left: 12,
                 right: 12,
@@ -44,12 +46,13 @@ impl EditorApp {
                     ui,
                     &t!("batch.title"),
                     Some(&t!("batch.subtitle")),
-                    true,
+                    false, // add_separator
                     h,
                 ) {
                     self.show_batch_converter = false;
                 }
             });
+
         self.layout_state = ls;
 
         ui.add_space(2.0);
