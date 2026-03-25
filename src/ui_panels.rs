@@ -1349,135 +1349,75 @@ if ui
                                                     .unwrap_or(KeyStatus::Unknown);
 
                                                 if tree_on {
-                                                    // Status indicator logic (manually drawn inside button frame)
                                                     let color = match status {
-                                                        KeyStatus::Decryptable => self
-                                                            .current_theme
-                                                            .colors
-                                                            .success_color(),
-                                                        KeyStatus::WrongKey => {
-                                                            self.current_theme.colors.error_color()
-                                                        }
-                                                        KeyStatus::Unknown => self
-                                                            .current_theme
-                                                            .colors
-                                                            .warning_color(),
+                                                        KeyStatus::Decryptable => self.current_theme.colors.success_color(),
+                                                        KeyStatus::WrongKey => self.current_theme.colors.error_color(),
+                                                        KeyStatus::Unknown => self.current_theme.colors.warning_color(),
                                                         _ => ui.visuals().weak_text_color(),
                                                     };
 
-                                                    let mut job = egui::text::LayoutJob::default();
-                                                    let font_id =
-                                                        egui::TextStyle::Button.resolve(ui.style());
-
-                                                    // Measure space taken by dot prefix
-                                                    let prefix = "  ";
-                                                    let prefix_w = ui
-                                                        .painter()
-                                                        .layout_no_wrap(
-                                                            prefix.to_string(),
-                                                            font_id.clone(),
-                                                            egui::Color32::BLACK,
-                                                        )
-                                                        .rect
-                                                        .width();
-                                                    let truncated_name = self.smart_truncate_text(
-                                                        ui,
-                                                        &display_name,
-                                                        font_id.clone(),
-                                                        (ui.available_width() - prefix_w - ui.spacing().button_padding.x * 2.0).max(10.0),
-                                                    );
-
-                                                    // Add 2 spaces to make room for the dot at the beginning
-                                                    job.append(
-                                                        prefix,
-                                                        0.0,
-                                                        egui::text::TextFormat {
-                                                            font_id: font_id.clone(),
-                                                            ..Default::default()
-                                                        },
-                                                    );
-                                                    job.append(
-                                                        &truncated_name,
-                                                        0.0,
-                                                        egui::text::TextFormat {
-                                                            color: ui.visuals().text_color(),
-                                                            font_id,
-                                                            ..Default::default()
-                                                        },
-                                                    );
-
-                                                    let button_resp =
-                                                        ui.add(egui::Button::new(job));
-
-                                                    // Draw the dot manually on top of the button's rectangle
-                                                    let dot_radius = 4.0;
-                                                    let dot_center = egui::pos2(
-                                                        button_resp.rect.left() + 14.0,
-                                                        button_resp.rect.center().y,
-                                                    );
-                                                    let pulse_alpha = if self.keyfile_path.is_none()
-                                                    {
-                                                        (0.1 + 0.9
-                                                            * (self
-                                                                .start_time
-                                                                .elapsed()
-                                                                .as_secs_f32()
-                                                                * 3.0)
-                                                                .cos()
-                                                                .abs())
-                                                            as f32
+                                                    let pulse_alpha = if self.keyfile_path.is_none() {
+                                                        (0.1 + 0.9 * (self.start_time.elapsed().as_secs_f32() * 3.0).cos().abs()) as f32
                                                     } else {
                                                         1.0
                                                     };
-                                                    ui.painter().circle_filled(
-                                                        dot_center,
-                                                        dot_radius,
-                                                        color.gamma_multiply(pulse_alpha),
+
+                                                    let icon = match status {
+                                                        KeyStatus::Unknown => &self.icons.unknown_file,
+                                                        KeyStatus::WrongKey => &self.icons.locked_file,
+                                                        KeyStatus::Decryptable => &self.icons.asterisk_file,
+                                                        _ => &self.icons.status_dot,
+                                                    };
+
+                                                    let font_id = egui::TextStyle::Button.resolve(ui.style());
+                                                    let icon_size = ui.text_style_height(&egui::TextStyle::Button);
+                                                    
+                                                    let truncated_name = self.smart_truncate_text(
+                                                        ui,
+                                                        &display_name,
+                                                        font_id,
+                                                        (ui.available_width() - icon_size - ui.spacing().button_padding.x * 2.0).max(10.0),
                                                     );
 
-                                                    if button_resp.clicked() {
+                                                    if ui.add(egui::Button::image_and_text(
+                                                        egui::Image::new(icon)
+                                                            .fit_to_exact_size(egui::vec2(icon_size, icon_size))
+                                                            .tint(color.gamma_multiply(pulse_alpha)),
+                                                        truncated_name
+                                                    )).clicked() {
                                                         self.open_file(path.clone());
                                                     }
                                                 } else {
                                                     // Simple View (Icon + Text)
-                                                    let icon_color = match status {
-                                                        KeyStatus::Decryptable => self
-                                                            .current_theme
-                                                            .colors
-                                                            .success_color(),
-                                                        KeyStatus::WrongKey => {
-                                                            self.current_theme.colors.error_color()
-                                                        }
+                                                    let color = match status {
+                                                        KeyStatus::Decryptable => self.current_theme.colors.success_color(),
+                                                        KeyStatus::WrongKey => self.current_theme.colors.error_color(),
                                                         _ => ui.visuals().text_color(),
                                                     };
-                                                    let icon_size = ui
-                                                        .text_style_height(&egui::TextStyle::Body);
-                                                    ui.allocate_ui(
-                                                        egui::vec2(icon_size, icon_size),
-                                                        |ui| {
-                                                            ui.centered_and_justified(|ui| {
-                                                                ui.add(
-                                                                    egui::Image::new(
-                                                                        &self.icons.key,
-                                                                    )
-                                                                    .tint(icon_color)
-                                                                    .max_width(icon_size),
-                                                                );
-                                                            });
-                                                        },
-                                                    );
-                                                    let btn_font =
-                                                        egui::TextStyle::Button.resolve(ui.style());
+                                                    
+                                                    let icon = match status {
+                                                        KeyStatus::Unknown => &self.icons.unknown_file,
+                                                        KeyStatus::WrongKey => &self.icons.locked_file,
+                                                        KeyStatus::Decryptable => &self.icons.asterisk_file,
+                                                        _ => &self.icons.key,
+                                                    };
+
+                                                    let icon_size = ui.text_style_height(&egui::TextStyle::Button);
+                                                    let btn_font = egui::TextStyle::Button.resolve(ui.style());
+                                                    
                                                     let truncated_name = self.smart_truncate_text(
                                                         ui,
                                                         &display_name,
                                                         btn_font,
-                                                        (ui.available_width() - 20.0 - ui.spacing().button_padding.x * 2.0).max(10.0), // account for icon
+                                                        (ui.available_width() - icon_size - ui.spacing().button_padding.x * 2.0).max(10.0),
                                                     );
-                                                    if ui
-                                                        .add(egui::Button::new(truncated_name))
-                                                        .clicked()
-                                                    {
+
+                                                    if ui.add(egui::Button::image_and_text(
+                                                        egui::Image::new(icon)
+                                                            .fit_to_exact_size(egui::vec2(icon_size, icon_size))
+                                                            .tint(color),
+                                                        truncated_name
+                                                    )).clicked() {
                                                         self.open_file(path.clone());
                                                     }
                                                 }

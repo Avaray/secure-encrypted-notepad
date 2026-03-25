@@ -928,9 +928,16 @@ impl eframe::App for EditorApp {
             self.show_about_panel = !self.show_about_panel;
         }
 
-        // ESC: Close About Panel
-        if self.show_about_panel && ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
-            self.show_about_panel = false;
+        // ESC: Close optional overlays/panels
+        if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+            if self.show_about_panel {
+                self.show_about_panel = false;
+            } else if self.show_goto_line {
+                self.show_goto_line = false;
+            } else if self.show_search_panel {
+                self.show_search_panel = false;
+                self.settings.show_search_panel = false;
+            }
         }
 
         // About Panel (full-screen overlay)

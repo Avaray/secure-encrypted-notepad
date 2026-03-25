@@ -40,6 +40,10 @@ pub struct Icons {
     pub flag_nl: TextureHandle,
     pub folder_filled: TextureHandle,
     pub folder_open: TextureHandle,
+    pub unknown_file: TextureHandle,
+    pub status_dot: TextureHandle,
+    pub locked_file: TextureHandle,
+    pub asterisk_file: TextureHandle,
 }
 
 impl Icons {
@@ -109,6 +113,26 @@ impl Icons {
                 ctx,
                 include_bytes!("../assets/ui/QlementineIconsFolderOpen24.svg"),
                 "icon_folder_open",
+            ),
+            unknown_file: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/ui/MynauiQuestionHexagonSolid.svg"),
+                "icon_unknown",
+            ),
+            status_dot: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/ui/Dot.svg"),
+                "icon_dot",
+            ),
+            locked_file: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/ui/MynauiLockHexagonSolid.svg"),
+                "icon_locked",
+            ),
+            asterisk_file: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/ui/MynauiAsteriskHexagonSolid.svg"),
+                "icon_asterisk",
             ),
             theme: Self::load_svg(
                 ctx,
