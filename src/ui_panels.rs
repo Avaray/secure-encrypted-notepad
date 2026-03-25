@@ -9,7 +9,7 @@ impl EditorApp {
         let mut ls = std::mem::take(&mut self.layout_state);
         ui.vertical(|ui| {
             let h = ls.get_height("settings_header");
-            if self.render_panel_header(ui, &rust_i18n::t!("settings.settings"), Some(&self.icons.settings), None, true, h) {
+            if self.render_panel_header(ui, &rust_i18n::t!("settings.settings"), None, true, h) {
                 self.show_settings_panel = false;
             }
             egui::ScrollArea::vertical()
@@ -817,7 +817,7 @@ if ui
 
         ui.vertical(|ui| {
                 let h = ls.get_height("history_header");
-                if self.render_panel_header(ui, &rust_i18n::t!("history.title"), Some(&self.icons.history), None, true, h) {
+                if self.render_panel_header(ui, &rust_i18n::t!("history.title"), None, true, h) {
                     self.show_history_panel = false;
                 }
             crate::app_helpers::center_row(ui, |ui| {
@@ -1051,7 +1051,6 @@ if ui
             if self.render_panel_header(
                 ui,
                 &rust_i18n::t!("debug.title"),
-                Some(&self.icons.debug),
                 None,
                 true,
                 h,
@@ -1159,7 +1158,6 @@ if ui
             if self.render_panel_header(
                 ui,
                 &rust_i18n::t!("file_tree.title"),
-                Some(&self.icons.file_tree),
                 None,
                 true,
                 h,
@@ -1599,7 +1597,6 @@ if ui
             if self.render_panel_header(
                 ui,
                 &rust_i18n::t!("theme.title"),
-                Some(&self.icons.theme),
                 None,
                 true,
                 h,

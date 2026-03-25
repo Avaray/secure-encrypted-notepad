@@ -953,7 +953,6 @@ impl EditorApp {
         &self,
         ui: &mut egui::Ui,
         title: &str,
-        icon: Option<&egui::TextureHandle>,
         subtitle: Option<&str>,
         add_separator: bool,
         cached_height: &mut f32,
@@ -961,11 +960,7 @@ impl EditorApp {
         let mut close_clicked = false;
 
         crate::app_helpers::stateful_center_row(ui, cached_height, |ui| {
-            ui.add_space(12.0); // Consistent padding from left edge
-            if let Some(ic) = icon {
-                ui.add(egui::Image::new(ic).max_width(18.0).max_height(18.0));
-                ui.add_space(8.0);
-            }
+            ui.add_space(8.0); // Consistent padding from left edge
 
             let head_font = egui::TextStyle::Heading.resolve(ui.style());
             let truncated_title = self.smart_truncate_text(ui, title, head_font, ui.available_width() - 80.0);
@@ -979,9 +974,9 @@ impl EditorApp {
             }
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.add_space(12.0); // Consistent padding from right edge
+                ui.add_space(8.0); // Consistent padding from right edge
                 if ui
-                    .button("X")
+                    .button("❌")
                     .on_hover_text(rust_i18n::t!("app.close_panel"))
                     .clicked()
                 {

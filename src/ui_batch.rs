@@ -43,7 +43,6 @@ impl EditorApp {
                 if self.render_panel_header(
                     ui,
                     &t!("batch.title"),
-                    Some(&self.icons.batch_convert),
                     Some(&t!("batch.subtitle")),
                     true,
                     h,
