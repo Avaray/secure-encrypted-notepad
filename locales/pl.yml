@@ -1,5 +1,7 @@
 _version: 1
 app.close_panel: "Zamknij panel"
+app.unsaved_document: "Niezapisany dokument"
+app.no_keyfile: "Brak klucza"
 
 # ═══════════════════════════════════════
 # TOOLBAR

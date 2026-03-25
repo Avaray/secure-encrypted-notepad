@@ -538,7 +538,7 @@ impl EditorApp {
         if self.settings.show_keyfile_paths {
             path.display().to_string()
         } else {
-            "Secured".to_string()
+            rust_i18n::t!("settings.secured").to_string()
         }
     }
 
@@ -547,7 +547,7 @@ impl EditorApp {
         if self.settings.show_directory_paths {
             path.display().to_string()
         } else {
-            "Secured".to_string()
+            rust_i18n::t!("settings.secured").to_string()
         }
     }
 }
@@ -1112,7 +1112,11 @@ impl eframe::App for EditorApp {
 
                                     // Keyfile indicator
                                     if let Some(path) = &self.keyfile_path {
-                                        let icon_tint = self.current_theme.colors.success_color();
+                                        let icon_tint = if self.settings.show_keyfile_paths {
+                                            self.current_theme.colors.warning_color()
+                                        } else {
+                                            self.current_theme.colors.success_color()
+                                        };
                                         let status_text = self.mask_keyfile_path(path);
                                         ui.add(
                                             egui::Label::new(
@@ -1133,7 +1137,7 @@ impl eframe::App for EditorApp {
                                         };
                                         ui.add(
                                             egui::Label::new(
-                                                egui::RichText::new("No keyfile")
+                                                egui::RichText::new(rust_i18n::t!("app.no_keyfile"))
                                                     .color(icon_tint.gamma_multiply(pulse_alpha)),
                                             )
                                             .selectable(false),
@@ -1159,7 +1163,7 @@ impl eframe::App for EditorApp {
                                         );
                                     } else {
                                         ui.label(
-                                            egui::RichText::new("Unsaved document").color(fg_color),
+                                            egui::RichText::new(rust_i18n::t!("app.unsaved_document")).color(fg_color),
                                         );
                                     }
 

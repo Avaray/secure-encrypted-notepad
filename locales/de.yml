@@ -1,5 +1,7 @@
 _version: 1
 app.close_panel: "Panel schließen"
+app.unsaved_document: "Nicht gespeichertes Dokument"
+app.no_keyfile: "Keine Schlüsseldatei"
 
 # ═══════════════════════════════════════
 # TOOLBAR
