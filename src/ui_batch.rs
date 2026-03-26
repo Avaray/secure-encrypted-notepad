@@ -36,9 +36,9 @@ impl EditorApp {
             .show_separator_line(true)
             .frame(egui::Frame::NONE.inner_margin(egui::Margin {
                 left: 12,
-                right: 12,
-                top: 8,
-                bottom: 8,
+                right: 4,
+                top: 12,
+                bottom: 12,
             }))
             .show_inside(ui, |ui| {
                 let h = ls.get_height("batch_header");
