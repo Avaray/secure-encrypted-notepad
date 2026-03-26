@@ -54,3 +54,5 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Scrollbar Flickering Bug**: Fix the infinite flickering/flashing effect when the mouse hovers near the vertical line that splits panels.
     - This happens when a scrollbar appears in the same location as the splitter, causing the layout to enter an unstable state where it cannot decide if the scrollbar should be visible/grown or not.
     - Goal: Ensure stable layout even when scrollbars and splitters overlap or interact.
+- [ ] **Search Panel Sync (Undo/Redo)**: If Replace/Replace All is used and then undone (CTRL + Z), the search panel doesn't refresh and findings are not highlighted.
+    - Goal: Ensure search results are always synchronized with the current editor content, especially after undo/redo operations.
