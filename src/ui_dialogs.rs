@@ -221,6 +221,10 @@ impl EditorApp {
                             if let Some(autosave) = self.document.autosave.take() {
                                 self.document.current_content = autosave.content;
                                 self.is_modified = true;
+                                if self.show_search_panel {
+                                    self.perform_search();
+                                }
+                                self.replace_undo_stack.clear();
                                 self.log_info(t!("dialog.autosave_restored_log"));
                                 self.status_message =
                                     t!("dialog.autosave_restored_msg").to_string();

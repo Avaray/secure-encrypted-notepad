@@ -638,6 +638,7 @@ impl EditorApp {
             scroll_output.inner;
         let mut status_update = None;
         let mut warning_log = None;
+        let mut needs_search = false;
 
         {
             let text = &mut self.document.current_content;
@@ -646,6 +647,12 @@ impl EditorApp {
                 self.is_modified = true;
                 self.loaded_history_index = None;
                 self.last_modification_time = std::time::Instant::now();
+                
+                // If the search panel is open, we MUST re-run the search on every change
+                // to keep highlights and match counts in sync (handles CTRL + Z fix).
+                if self.show_search_panel {
+                    needs_search = true;
+                }
 
                 // Enforce max lines limit
                 if self.settings.max_lines > 0 {
@@ -671,6 +678,10 @@ impl EditorApp {
                     }
                 }
             }
+        }
+
+        if needs_search {
+            self.perform_search();
         }
 
         if let Some(msg) = status_update {

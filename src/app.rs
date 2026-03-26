@@ -142,6 +142,7 @@ pub struct EditorApp {
     pub(crate) search_case_sensitive: bool,
     pub(crate) search_matches: Vec<usize>, // List of match starting indices (byte offsets)
     pub(crate) current_match_index: Option<usize>, // Index into search_matches
+    pub(crate) replace_undo_stack: Vec<String>,    // Session-only undo stack for Replace ops
 
     // Batch Converter State
     pub(crate) show_batch_converter: bool,
@@ -367,6 +368,7 @@ impl EditorApp {
             search_case_sensitive: false,
             search_matches: Vec::new(),
             current_match_index: None,
+            replace_undo_stack: Vec::new(),
             show_batch_converter: false,
             batch_mode: BatchMode::default(),
             batch_files: Vec::new(),
@@ -1280,6 +1282,26 @@ impl eframe::App for EditorApp {
                 .show(ctx, |ui| {
                     self.render_editor(ui);
                 });
+        }
+
+        // --- GLOBAL KEYBOARD SHORTCUTS FALLBACK ---
+        // These run AFTER the UI has been rendered. If a widget (like TextEdit)
+        // had focus and consumed a shortcut, these will not trigger.
+        //
+        // 1. Session-only Undo for Search & Replace
+        if ctx.input_mut(|i| {
+            i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL,
+                egui::Key::Z,
+            ))
+        }) {
+            if let Some(prev_text) = self.replace_undo_stack.pop() {
+                self.document.current_content = prev_text;
+                self.is_modified = true;
+                if self.show_search_panel {
+                    self.perform_search();
+                }
+            }
         }
     }
 }

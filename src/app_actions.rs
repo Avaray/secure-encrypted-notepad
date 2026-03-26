@@ -47,6 +47,10 @@ impl EditorApp {
         self.show_autosave_restore = false;
         self.status_message = t!("actions.status_new").to_string();
         self.log_info(t!("actions.log_new"));
+        if self.show_search_panel {
+            self.perform_search();
+        }
+        self.replace_undo_stack.clear();
     }
 
     /// Open file dialog implementation
@@ -102,6 +106,10 @@ impl EditorApp {
                     self.document = DocumentWithHistory::from_file_content(&content);
                     self.current_file_path = Some(path.clone());
                     self.is_modified = false;
+                    if self.show_search_panel {
+                        self.perform_search();
+                    }
+                    self.replace_undo_stack.clear();
                     self.loaded_history_index = None;
                     self.show_autosave_restore = self.document.autosave.is_some();
 
@@ -400,6 +408,10 @@ impl EditorApp {
             self.is_modified = true;
             self.status_message = t!("actions.status_ver_loaded").to_string();
             self.log_success(t!("actions.log_ver_loaded", index = index));
+            if self.show_search_panel {
+                self.perform_search();
+            }
+            self.replace_undo_stack.clear();
         }
     }
 
@@ -419,6 +431,10 @@ impl EditorApp {
             self.loaded_history_index = Some(index);
             self.status_message = t!("actions.status_revert_success").to_string();
             self.log_success(t!("actions.log_revert_success", index = index));
+            if self.show_search_panel {
+                self.perform_search();
+            }
+            self.replace_undo_stack.clear();
         }
     }
 

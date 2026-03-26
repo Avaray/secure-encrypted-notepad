@@ -137,7 +137,7 @@ impl EditorApp {
     }
 
     /// Perform full text search and populate matches
-    fn perform_search(&mut self) {
+    pub(crate) fn perform_search(&mut self) {
         self.search_matches.clear();
         self.current_match_index = None;
 
@@ -242,6 +242,8 @@ impl EditorApp {
 
                 let text = &mut self.document.current_content;
                 if end <= text.len() {
+                    // Record undo snapshot for session-only stack (doesn't touch main history)
+                    self.replace_undo_stack.push(text.clone());
                     text.replace_range(start..end, &self.replace_query);
                     self.is_modified = true;
                     self.loaded_history_index = None;
@@ -269,6 +271,8 @@ impl EditorApp {
         };
 
         if new_text != *text {
+            // Record undo snapshot for session-only stack (doesn't touch main history)
+            self.replace_undo_stack.push(text.clone());
             *text = new_text;
             self.is_modified = true;
             self.loaded_history_index = None;
