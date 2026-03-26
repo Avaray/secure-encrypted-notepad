@@ -27,6 +27,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
     - Many UI elements (e.g., separators) should automatically derive their default colors from primary sources like the application's text foreground color.
     - Perform a thorough audit of the existing color set to identify opportunities for simplification and derivation.
     - Goal: A more user-friendly theme creation process that doesn't sacrifice depth of customization.
+- [x] **File Tree Max Width**: Limit the maximum width of the file tree panel (e.g., to 90% of the screen) to prevent it from covering the entire editor.
 
 ---
 
@@ -45,5 +46,5 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Scrollbar Flickering Bug**: Fix the infinite flickering/flashing effect when the mouse hovers near the vertical line that splits panels.
     - This happens when a scrollbar appears in the same location as the splitter, causing the layout to enter an unstable state where it cannot decide if the scrollbar should be visible/grown or not.
     - Goal: Ensure stable layout even when scrollbars and splitters overlap or interact.
-- [ ] **Search Panel Sync (Undo/Redo)**: If Replace/Replace All is used and then undone (CTRL + Z), the search panel doesn't refresh and findings are not highlighted.
+- [x] **Search Panel Sync (Undo/Redo)**: If Replace/Replace All is used and then undone (CTRL + Z), the search panel doesn't refresh and findings are not highlighted.
     - Goal: Ensure search results are always synchronized with the current editor content, especially after undo/redo operations.

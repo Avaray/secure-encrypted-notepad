@@ -1183,15 +1183,18 @@ impl eframe::App for EditorApp {
                         });
                     });
             }
+            let screen_w = ctx.viewport_rect().width();
+            let max_panel_width = screen_w * 0.80;
 
             // File tree (left)
             if self.show_file_tree && !self.zen_mode {
-                #[allow(deprecated)]
-                let min_tree_width = ctx.screen_rect().width() * 0.10;
+                let min_tree_width = screen_w * 0.10;
+                let max_tree_width = max_panel_width;
                 let panel_res = egui::SidePanel::left("file_tree_panel")
                     .frame(left_panel_frame)
                     .resizable(true)
                     .min_width(min_tree_width)
+                    .max_width(max_tree_width)
                     .default_width(self.settings.file_tree_width)
                     .show(ctx, |ui| {
                         self.render_file_tree(ui);
@@ -1200,7 +1203,7 @@ impl eframe::App for EditorApp {
                 // Persist panel width when user resizes it
                 let actual_width = panel_res.response.rect.width();
                 if (actual_width - self.settings.file_tree_width).abs() > 1.0 {
-                    self.settings.file_tree_width = actual_width;
+                    self.settings.file_tree_width = actual_width.min(max_panel_width);
                     let _ = self.settings.save();
                 }
             }
@@ -1212,14 +1215,14 @@ impl eframe::App for EditorApp {
                     .resizable(true)
                     .default_width(self.settings.theme_editor_width)
                     .min_width(100.0)
-                    .max_width(1200.0)
+                    .max_width(max_panel_width)
                     .show(ctx, |ui| {
                         self.render_theme_editor_panel(ui);
                     });
 
                 let actual_width = panel_res.response.rect.width();
                 if (actual_width - self.settings.theme_editor_width).abs() > 1.0 {
-                    self.settings.theme_editor_width = actual_width;
+                    self.settings.theme_editor_width = actual_width.min(max_panel_width);
                     let _ = self.settings.save();
                 }
             }
@@ -1231,13 +1234,14 @@ impl eframe::App for EditorApp {
                     .resizable(true)
                     .default_width(self.settings.settings_panel_width)
                     .min_width(300.0)
+                    .max_width(max_panel_width)
                     .show(ctx, |ui| {
                         self.render_settings_panel(ui);
                     });
 
                 let actual_width = panel_res.response.rect.width();
                 if (actual_width - self.settings.settings_panel_width).abs() > 1.0 {
-                    self.settings.settings_panel_width = actual_width;
+                    self.settings.settings_panel_width = actual_width.min(max_panel_width);
                     let _ = self.settings.save();
                 }
             }
@@ -1253,13 +1257,14 @@ impl eframe::App for EditorApp {
                     .frame(history_panel_frame)
                     .resizable(true)
                     .default_width(self.settings.history_panel_width)
+                    .max_width(max_panel_width)
                     .show(ctx, |ui| {
                         self.render_history_panel(ui);
                     });
 
                 let actual_width = panel_res.response.rect.width();
                 if (actual_width - self.settings.history_panel_width).abs() > 1.0 {
-                    self.settings.history_panel_width = actual_width;
+                    self.settings.history_panel_width = actual_width.min(max_panel_width);
                     let _ = self.settings.save();
                 }
             }
@@ -1270,13 +1275,14 @@ impl eframe::App for EditorApp {
                     .frame(right_panel_frame)
                     .resizable(true)
                     .default_width(self.settings.debug_panel_width)
+                    .max_width(max_panel_width)
                     .show(ctx, |ui| {
                         self.render_debug_panel(ui);
                     });
 
                 let actual_width = panel_res.response.rect.width();
                 if (actual_width - self.settings.debug_panel_width).abs() > 1.0 {
-                    self.settings.debug_panel_width = actual_width;
+                    self.settings.debug_panel_width = actual_width.min(max_panel_width);
                     let _ = self.settings.save();
                 }
             }
