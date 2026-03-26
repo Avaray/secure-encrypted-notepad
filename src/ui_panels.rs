@@ -1048,17 +1048,16 @@ if ui
         let mut ls = std::mem::take(&mut self.layout_state);
         ui.vertical(|ui| {
             let h = ls.get_height("debug_header");
-            if self.render_panel_header(
-                ui,
-                &rust_i18n::t!("debug.title"),
-                None,
-                true,
-                h,
-            ) {
+            if self.render_panel_header(ui, &rust_i18n::t!("debug.title"), None, true, h) {
                 self.show_debug_panel = false;
             }
             egui::Frame::NONE
-                .inner_margin(egui::Margin { left: 8, right: 12, top: 0, bottom: 0 })
+                .inner_margin(egui::Margin {
+                    left: 8,
+                    right: 12,
+                    top: 0,
+                    bottom: 0,
+                })
                 .show(ui, |ui| {
                     ui.horizontal_wrapped(|ui| {
                         ui.spacing_mut().item_spacing.x = 8.0;
@@ -1091,7 +1090,9 @@ if ui
                                         ..Default::default()
                                     },
                                 );
-                                changed |= ui.checkbox(&mut self.settings.debug_show_error, job).changed();
+                                changed |= ui
+                                    .checkbox(&mut self.settings.debug_show_error, job)
+                                    .changed();
 
                                 // 3. Warning
                                 let mut job = egui::text::LayoutJob::default();
@@ -1110,7 +1111,9 @@ if ui
                                         ..Default::default()
                                     },
                                 );
-                                changed |= ui.checkbox(&mut self.settings.debug_show_warning, job).changed();
+                                changed |= ui
+                                    .checkbox(&mut self.settings.debug_show_warning, job)
+                                    .changed();
 
                                 // 2. Success
                                 let mut job = egui::text::LayoutJob::default();
@@ -1129,7 +1132,9 @@ if ui
                                         ..Default::default()
                                     },
                                 );
-                                changed |= ui.checkbox(&mut self.settings.debug_show_success, job).changed();
+                                changed |= ui
+                                    .checkbox(&mut self.settings.debug_show_success, job)
+                                    .changed();
 
                                 // 1. Info
                                 let mut job = egui::text::LayoutJob::default();
@@ -1148,7 +1153,9 @@ if ui
                                         ..Default::default()
                                     },
                                 );
-                                changed |= ui.checkbox(&mut self.settings.debug_show_info, job).changed();
+                                changed |= ui
+                                    .checkbox(&mut self.settings.debug_show_info, job)
+                                    .changed();
 
                                 if changed {
                                     let _ = self.settings.save();
@@ -1220,13 +1227,7 @@ if ui
             ui.set_max_width(ui.available_width());
             ui.set_min_width(0.0);
             let h = ls.get_height("tree_header");
-            if self.render_panel_header(
-                ui,
-                &rust_i18n::t!("file_tree.title"),
-                None,
-                true,
-                h,
-            ) {
+            if self.render_panel_header(ui, &rust_i18n::t!("file_tree.title"), None, true, h) {
                 self.show_file_tree = false;
             }
             egui::ScrollArea::vertical()
@@ -1249,7 +1250,12 @@ if ui
                             if let Some(dir) = &self.file_tree_dir {
                                 if self.settings.show_directory_paths {
                                     let sub_font = egui::TextStyle::Body.resolve(ui.style());
-                                    let truncated_dir = self.smart_truncate_text(ui, &dir.display().to_string(), sub_font, ui.available_width() - 12.0);
+                                    let truncated_dir = self.smart_truncate_text(
+                                        ui,
+                                        &dir.display().to_string(),
+                                        sub_font,
+                                        ui.available_width() - 12.0,
+                                    );
                                     ui.label(truncated_dir);
                                     ui.separator();
                                 }
@@ -1359,24 +1365,29 @@ if ui
                                                 } else {
                                                     &self.icons.folder_filled
                                                 };
-                                                
+
                                                 let tint = self.current_theme.colors.icon_color();
-                                                let icon_size = ui.text_style_height(&egui::TextStyle::Button);
+                                                let icon_size =
+                                                    ui.text_style_height(&egui::TextStyle::Button);
 
                                                 let truncated_name = self.smart_truncate_text(
                                                     ui,
                                                     &display_name,
                                                     btn_font,
-                                                    (ui.available_width() - ui.spacing().button_padding.x * 2.0).max(20.0),
+                                                    (ui.available_width()
+                                                        - ui.spacing().button_padding.x * 2.0)
+                                                        .max(20.0),
                                                 );
 
                                                 ui.add(egui::Button::image_and_text(
                                                     egui::Image::new(icon)
                                                         .shrink_to_fit()
                                                         .maintain_aspect_ratio(true)
-                                                        .fit_to_exact_size(egui::vec2(icon_size, icon_size))
+                                                        .fit_to_exact_size(egui::vec2(
+                                                            icon_size, icon_size,
+                                                        ))
                                                         .tint(tint),
-                                                    truncated_name
+                                                    truncated_name,
                                                 ))
                                             };
 
@@ -1415,74 +1426,134 @@ if ui
 
                                                 if tree_on {
                                                     let color = match status {
-                                                        KeyStatus::Decryptable => self.current_theme.colors.success_color(),
-                                                        KeyStatus::WrongKey => self.current_theme.colors.error_color(),
-                                                        KeyStatus::Unknown => self.current_theme.colors.warning_color(),
+                                                        KeyStatus::Decryptable => self
+                                                            .current_theme
+                                                            .colors
+                                                            .success_color(),
+                                                        KeyStatus::WrongKey => {
+                                                            self.current_theme.colors.error_color()
+                                                        }
+                                                        KeyStatus::Unknown => self
+                                                            .current_theme
+                                                            .colors
+                                                            .warning_color(),
                                                         _ => ui.visuals().weak_text_color(),
                                                     };
 
-                                                    let pulse_alpha = if self.keyfile_path.is_none() {
-                                                        (0.1 + 0.9 * (self.start_time.elapsed().as_secs_f32() * 3.0).cos().abs()) as f32
+                                                    let pulse_alpha = if self.keyfile_path.is_none()
+                                                    {
+                                                        (0.1 + 0.9
+                                                            * (self
+                                                                .start_time
+                                                                .elapsed()
+                                                                .as_secs_f32()
+                                                                * 3.0)
+                                                                .cos()
+                                                                .abs())
+                                                            as f32
                                                     } else {
                                                         1.0
                                                     };
 
                                                     let icon = match status {
-                                                        KeyStatus::Unknown => &self.icons.unknown_file,
-                                                        KeyStatus::WrongKey => &self.icons.locked_file,
-                                                        KeyStatus::Decryptable => &self.icons.asterisk_file,
+                                                        KeyStatus::Unknown => {
+                                                            &self.icons.unknown_file
+                                                        }
+                                                        KeyStatus::WrongKey => {
+                                                            &self.icons.locked_file
+                                                        }
+                                                        KeyStatus::Decryptable => {
+                                                            &self.icons.asterisk_file
+                                                        }
                                                         _ => &self.icons.status_dot,
                                                     };
 
-                                                    let font_id = egui::TextStyle::Button.resolve(ui.style());
-                                                    let icon_size = ui.text_style_height(&egui::TextStyle::Button);
-                                                    
+                                                    let font_id =
+                                                        egui::TextStyle::Button.resolve(ui.style());
+                                                    let icon_size = ui.text_style_height(
+                                                        &egui::TextStyle::Button,
+                                                    );
+
                                                     let truncated_name = self.smart_truncate_text(
                                                         ui,
                                                         &display_name,
                                                         font_id,
-                                                        (ui.available_width() - icon_size - ui.spacing().button_padding.x * 2.0).max(10.0),
+                                                        (ui.available_width()
+                                                            - icon_size
+                                                            - ui.spacing().button_padding.x * 2.0)
+                                                            .max(10.0),
                                                     );
 
-                                                    if ui.add(egui::Button::image_and_text(
-                                                        egui::Image::new(icon)
-                                                            .fit_to_exact_size(egui::vec2(icon_size, icon_size))
-                                                            .tint(color.gamma_multiply(pulse_alpha)),
-                                                        truncated_name
-                                                    )).clicked() {
+                                                    if ui
+                                                        .add(egui::Button::image_and_text(
+                                                            egui::Image::new(icon)
+                                                                .fit_to_exact_size(egui::vec2(
+                                                                    icon_size, icon_size,
+                                                                ))
+                                                                .tint(
+                                                                    color.gamma_multiply(
+                                                                        pulse_alpha,
+                                                                    ),
+                                                                ),
+                                                            truncated_name,
+                                                        ))
+                                                        .clicked()
+                                                    {
                                                         self.open_file(path.clone());
                                                     }
                                                 } else {
                                                     // Simple View (Icon + Text)
                                                     let color = match status {
-                                                        KeyStatus::Decryptable => self.current_theme.colors.success_color(),
-                                                        KeyStatus::WrongKey => self.current_theme.colors.error_color(),
+                                                        KeyStatus::Decryptable => self
+                                                            .current_theme
+                                                            .colors
+                                                            .success_color(),
+                                                        KeyStatus::WrongKey => {
+                                                            self.current_theme.colors.error_color()
+                                                        }
                                                         _ => ui.visuals().text_color(),
                                                     };
-                                                    
+
                                                     let icon = match status {
-                                                        KeyStatus::Unknown => &self.icons.unknown_file,
-                                                        KeyStatus::WrongKey => &self.icons.locked_file,
-                                                        KeyStatus::Decryptable => &self.icons.asterisk_file,
+                                                        KeyStatus::Unknown => {
+                                                            &self.icons.unknown_file
+                                                        }
+                                                        KeyStatus::WrongKey => {
+                                                            &self.icons.locked_file
+                                                        }
+                                                        KeyStatus::Decryptable => {
+                                                            &self.icons.asterisk_file
+                                                        }
                                                         _ => &self.icons.key,
                                                     };
 
-                                                    let icon_size = ui.text_style_height(&egui::TextStyle::Button);
-                                                    let btn_font = egui::TextStyle::Button.resolve(ui.style());
-                                                    
+                                                    let icon_size = ui.text_style_height(
+                                                        &egui::TextStyle::Button,
+                                                    );
+                                                    let btn_font =
+                                                        egui::TextStyle::Button.resolve(ui.style());
+
                                                     let truncated_name = self.smart_truncate_text(
                                                         ui,
                                                         &display_name,
                                                         btn_font,
-                                                        (ui.available_width() - icon_size - ui.spacing().button_padding.x * 2.0).max(10.0),
+                                                        (ui.available_width()
+                                                            - icon_size
+                                                            - ui.spacing().button_padding.x * 2.0)
+                                                            .max(10.0),
                                                     );
 
-                                                    if ui.add(egui::Button::image_and_text(
-                                                        egui::Image::new(icon)
-                                                            .fit_to_exact_size(egui::vec2(icon_size, icon_size))
-                                                            .tint(color),
-                                                        truncated_name
-                                                    )).clicked() {
+                                                    if ui
+                                                        .add(egui::Button::image_and_text(
+                                                            egui::Image::new(icon)
+                                                                .fit_to_exact_size(egui::vec2(
+                                                                    icon_size, icon_size,
+                                                                ))
+                                                                .tint(color),
+                                                            truncated_name,
+                                                        ))
+                                                        .clicked()
+                                                    {
                                                         self.open_file(path.clone());
                                                     }
                                                 }
@@ -1506,7 +1577,9 @@ if ui
                                                     ui,
                                                     &display_name,
                                                     btn_font,
-                                                    (ui.available_width() - ui.spacing().button_padding.x * 2.0).max(20.0),
+                                                    (ui.available_width()
+                                                        - ui.spacing().button_padding.x * 2.0)
+                                                        .max(20.0),
                                                 );
                                                 if ui
                                                     .add(egui::Button::new(truncated_name))
@@ -1626,13 +1699,7 @@ if ui
         let mut should_reset = false;
         ui.vertical(|ui| {
             let h = ls.get_height("theme_header");
-            if self.render_panel_header(
-                ui,
-                &rust_i18n::t!("theme.title"),
-                None,
-                true,
-                h,
-            ) {
+            if self.render_panel_header(ui, &rust_i18n::t!("theme.title"), None, true, h) {
                 self.show_theme_editor = false;
             }
             if let Some(theme) = &mut self.editing_theme {

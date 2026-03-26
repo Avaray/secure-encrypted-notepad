@@ -109,7 +109,7 @@ impl EditorApp {
         default_tint: egui::Color32,
     ) -> egui::Response {
         let (rect, mut response) = ui.allocate_exact_size(btn_size, egui::Sense::click());
-        
+
         let is_enabled = ui.is_enabled();
 
         if is_enabled && response.clicked() {
@@ -133,7 +133,7 @@ impl EditorApp {
         } else {
             default_tint
         };
-        
+
         let icon_rect = egui::Rect::from_center_size(rect.center(), ico_size);
         ui.painter().image(
             icon.id(),

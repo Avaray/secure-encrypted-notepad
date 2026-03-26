@@ -142,7 +142,7 @@ pub struct EditorApp {
     pub(crate) search_case_sensitive: bool,
     pub(crate) search_matches: Vec<usize>, // List of match starting indices (byte offsets)
     pub(crate) current_match_index: Option<usize>, // Index into search_matches
-    pub(crate) replace_undo_stack: Vec<String>,    // Session-only undo stack for Replace ops
+    pub(crate) replace_undo_stack: Vec<String>, // Session-only undo stack for Replace ops
 
     // Batch Converter State
     pub(crate) show_batch_converter: bool,
@@ -1139,8 +1139,10 @@ impl eframe::App for EditorApp {
                                         };
                                         ui.add(
                                             egui::Label::new(
-                                                egui::RichText::new(rust_i18n::t!("app.no_keyfile"))
-                                                    .color(icon_tint.gamma_multiply(pulse_alpha)),
+                                                egui::RichText::new(rust_i18n::t!(
+                                                    "app.no_keyfile"
+                                                ))
+                                                .color(icon_tint.gamma_multiply(pulse_alpha)),
                                             )
                                             .selectable(false),
                                         );
@@ -1165,7 +1167,10 @@ impl eframe::App for EditorApp {
                                         );
                                     } else {
                                         ui.label(
-                                            egui::RichText::new(rust_i18n::t!("app.unsaved_document")).color(fg_color),
+                                            egui::RichText::new(rust_i18n::t!(
+                                                "app.unsaved_document"
+                                            ))
+                                            .color(fg_color),
                                         );
                                     }
 

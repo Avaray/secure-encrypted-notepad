@@ -119,11 +119,7 @@ impl Icons {
                 include_bytes!("../assets/ui/MynauiQuestionHexagonSolid.svg"),
                 "icon_unknown",
             ),
-            status_dot: Self::load_svg(
-                ctx,
-                include_bytes!("../assets/ui/Dot.svg"),
-                "icon_dot",
-            ),
+            status_dot: Self::load_svg(ctx, include_bytes!("../assets/ui/Dot.svg"), "icon_dot"),
             locked_file: Self::load_svg(
                 ctx,
                 include_bytes!("../assets/ui/MynauiLockHexagonSolid.svg"),
