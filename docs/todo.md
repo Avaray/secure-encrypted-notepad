@@ -28,7 +28,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
     - Perform a thorough audit of the existing color set to identify opportunities for simplification and derivation.
     - Goal: A more user-friendly theme creation process that doesn't sacrifice depth of customization.
 
-
+---
 
 ## 🐛 Bug Fixes (To Fix)
 
