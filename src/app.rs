@@ -600,6 +600,89 @@ impl EditorApp {
 
         app
     }
+
+    pub(crate) fn render_status_bar(&mut self, ui: &mut egui::Ui, show_file_info: bool) {
+        let fg_color = self
+            .current_theme
+            .colors
+            .to_egui_color32(self.current_theme.colors.foreground);
+
+        crate::app_helpers::center_row(ui, |ui| {
+            // Status message on the left
+            ui.label(egui::RichText::new(&self.status_message).color(fg_color));
+
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                // Version info
+                let version = format!("SEN {}", env!("CARGO_PKG_VERSION"));
+                ui.add(
+                    egui::Label::new(
+                        egui::RichText::new(version).color(self.current_theme.colors.info_color()),
+                    )
+                    .selectable(false),
+                );
+
+                ui.separator();
+
+                // Keyfile indicator
+                if let Some(path) = &self.keyfile_path {
+                    let icon_tint = if self.settings.show_keyfile_paths {
+                        self.current_theme.colors.warning_color()
+                    } else {
+                        self.current_theme.colors.success_color()
+                    };
+                    let status_text = self.mask_keyfile_path(path);
+                    ui.add(
+                        egui::Label::new(egui::RichText::new(status_text).color(icon_tint))
+                            .selectable(false),
+                    );
+                } else {
+                    let icon_tint = self.current_theme.colors.warning_color();
+                    let pulse_alpha = if self.keyfile_path.is_none() {
+                        (0.1 + 0.9 * (self.start_time.elapsed().as_secs_f32() * 3.0).cos().abs())
+                            as f32
+                    } else {
+                        1.0
+                    };
+                    ui.add(
+                        egui::Label::new(
+                            egui::RichText::new(rust_i18n::t!("app.no_keyfile"))
+                                .color(icon_tint.gamma_multiply(pulse_alpha)),
+                        )
+                        .selectable(false),
+                    );
+                }
+
+                if show_file_info {
+                    ui.separator();
+
+                    // File indicator
+                    let fg_color = self
+                        .current_theme
+                        .colors
+                        .to_egui_color32(self.current_theme.colors.foreground);
+
+                    if let Some(path) = &self.current_file_path {
+                        ui.label(
+                            egui::RichText::new(
+                                path.file_name().unwrap_or_default().to_string_lossy(),
+                            )
+                            .color(fg_color),
+                        );
+                    } else {
+                        ui.label(
+                            egui::RichText::new(rust_i18n::t!("app.unsaved_document"))
+                                .color(fg_color),
+                        );
+                    }
+
+                    if self.is_modified {
+                        ui.add_space(4.0);
+                        ui.label(egui::RichText::new("*").color(fg_color));
+                    }
+                }
+            });
+        });
+    }
 }
 
 impl eframe::App for EditorApp {
@@ -1049,15 +1132,7 @@ impl eframe::App for EditorApp {
                     .frame(status_bar_frame)
                     .min_height(24.0)
                     .show(ctx, |ui| {
-                        crate::app_helpers::center_row(ui, |ui| {
-                            ui.label(
-                                egui::RichText::new(&self.status_message).color(
-                                    self.current_theme
-                                        .colors
-                                        .to_egui_color32(self.current_theme.colors.foreground),
-                                ),
-                            );
-                        });
+                        self.render_status_bar(ui, false);
                     });
             }
 
@@ -1089,98 +1164,7 @@ impl eframe::App for EditorApp {
                     .frame(status_bar_frame)
                     .min_height(24.0)
                     .show(ctx, |ui| {
-                        crate::app_helpers::center_row(ui, |ui| {
-                            let fg_color = self
-                                .current_theme
-                                .colors
-                                .to_egui_color32(self.current_theme.colors.foreground);
-
-                            ui.label(egui::RichText::new(&self.status_message).color(fg_color));
-
-                            ui.with_layout(
-                                egui::Layout::right_to_left(egui::Align::Center),
-                                |ui| {
-                                    // Version info
-                                    let version = format!("SEN {}", env!("CARGO_PKG_VERSION"));
-                                    ui.add(
-                                        egui::Label::new(
-                                            egui::RichText::new(version)
-                                                .color(self.current_theme.colors.info_color()),
-                                        )
-                                        .selectable(false),
-                                    );
-
-                                    ui.separator();
-
-                                    // Keyfile indicator
-                                    if let Some(path) = &self.keyfile_path {
-                                        let icon_tint = if self.settings.show_keyfile_paths {
-                                            self.current_theme.colors.warning_color()
-                                        } else {
-                                            self.current_theme.colors.success_color()
-                                        };
-                                        let status_text = self.mask_keyfile_path(path);
-                                        ui.add(
-                                            egui::Label::new(
-                                                egui::RichText::new(status_text).color(icon_tint),
-                                            )
-                                            .selectable(false),
-                                        );
-                                    } else {
-                                        let icon_tint = self.current_theme.colors.warning_color();
-                                        let pulse_alpha = if self.keyfile_path.is_none() {
-                                            (0.1 + 0.9
-                                                * (self.start_time.elapsed().as_secs_f32() * 3.0)
-                                                    .cos()
-                                                    .abs())
-                                                as f32
-                                        } else {
-                                            1.0
-                                        };
-                                        ui.add(
-                                            egui::Label::new(
-                                                egui::RichText::new(rust_i18n::t!(
-                                                    "app.no_keyfile"
-                                                ))
-                                                .color(icon_tint.gamma_multiply(pulse_alpha)),
-                                            )
-                                            .selectable(false),
-                                        );
-                                    }
-
-                                    ui.separator();
-
-                                    // File indicator
-                                    let fg_color = self
-                                        .current_theme
-                                        .colors
-                                        .to_egui_color32(self.current_theme.colors.foreground);
-
-                                    if let Some(path) = &self.current_file_path {
-                                        ui.label(
-                                            egui::RichText::new(
-                                                path.file_name()
-                                                    .unwrap_or_default()
-                                                    .to_string_lossy(),
-                                            )
-                                            .color(fg_color),
-                                        );
-                                    } else {
-                                        ui.label(
-                                            egui::RichText::new(rust_i18n::t!(
-                                                "app.unsaved_document"
-                                            ))
-                                            .color(fg_color),
-                                        );
-                                    }
-
-                                    if self.is_modified {
-                                        ui.add_space(4.0);
-                                        ui.label(egui::RichText::new("*").color(fg_color));
-                                    }
-                                },
-                            );
-                        });
+                        self.render_status_bar(ui, true);
                     });
             }
             let screen_w = ctx.viewport_rect().width();
