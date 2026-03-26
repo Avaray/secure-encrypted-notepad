@@ -1375,7 +1375,10 @@ if ui
                                                     &display_name,
                                                     btn_font,
                                                     (ui.available_width()
-                                                        - ui.spacing().button_padding.x * 2.0)
+                                                        - icon_size
+                                                        - ui.spacing().button_padding.x * 2.0
+                                                        - ui.spacing().item_spacing.x
+                                                        - 8.0)
                                                         .max(20.0),
                                                 );
 
@@ -1480,7 +1483,9 @@ if ui
                                                         font_id,
                                                         (ui.available_width()
                                                             - icon_size
-                                                            - ui.spacing().button_padding.x * 2.0)
+                                                            - ui.spacing().button_padding.x * 2.0
+                                                            - ui.spacing().item_spacing.x
+                                                            - 8.0)
                                                             .max(10.0),
                                                     );
 
@@ -1539,7 +1544,9 @@ if ui
                                                         btn_font,
                                                         (ui.available_width()
                                                             - icon_size
-                                                            - ui.spacing().button_padding.x * 2.0)
+                                                            - ui.spacing().button_padding.x * 2.0
+                                                            - ui.spacing().item_spacing.x
+                                                            - 8.0)
                                                             .max(10.0),
                                                     );
 

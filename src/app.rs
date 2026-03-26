@@ -1197,13 +1197,16 @@ impl eframe::App for EditorApp {
                     .max_width(max_tree_width)
                     .default_width(self.settings.file_tree_width)
                     .show(ctx, |ui| {
+                        let w = ui.available_width();
+                        ui.set_max_width(w);
                         self.render_file_tree(ui);
+                        ui.set_min_width(0.0); // zapobiega "wypychaniu" panelu przez content
                     });
 
                 // Persist panel width when user resizes it
                 let actual_width = panel_res.response.rect.width();
                 if (actual_width - self.settings.file_tree_width).abs() > 1.0 {
-                    self.settings.file_tree_width = actual_width.min(max_panel_width);
+                    self.settings.file_tree_width = actual_width;
                     let _ = self.settings.save();
                 }
             }
