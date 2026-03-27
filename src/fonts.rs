@@ -3,20 +3,19 @@ use std::collections::BTreeSet;
 
 pub const PREFERRED_UI_FONTS: &[&str] = &[
     "Fira Code",
-    "Inter",
-    "Roboto",
-    "Segoe UI",
-    "San Francisco",
-    "Arial",
-];
-pub const PREFERRED_EDITOR_FONTS: &[&str] = &[
-    "Fira Code",
     "JetBrains Mono",
-    "Cascadia Code",
     "Ubuntu Mono",
-    "Consolas",
-    "Courier New",
+    "Cascadia Mono",
+    "Cantarell",
+    "Segoe UI",
+    "Roboto Mono",
+    "Roboto",
+    "Menlo",
+    "Consolas", // Common Windows Monospace fallback
+    "Liberation Mono", // Common Linux Monospace fallback
+    "Monaco", // MacOS Monospace fallback
 ];
+pub const PREFERRED_EDITOR_FONTS: &[&str] = PREFERRED_UI_FONTS;
 
 /// Get list of available system fonts
 pub fn detect_best_font(available_fonts: &[String], preferences: &[&str]) -> Option<String> {
