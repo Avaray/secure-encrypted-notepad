@@ -3058,50 +3058,21 @@ fn render_copy_paste_buttons(
 /// This sidesteps the rigid sizing constraints of `ui.color_edit_button_srgb`
 /// and matches the exact `interact_size.y` to align flawlessly with inputs and other buttons.
 fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: egui::Id) -> bool {
-    let btn_size = ui.spacing().interact_size.y;
-    let padding = ui.spacing().button_padding;
-
-    let inner_size = (btn_size * 0.6).max(12.0);
-    let desired_size = egui::vec2(
-        btn_size.max(inner_size + padding.x * 2.0),
-        btn_size.max(inner_size + padding.y * 2.0),
-    );
-
     let mut color32 = egui::Color32::from_rgb(color[0], color[1], color[2]);
-    let button_id = popup_id.with("btn");
     let area_id = popup_id.with("area");
 
-    let rect = ui.allocate_exact_size(desired_size, egui::Sense::hover()).0;
-    let response = ui.interact(rect, button_id, egui::Sense::click());
-
-    // Simple boolean state — completely independent of egui's Popup system
     let is_open = ui.data(|d| d.get_temp::<bool>(popup_id).unwrap_or(false));
+
+    // The text matches the color, creating an invisible content block for natural button sizing.
+    let response = ui.add(
+        egui::Button::new(egui::RichText::new("        ").color(color32))
+            .fill(color32),
+    );
+
     if response.clicked() {
         ui.data_mut(|d| d.insert_temp(popup_id, !is_open));
     }
 
-    // Draw button
-    if ui.is_rect_visible(rect) {
-        let visuals = ui.style().interact(&response);
-        ui.painter()
-            .rect_filled(rect, visuals.corner_radius, visuals.bg_fill);
-        ui.painter().rect_stroke(
-            rect,
-            visuals.corner_radius,
-            visuals.bg_stroke,
-            egui::StrokeKind::Inside,
-        );
-
-        let inner_rect = rect.shrink2(padding);
-        ui.painter()
-            .rect_filled(inner_rect, visuals.corner_radius.at_most(2), color32);
-        ui.painter().rect_stroke(
-            inner_rect,
-            visuals.corner_radius.at_most(2),
-            egui::Stroke::new(1.0, ui.visuals().widgets.noninteractive.bg_stroke.color),
-            egui::StrokeKind::Inside,
-        );
-    }
 
     let mut changed = false;
 
