@@ -30,6 +30,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
     - Perform a thorough audit of the existing color set to identify opportunities for simplification and derivation.
     - Goal: A more user-friendly theme creation process that doesn't sacrifice depth of customization.
 - [ ] **Theme Editor Panel Sizing**: Ensure the Theme Editor panel cannot be resized horizontally beyond its longest content. It must dynamically adapt to changes in UI font size or button padding to maintain perfect constraints.
+- [ ] **Windows Start Menu Integration**: Add an "Add to Start Menu" button (Windows-specific) in settings. It would generate the necessary manifest files and icons to allow pinning a large, high-quality tile for SEN to the Start Menu, bypassing the current limitations of portable apps.
 - [x] **File Tree Max Width**: Limit the maximum width of the file tree panel (e.g., to 90% of the screen) to prevent it from covering the entire editor.
 
 ---
