@@ -6,7 +6,6 @@ pub const PREFERRED_UI_FONTS: &[&str] = &[
     "JetBrains Mono",
     "Ubuntu Mono",
     "Cascadia Mono",
-    "Cantarell",
     "Segoe UI",
     "Roboto Mono",
     "Roboto",
