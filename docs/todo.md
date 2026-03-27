@@ -56,3 +56,4 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
     - Goal: Ensure stable layout even when scrollbars and splitters overlap or interact.
 - [x] **Search Panel Sync (Undo/Redo)**: If Replace/Replace All is used and then undone (CTRL + Z), the search panel doesn't refresh and findings are not highlighted.
     - Goal: Ensure search results are always synchronized with the current editor content, especially after undo/redo operations.
+- [ ] **Minimum Panel Widths**: Implement minimum width constraints for all side panels to prevent them from overlapping or becoming completely hidden. The user should always be able to easily find and grab the panel edge handles without confusion.
