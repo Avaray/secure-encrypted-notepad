@@ -3056,23 +3056,43 @@ fn render_copy_paste_buttons(
     paste_color
 }
 
-/// Helper function to create a pixel-perfect, custom-sized color picker button.
-/// This sidesteps the rigid sizing constraints of `ui.color_edit_button_srgb`
-/// and matches the exact `interact_size.y` to align flawlessly with inputs and other buttons.
 fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: egui::Id) -> bool {
     let mut color32 = egui::Color32::from_rgb(color[0], color[1], color[2]);
+    let button_id = popup_id.with("btn");
     let area_id = popup_id.with("area");
 
+    // Calculate natural button size like a button with 8 spaces
+    let galley = egui::WidgetText::from("        ").into_galley(ui, None, f32::INFINITY, egui::TextStyle::Button);
+    let desired_size = galley.size() + ui.spacing().button_padding * 2.0;
+
+    let rect = ui.allocate_exact_size(desired_size, egui::Sense::hover()).0;
+    let response = ui.interact(rect, button_id, egui::Sense::click());
+
     let is_open = ui.data(|d| d.get_temp::<bool>(popup_id).unwrap_or(false));
-
-    // The text matches the color, creating an invisible content block for natural button sizing.
-    let response = ui.add(
-        egui::Button::new(egui::RichText::new("        ").color(color32))
-            .fill(color32),
-    );
-
     if response.clicked() {
         ui.data_mut(|d| d.insert_temp(popup_id, !is_open));
+    }
+
+    // Draw button manually to avoid egui default button hover artifacts
+    if ui.is_rect_visible(rect) {
+        let visuals = ui.style().interact(&response);
+        ui.painter()
+            .rect_filled(rect, visuals.corner_radius, color32);
+
+        // Enhance border visibility on hover to compensate for the fixed background color
+        let mut stroke = visuals.bg_stroke;
+        if response.hovered() {
+            stroke.width = stroke.width.max(2.0); // Clear feedback using theme's hover border color
+        } else {
+            stroke.width = stroke.width.max(1.0);
+        }
+
+        ui.painter().rect_stroke(
+            rect,
+            visuals.corner_radius,
+            stroke,
+            egui::StrokeKind::Inside,
+        );
     }
 
 
