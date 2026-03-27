@@ -2988,19 +2988,20 @@ fn render_copy_paste_buttons(
     let mut paste_color = None;
     crate::app_helpers::stateful_center_row(ui, cached_height, |ui| {
         let time = ui.input(|i| i.time);
-        let btn_size = ui.spacing().interact_size.y;
-        let icon_size = (btn_size * 0.6).max(12.0); // Balanced relative size
+        
+        // Match the natural height of text, like in expandable folders
+        let icon_size = ui.text_style_height(&egui::TextStyle::Button);
 
         // --- 1. PASTE BUTTON (Left) ---
         // Only visible when a color is in clipboard
         if let Some(c) = *copied_color {
             let paste_btn = egui::Button::image(
                 egui::Image::new(&icons.paste)
-                    .max_size(egui::vec2(icon_size, icon_size))
+                    .shrink_to_fit()
                     .maintain_aspect_ratio(true)
+                    .fit_to_exact_size(egui::vec2(icon_size, icon_size))
                     .tint(ui.visuals().widgets.inactive.fg_stroke.color),
-            )
-            .min_size(egui::vec2(btn_size, btn_size));
+            );
             let paste_res = ui
                 .add(paste_btn)
                 .on_hover_text(rust_i18n::t!("theme.paste_color"));
@@ -3010,7 +3011,8 @@ fn render_copy_paste_buttons(
             ui.add_space(4.0); // Keeps them grouped close in the column
         } else {
             // Invisible placeholder to prevent layout shifting
-            ui.add_space(btn_size + 4.0);
+            let placeholder_width = icon_size + ui.spacing().button_padding.x * 2.0;
+            ui.add_space(placeholder_width + 4.0);
         }
 
         // --- 2. COPY BUTTON (Right) ---
@@ -3034,11 +3036,11 @@ fn render_copy_paste_buttons(
 
         let copy_btn = egui::Button::image(
             egui::Image::new(&icons.copy)
-                .max_size(egui::vec2(icon_size, icon_size))
+                .shrink_to_fit()
                 .maintain_aspect_ratio(true)
+                .fit_to_exact_size(egui::vec2(icon_size, icon_size))
                 .tint(tint),
-        )
-        .min_size(egui::vec2(btn_size, btn_size));
+        );
 
         let copy_res = ui
             .add(copy_btn)
