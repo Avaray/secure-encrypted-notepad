@@ -270,27 +270,38 @@ impl EditorApp {
                     ui.add_enabled_ui(enabled || is_running, |ui| {
                         let btn_size = egui::vec2(ui.available_width(), 36.0);
 
-                        // Use a customized button content if running
                         let button_response = if is_running {
-                            ui.add_sized(btn_size, egui::Button::new(""))
+                            let response = ui.add_sized(btn_size, egui::Button::new(""));
+                            // Paint spinner + text centered within the button rect
+                            let rect = response.rect;
+                            let spinner_size = 14.0;
+                            let spacing = 6.0;
+                            let text_galley = ui.painter().layout_no_wrap(
+                                label.clone(),
+                                egui::TextStyle::Button.resolve(ui.style()),
+                                ui.visuals().text_color(),
+                            );
+                            let total_w = spinner_size + spacing + text_galley.rect.width();
+                            let start_x = rect.center().x - total_w / 2.0;
+                            let center_y = rect.center().y;
+
+                            // Draw spinner
+                            let spinner_rect = egui::Rect::from_center_size(
+                                egui::pos2(start_x + spinner_size / 2.0, center_y),
+                                egui::vec2(spinner_size, spinner_size),
+                            );
+                            ui.put(spinner_rect, egui::Spinner::new().size(spinner_size));
+
+                            // Draw text
+                            let text_pos = egui::pos2(
+                                start_x + spinner_size + spacing,
+                                center_y - text_galley.rect.height() / 2.0,
+                            );
+                            ui.painter().galley(text_pos, text_galley, ui.visuals().text_color());
+                            response
                         } else {
                             ui.add_sized(btn_size, egui::Button::new(format!("{} {}", icon, label)))
                         };
-
-                        if is_running {
-                            // Overlay spinner and text on the button
-                            let rect = button_response.rect;
-                            ui.scope_builder(egui::UiBuilder::new().max_rect(rect), |ui| {
-                                let content_width = 12.0 + 8.0 + (label.len() as f32 * 7.0);
-                                let padding = (rect.width() - content_width) / 2.0;
-
-                                crate::app_helpers::center_row(ui, |ui| {
-                                    ui.add_space(padding.max(0.0));
-                                    ui.add(egui::Spinner::new().size(12.0));
-                                    ui.label(egui::RichText::new(label).strong());
-                                });
-                            });
-                        }
 
                         if button_response.clicked() && !is_running {
                             self.execute_batch_action();
