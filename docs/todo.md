@@ -34,7 +34,6 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Hide Hidden Files**: Add an option in settings to hide files and folders starting with a dot (hidden files) from the file tree panel.
 - [ ] **Draggable Dialogs**: Make custom dialog windows (like "Reset Settings") draggable by clicking and dragging their title bar area.
 - [ ] **Auto-save Restore Dialog Layout**: Update the "Restore auto-save" dialog to use two separate text lines for better readability, similar to the "Reset Settings" dialog layout.
-- [x] **File Tree Max Width**: Limit the maximum width of the file tree panel (e.g., to 90% of the screen) to prevent it from covering the entire editor.
 
 ---
 
@@ -54,6 +53,4 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Scrollbar Flickering Bug**: Fix the infinite flickering/flashing effect when the mouse hovers near the vertical line that splits panels.
     - This happens when a scrollbar appears in the same location as the splitter, causing the layout to enter an unstable state where it cannot decide if the scrollbar should be visible/grown or not.
     - Goal: Ensure stable layout even when scrollbars and splitters overlap or interact.
-- [x] **Search Panel Sync (Undo/Redo)**: If Replace/Replace All is used and then undone (CTRL + Z), the search panel doesn't refresh and findings are not highlighted.
-    - Goal: Ensure search results are always synchronized with the current editor content, especially after undo/redo operations.
 - [ ] **Minimum Panel Widths**: Implement minimum width constraints for all side panels to prevent them from overlapping or becoming completely hidden. The user should always be able to easily find and grab the panel edge handles without confusion.
