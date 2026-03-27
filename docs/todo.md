@@ -32,6 +32,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Theme Editor Panel Sizing**: Ensure the Theme Editor panel cannot be resized horizontally beyond its longest content. It must dynamically adapt to changes in UI font size or button padding to maintain perfect constraints.
 - [ ] **Windows Start Menu Integration**: Add an "Add to Start Menu" button (Windows-specific) in settings. It would generate the necessary manifest files and icons to allow pinning a large, high-quality tile for SEN to the Start Menu, bypassing the current limitations of portable apps.
 - [ ] **Hide Hidden Files**: Add an option in settings to hide files and folders starting with a dot (hidden files) from the file tree panel.
+- [ ] **Draggable Dialogs**: Make custom dialog windows (like "Reset Settings") draggable by clicking and dragging their title bar area.
 - [x] **File Tree Max Width**: Limit the maximum width of the file tree panel (e.g., to 90% of the screen) to prevent it from covering the entire editor.
 
 ---
