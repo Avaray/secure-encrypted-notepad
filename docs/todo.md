@@ -29,6 +29,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
     - Many UI elements (e.g., separators) should automatically derive their default colors from primary sources like the application's text foreground color.
     - Perform a thorough audit of the existing color set to identify opportunities for simplification and derivation.
     - Goal: A more user-friendly theme creation process that doesn't sacrifice depth of customization.
+- [ ] **Theme Editor Panel Sizing**: Ensure the Theme Editor panel cannot be resized horizontally beyond its longest content. It must dynamically adapt to changes in UI font size or button padding to maintain perfect constraints.
 - [x] **File Tree Max Width**: Limit the maximum width of the file tree panel (e.g., to 90% of the screen) to prevent it from covering the entire editor.
 
 ---
