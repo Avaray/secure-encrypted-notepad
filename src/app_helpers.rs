@@ -320,10 +320,12 @@ impl EditorApp {
         let dir_opt = self.file_tree_dir.clone();
 
         if let Some(dir) = dir_opt {
-            self.log_info(t!(
-                "helpers.log_refresh_tree",
-                file = self.mask_directory_path(&dir)
-            ));
+            let masked = self.mask_directory_path(&dir);
+            if masked == crate::rust_i18n::t!("settings.secured") {
+                self.log_info(t!("helpers.log_refresh_tree_secured"));
+            } else {
+                self.log_info(t!("helpers.log_refresh_tree", file = masked));
+            }
 
             if self.settings.tree_style_file_tree {
                 // Tree View (recursive lazy load)
