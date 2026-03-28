@@ -35,15 +35,16 @@ impl EditorApp {
         let spacing = 4.0;
         let sep_h = 4.0;
 
-        // Group 1: 5 btns (new, open, open_folder, save, save_as)
-        // Group 2: 2 btns
+        // Group 1: 6 btns (new, open, open_folder, save, save_as, close)
+        // Group 2: 1 btn (export)
         // Group 3: 3 btns (load, rotate, generate)
-        // Group 4: 6 btns
-        // Total: 16 buttons
+        // Group 4: 7 btns (history, file_tree, zen, theme, settings, batch_convert, debug)
+        // Total: 17 buttons
         // Separators: 3
-        // Padding/Spacing:
-        //   5 (in G1) + 1 (sep) + 2 (in G2) + 1 (sep) + 3 (in G3) + 1 (sep) + 1 (spacer) + 6 (in G4) = 20 gaps
-        let total_content_h = (16.0 * btn_h) + (3.0 * sep_h) + (20.0 * spacing);
+        // Gaps calculation (using item_spacing): 
+        // 17 items + 3 separators = 20 elements -> 19 gaps
+        // + 1 additional gap for the spacer
+        let total_content_h = (17.0 * btn_h) + (3.0 * sep_h) + (20.0 * spacing);
         let min_gap = 16.0;
         let spacer = (panel_h - total_content_h - 1.0).max(min_gap);
 
@@ -147,7 +148,7 @@ impl EditorApp {
 
     // ─── Group renderers ─────────────────────────────────────────────────────────
 
-    /// Group 1: New, Open, Open Directory, Save As.
+    /// Group 1: New, Open, Open Directory, Save, Save As, Close.
     fn render_toolbar_file_group(&mut self, ui: &mut egui::Ui) {
         let ico_s = self.settings.toolbar_icon_size;
         let bs = egui::vec2(ico_s + 4.0, ico_s + 4.0);
@@ -225,6 +226,20 @@ impl EditorApp {
         .clicked()
         {
             self.save_file_as();
+        }
+        if Self::icon_btn(
+            ui,
+            &self.icons.close,
+            &rust_i18n::t!("toolbar.close"),
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
+            self.close_file();
         }
     }
 

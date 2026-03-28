@@ -44,6 +44,7 @@ pub struct Icons {
     pub status_dot: TextureHandle,
     pub locked_file: TextureHandle,
     pub asterisk_file: TextureHandle,
+    pub close: TextureHandle,
 }
 
 impl Icons {
@@ -249,6 +250,11 @@ impl Icons {
                 ctx,
                 include_bytes!("../assets/flags/EmojioneV1FlagForNetherlands.svg"),
                 "flag_nl",
+            ),
+            close: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/ui/QlementineIconsCross16.svg"),
+                "icon_close",
             ),
         }
     }

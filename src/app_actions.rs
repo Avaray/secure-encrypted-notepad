@@ -34,8 +34,24 @@ impl EditorApp {
             }
             PendingAction::OpenFileFromTree(path) => self.perform_open_file(path, false),
             PendingAction::OpenFileFromIPC(path) => self.perform_open_file(path, false),
+            PendingAction::CloseFile => self.perform_close_file(),
             PendingAction::ChangeDirectory(path) => self.perform_change_directory(path),
         }
+    }
+
+    /// Close file implementation
+    pub(crate) fn perform_close_file(&mut self) {
+        self.document = DocumentWithHistory::new_with_limit(self.settings.max_history_length);
+        self.current_file_path = None;
+        self.is_modified = false;
+        self.loaded_history_index = None;
+        self.show_autosave_restore = false;
+        self.status_message = t!("actions.status_closed").to_string();
+        self.log_info(t!("actions.log_closed"));
+        if self.show_search_panel {
+            self.perform_search();
+        }
+        self.replace_undo_stack.clear();
     }
 
     /// New document implementation
@@ -460,6 +476,11 @@ impl EditorApp {
     pub(crate) fn open_file(&mut self, path: PathBuf) {
         // Pliki sprawdzają zmiany
         self.check_changes_before_action(PendingAction::OpenFileFromTree(path));
+    }
+
+    pub(crate) fn close_file(&mut self) {
+        // Zamykanie pliku sprawdza zmiany
+        self.check_changes_before_action(PendingAction::CloseFile);
     }
 
     pub(crate) fn open_directory(&mut self) {
