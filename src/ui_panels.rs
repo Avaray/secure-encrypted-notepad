@@ -3081,6 +3081,202 @@ fn render_copy_paste_buttons(
     paste_color
 }
 
+// ─── Custom color picker with rectangular 2D field ──────────────────────────
+
+const COLOR_N: u32 = 36; // 6×6 – identical to egui internals
+
+fn picker_contrast(color: egui::Color32) -> egui::Color32 {
+    let [r, g, b, _] = color.to_array();
+    let lum = 0.299 * r as f32 + 0.587 * g as f32 + 0.114 * b as f32;
+    if lum < 128.0 { egui::Color32::WHITE } else { egui::Color32::BLACK }
+}
+
+/// Copy of egui's private `color_slider_1d` (hue / alpha bar).
+fn picker_slider_1d(
+    ui: &mut egui::Ui,
+    value: &mut f32,
+    color_at: impl Fn(f32) -> egui::Color32,
+) -> egui::Response {
+    let desired = egui::vec2(ui.spacing().slider_width, ui.spacing().interact_size.y);
+    let (rect, resp) = ui.allocate_at_least(desired, egui::Sense::click_and_drag());
+
+    if let Some(p) = resp.interact_pointer_pos() {
+        *value = egui::remap_clamp(p.x, rect.left()..=rect.right(), 0.0..=1.0);
+    }
+
+    if ui.is_rect_visible(rect) {
+        let vis = ui.style().interact(&resp);
+        let mut mesh = egui::epaint::Mesh::default();
+        for i in 0..=COLOR_N {
+            let t = i as f32 / COLOR_N as f32;
+            let c = color_at(t);
+            let x = egui::lerp(rect.left()..=rect.right(), t);
+            mesh.colored_vertex(egui::pos2(x, rect.top()), c);
+            mesh.colored_vertex(egui::pos2(x, rect.bottom()), c);
+            if i < COLOR_N {
+                let b = 2 * i;
+                mesh.add_triangle(b, b + 1, b + 2);
+                mesh.add_triangle(b + 1, b + 2, b + 3);
+            }
+        }
+        ui.painter().add(egui::Shape::mesh(mesh));
+        ui.painter().rect_stroke(rect, 0.0, vis.bg_stroke, egui::StrokeKind::Inside);
+
+        // triangle position indicator
+        let x = egui::lerp(rect.left()..=rect.right(), *value);
+        let r = rect.height() / 4.0;
+        let picked = color_at(*value);
+        ui.painter().add(egui::Shape::convex_polygon(
+            vec![
+                egui::pos2(x, rect.center().y),
+                egui::pos2(x + r, rect.bottom()),
+                egui::pos2(x - r, rect.bottom()),
+            ],
+            picked,
+            egui::Stroke::new(vis.fg_stroke.width, picker_contrast(picked)),
+        ));
+    }
+    resp
+}
+
+/// Copy of egui's private `color_slider_2d` but with separate `width` and `height`.
+/// This allows the field to be a rectangle instead of a square.
+fn picker_slider_2d(
+    ui: &mut egui::Ui,
+    x_value: &mut f32,
+    y_value: &mut f32,
+    width: f32,
+    height: f32,
+    color_at: impl Fn(f32, f32) -> egui::Color32,
+) -> egui::Response {
+    let (rect, resp) =
+        ui.allocate_at_least(egui::vec2(width, height), egui::Sense::click_and_drag());
+
+    if let Some(p) = resp.interact_pointer_pos() {
+        *x_value = egui::remap_clamp(p.x, rect.left()..=rect.right(), 0.0..=1.0);
+        *y_value = egui::remap_clamp(p.y, rect.bottom()..=rect.top(), 0.0..=1.0);
+    }
+
+    if ui.is_rect_visible(rect) {
+        let vis = ui.style().interact(&resp);
+        let n = COLOR_N;
+        let mut mesh = egui::epaint::Mesh::default();
+
+        for yi in 0..=n {
+            for xi in 0..=n {
+                let xt = xi as f32 / n as f32;
+                let yt = yi as f32 / n as f32;
+                let x = egui::lerp(rect.left()..=rect.right(), xt);
+                let y = egui::lerp(rect.bottom()..=rect.top(), yt);
+                mesh.colored_vertex(egui::pos2(x, y), color_at(xt, yt));
+
+                if xi < n && yi < n {
+                    let row = n + 1;
+                    let idx = yi * row + xi;
+                    mesh.add_triangle(idx, idx + 1, idx + row);
+                    mesh.add_triangle(idx + 1, idx + row + 1, idx + row);
+                }
+            }
+        }
+        ui.painter().add(egui::Shape::mesh(mesh));
+        ui.painter().rect_stroke(rect, 0.0, vis.bg_stroke, egui::StrokeKind::Inside);
+
+        let cx = egui::lerp(rect.left()..=rect.right(), *x_value);
+        let cy = egui::lerp(rect.bottom()..=rect.top(), *y_value);
+        let picked = color_at(*x_value, *y_value);
+        ui.painter().add(egui::Shape::circle_stroke(
+            egui::pos2(cx, cy),
+            4.0,
+            egui::Stroke::new(1.5, picker_contrast(picked)),
+        ));
+    }
+    resp
+}
+
+/// Replacement for `egui::color_picker::color_picker_color32`.
+///
+/// `picker_height` – height of the 2D field in pixels (e.g. 80.0).
+/// Width comes from `ui.spacing().slider_width`, so the popup
+/// keeps the same width as before – only the 2D field height changes.
+pub fn color_picker_color32_wide(
+    ui: &mut egui::Ui,
+    srgba: &mut egui::Color32,
+    alpha: egui::color_picker::Alpha,
+    picker_height: f32,
+) -> bool {
+    use egui::epaint::ecolor::Hsva;
+
+    let mut hsva = Hsva::from(*srgba);
+    let mut changed = false;
+
+    // 2D field (saturation × value)
+    // NOTE: Response::changed() doesn't work for raw allocations (allocate_at_least),
+    // so we track old values and compare after the slider modifies them.
+    let width = ui.spacing().slider_width;
+    let h = hsva.h;
+    let (old_s, old_v) = (hsva.s, hsva.v);
+    picker_slider_2d(ui, &mut hsva.s, &mut hsva.v, width, picker_height, |s, v| {
+        Hsva { h, s, v, a: 1.0 }.into()
+    });
+    if hsva.s != old_s || hsva.v != old_v {
+        changed = true;
+    }
+
+    // Hue bar
+    let old_h = hsva.h;
+    picker_slider_1d(ui, &mut hsva.h, |h| Hsva { h, s: 1.0, v: 1.0, a: 1.0 }.into());
+    if hsva.h != old_h {
+        changed = true;
+    }
+
+    // Alpha bar (when needed)
+    match alpha {
+        egui::color_picker::Alpha::Opaque => {
+            hsva.a = 1.0;
+        }
+        egui::color_picker::Alpha::OnlyBlend | egui::color_picker::Alpha::BlendOrAdditive => {
+            let (h, s, v) = (hsva.h, hsva.s, hsva.v);
+            let old_a = hsva.a;
+            picker_slider_1d(ui, &mut hsva.a, |a| Hsva { h, s, v, a }.into());
+            if hsva.a != old_a {
+                changed = true;
+            }
+        }
+    }
+
+    // Color swatch + R/G/B fields
+    let swatch = egui::vec2(ui.spacing().slider_width, ui.spacing().interact_size.y);
+    egui::color_picker::show_color(ui, *srgba, swatch);
+
+    ui.horizontal(|ui| {
+        let speed = 1.0 / 255.0;
+        let mut r = srgba.r() as f32 / 255.0;
+        let mut g = srgba.g() as f32 / 255.0;
+        let mut b = srgba.b() as f32 / 255.0;
+
+        let dr = ui.add(egui::DragValue::new(&mut r).speed(speed).range(0.0..=1.0)
+            .prefix("R ").custom_formatter(|n, _| format!("{n:.3}")));
+        let dg = ui.add(egui::DragValue::new(&mut g).speed(speed).range(0.0..=1.0)
+            .prefix("G ").custom_formatter(|n, _| format!("{n:.3}")));
+        let db = ui.add(egui::DragValue::new(&mut b).speed(speed).range(0.0..=1.0)
+            .prefix("B ").custom_formatter(|n, _| format!("{n:.3}")));
+
+        if dr.changed() || dg.changed() || db.changed() {
+            hsva = Hsva::from(egui::Color32::from_rgb(
+                (r * 255.0).round() as u8,
+                (g * 255.0).round() as u8,
+                (b * 255.0).round() as u8,
+            ));
+            changed = true;
+        }
+    });
+
+    if changed {
+        *srgba = egui::Color32::from(hsva);
+    }
+    changed
+}
+
 fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: egui::Id) -> bool {
     let mut color32 = egui::Color32::from_rgb(color[0], color[1], color[2]);
     let button_id = popup_id.with("btn");
@@ -3138,10 +3334,11 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: 
 
                 // Use measured width from previous frame, or small default to let buttons determine width
                 ui.spacing_mut().slider_width = measured.unwrap_or(100.0);
-                if egui::color_picker::color_picker_color32(
+                if color_picker_color32_wide(
                     ui,
                     &mut color32,
                     egui::color_picker::Alpha::Opaque,
+                    80.0, // height of the 2D field in pixels (half of square)
                 ) {
                     changed = true;
                     color[0] = color32.r();
