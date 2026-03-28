@@ -223,6 +223,10 @@ pub struct EditorApp {
     pub(crate) show_about_panel: bool,
     /// Layout hints for vertical alignment (cached heights)
     pub(crate) layout_state: LayoutState,
+    /// Initial history size (to detect added snapshots for revert)
+    pub(crate) initial_history_len: usize,
+    /// Initial max history length (to detect changes for revert)
+    pub(crate) initial_max_history_length: usize,
 }
 
 impl EditorApp {
@@ -411,6 +415,8 @@ impl EditorApp {
             #[cfg(target_os = "windows")]
             cached_hwnd: None,
             layout_state: LayoutState::default(),
+            initial_history_len: 0,
+            initial_max_history_length: 1000,
         }
     }
 

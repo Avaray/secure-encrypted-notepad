@@ -52,6 +52,7 @@ impl EditorApp {
             self.perform_search();
         }
         self.replace_undo_stack.clear();
+        self.commit_history_state();
     }
 
     /// New document implementation
@@ -67,6 +68,7 @@ impl EditorApp {
             self.perform_search();
         }
         self.replace_undo_stack.clear();
+        self.commit_history_state();
     }
 
     /// Open file dialog implementation
@@ -154,6 +156,7 @@ impl EditorApp {
                         )
                         .to_string()
                     });
+                    self.commit_history_state();
                     break;
                 }
                 Err(e) => {
@@ -299,7 +302,7 @@ impl EditorApp {
                 } else {
                     t!("actions.log_save_file_success", file = masked_path).to_string()
                 });
-
+                self.commit_history_state();
                 self.refresh_file_tree();
 
                 // Auto-Backup Logic
@@ -784,5 +787,29 @@ Terminal=false"#,
                 self.log_error(t!("actions.log_autosave_failed", e = e));
             }
         }
+    }
+
+    /// Commit the current history state as the "last saved" state
+    pub(crate) fn commit_history_state(&mut self) {
+        self.initial_history_len = self.document.history.len();
+        self.initial_max_history_length = self.document.max_history_length;
+    }
+
+    /// Revert history to its last saved state
+    pub(crate) fn revert_history_changes(&mut self) {
+        // 1. Revert max history length
+        self.document.max_history_length = self.initial_max_history_length;
+
+        // 2. Remove any snapshots added since last save/open
+        if self.document.history.len() > self.initial_history_len {
+            self.document.history.truncate(self.initial_history_len);
+        }
+
+        // 3. Clear soft deletions (mark deleted = false)
+        for entry in &mut self.document.history {
+            entry.deleted = false;
+        }
+
+        self.log_info(t!("history.log_reverted"));
     }
 }

@@ -901,8 +901,25 @@ if ui
                         if ui.button(rust_i18n::t!("settings.no")).clicked() {
                             self.show_clear_history_confirmation = false;
                         }
-                    } else if ui.button(rust_i18n::t!("history.clear_all")).clicked() {
-                        self.show_clear_history_confirmation = true;
+                    } else {
+                        ui.horizontal(|ui| {
+                            if ui.button(rust_i18n::t!("history.clear_all")).clicked() {
+                                self.show_clear_history_confirmation = true;
+                            }
+
+                            let history_changed = self.document.history.iter().any(|e| e.deleted)
+                                || self.document.history.len() != self.initial_history_len
+                                || self.document.max_history_length != self.initial_max_history_length;
+
+                            if history_changed {
+                                if ui.button(rust_i18n::t!("history.revert_changes"))
+                                    .on_hover_text(rust_i18n::t!("history.log_reverted"))
+                                    .clicked()
+                                {
+                                    self.revert_history_changes();
+                                }
+                            }
+                        });
                     }
                 });
             }

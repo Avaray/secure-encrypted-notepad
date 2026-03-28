@@ -386,7 +386,9 @@ history.clear_all: "Wyczyść całą historię"
 history.no_history: "Nie znaleziono wpisów historii"
 history.delete_entry: "Oznacz do usunięcia"
 history.revert_entry: "Przywróć tę wersję"
+history.revert_changes: "Przywróć zmiany"
 history.log_limit_set: "Limit historii dokumentu ustawiony na %{limit}"
+history.log_reverted: "Przywrócono historię do ostatnio zapisanego stanu"
 
 # ═══════════════════════════════════════
 # APP CORE & STATUS

@@ -384,7 +384,9 @@ history.clear_all: "Gesamten Verlauf löschen"
 history.no_history: "Keine Verlaufseinträge gefunden"
 history.delete_entry: "Zum Löschen markieren"
 history.revert_entry: "Auf diese Version zurücksetzen"
+history.revert_changes: "Änderungen verwerfen"
 history.log_limit_set: "Verlaufslimit für Dokument auf %{limit} gesetzt"
+history.log_reverted: "Verlauf auf den letzten gespeicherten Stand zurückgesetzt"
 
 # ═══════════════════════════════════════
 # APP CORE & STATUS
