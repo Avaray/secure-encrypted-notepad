@@ -14,7 +14,6 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Stealth Mode**: Option to save files without the `.sen` extension and without any identifying headers (pure binary noise) to make it impossible to identify the application associated with the file. By default, `.sen` files would load automatically in the file tree, while extensionless "stealth" files would require a background verification process (trial decryption) to be identified and marked.
 - [ ] **Close File Button**: Add a "Close file" button in the menu bar, positioned after "Save as".
 - [ ] **Documentation Deep Audit**: Perform a comprehensive documentation audit using a high-level thinking model.
-- [ ] **Font Autodetection List Polish**: Refine the preferred font lists (UI and Editor) for smart detection, as the current lists are early versions that need better selection.
 - [ ] **Cargo Workspace Refactoring**: Consider refactoring the project into a [workspace](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html) to better support future platforms like Android, allowing shared logic between desktop and mobile versions.
 - [ ] **History Revert Button**: Add a "Revert changes" button in the history panel. If the user marks entries for deletion (single or all) but hasn't saved the file yet, this button should appear and allow reverting history to its last saved state.
 - [ ] **Translation Polish**: Review and refine translations throughout the application to ensure consistency and correctness across all supported languages.
