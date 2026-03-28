@@ -38,7 +38,6 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
     - Fix sizes of copy/paste buttons (should be framed, squared, matching `interact_size.y` height).
     - Replace the native `ui.color_edit_button_srgb` with custom buttons (e.g., `ui.add(egui::Button::image(...).fill(color))`). This allows forcing a square `min_size` matching the input height, eliminating the native selector's rigid dimensions.
     - Use `egui::show_tooltip_for_rect` or `egui::Popup` with `egui::color_picker::color_picker_color32` to display the color adjustment interface only after clicking the custom button.
-- [ ] **Main Color Picker Height**: Reduce the height of the main color picker by half (the square field where X/Y axes are controlled), as it is currently too tall.
 - [ ] **Settings Slider Crash**: Investigate and fix application crashes occurring when rapidly dragging value-based sliders (e.g., Font Size, Line Height, Transparency) in the settings and theme panels.
 - [ ] **Menu Bar Margin Fix (Vertical Position)**: Fix inconsistent horizontal margins when the menu bar is positioned vertically (left/right side).
     - When on the left, the left margin is larger than the right one; when on the right, the right margin is larger than the left one.
