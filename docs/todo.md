@@ -12,10 +12,8 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Logo & App Icon**: Create a new professional logo for SEN and replace the current application icon.
 - [ ] **UI Icon Sets**: Add the ability to change icon sets from a dropdown in settings. This will allow users to choose between different visual styles for the application icons (folders, keys, files, etc.), requiring architectural changes to support dynamic icon loading.
 - [ ] **Stealth Mode**: Option to save files without the `.sen` extension and without any identifying headers (pure binary noise) to make it impossible to identify the application associated with the file. By default, `.sen` files would load automatically in the file tree, while extensionless "stealth" files would require a background verification process (trial decryption) to be identified and marked.
-- [ ] **Close File Button**: Add a "Close file" button in the menu bar, positioned after "Save as".
 - [ ] **Documentation Deep Audit**: Perform a comprehensive documentation audit using a high-level thinking model.
 - [ ] **Cargo Workspace Refactoring**: Consider refactoring the project into a [workspace](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html) to better support future platforms like Android, allowing shared logic between desktop and mobile versions.
-- [ ] **History Revert Button**: Add a "Revert changes" button in the history panel. If the user marks entries for deletion (single or all) but hasn't saved the file yet, this button should appear and allow reverting history to its last saved state.
 - [ ] **Translation Polish**: Review and refine translations throughout the application to ensure consistency and correctness across all supported languages.
 - [ ] **Refactor `center_row` Helper**: Improve or replace the `crate::app_helpers::center_row` helper to ensure consistent vertical centering.
     - It should act like Tailwind's `items-center`, ensuring all elements in the row are perfectly aligned vertically and stay in one line.
@@ -30,9 +28,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
     - Goal: A more user-friendly theme creation process that doesn't sacrifice depth of customization.
 - [ ] **Theme Editor Panel Sizing**: Ensure the Theme Editor panel cannot be resized horizontally beyond its longest content. It must dynamically adapt to changes in UI font size or button padding to maintain perfect constraints.
 - [ ] **Windows Start Menu Integration**: Add an "Add to Start Menu" button (Windows-specific) in settings. It would generate the necessary manifest files and icons to allow pinning a large, high-quality tile for SEN to the Start Menu, bypassing the current limitations of portable apps.
-- [ ] **Hide Hidden Files**: Add an option in settings to hide files and folders starting with a dot (hidden files) from the file tree panel.
 - [ ] **Draggable Dialogs**: Make custom dialog windows (like "Reset Settings") draggable by clicking and dragging their title bar area.
-- [ ] **Auto-save Restore Dialog Layout**: Update the "Restore auto-save" dialog to use two separate text lines for better readability, similar to the "Reset Settings" dialog layout.
 
 ---
 
