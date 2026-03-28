@@ -275,6 +275,14 @@ if ui
 let _ = self.settings.save();
 }
 if ui
+.checkbox(&mut self.settings.hide_hidden_files, rust_i18n::t!("settings.hide_hidden"))
+.on_hover_text(rust_i18n::t!("settings.hide_hidden_tooltip"))
+.changed()
+{
+let _ = self.settings.save();
+self.refresh_file_tree();
+}
+if ui
 .checkbox(&mut self.settings.tree_style_file_tree, rust_i18n::t!("settings.tree_view"))
 .on_hover_text(rust_i18n::t!("settings.tree_view_tooltip"))
 .changed()

@@ -75,6 +75,8 @@ settings.capitalize_names: "Capitalize names"
 settings.capitalize_names_tooltip: "Always display file and folder names in UPPERCASE in the file tree."
 settings.tree_view: "Use Expandable Tree View"
 settings.tree_view_tooltip: "Display folders hierarchically and toggle expansion on click"
+settings.hide_hidden: "Hide hidden files"
+settings.hide_hidden_tooltip: "Hide files and folders starting with a dot"
 settings.no_dir_opened: "No directory opened"
 settings.open_dir: "Open Directory"
 

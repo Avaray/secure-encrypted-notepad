@@ -356,6 +356,16 @@ impl EditorApp {
                         for entry_res in read_dir {
                             if let Ok(entry) = entry_res {
                                 let path = entry.path();
+                                
+                                // Hidden files filter
+                                if self.settings.hide_hidden_files {
+                                    if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
+                                        if name.starts_with('.') {
+                                            continue;
+                                        }
+                                    }
+                                }
+
                                 if path.is_dir() && self.settings.show_subfolders {
                                     folders.push(FileTreeEntry {
                                         path: path.clone(),
@@ -442,6 +452,16 @@ impl EditorApp {
         for entry_res in read_dir {
             if let Ok(entry) = entry_res {
                 let path = entry.path();
+
+                // Hidden files filter
+                if self.settings.hide_hidden_files {
+                    if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
+                        if name.starts_with('.') {
+                            continue;
+                        }
+                    }
+                }
+
                 if path.is_dir() {
                     child_folders.push(path);
                 } else if path.is_file() {

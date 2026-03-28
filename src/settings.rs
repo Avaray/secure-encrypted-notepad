@@ -174,6 +174,9 @@ pub struct Settings {
     /// Hide filename in window title/taskbar
     #[serde(default)]
     pub hide_filename_in_title: bool,
+    /// Hide files starting with a dot
+    #[serde(default)]
+    pub hide_hidden_files: bool,
     /// Max history length
     pub max_history_length: usize,
 
@@ -349,6 +352,7 @@ impl Default for Settings {
             hide_undecryptable_files: false,
             capitalize_tree_names: false,
             hide_filename_in_title: false,
+            hide_hidden_files: true, // Default to true for cleaner view
             zen_mode: false,
             remember_zen_mode: false,
             max_history_length: 100,
