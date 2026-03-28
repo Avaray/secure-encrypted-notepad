@@ -110,6 +110,21 @@ impl EditorApp {
                                     self.settings = crate::settings::Settings::default();
                                     self.settings.start_maximized = was_maximized;
                                     let _ = self.settings.save();
+
+                                    // Apply theme immediately
+                                    let new_theme = self
+                                        .themes
+                                        .iter()
+                                        .find(|t| t.name == self.settings.theme_name)
+                                        .cloned()
+                                        .unwrap_or_else(|| crate::theme::Theme::dark());
+                                    new_theme.apply(ctx);
+                                    self.current_theme = new_theme;
+
+                                    // Apply language immediately
+                                    rust_i18n::set_locale(&self.settings.language);
+                                    self.refresh_file_tree(); // Refresh headers/stats if needed
+
                                     self.show_reset_confirmation = false;
                                     self.style_dirty = true; // Apply default fonts/sizes
                                     self.status_message = t!("dialog.reset_success").to_string();
