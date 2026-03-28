@@ -226,8 +226,25 @@ impl EditorApp {
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
-                ui.set_max_width(350.0);
-                ui.label(t!("dialog.autosave_msg", time = timestamp_str));
+                let font_id = egui::TextStyle::Body.resolve(ui.style());
+                let text1 = t!("dialog.autosave_msg1");
+                let text2 = t!("dialog.autosave_msg2", time = timestamp_str);
+
+                let w1 = ui
+                    .painter()
+                    .layout_no_wrap(text1.to_string(), font_id.clone(), egui::Color32::WHITE)
+                    .rect
+                    .width();
+                let w2 = ui
+                    .painter()
+                    .layout_no_wrap(text2.to_string(), font_id, egui::Color32::WHITE)
+                    .rect
+                    .width();
+
+                ui.set_min_width(w1.max(w2));
+
+                ui.label(text1);
+                ui.label(text2);
                 ui.separator();
 
                 crate::app_helpers::center_row(ui, |ui| {
