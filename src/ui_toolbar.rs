@@ -46,7 +46,7 @@ impl EditorApp {
         // + 1 additional gap for the spacer
         let total_content_h = (17.0 * btn_h) + (3.0 * sep_h) + (20.0 * spacing);
         let min_gap = 16.0;
-        let spacer = (panel_h - total_content_h - 1.0).max(min_gap);
+        let spacer = (panel_h - total_content_h - 8.0).max(min_gap);
 
         egui::ScrollArea::vertical()
             .id_salt("tb_scroll")

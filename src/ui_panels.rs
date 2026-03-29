@@ -831,18 +831,16 @@ if ui
             crate::app_helpers::center_row(ui, |ui| {
                 ui.add(egui::Label::new(rust_i18n::t!("history.max_limit")).selectable(false));
                 let mut temp_limit = doc_max_limit;
-                if ui
-                    .add(
-                        egui::DragValue::new(&mut temp_limit)
-                            .speed(0.5)
-                            .range(1..=1000)
-                            .clamp_existing_to_range(true),
-                    )
-                    .changed()
-                {
+                let response = ui.add(
+                    egui::DragValue::new(&mut temp_limit)
+                        .speed(0.5)
+                        .range(1..=1000)
+                        .clamp_existing_to_range(true),
+                );
+
+                if response.changed() {
                     self.document.set_max_history_length(temp_limit);
                     self.is_modified = true;
-                    self.log_info(rust_i18n::t!("history.log_limit_set", limit = temp_limit));
                 }
             });
             let history_status_color = if history_len > doc_max_limit {
