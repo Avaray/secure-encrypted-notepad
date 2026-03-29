@@ -66,21 +66,7 @@ pub struct ThemeColors {
 
     // --- Interactive Widgets ---
     #[serde(default)]
-    pub checkbox_bg: Option<[u8; 3]>,
-    #[serde(default)]
     pub checkbox_check: Option<[u8; 3]>,
-    #[serde(default)]
-    pub slider_rail: Option<[u8; 3]>,
-    #[serde(default)]
-    pub slider_thumb: Option<[u8; 3]>,
-    #[serde(default)]
-    pub scrollbar_bg: Option<[u8; 3]>,
-    #[serde(default)]
-    pub scrollbar_thumb: Option<[u8; 3]>,
-    #[serde(default)]
-    pub tooltip_bg: Option<[u8; 3]>,
-    #[serde(default)]
-    pub tooltip_text: Option<[u8; 3]>,
 
     // --- Editor Additions ---
     #[serde(default)]
@@ -169,14 +155,7 @@ impl ThemeColors {
             weak_text: None,
             strong_text: None,
             hyperlink: None,
-            checkbox_bg: None,
             checkbox_check: None,
-            slider_rail: None,
-            slider_thumb: None,
-            scrollbar_bg: None,
-            scrollbar_thumb: None,
-            tooltip_bg: None,
-            tooltip_text: None,
             editor_background: None,
             text_edit_bg: None,
             selection_text: None,
@@ -229,14 +208,7 @@ impl ThemeColors {
             weak_text: None,
             strong_text: None,
             hyperlink: None,
-            checkbox_bg: None,
             checkbox_check: None,
-            slider_rail: None,
-            slider_thumb: None,
-            scrollbar_bg: None,
-            scrollbar_thumb: None,
-            tooltip_bg: None,
-            tooltip_text: None,
             editor_background: None,
             text_edit_bg: None,
             selection_text: None,
@@ -496,6 +468,16 @@ impl Theme {
         if let Some(s) = self.colors.shadow_spread {
             visuals.window_shadow.spread = s as u8;
             visuals.popup_shadow.spread = s as u8;
+        }
+
+        // When both spread and blur are zero, force shadow to be invisible
+        {
+            let spread = self.colors.shadow_spread.unwrap_or(0.0);
+            let blur = self.colors.shadow_blur.unwrap_or(0.0);
+            if spread == 0.0 && blur == 0.0 {
+                visuals.window_shadow.color = egui::Color32::TRANSPARENT;
+                visuals.popup_shadow.color = egui::Color32::TRANSPARENT;
+            }
         }
 
         if let Some(x) = self.colors.shadow_offset_x {

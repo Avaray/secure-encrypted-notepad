@@ -167,7 +167,7 @@ impl EditorApp {
             }
         });
 
-        let was_empty = if lines_to_toggle.len() == 1 {
+        let _was_empty = if lines_to_toggle.len() == 1 {
             let line_idx = lines_to_toggle[0];
             line_idx < lines.len() && lines[line_idx].trim_start().is_empty()
         } else {
@@ -218,12 +218,20 @@ impl EditorApp {
         *text = new_lines.join("\n");
         self.is_modified = true;
 
-        if lines_to_toggle.len() == 1 && was_empty && !all_commented {
+        if lines_to_toggle.len() == 1 {
             if let Some(id) = self.text_edit_id {
                 if let Some(mut state) = egui::TextEdit::load_state(ctx, id) {
                     if let Some(mut range) = state.cursor.char_range() {
-                        range.primary.index += added_len;
-                        range.secondary.index += added_len;
+                        if all_commented {
+                            // Uncommenting: shift cursor left by the removed prefix length
+                            let shift = added_len;
+                            range.primary.index = range.primary.index.saturating_sub(shift);
+                            range.secondary.index = range.secondary.index.saturating_sub(shift);
+                        } else {
+                            // Commenting: shift cursor right by added prefix length
+                            range.primary.index += added_len;
+                            range.secondary.index += added_len;
+                        }
                         state.cursor.set_char_range(Some(range));
                         state.store(ctx, id);
                     }
@@ -841,7 +849,7 @@ impl EditorApp {
                 }
             }
 
-            // Draw manual selection highlights
+            // Draw manual selection highlights (on background layer, so text renders on top)
             if cursor_range.primary != cursor_range.secondary {
                 let (min_idx, max_idx) =
                     if cursor_range.primary.index < cursor_range.secondary.index {
@@ -849,6 +857,13 @@ impl EditorApp {
                     } else {
                         (cursor_range.secondary.index, cursor_range.primary.index)
                     };
+
+                // Use a background-layer painter so the selection renders beneath the text
+                let bg_layer = egui::LayerId::new(
+                    egui::Order::Background,
+                    output.response.id.with("selection_bg"),
+                );
+                let bg_painter = ui.ctx().layer_painter(bg_layer);
 
                 let mut current_char_idx = 0;
                 for row in &galley.rows {
@@ -881,7 +896,7 @@ impl EditorApp {
                             ),
                         );
 
-                        ui.painter()
+                        bg_painter
                             .rect_filled(rect, 0.0, selection_color.linear_multiply(0.7));
                     }
                     current_char_idx = row_end_idx;

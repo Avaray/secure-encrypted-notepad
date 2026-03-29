@@ -2451,19 +2451,6 @@ if ui
                                             theme_changed = true;
                                         }
                                         if edit_optional_color(
-                                            &rust_i18n::t!("theme.chk_bg"),
-                                            &mut theme.colors.checkbox_bg,
-                                            [50, 50, 50],
-                                            "chk_bg_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_chk_bg"),
-                                            ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
                                             &rust_i18n::t!("theme.chk_check"),
                                             &mut theme.colors.checkbox_check,
                                             [200, 200, 200],
@@ -2472,84 +2459,6 @@ if ui
                                             last_copied_id,
                                             last_copied_time,
                                             ls.get_height("th_chk_chk"),
-                                            ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.slider_rail"),
-                                            &mut theme.colors.slider_rail,
-                                            [60, 60, 60],
-                                            "slide_rail_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_slide_rail"),
-                                            ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.slider_thumb"),
-                                            &mut theme.colors.slider_thumb,
-                                            [180, 180, 180],
-                                            "slide_thumb_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_slide_thumb"),
-                                            ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.scroll_bg"),
-                                            &mut theme.colors.scrollbar_bg,
-                                            [30, 30, 30],
-                                            "scroll_bg_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_scroll_bg"),
-                                            ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.scroll_thumb"),
-                                            &mut theme.colors.scrollbar_thumb,
-                                            [120, 120, 120],
-                                            "scroll_thumb_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_scroll_thumb"),
-                                            ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.tooltip_bg"),
-                                            &mut theme.colors.tooltip_bg,
-                                            [20, 20, 20],
-                                            "tooltip_bg_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_tooltip_bg"),
-                                            ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.tooltip_text"),
-                                            &mut theme.colors.tooltip_text,
-                                            [220, 220, 220],
-                                            "tooltip_txt_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_tooltip_txt"),
                                             ui,
                                         ) {
                                             theme_changed = true;
