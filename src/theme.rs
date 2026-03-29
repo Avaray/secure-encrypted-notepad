@@ -88,23 +88,24 @@ pub struct ThemeColors {
     #[serde(default)]
     pub text_edit_bg: Option<[u8; 3]>,
     #[serde(default)]
-    pub focus_outline: Option<[u8; 3]>,
-    #[serde(default)]
     pub selection_text: Option<[u8; 3]>,
 
-    // --- Geometry & Borders ---
+    // --- Geometry & Borders (unified for all interactive widgets) ---
     #[serde(default)]
     pub window_rounding: Option<f32>,
-    #[serde(default)]
-    pub button_rounding: Option<f32>,
-    #[serde(default)]
-    pub button_border_width: Option<f32>,
-    #[serde(default)]
-    pub button_border_color: Option<[u8; 3]>,
-    #[serde(default)]
-    pub button_padding_x: Option<f32>,
-    #[serde(default)]
-    pub button_padding_y: Option<f32>,
+    #[serde(default, alias = "button_rounding", alias = "input_rounding")]
+    pub widget_rounding: Option<f32>,
+    #[serde(default, alias = "button_border_width")]
+    pub widget_border_width: Option<f32>,
+    #[serde(default, alias = "button_border_color", alias = "input_border_color")]
+    pub widget_border_color: Option<[u8; 3]>,
+    #[serde(default, alias = "button_padding_x")]
+    pub widget_padding_x: Option<f32>,
+    #[serde(default, alias = "button_padding_y")]
+    pub widget_padding_y: Option<f32>,
+    /// Focus/selection border color for all interactive widgets
+    #[serde(default, alias = "focus_outline", alias = "input_focus_border_color")]
+    pub widget_focus_border: Option<[u8; 3]>,
     #[serde(default)]
     pub separator_width: Option<f32>,
     #[serde(default)]
@@ -128,17 +129,6 @@ pub struct ThemeColors {
     #[serde(default)]
     pub button_active_border_color: Option<[u8; 3]>,
 
-    // --- Granular Input Fields ---
-    #[serde(default)]
-    pub input_bg: Option<[u8; 3]>,
-    #[serde(default)]
-    pub input_fg: Option<[u8; 3]>,
-    #[serde(default)]
-    pub input_border_color: Option<[u8; 3]>,
-    #[serde(default)]
-    pub input_focus_border_color: Option<[u8; 3]>,
-    #[serde(default)]
-    pub input_rounding: Option<f32>,
     /// Color for tree view lines (indentation guides)
     #[serde(default)]
     pub tree_line: Option<[u8; 3]>,
@@ -189,14 +179,14 @@ impl ThemeColors {
             tooltip_text: None,
             editor_background: None,
             text_edit_bg: None,
-            focus_outline: None,
             selection_text: None,
             window_rounding: None,
-            button_rounding: None,
-            button_border_width: None,
-            button_border_color: None,
-            button_padding_x: None,
-            button_padding_y: None,
+            widget_rounding: None,
+            widget_border_width: None,
+            widget_border_color: None,
+            widget_padding_x: None,
+            widget_padding_y: None,
+            widget_focus_border: None,
             separator_width: None,
             shadow_color: None,
             shadow_blur: None,
@@ -207,11 +197,6 @@ impl ThemeColors {
             button_active_fg: None,
             button_hover_border_color: None,
             button_active_border_color: None,
-            input_bg: None,
-            input_fg: None,
-            input_border_color: None,
-            input_focus_border_color: None,
-            input_rounding: None,
             tree_line: None,
         }
     }
@@ -254,14 +239,14 @@ impl ThemeColors {
             tooltip_text: None,
             editor_background: None,
             text_edit_bg: None,
-            focus_outline: None,
             selection_text: None,
             window_rounding: None,
-            button_rounding: None,
-            button_border_width: None,
-            button_border_color: None,
-            button_padding_x: None,
-            button_padding_y: None,
+            widget_rounding: None,
+            widget_border_width: None,
+            widget_border_color: None,
+            widget_padding_x: None,
+            widget_padding_y: None,
+            widget_focus_border: None,
             separator_width: None,
             shadow_color: None,
             shadow_blur: None,
@@ -272,11 +257,6 @@ impl ThemeColors {
             button_active_fg: None,
             button_hover_border_color: None,
             button_active_border_color: None,
-            input_bg: None,
-            input_fg: None,
-            input_border_color: None,
-            input_focus_border_color: None,
-            input_rounding: None,
             tree_line: None,
         }
     }
@@ -480,9 +460,15 @@ impl Theme {
         }
         if let Some(fg) = self.colors.button_fg {
             let fg_color = self.colors.to_egui_color32(fg);
+            // Only set inactive; hover/active have their own explicit fields
             visuals.widgets.inactive.fg_stroke.color = fg_color;
-            visuals.widgets.hovered.fg_stroke.color = fg_color;
-            visuals.widgets.active.fg_stroke.color = fg_color;
+            // Also set hover/active as fallback, but specific overrides below will take priority
+            if self.colors.button_hover_fg.is_none() {
+                visuals.widgets.hovered.fg_stroke.color = fg_color;
+            }
+            if self.colors.button_active_fg.is_none() {
+                visuals.widgets.active.fg_stroke.color = fg_color;
+            }
         }
 
         // Apply Separator Color
@@ -491,8 +477,8 @@ impl Theme {
             visuals.widgets.noninteractive.bg_stroke.color = sep_color; // Used for separators
         }
 
-        // Apply Focus Outline
-        if let Some(c) = self.colors.focus_outline {
+        // Apply Focus/Selection Border (unified)
+        if let Some(c) = self.colors.widget_focus_border {
             visuals.selection.stroke = egui::Stroke::new(1.0, self.colors.to_egui_color32(c));
         }
 
@@ -536,33 +522,6 @@ impl Theme {
             visuals.widgets.active.bg_stroke.color = self.colors.to_egui_color32(c);
         }
 
-        // --- Apply Input Field Styles ---
-        if let Some(bg) = self.colors.input_bg {
-            visuals.extreme_bg_color = self.colors.to_egui_color32(bg);
-            // Also apply to text_edit_bg if explicitly requested as input_bg
-            visuals.widgets.active.bg_fill = self.colors.to_egui_color32(bg);
-            visuals.widgets.hovered.bg_fill = self.colors.to_egui_color32(bg);
-        }
-
-        if let Some(fg) = self.colors.input_fg {
-            let color = self.colors.to_egui_color32(fg);
-            // extreme_bg has no fg, it uses widget fg usually.
-            // We set it on active/hovered to affect focused inputs.
-            visuals.widgets.active.fg_stroke.color = color;
-            visuals.widgets.hovered.fg_stroke.color = color;
-        }
-
-        if let Some(c) = self.colors.input_border_color {
-            let color = self.colors.to_egui_color32(c);
-            let stroke = egui::Stroke::new(1.0, color);
-            visuals.widgets.inactive.bg_stroke = stroke;
-            visuals.widgets.hovered.bg_stroke = stroke;
-        }
-
-        if let Some(c) = self.colors.input_focus_border_color {
-            visuals.selection.stroke.color = self.colors.to_egui_color32(c);
-        }
-
         ctx.set_visuals(visuals);
 
         // --- Apply Global Style Additions ---
@@ -572,7 +531,8 @@ impl Theme {
             style.visuals.window_corner_radius = egui::CornerRadius::same(r as u8);
         }
 
-        if let Some(r) = self.colors.button_rounding {
+        // Unified widget rounding (applies to buttons, inputs, checkboxes, etc.)
+        if let Some(r) = self.colors.widget_rounding {
             let radius = egui::CornerRadius::same(r as u8);
             style.visuals.widgets.noninteractive.corner_radius = radius;
             style.visuals.widgets.inactive.corner_radius = radius;
@@ -581,37 +541,30 @@ impl Theme {
             style.visuals.widgets.open.corner_radius = radius;
         }
 
-        if let Some(r) = self.colors.input_rounding {
-            let radius = egui::CornerRadius::same(r as u8);
-            style.visuals.widgets.inactive.corner_radius = radius;
-            style.visuals.widgets.hovered.corner_radius = radius;
-            style.visuals.widgets.active.corner_radius = radius;
-        }
-
-        if let Some(w) = self.colors.button_border_width {
+        // Unified widget border width
+        if let Some(w) = self.colors.widget_border_width {
             style.visuals.widgets.inactive.bg_stroke.width = w;
             style.visuals.widgets.hovered.bg_stroke.width = w;
             style.visuals.widgets.active.bg_stroke.width = w;
         }
 
-        if let Some(c) = self.colors.button_border_color {
+        // Unified widget border color (idle state)
+        if let Some(c) = self.colors.widget_border_color {
             let stroke_color = self.colors.to_egui_color32(c);
             style.visuals.widgets.inactive.bg_stroke.color = stroke_color;
         }
 
-        if let Some(x) = self.colors.button_padding_x {
+        // Unified widget padding
+        if let Some(x) = self.colors.widget_padding_x {
             style.spacing.button_padding.x = x;
         }
-        if let Some(y) = self.colors.button_padding_y {
+        if let Some(y) = self.colors.widget_padding_y {
             style.spacing.button_padding.y = y;
         }
 
+        // Separator width — only affects noninteractive bg_stroke width
         if let Some(w) = self.colors.separator_width {
             style.visuals.widgets.noninteractive.bg_stroke.width = w;
-        }
-
-        if let Some(c) = self.colors.scrollbar_bg {
-            style.visuals.extreme_bg_color = self.colors.to_egui_color32(c); // Often used as scrollbar rail fallback
         }
 
         // Increase checkbox (icon) size
