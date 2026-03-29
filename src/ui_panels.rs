@@ -544,11 +544,12 @@ ui.close_kind(egui::UiKind::Menu);
 }
 }
 });
-if changed {
+    if changed {
 self.settings.ui_font_family =
 self.available_fonts[self.ui_font_index].clone();
 let _ = self.settings.save();
 self.style_dirty = true;
+self.fonts_dirty = true;
 self.log_info(format!(
 "UI font changed to: {}",
 self.settings.ui_font_family
@@ -558,17 +559,17 @@ self.settings.ui_font_family
 });
                     let h = ls.get_height("set_ui_font_sz");
                     crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.ui_font_size"), h, |ui| {
-if ui
-.add(
+let response = ui.add(
 egui::DragValue::new(&mut self.settings.ui_font_size)
 .speed(0.5)
 .range(8.0..=128.0),
-)
-.changed()
-{
+);
+if response.changed() {
 self.settings.validate_font_sizes();
-let _ = self.settings.save();
 self.style_dirty = true;
+}
+if response.drag_stopped() || (response.changed() && response.lost_focus()) {
+let _ = self.settings.save();
 }
 });
 ui.separator();
@@ -621,6 +622,7 @@ self.settings.editor_font_family =
 self.available_fonts[self.editor_font_index].clone();
 let _ = self.settings.save();
 self.style_dirty = true;
+self.fonts_dirty = true;
 self.log_info(format!(
 "Editor font changed to: {}",
 self.settings.editor_font_family
@@ -630,63 +632,62 @@ self.settings.editor_font_family
 });
                     let h = ls.get_height("set_ed_font_sz");
                     crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.editor_font_size"), h, |ui| {
-if ui
-.add(
+let response = ui.add(
 egui::DragValue::new(&mut self.settings.editor_font_size)
 .speed(0.5)
 .range(8.0..=128.0),
-)
-.changed()
-{
+);
+if response.changed() {
 self.settings.validate_font_sizes();
-let _ = self.settings.save();
 self.style_dirty = true;
+}
+if response.drag_stopped() || (response.changed() && response.lost_focus()) {
+let _ = self.settings.save();
 }
 });
                     let h = ls.get_height("set_line_h");
                     crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.line_height"), h, |ui| {
-            if ui
-                .add(
-                    egui::DragValue::new(&mut self.settings.line_height)
-                        .speed(0.05)
-                        .range(1.0..=2.5)
-                        .max_decimals(2)
-                )
-.changed()
-{
-let _ = self.settings.save();
-}
+            let response = ui.add(
+                egui::DragValue::new(&mut self.settings.line_height)
+                    .speed(0.05)
+                    .range(1.0..=2.5)
+                    .max_decimals(2)
+            );
+            
+            if response.drag_stopped() || (response.changed() && response.lost_focus()) {
+                let _ = self.settings.save();
+            }
 });
 // Global Scroll Speed
 crate::app_helpers::center_row(ui, |ui| {
     ui.add(egui::Label::new(rust_i18n::t!("settings.scroll_speed")).selectable(false));
     let mut mult = self.settings.scroll_speed_multiplier;
-    if ui
-        .add(
-            egui::DragValue::new(&mut mult)
-                .speed(0.1)
-                .range(1.0..=10.0)
-                .clamp_existing_to_range(true),
-        )
-        .on_hover_text(rust_i18n::t!("settings.scroll_speed_tooltip"))
-        .changed()
-    {
+    let response = ui.add(
+        egui::DragValue::new(&mut mult)
+            .speed(0.1)
+            .range(1.0..=10.0)
+            .clamp_existing_to_range(true),
+    )
+    .on_hover_text(rust_i18n::t!("settings.scroll_speed_tooltip"));
+    
+    if response.changed() {
         self.settings.scroll_speed_multiplier = mult;
+    }
+    if response.drag_stopped() || (response.changed() && response.lost_focus()) {
         let _ = self.settings.save();
     }
 });
 // Toolbar icon size
 crate::app_helpers::center_row(ui, |ui| {
 ui.add(egui::Label::new(rust_i18n::t!("settings.toolbar_icon_size")).selectable(false));
-if ui
-.add(
+let response = ui.add(
 egui::DragValue::new(&mut self.settings.toolbar_icon_size)
 .speed(1.0)
 .range(12.0..=96.0)
 .clamp_existing_to_range(true),
-)
-.changed()
-{
+);
+
+if response.drag_stopped() || (response.changed() && response.lost_focus()) {
 let _ = self.settings.save();
 }
 });

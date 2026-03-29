@@ -68,8 +68,6 @@ impl EditorApp {
 
     /// Update UI style + fonts based on settings
     pub(crate) fn apply_style(&self, ctx: &egui::Context) {
-        self.load_custom_fonts(ctx);
-
         ctx.style_mut(|style| {
             use egui::{FontFamily, FontId, TextStyle};
 

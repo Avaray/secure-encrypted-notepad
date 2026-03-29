@@ -134,6 +134,7 @@ pub struct EditorApp {
 
     // Style dirty flag
     pub(crate) style_dirty: bool,
+    pub(crate) fonts_dirty: bool,
 
     // Search state
     pub show_search_panel: bool,
@@ -397,6 +398,7 @@ impl EditorApp {
             last_modification_time: Instant::now(),
 
             style_dirty: true, // Apply style on startup
+            fonts_dirty: true, // Load fonts on startup
             reset_scroll_x_pending: false,
             previous_cursor_byte_pos: None,
             text_edit_id: None,
@@ -885,6 +887,11 @@ impl eframe::App for EditorApp {
                 ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
                 self.check_changes_before_action(PendingAction::Exit);
             }
+        }
+
+        if self.fonts_dirty {
+            self.load_custom_fonts(ctx);
+            self.fonts_dirty = false;
         }
 
         // Apply styles & font sizes if dirty
