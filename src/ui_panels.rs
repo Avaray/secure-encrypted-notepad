@@ -1452,142 +1452,73 @@ if ui
                                                     .cloned()
                                                     .unwrap_or(KeyStatus::Unknown);
 
-                                                if tree_on {
-                                                    let color = match status {
-                                                        KeyStatus::Decryptable => self
-                                                            .current_theme
-                                                            .colors
-                                                            .success_color(),
-                                                        KeyStatus::WrongKey => {
-                                                            self.current_theme.colors.error_color()
-                                                        }
-                                                        KeyStatus::Unknown => self
-                                                            .current_theme
-                                                            .colors
-                                                            .warning_color(),
-                                                        _ => ui.visuals().weak_text_color(),
-                                                    };
-
-                                                    let pulse_alpha = if self.keyfile_path.is_none()
-                                                    {
-                                                        (0.1 + 0.9
-                                                            * (self
-                                                                .start_time
-                                                                .elapsed()
-                                                                .as_secs_f32()
-                                                                * 3.0)
-                                                                .cos()
-                                                                .abs())
-                                                            as f32
-                                                    } else {
-                                                        1.0
-                                                    };
-
-                                                    let icon = match status {
-                                                        KeyStatus::Unknown => {
-                                                            &self.icons.unknown_file
-                                                        }
-                                                        KeyStatus::WrongKey => {
-                                                            &self.icons.locked_file
-                                                        }
-                                                        KeyStatus::Decryptable => {
-                                                            &self.icons.asterisk_file
-                                                        }
-                                                        _ => &self.icons.status_dot,
-                                                    };
-
-                                                    let font_id =
-                                                        egui::TextStyle::Button.resolve(ui.style());
-                                                    let icon_size = ui.text_style_height(
-                                                        &egui::TextStyle::Button,
-                                                    );
-
-                                                    let truncated_name = self.smart_truncate_text(
-                                                        ui,
-                                                        &display_name,
-                                                        font_id,
-                                                        (ui.available_width()
-                                                            - icon_size
-                                                            - ui.spacing().button_padding.x * 2.0
-                                                            - ui.spacing().item_spacing.x
-                                                            - 8.0)
-                                                            .max(10.0),
-                                                    );
-
-                                                    if ui
-                                                        .add(egui::Button::image_and_text(
-                                                            egui::Image::new(icon)
-                                                                .fit_to_exact_size(egui::vec2(
-                                                                    icon_size, icon_size,
-                                                                ))
-                                                                .tint(
-                                                                    color.gamma_multiply(
-                                                                        pulse_alpha,
-                                                                    ),
-                                                                ),
-                                                            truncated_name,
-                                                        ))
-                                                        .clicked()
-                                                    {
-                                                        self.open_file(path.clone());
+                                                let color = match status {
+                                                    KeyStatus::Decryptable => {
+                                                        self.current_theme.colors.success_color()
                                                     }
+                                                    KeyStatus::WrongKey => {
+                                                        self.current_theme.colors.error_color()
+                                                    }
+                                                    KeyStatus::Unknown => {
+                                                        self.current_theme.colors.warning_color()
+                                                    }
+                                                    _ => ui.visuals().weak_text_color(),
+                                                };
+
+                                                let pulse_alpha = if self.keyfile_path.is_none() {
+                                                    (0.1 + 0.9
+                                                        * (self.start_time.elapsed().as_secs_f32()
+                                                            * 3.0)
+                                                            .cos()
+                                                            .abs()) as f32
                                                 } else {
-                                                    // Simple View (Icon + Text)
-                                                    let color = match status {
-                                                        KeyStatus::Decryptable => self
-                                                            .current_theme
-                                                            .colors
-                                                            .success_color(),
-                                                        KeyStatus::WrongKey => {
-                                                            self.current_theme.colors.error_color()
-                                                        }
-                                                        _ => ui.visuals().text_color(),
-                                                    };
+                                                    1.0
+                                                };
 
-                                                    let icon = match status {
-                                                        KeyStatus::Unknown => {
-                                                            &self.icons.unknown_file
-                                                        }
-                                                        KeyStatus::WrongKey => {
-                                                            &self.icons.locked_file
-                                                        }
-                                                        KeyStatus::Decryptable => {
-                                                            &self.icons.asterisk_file
-                                                        }
-                                                        _ => &self.icons.key,
-                                                    };
-
-                                                    let icon_size = ui.text_style_height(
-                                                        &egui::TextStyle::Button,
-                                                    );
-                                                    let btn_font =
-                                                        egui::TextStyle::Button.resolve(ui.style());
-
-                                                    let truncated_name = self.smart_truncate_text(
-                                                        ui,
-                                                        &display_name,
-                                                        btn_font,
-                                                        (ui.available_width()
-                                                            - icon_size
-                                                            - ui.spacing().button_padding.x * 2.0
-                                                            - ui.spacing().item_spacing.x
-                                                            - 8.0)
-                                                            .max(10.0),
-                                                    );
-
-                                                    if ui
-                                                        .add(egui::Button::image_and_text(
-                                                            egui::Image::new(icon)
-                                                                .fit_to_exact_size(egui::vec2(
-                                                                    icon_size, icon_size,
-                                                                ))
-                                                                .tint(color),
-                                                            truncated_name,
-                                                        ))
-                                                        .clicked()
-                                                    {
-                                                        self.open_file(path.clone());
+                                                let icon = match status {
+                                                    KeyStatus::Unknown => &self.icons.unknown_file,
+                                                    KeyStatus::WrongKey => &self.icons.locked_file,
+                                                    KeyStatus::Decryptable => {
+                                                        &self.icons.asterisk_file
                                                     }
+                                                    _ => {
+                                                        if tree_on {
+                                                            &self.icons.status_dot
+                                                        } else {
+                                                            &self.icons.key
+                                                        }
+                                                    }
+                                                };
+
+                                                let font_id =
+                                                    egui::TextStyle::Button.resolve(ui.style());
+                                                let icon_size = ui
+                                                    .text_style_height(&egui::TextStyle::Button);
+
+                                                let truncated_name = self.smart_truncate_text(
+                                                    ui,
+                                                    &display_name,
+                                                    font_id,
+                                                    (ui.available_width()
+                                                        - icon_size
+                                                        - ui.spacing().button_padding.x * 2.0
+                                                        - ui.spacing().item_spacing.x
+                                                        - 8.0)
+                                                        .max(10.0),
+                                                );
+
+                                                if ui
+                                                    .add(egui::Button::image_and_text(
+                                                        egui::Image::new(icon)
+                                                            .fit_to_exact_size(egui::vec2(
+                                                                icon_size, icon_size,
+                                                            ))
+                                                            .tint(color.gamma_multiply(pulse_alpha)),
+                                                        truncated_name,
+                                                    ))
+                                                    .clicked()
+                                                {
+                                                    self.open_file(path.clone());
                                                 }
                                             } else {
                                                 // Non-SEN file
