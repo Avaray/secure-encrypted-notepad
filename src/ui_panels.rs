@@ -714,11 +714,11 @@ let _ = self.settings.save();
             crate::app_helpers::center_row(ui, |ui| {
                 ui.add(
                     egui::Button::new(rust_i18n::t!("settings.language"))
-                        .frame(false) // Wyłącza tło i ramkę - wygląda jak czysty tekst!
-                        .sense(egui::Sense::hover()) // Sprawia, że nie da się w to kliknąć
+                        .frame(false) // Disables background and border - looks like plain text!
+                        .sense(egui::Sense::hover()) // Makes it non-clickable
                 );
 
-                // Używamy text_height dla flagi
+                // We use text_height for the flag
                 ui.add(egui::Image::new(current_icon).max_height(text_height).maintain_aspect_ratio(true));
 
                 egui::ComboBox::from_id_salt("language_selector")
@@ -728,7 +728,7 @@ let _ = self.settings.save();
                             let is_selected = self.settings.language == code;
                             let mut clicked = false;
                             ui.horizontal(|ui| {
-                                // Tutaj też używamy text_height
+                                // We also use text_height here
                                 ui.add(egui::Image::new(icon).max_height(text_height).maintain_aspect_ratio(true));
                                 if ui.selectable_label(is_selected, label).clicked() {
                                     self.settings.language = code.to_string();
