@@ -93,11 +93,15 @@ impl EditorApp {
                     crate::app_helpers::center_row(ui, |ui| {
                         ui.label(t!("dialog.reset_slider"));
                         ui.spacing_mut().slider_width = ui.available_width();
+                        let slider_bg = ui.visuals().widgets.inactive.bg_fill;
+                        // Hide slider rail after thumbnail
+                        ui.visuals_mut().widgets.inactive.bg_fill = egui::Color32::TRANSPARENT;
                         ui.add(
                             egui::Slider::new(&mut self.reset_slider_val, 0.0..=1.0)
                                 .show_value(false)
                                 .trailing_fill(true),
                         );
+                        ui.visuals_mut().widgets.inactive.bg_fill = slider_bg;
                     });
                     ui.add_space(8.0);
 
@@ -119,7 +123,9 @@ impl EditorApp {
                                         .cloned()
                                         .unwrap_or_else(|| crate::theme::Theme::dark());
                                     new_theme.apply(ctx);
-                                    self.current_theme = new_theme;
+                                    self.current_theme = new_theme.clone();
+                                    self.editing_theme = Some(new_theme.clone());
+                                    self.original_editing_theme = Some(new_theme);
 
                                     // Apply language immediately
                                     rust_i18n::set_locale(&self.settings.language);

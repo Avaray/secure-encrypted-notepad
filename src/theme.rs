@@ -510,7 +510,9 @@ impl Theme {
         let mut style = (*ctx.style()).clone();
 
         if let Some(r) = self.colors.window_rounding {
-            style.visuals.window_corner_radius = egui::CornerRadius::same(r as u8);
+            let radius = egui::CornerRadius::same(r as u8);
+            style.visuals.window_corner_radius = radius;
+            style.visuals.menu_corner_radius = radius;
         }
 
         // Unified widget rounding (applies to buttons, inputs, checkboxes, etc.)
