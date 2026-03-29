@@ -15,7 +15,11 @@ impl EditorApp {
                 .show(ctx, |ui| {
                     let font_id = egui::TextStyle::Body.resolve(ui.style());
                     let text1 = t!("dialog.unsaved_line1");
-                    let text2 = t!("dialog.unsaved_line2");
+                    let text2 = if self.keyfile_path.is_none() {
+                        t!("dialog.unsaved_line2_no_key")
+                    } else {
+                        t!("dialog.unsaved_line2")
+                    };
 
                     let w1 = ui
                         .painter()
@@ -35,16 +39,40 @@ impl EditorApp {
                     ui.add_space(8.0);
 
                     crate::app_helpers::center_row(ui, |ui| {
-                        if ui.button(t!("dialog.btn_save")).clicked() {
-                            self.save_file();
-                            if !self.is_modified {
-                                self.show_close_confirmation = false;
-                                let action = self.pending_action.clone();
-                                self.pending_action = PendingAction::None;
-                                if let PendingAction::Exit = action {
-                                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                        if self.keyfile_path.is_none() {
+                            if ui.button(t!("dialog.btn_load_key")).clicked() {
+                                self.load_keyfile();
+                                
+                                if self.keyfile_path.is_some() {
+                                    self.save_file();
+                                    if !self.is_modified {
+                                        self.show_close_confirmation = false;
+                                        let action = self.pending_action.clone();
+                                        self.pending_action = PendingAction::None;
+                                        if let PendingAction::Exit = action {
+                                            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                                        } else {
+                                            self.execute_pending_action(action);
+                                        }
+                                    } else {
+                                        self.status_message = t!("dialog.save_failed").to_string();
+                                    }
+                                }
+                            }
+                        } else {
+                            if ui.button(t!("dialog.btn_save")).clicked() {
+                                self.save_file();
+                                if !self.is_modified {
+                                    self.show_close_confirmation = false;
+                                    let action = self.pending_action.clone();
+                                    self.pending_action = PendingAction::None;
+                                    if let PendingAction::Exit = action {
+                                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                                    } else {
+                                        self.execute_pending_action(action);
+                                    }
                                 } else {
-                                    self.execute_pending_action(action);
+                                    self.status_message = t!("dialog.save_failed").to_string();
                                 }
                             }
                         }
@@ -59,9 +87,6 @@ impl EditorApp {
                             } else {
                                 self.execute_pending_action(action);
                             }
-                        } else {
-                            // Save failed or cancelled
-                            self.status_message = t!("dialog.save_failed").to_string();
                         }
 
                         if ui.button(t!("dialog.btn_cancel")).clicked() {
