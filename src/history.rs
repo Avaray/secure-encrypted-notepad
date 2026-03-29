@@ -92,7 +92,7 @@ impl DocumentWithHistory {
             let current_content = file_content[..pos].to_string();
             let history_json = &file_content[pos + HISTORY_SEPARATOR.len()..];
 
-            // Deserializuj jako obiekt z history, max_history_length i autosave
+            // Deserialize as object with history, max_history_length and autosave
             #[derive(Deserialize)]
             struct HistoryData {
                 history: Vec<HistoryEntry>,
@@ -110,7 +110,7 @@ impl DocumentWithHistory {
                     autosave: data.autosave,
                 }
             } else {
-                // Fallback: old format - tylko array historii
+                // Fallback: old format - history array only
                 let history: Vec<HistoryEntry> =
                     serde_json::from_str(history_json).unwrap_or_default();
                 Self {
@@ -171,10 +171,10 @@ impl DocumentWithHistory {
     /// Add new snapshot to history (with automatic trimming)
     /// Returns `true` if snapshot was added, `false` if content unchanged
     pub fn add_snapshot(&mut self, comment: Option<String>) -> bool {
-        // ✅ NOWA LOGIKA: Sprawdź czy content się zmienił
+        // ✅ NEW LOGIC: Check if content has changed
         if let Some(last_entry) = self.history.iter().rev().find(|e| !e.deleted) {
             if last_entry.content == self.current_content {
-                // Zawartość identyczna - nie dodawaj
+                // Identical content - do not add
                 return false;
             }
         }

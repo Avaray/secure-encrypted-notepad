@@ -273,19 +273,19 @@ impl Icons {
 
         let mut pixmap = tiny_skia::Pixmap::new(width, height).expect("Failed to create pixmap");
 
-        // Użyj metody size() zamiast pola
+        // Use the size() method instead of the field
         let tree_size = tree.size();
 
-        // Oblicz transform do skalowania SVG do docelowego rozmiaru
+        // Calculate transform to scale SVG to the target size
         let transform = tiny_skia::Transform::from_scale(
             width as f32 / tree_size.width(),
             height as f32 / tree_size.height(),
         );
 
-        // Renderuj SVG
+        // Render SVG
         resvg::render(&tree, transform, &mut pixmap.as_mut());
 
-        // Konwertuj pixmap do ColorImage dla egui
+        // Convert pixmap to ColorImage for egui
         let pixels: Vec<egui::Color32> = pixmap
             .data()
             .chunks_exact(4)

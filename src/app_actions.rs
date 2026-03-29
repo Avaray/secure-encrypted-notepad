@@ -477,12 +477,12 @@ impl EditorApp {
     }
 
     pub(crate) fn open_file(&mut self, path: PathBuf) {
-        // Pliki sprawdzają zmiany
+        // Files check for unsaved changes
         self.check_changes_before_action(PendingAction::OpenFileFromTree(path));
     }
 
     pub(crate) fn close_file(&mut self) {
-        // Zamykanie pliku sprawdza zmiany
+        // Closing a file checks for unsaved changes
         self.check_changes_before_action(PendingAction::CloseFile);
     }
 
@@ -491,7 +491,7 @@ impl EditorApp {
     }
 
     pub(crate) fn change_directory(&mut self, path: PathBuf) {
-        // POPRAWKA: Foldery NIE sprawdzają zmian - nawigacja jest zawsze dozwolona
+        // FIX: Folders do NOT check for changes - directory navigation is always allowed
         self.perform_change_directory(path);
     }
 

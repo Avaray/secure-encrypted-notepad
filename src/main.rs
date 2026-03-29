@@ -33,7 +33,7 @@ mod settings;
 mod single_instance;
 mod theme;
 
-// Deklaracje modułów dla app
+// Module declarations for app
 mod app;
 mod app_actions;
 mod app_helpers;

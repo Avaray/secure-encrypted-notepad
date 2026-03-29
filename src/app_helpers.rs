@@ -118,10 +118,10 @@ impl EditorApp {
             ]
             .into();
 
-            // Item spacing - zwiększ spacing w pionie
+            // Item spacing - increase vertical spacing
             style.spacing.item_spacing = egui::vec2(8.0, 6.0);
 
-            // Interact size - wysokość interaktywnych elementów
+            // Interact size - height of interactive elements
             style.spacing.interact_size.y = self.settings.ui_font_size + 8.0;
 
             // Text cursor settings
@@ -132,9 +132,9 @@ impl EditorApp {
                 crate::settings::CursorShape::Underscore => 2.0, // Fallback for now, maybe custom draw later
             };
 
-            // Opcjonalnie: window padding
+            // Optional: window padding
             style.spacing.window_margin = egui::Margin::same(8);
-            style.spacing.item_spacing.y = 6.0; // spacing między elementami
+            style.spacing.item_spacing.y = 6.0; // spacing between elements
         });
     }
 
@@ -152,7 +152,7 @@ impl EditorApp {
 
         let text = &mut self.document.current_content;
 
-        // POPRAWKA: Użyj split('\n') zamiast lines() aby zachować końcowe puste linie
+        // FIX: Use split('\n') instead of lines() to preserve trailing empty lines
         let lines: Vec<&str> = text.split('\n').collect();
 
         let comment_prefix = self.settings.comment_prefix.clone();
@@ -214,7 +214,7 @@ impl EditorApp {
             }
         }
 
-        // POPRAWKA: Użyj join('\n') żeby zachować strukturę
+        // FIX: Use join('\n') to preserve structure
         *text = new_lines.join("\n");
         self.is_modified = true;
 
@@ -1072,8 +1072,8 @@ pub fn stateful_center_row<R>(
         |ui| {
             ui.spacing_mut().item_spacing.y = 0.0;
 
-            // Tworzymy scope, aby zmierzyć rzeczywisty rozmiar samej zawartości.
-            // Zwrócony rect będzie ignorował sztywną alokację rodzica.
+            // We create a scope to measure the actual size of the content itself.
+            // The returned rect will ignore the parent's fixed allocation.
             let inner_resp = ui.scope(|ui| add_contents(ui));
 
             (inner_resp.inner, inner_resp.response.rect.height())
@@ -1101,9 +1101,9 @@ pub fn render_settings_row<F>(
     F: FnOnce(&mut egui::Ui),
 {
     stateful_center_row(ui, cached_height, |ui| {
-        // Używamy interact_size.y zamiast cached_height — label NIE może
-        // pompować min_rect do starej wartości, bo to tworzy pętlę
-        // uniemożliwiającą kurczenie się rodzica przy zmniejszaniu paddingów.
+        // We use interact_size.y instead of cached_height — the label MUST NOT
+        // inflate min_rect to the old value, as that creates a loop
+        // preventing the parent from shrinking when padding decreases.
         ui.add_sized(
             [120.0, ui.spacing().interact_size.y],
             egui::Label::new(label).selectable(false),

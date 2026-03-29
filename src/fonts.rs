@@ -64,7 +64,7 @@ pub fn load_font_data(font_name: &str) -> Option<Vec<u8>> {
         // Load font data
         if let Ok(font) = handle.load() {
             if let Some(data) = font.copy_font_data() {
-                // Zmień Ok na Some
+                // Changed Ok to Some
                 return Some(data.to_vec());
             }
         }
