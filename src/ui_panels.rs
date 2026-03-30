@@ -728,7 +728,7 @@ let _ = self.settings.save();
                         let mut lang_row = |ui: &mut egui::Ui, code: &str, label: &str, icon: &egui::TextureHandle| {
                             let is_selected = self.settings.language == code;
                             let mut clicked = false;
-                            ui.horizontal(|ui| {
+                            crate::app_helpers::flex_row(ui, |ui| {
                                 // We also use text_height here
                                 ui.add(egui::Image::new(icon).max_height(text_height).maintain_aspect_ratio(true));
                                 if ui.selectable_label(is_selected, label).clicked() {

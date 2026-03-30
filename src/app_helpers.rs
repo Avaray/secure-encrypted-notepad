@@ -989,37 +989,30 @@ impl EditorApp {
         title: &str,
         subtitle: Option<&str>,
         add_separator: bool,
-        cached_height: &mut f32,
+        _cached_height: &mut f32,
     ) -> bool {
         let mut close_clicked = false;
 
-        crate::app_helpers::stateful_center_row(ui, cached_height, |ui| {
-            ui.add_space(8.0); // Consistent padding from left edge
+        crate::app_helpers::flex_row_between(ui, 
+            |ui| {
+                ui.add_space(8.0); // Consistent padding from left edge
+                let head_font = egui::TextStyle::Heading.resolve(ui.style());
+                let truncated_title = self.smart_truncate_text(ui, title, head_font, ui.available_width() - 80.0);
+                ui.heading(truncated_title);
 
-            let head_font = egui::TextStyle::Heading.resolve(ui.style());
-            let truncated_title =
-                self.smart_truncate_text(ui, title, head_font, ui.available_width() - 80.0);
-            ui.heading(truncated_title);
-
-            if let Some(sub) = subtitle {
-                ui.add_space(8.0);
-                let sub_font = egui::TextStyle::Body.resolve(ui.style());
-                let truncated_sub =
-                    self.smart_truncate_text(ui, sub, sub_font, ui.available_width() - 150.0);
-                ui.label(egui::RichText::new(truncated_sub).weak());
-            }
-
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if let Some(sub) = subtitle {
+                    ui.add_space(8.0);
+                    let sub_font = egui::TextStyle::Body.resolve(ui.style());
+                    let truncated_sub = self.smart_truncate_text(ui, sub, sub_font, ui.available_width() - 150.0);
+                    ui.label(egui::RichText::new(truncated_sub).weak());
+                }
+            },
+            |ui| {
                 ui.add_space(8.0); // Consistent padding from right edge
-                if ui
-                    .button("❌")
-                    .on_hover_text(rust_i18n::t!("app.close_panel"))
-                    .clicked()
-                {
+                if ui.button("❌").on_hover_text(rust_i18n::t!("app.close_panel")).clicked() {
                     close_clicked = true;
                 }
             });
-        });
 
         if add_separator {
             let space = (self.settings.ui_font_size * 0.25).max(2.0).min(6.0);
@@ -1031,80 +1024,80 @@ impl EditorApp {
     }
 }
 
-pub fn center_row<R>(
+pub fn flex_row<R>(
     ui: &mut egui::Ui,
     add_contents: impl FnOnce(&mut egui::Ui) -> R,
 ) -> egui::InnerResponse<R> {
-    // We use the base interaction height to provide a stable vertical axis
-    // for all elements in the row, preventing inconsistencies between
-    // plain labels and interactive widgets.
-    let h = ui.spacing().interact_size.y;
-
     ui.allocate_ui_with_layout(
-        egui::vec2(ui.available_width(), h),
+        egui::vec2(ui.available_width(), 0.0), // 0.0 w pionie wymusza idealne kurczenie się!
         egui::Layout::left_to_right(egui::Align::Center),
         |ui| {
-            ui.spacing_mut().item_spacing.y = 0.0;
+            // Dynamicznie obliczamy wymiar typowego przycisku/comboboxa w obecnym motywie.
+            // Dzięki temu Label narysowany przed ComboBoxem już wie, względem jakiej
+            // wysokości musi się perfekcyjnie wyśrodkować.
+            let text_height = ui.text_style_height(&egui::TextStyle::Button);
+            let padding = ui.spacing().button_padding.y;
+            let interact = ui.spacing().interact_size.y;
+            ui.set_min_height(interact.max(text_height + padding * 2.0));
+
             add_contents(ui)
         },
     )
 }
 
-/// A version of `center_row` that maintains a stable vertical axis by caching the height
-/// from the previous frame. This handles both expansion (growing widgets) and
-/// shrinking (decreasing padding) without one-frame lag or flickering.
-pub fn stateful_center_row<R>(
+pub fn flex_row_between<R1, R2>(
     ui: &mut egui::Ui,
-    cached_height: &mut f32,
-    add_contents: impl FnOnce(&mut egui::Ui) -> R,
-) -> egui::InnerResponse<R> {
-    // Sane default for first frame if not set
-    if *cached_height < 1.0 {
-        *cached_height = ui.spacing().interact_size.y;
-    }
-
-    let result = ui.allocate_ui_with_layout(
-        egui::vec2(ui.available_width(), *cached_height),
+    left_ui: impl FnOnce(&mut egui::Ui) -> R1,
+    right_ui: impl FnOnce(&mut egui::Ui) -> R2,
+) -> (R1, R2) {
+    ui.allocate_ui_with_layout(
+        egui::vec2(ui.available_width(), 0.0),
         egui::Layout::left_to_right(egui::Align::Center),
         |ui| {
-            ui.spacing_mut().item_spacing.y = 0.0;
+            // Analogicznie - ustalamy dynamiczną bazę wysokości, aby zachować balans na osi Y.
+            let text_height = ui.text_style_height(&egui::TextStyle::Button);
+            let padding = ui.spacing().button_padding.y;
+            let interact = ui.spacing().interact_size.y;
+            ui.set_min_height(interact.max(text_height + padding * 2.0));
 
-            // We create a scope to measure the actual size of the content itself.
-            // The returned rect will ignore the parent's fixed allocation.
-            let inner_resp = ui.scope(|ui| add_contents(ui));
-
-            (inner_resp.inner, inner_resp.response.rect.height())
+            let r1 = left_ui(ui);
+            let r2 = ui
+                .with_layout(
+                    egui::Layout::right_to_left(egui::Align::Center),
+                    right_ui,
+                )
+                .inner;
+            (r1, r2)
         },
-    );
-
-    // Update the cache for the next frame
-    if result.inner.1 > 0.0 {
-        *cached_height = result.inner.1;
-    }
-
-    egui::InnerResponse {
-        inner: result.inner.0,
-        response: result.response,
-    }
+    )
+    .inner
 }
 
-/// A standardized row for settings panels: [Label (120px)] | [Content (Fill)]
+pub fn center_row<R>(
+    ui: &mut egui::Ui,
+    add_contents: impl FnOnce(&mut egui::Ui) -> R,
+) -> egui::InnerResponse<R> {
+    flex_row(ui, add_contents)
+}
+
+pub fn stateful_center_row<R>(
+    ui: &mut egui::Ui,
+    _cached_height: &mut f32,
+    add_contents: impl FnOnce(&mut egui::Ui) -> R,
+) -> egui::InnerResponse<R> {
+    flex_row(ui, add_contents)
+}
+
 pub fn render_settings_row<F>(
     ui: &mut egui::Ui,
     label: &str,
-    cached_height: &mut f32,
+    _cached_height: &mut f32,
     add_contents: F,
 ) where
     F: FnOnce(&mut egui::Ui),
 {
-    stateful_center_row(ui, cached_height, |ui| {
-        // We use interact_size.y instead of cached_height — the label MUST NOT
-        // inflate min_rect to the old value, as that creates a loop
-        // preventing the parent from shrinking when padding decreases.
-        ui.add_sized(
-            [120.0, ui.spacing().interact_size.y],
-            egui::Label::new(label).selectable(false),
-        );
+    flex_row(ui, |ui| {
+        ui.label(label);
         add_contents(ui)
     });
 }
