@@ -12,3 +12,4 @@ This document lists all features, ideas, or proposals that are **explicitly not 
 - **Pinned or Favorite Files**: Feature to pin files or add them to favorites is not planned.
 - **Syntax Highlighting**: Not planned because this is just a Notes app, not an IDE.
 - **Markdown Support**: Not planned because this is just a notes app.
+- **File icons**: Not planning to add file icons for the File Explorer panel.
