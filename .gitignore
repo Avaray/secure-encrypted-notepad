@@ -2,3 +2,5 @@
 debug*
 tmp*
 *.py
+*.js
+*.ts
