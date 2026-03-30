@@ -1758,9 +1758,6 @@ if ui
             ui.separator();
             if let Some(ref mut theme) = self.editing_theme {
                 let mut theme_changed = false;
-                let copied_color = &mut self.copied_color;
-                let last_copied_id = &mut self.last_copied_id;
-                let last_copied_time = &mut self.last_copied_time;
                 crate::app_helpers::center_row(ui, |ui| {
                     ui.label(rust_i18n::t!("theme.name_label"));
                     ui.add(
@@ -1811,160 +1808,63 @@ if ui
                             .show(ui, |ui| {
                                 ui.heading(rust_i18n::t!("theme.colors_heading"));
                                 ui.add_space(4.0);
-                                egui::Grid::new("all_theme_colors_grid")
-                                    .num_columns(3)
-                                    .spacing([20.0, 4.0])
-                                    .striped(false)
-                                    .show(ui, |ui| {
+                                ui.vertical(|ui| {
                                         // --- HELPER CLOSURES FOR NEW OPTIONAL FIELDS ---
-                                        let icons = &self.icons;
                                         let edit_optional_color =
-                                            |label: &str,
-                                             field: &mut Option<[u8; 3]>,
-                                             default: [u8; 3],
-                                             id_str: &str,
-                                             copied_color: &mut Option<[u8; 3]>,
-                                             last_copied_id: &mut Option<egui::Id>,
-                                             last_copied_time: &mut f64,
-                                             cached_height: &mut f32,
-                                             ui: &mut egui::Ui|
-                                             -> bool {
-                                                let mut changed = false;
-                                                ui.add(egui::Label::new(label).selectable(false));
-                                                let mut current = field.unwrap_or(default);
-                                                crate::app_helpers::stateful_center_row(
-                                                    ui,
-                                                    cached_height,
-                                                    |ui| {
-                                                        ui.spacing_mut().item_spacing.x = 4.0;
-                                                        if custom_color_picker_button(
-                                                            ui,
-                                                            &mut current,
-                                                            egui::Id::new(id_str),
-                                                        ) {
-                                                            *field = Some(current);
-                                                            changed = true;
-                                                        }
-                                                        if field.is_some() {
-                                                            if ui
-                                                                .button("↺")
-                                                                .on_hover_text(rust_i18n::t!(
-                                                                    "theme.reset_tooltip"
-                                                                ))
-                                                                .clicked()
-                                                            {
-                                                                *field = None;
-                                                                changed = true;
-                                                            }
-                                                        }
-                                                    },
-                                                );
-                                                if let Some(new_color) = render_copy_paste_buttons(
-                                                    ui,
-                                                    current,
-                                                    copied_color,
-                                                    last_copied_id,
-                                                    last_copied_time,
-                                                    egui::Id::new(id_str),
-                                                    icons,
-                                                    cached_height,
-                                                ) {
-                                                    *field = Some(new_color);
-                                                    changed = true;
-                                                }
-                                                ui.end_row();
-                                                changed
-                                            };
+    |label: &str, field: &mut Option<[u8; 3]>, default: [u8; 3], id_str: &str, ui: &mut egui::Ui| -> bool {
+        let mut changed = false;
+        ui.add_space(4.0);
+        crate::app_helpers::render_settings_row(ui, label, &mut 0.0, |ui| {
+            let mut current = field.unwrap_or(default);
+            ui.spacing_mut().item_spacing.x = 4.0;
+            if custom_color_picker_button(ui, &mut current, egui::Id::new(id_str)) {
+                *field = Some(current);
+                changed = true;
+            }
+            if field.is_some() {
+                if ui.button("↺").on_hover_text(rust_i18n::t!("theme.reset_tooltip")).clicked() {
+                    *field = None;
+                    changed = true;
+                }
+            }
+        });
+        changed
+    };
 
                                         let edit_optional_float =
-                                            |label: &str,
-                                             field: &mut Option<f32>,
-                                             default: f32,
-                                             range: std::ops::RangeInclusive<f32>,
-                                             speed: f32,
-                                             cached_height: &mut f32,
-                                             ui: &mut egui::Ui|
-                                             -> bool {
-                                                let mut changed = false;
-                                                ui.add(egui::Label::new(label).selectable(false));
-                                                let mut current = field.unwrap_or(default);
-                                                crate::app_helpers::stateful_center_row(
-                                                    ui,
-                                                    cached_height,
-                                                    |ui| {
-                                                        ui.spacing_mut().item_spacing.x = 4.0;
-                                                        if ui
-                                                            .add(
-                                                                egui::DragValue::new(&mut current)
-                                                                    .speed(speed)
-                                                                    .range(range),
-                                                            )
-                                                            .changed()
-                                                        {
-                                                            *field = Some(current);
-                                                            changed = true;
-                                                        }
-                                                        if field.is_some() {
-                                                            if ui
-                                                                .button("↺")
-                                                                .on_hover_text(rust_i18n::t!(
-                                                                    "theme.reset_tooltip"
-                                                                ))
-                                                                .clicked()
-                                                            {
-                                                                *field = None;
-                                                                changed = true;
-                                                            }
-                                                        }
-                                                    },
-                                                );
-                                                ui.label(""); // Empty label for copy/paste column
-                                                ui.end_row();
-                                                changed
-                                            };
+    |label: &str, field: &mut Option<f32>, default: f32, range: std::ops::RangeInclusive<f32>, speed: f32, ui: &mut egui::Ui| -> bool {
+        let mut changed = false;
+        ui.add_space(4.0);
+        crate::app_helpers::render_settings_row(ui, label, &mut 0.0, |ui| {
+            let mut current = field.unwrap_or(default);
+            ui.spacing_mut().item_spacing.x = 4.0;
+            if ui.add(egui::DragValue::new(&mut current).speed(speed).range(range)).changed() {
+                *field = Some(current);
+                changed = true;
+            }
+            if field.is_some() {
+                if ui.button("↺").on_hover_text(rust_i18n::t!("theme.reset_tooltip")).clicked() {
+                    *field = None;
+                    changed = true;
+                }
+            }
+        });
+        changed
+    };
 
                                         // --- CORE UI BACKGROUNDS & ACCENTS ---
                                         ui.label(
                                             egui::RichText::new(rust_i18n::t!("theme.cat_core"))
                                                 .strong(),
                                         );
-                                        ui.label("");
-                                        ui.label("");
-                                        ui.end_row();
-                                        ui.add(
-                                            egui::Label::new(rust_i18n::t!("theme.bg"))
-                                                .selectable(false),
-                                        );
-                                        if render_color_edit_row(
-                                            ui,
-                                            &mut theme.colors.background,
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            egui::Id::new("bg_copy"),
-                                            icons,
-                                            ls.get_height("th_bg"),
-                                        ) {
+                                        ui.add_space(4.0);
+                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.bg"), &mut theme.colors.background, egui::Id::new("bg_copy")) {
                                             theme_changed = true;
                                         }
-                                        ui.end_row();
-                                        ui.add(
-                                            egui::Label::new(rust_i18n::t!("theme.selection_bg"))
-                                                .selectable(false),
-                                        );
-                                        if render_color_edit_row(
-                                            ui,
-                                            &mut theme.colors.selection_background,
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            egui::Id::new("selection_bg_copy"),
-                                            icons,
-                                            ls.get_height("th_sel_bg"),
-                                        ) {
+                                        ui.add_space(4.0);
+                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.selection_bg"), &mut theme.colors.selection_background, egui::Id::new("selection_bg_copy")) {
                                             theme_changed = true;
                                         }
-                                        ui.end_row();
 
                                         let icon_def = if theme.color_scheme
                                             == crate::theme::ColorScheme::Dark
@@ -1977,32 +1877,14 @@ if ui
                                             &rust_i18n::t!("theme.icon_default"),
                                             &mut theme.colors.icon_color,
                                             icon_def,
-                                            "icon_def_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_icon_def"),
-                                            ui,
+                                            "icon_def_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
-                                        ui.add(
-                                            egui::Label::new(rust_i18n::t!("theme.icon_hover"))
-                                                .selectable(false),
-                                        );
-                                        if render_color_edit_row(
-                                            ui,
-                                            &mut theme.colors.icon_hover,
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            egui::Id::new("icon_hover_copy"),
-                                            icons,
-                                            ls.get_height("th_icon_hov"),
-                                        ) {
+                                        ui.add_space(4.0);
+                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.icon_hover"), &mut theme.colors.icon_hover, egui::Id::new("icon_hover_copy")) {
                                             theme_changed = true;
                                         }
-                                        ui.end_row();
 
                                         // --- TYPOGRAPHY ---
                                         ui.label(
@@ -2011,36 +1893,15 @@ if ui
                                             ))
                                             .strong(),
                                         );
-                                        ui.label("");
-                                        ui.label("");
-                                        ui.end_row();
-                                        ui.add(
-                                            egui::Label::new(rust_i18n::t!("theme.fg"))
-                                                .selectable(false),
-                                        );
-                                        if render_color_edit_row(
-                                            ui,
-                                            &mut theme.colors.foreground,
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            egui::Id::new("fg_copy"),
-                                            icons,
-                                            ls.get_height("th_fg"),
-                                        ) {
+                                        ui.add_space(4.0);
+                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.fg"), &mut theme.colors.foreground, egui::Id::new("fg_copy")) {
                                             theme_changed = true;
                                         }
-                                        ui.end_row();
                                         if edit_optional_color(
                                             &rust_i18n::t!("theme.headings"),
                                             &mut theme.colors.heading_text,
                                             [255, 255, 255],
-                                            "heading_text_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_head"),
-                                            ui,
+                                            "heading_text_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2048,12 +1909,7 @@ if ui
                                             &rust_i18n::t!("theme.labels"),
                                             &mut theme.colors.label_text,
                                             [220, 220, 220],
-                                            "label_text_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_lbl"),
-                                            ui,
+                                            "label_text_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2061,12 +1917,7 @@ if ui
                                             &rust_i18n::t!("theme.weak_text"),
                                             &mut theme.colors.weak_text,
                                             [150, 150, 150],
-                                            "weak_text_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_weak"),
-                                            ui,
+                                            "weak_text_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2074,12 +1925,7 @@ if ui
                                             &rust_i18n::t!("theme.strong_text"),
                                             &mut theme.colors.strong_text,
                                             [255, 255, 255],
-                                            "strong_text_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_strong"),
-                                            ui,
+                                            "strong_text_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2087,12 +1933,7 @@ if ui
                                             &rust_i18n::t!("theme.hyperlinks"),
                                             &mut theme.colors.hyperlink,
                                             [90, 170, 255],
-                                            "hyperlink_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_link"),
-                                            ui,
+                                            "hyperlink_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2102,19 +1943,11 @@ if ui
                                             egui::RichText::new(rust_i18n::t!("theme.cat_editor"))
                                                 .strong(),
                                         );
-                                        ui.label("");
-                                        ui.label("");
-                                        ui.end_row();
                                         if edit_optional_color(
                                             &rust_i18n::t!("theme.editor_bg"),
                                             &mut theme.colors.editor_background,
                                             [10, 10, 10],
-                                            "editor_bg_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_ed_bg"),
-                                            ui,
+                                            "editor_bg_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2122,59 +1955,23 @@ if ui
                                             &rust_i18n::t!("theme.editor_fg"),
                                             &mut theme.colors.editor_foreground,
                                             theme.colors.foreground,
-                                            "editor_fg_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_ed_fg"),
-                                            ui,
+                                            "editor_fg_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
-                                        ui.add(
-                                            egui::Label::new(rust_i18n::t!("theme.line_numbers"))
-                                                .selectable(false),
-                                        );
-                                        if render_color_edit_row(
-                                            ui,
-                                            &mut theme.colors.line_number,
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            egui::Id::new("line_num_copy"),
-                                            icons,
-                                            ls.get_height("th_ln_num"),
-                                        ) {
+                                        ui.add_space(4.0);
+                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.line_numbers"), &mut theme.colors.line_number, egui::Id::new("line_num_copy")) {
                                             theme_changed = true;
                                         }
-                                        ui.end_row();
-                                        ui.add(
-                                            egui::Label::new(rust_i18n::t!("theme.cursor"))
-                                                .selectable(false),
-                                        );
-                                        if render_color_edit_row(
-                                            ui,
-                                            &mut theme.colors.cursor,
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            egui::Id::new("cursor_copy"),
-                                            icons,
-                                            ls.get_height("th_cursor"),
-                                        ) {
+                                        ui.add_space(4.0);
+                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.cursor"), &mut theme.colors.cursor, egui::Id::new("cursor_copy")) {
                                             theme_changed = true;
                                         }
-                                        ui.end_row();
                                         if edit_optional_color(
                                             &rust_i18n::t!("theme.search_highlight"),
                                             &mut theme.colors.highlight,
                                             theme.colors.cursor,
-                                            "highlight_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_search"),
-                                            ui,
+                                            "highlight_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2182,12 +1979,7 @@ if ui
                                             &rust_i18n::t!("theme.whitespace"),
                                             &mut theme.colors.whitespace_symbols,
                                             [80, 80, 80],
-                                            "whitespace_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_ws"),
-                                            ui,
+                                            "whitespace_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2197,19 +1989,11 @@ if ui
                                             egui::RichText::new(rust_i18n::t!("theme.cat_buttons"))
                                                 .strong(),
                                         );
-                                        ui.label("");
-                                        ui.label("");
-                                        ui.end_row();
                                         if edit_optional_color(
                                             &rust_i18n::t!("theme.btn_bg"),
                                             &mut theme.colors.button_bg,
                                             [60, 60, 60],
-                                            "btn_bg_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_btn_bg"),
-                                            ui,
+                                            "btn_bg_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2217,12 +2001,7 @@ if ui
                                             &rust_i18n::t!("theme.btn_hover"),
                                             &mut theme.colors.button_hover_bg,
                                             [80, 80, 80],
-                                            "btn_hover_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_btn_hov"),
-                                            ui,
+                                            "btn_hover_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2230,12 +2009,7 @@ if ui
                                             &rust_i18n::t!("theme.btn_active"),
                                             &mut theme.colors.button_active_bg,
                                             [100, 100, 100],
-                                            "btn_active_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_btn_act"),
-                                            ui,
+                                            "btn_active_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2243,12 +2017,7 @@ if ui
                                             &rust_i18n::t!("theme.btn_fg"),
                                             &mut theme.colors.button_fg,
                                             theme.colors.foreground,
-                                            "btn_text_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_btn_fg"),
-                                            ui,
+                                            "btn_text_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2256,12 +2025,7 @@ if ui
                                             &rust_i18n::t!("theme.btn_hover_fg"),
                                             &mut theme.colors.button_hover_fg,
                                             theme.colors.foreground,
-                                            "btn_hover_fg_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_btn_hov_fg"),
-                                            ui,
+                                            "btn_hover_fg_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2269,12 +2033,7 @@ if ui
                                             &rust_i18n::t!("theme.btn_active_fg"),
                                             &mut theme.colors.button_active_fg,
                                             theme.colors.foreground,
-                                            "btn_active_fg_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_btn_act_fg"),
-                                            ui,
+                                            "btn_active_fg_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2282,12 +2041,7 @@ if ui
                                             &rust_i18n::t!("theme.btn_hover_border"),
                                             &mut theme.colors.button_hover_border_color,
                                             [120, 120, 120],
-                                            "btn_hover_border_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_btn_hov_brd"),
-                                            ui,
+                                            "btn_hover_border_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2295,12 +2049,7 @@ if ui
                                             &rust_i18n::t!("theme.btn_active_border"),
                                             &mut theme.colors.button_active_border_color,
                                             [150, 150, 150],
-                                            "btn_active_border_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_btn_act_brd"),
-                                            ui,
+                                            "btn_active_border_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2310,17 +2059,13 @@ if ui
                                             egui::RichText::new(rust_i18n::t!("theme.cat_widgets"))
                                                 .strong(),
                                         );
-                                        ui.label("");
-                                        ui.label("");
-                                        ui.end_row();
                                         if edit_optional_float(
                                             &rust_i18n::t!("theme.widget_rounding"),
                                             &mut theme.colors.widget_rounding,
                                             2.0,
                                             0.0..=20.0,
                                             0.1,
-                                            ls.get_height("th_wgt_round"),
-                                            ui,
+                                             ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2328,12 +2073,7 @@ if ui
                                             &rust_i18n::t!("theme.widget_border"),
                                             &mut theme.colors.widget_border_color,
                                             [100, 100, 100],
-                                            "wgt_border_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_wgt_brd"),
-                                            ui,
+                                            "wgt_border_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2343,8 +2083,7 @@ if ui
                                             0.0,
                                             0.0..=5.0,
                                             0.05,
-                                            ls.get_height("th_wgt_brd_w"),
-                                            ui,
+                                             ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2354,8 +2093,7 @@ if ui
                                             4.0,
                                             0.0..=40.0,
                                             0.5,
-                                            ls.get_height("th_wgt_pad_x"),
-                                            ui,
+                                             ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2365,8 +2103,7 @@ if ui
                                             2.0,
                                             0.0..=40.0,
                                             0.5,
-                                            ls.get_height("th_wgt_pad_y"),
-                                            ui,
+                                             ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2374,12 +2111,7 @@ if ui
                                             &rust_i18n::t!("theme.widget_focus_border"),
                                             &mut theme.colors.widget_focus_border,
                                             [100, 150, 255],
-                                            "wgt_focus_border_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_wgt_foc_brd"),
-                                            ui,
+                                            "wgt_focus_border_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2387,12 +2119,7 @@ if ui
                                             &rust_i18n::t!("theme.chk_check"),
                                             &mut theme.colors.checkbox_check,
                                             [200, 200, 200],
-                                            "chk_check_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_chk_chk"),
-                                            ui,
+                                            "chk_check_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2400,12 +2127,7 @@ if ui
                                             &rust_i18n::t!("theme.text_edit_bg"),
                                             &mut theme.colors.text_edit_bg,
                                             [15, 15, 15],
-                                            "text_edit_bg_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_text_edit_bg"),
-                                            ui,
+                                            "text_edit_bg_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2413,12 +2135,7 @@ if ui
                                             &rust_i18n::t!("theme.selection_text"),
                                             &mut theme.colors.selection_text,
                                             [255, 255, 255],
-                                            "sel_text_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_sel_txt"),
-                                            ui,
+                                            "sel_text_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2426,12 +2143,7 @@ if ui
                                             &rust_i18n::t!("theme.separator"),
                                             &mut theme.colors.separator,
                                             [80, 80, 80],
-                                            "sep_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_sep"),
-                                            ui,
+                                            "sep_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2441,8 +2153,7 @@ if ui
                                             1.0,
                                             0.0..=10.0,
                                             0.1,
-                                            ls.get_height("th_sep_w"),
-                                            ui,
+                                             ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2450,12 +2161,7 @@ if ui
                                             &rust_i18n::t!("theme.tree_line"),
                                             &mut theme.colors.tree_line,
                                             [100, 100, 100],
-                                            "tree_line_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_tree_line"),
-                                            ui,
+                                            "tree_line_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2467,17 +2173,13 @@ if ui
                                             ))
                                             .strong(),
                                         );
-                                        ui.label("");
-                                        ui.label("");
-                                        ui.end_row();
                                         if edit_optional_float(
                                             &rust_i18n::t!("theme.window_rounding"),
                                             &mut theme.colors.window_rounding,
                                             4.0,
                                             0.0..=20.0,
                                             0.1,
-                                            ls.get_height("th_win_round"),
-                                            ui,
+                                             ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2485,12 +2187,7 @@ if ui
                                             &rust_i18n::t!("theme.shadow_color"),
                                             &mut theme.colors.shadow_color,
                                             [0, 0, 0],
-                                            "shadow_copy",
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            ls.get_height("th_shadow"),
-                                            ui,
+                                            "shadow_copy", ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2500,8 +2197,7 @@ if ui
                                             20.0,
                                             0.0..=100.0,
                                             0.5,
-                                            ls.get_height("th_shadow_b"),
-                                            ui,
+                                             ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2511,8 +2207,7 @@ if ui
                                             0.0,
                                             0.0..=100.0,
                                             0.5,
-                                            ls.get_height("th_shadow_s"),
-                                            ui,
+                                             ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2522,8 +2217,7 @@ if ui
                                             0.0,
                                             -100.0..=100.0,
                                             0.5,
-                                            ls.get_height("th_shadow_ox"),
-                                            ui,
+                                             ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2533,8 +2227,7 @@ if ui
                                             0.0,
                                             -100.0..=100.0,
                                             0.5,
-                                            ls.get_height("th_shadow_oy"),
-                                            ui,
+                                             ui,
                                         ) {
                                             theme_changed = true;
                                         }
@@ -2544,94 +2237,26 @@ if ui
                                             egui::RichText::new(rust_i18n::t!("theme.cat_syntax"))
                                                 .strong(),
                                         );
-                                        ui.label("");
-                                        ui.label("");
-                                        ui.end_row();
-                                        ui.add(
-                                            egui::Label::new(rust_i18n::t!("theme.comment"))
-                                                .selectable(false),
-                                        );
-                                        if render_color_edit_row(
-                                            ui,
-                                            &mut theme.colors.comment,
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            egui::Id::new("comment_copy"),
-                                            icons,
-                                            ls.get_height("th_comment"),
-                                        ) {
+                                        ui.add_space(4.0);
+                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.comment"), &mut theme.colors.comment, egui::Id::new("comment_copy")) {
                                             theme_changed = true;
                                         }
-                                        ui.end_row();
-                                        ui.add(
-                                            egui::Label::new(rust_i18n::t!("theme.success_label"))
-                                                .selectable(false),
-                                        );
-                                        if render_color_edit_row(
-                                            ui,
-                                            &mut theme.colors.success,
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            egui::Id::new("success_copy"),
-                                            icons,
-                                            ls.get_height("th_success"),
-                                        ) {
+                                        ui.add_space(4.0);
+                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.success_label"), &mut theme.colors.success, egui::Id::new("success_copy")) {
                                             theme_changed = true;
                                         }
-                                        ui.end_row();
-                                        ui.add(
-                                            egui::Label::new(rust_i18n::t!("theme.info_label"))
-                                                .selectable(false),
-                                        );
-                                        if render_color_edit_row(
-                                            ui,
-                                            &mut theme.colors.info,
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            egui::Id::new("info_copy"),
-                                            icons,
-                                            ls.get_height("th_info"),
-                                        ) {
+                                        ui.add_space(4.0);
+                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.info_label"), &mut theme.colors.info, egui::Id::new("info_copy")) {
                                             theme_changed = true;
                                         }
-                                        ui.end_row();
-                                        ui.add(
-                                            egui::Label::new(rust_i18n::t!("theme.warning_label"))
-                                                .selectable(false),
-                                        );
-                                        if render_color_edit_row(
-                                            ui,
-                                            &mut theme.colors.warning,
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            egui::Id::new("warning_copy"),
-                                            icons,
-                                            ls.get_height("th_warning"),
-                                        ) {
+                                        ui.add_space(4.0);
+                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.warning_label"), &mut theme.colors.warning, egui::Id::new("warning_copy")) {
                                             theme_changed = true;
                                         }
-                                        ui.end_row();
-                                        ui.add(
-                                            egui::Label::new(rust_i18n::t!("theme.error_label"))
-                                                .selectable(false),
-                                        );
-                                        if render_color_edit_row(
-                                            ui,
-                                            &mut theme.colors.error,
-                                            copied_color,
-                                            last_copied_id,
-                                            last_copied_time,
-                                            egui::Id::new("error_copy"),
-                                            icons,
-                                            ls.get_height("th_error"),
-                                        ) {
+                                        ui.add_space(4.0);
+                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.error_label"), &mut theme.colors.error, egui::Id::new("error_copy")) {
                                             theme_changed = true;
                                         }
-                                        ui.end_row();
                                     });
                             });
                     });
@@ -2736,119 +2361,17 @@ if ui
 /// Helper for theme editor to render a color row with copy/paste buttons
 fn render_color_edit_row(
     ui: &mut egui::Ui,
+    label: &str,
     color: &mut [u8; 3],
-    copied_color: &mut Option<[u8; 3]>,
-    last_copied_id: &mut Option<egui::Id>,
-    last_copied_time: &mut f64,
     row_id: egui::Id,
-    icons: &crate::icons::Icons,
-    cached_height: &mut f32, // Added
 ) -> bool {
     let mut changed = false;
-    // Column 2: Picker
-    crate::app_helpers::stateful_center_row(ui, cached_height, |ui| {
+    crate::app_helpers::render_settings_row(ui, label, &mut 0.0, |ui| {
         if custom_color_picker_button(ui, color, row_id.with("color_btn")) {
             changed = true;
         }
     });
-
-    // Column 3: Buttons
-    if let Some(new_color) = render_copy_paste_buttons(
-        ui,
-        *color,
-        copied_color,
-        last_copied_id,
-        last_copied_time,
-        row_id,
-        icons,
-        cached_height, // Pass it
-    ) {
-        *color = new_color;
-        changed = true;
-    }
     changed
-}
-
-/// Helper for rendering Copy/Paste buttons with animation
-fn render_copy_paste_buttons(
-    ui: &mut egui::Ui,
-    current_color: [u8; 3],
-    copied_color: &mut Option<[u8; 3]>,
-    last_copied_id: &mut Option<egui::Id>,
-    last_copied_time: &mut f64,
-    row_id: egui::Id,
-    icons: &crate::icons::Icons,
-    cached_height: &mut f32, // Added
-) -> Option<[u8; 3]> {
-    let mut paste_color = None;
-    crate::app_helpers::stateful_center_row(ui, cached_height, |ui| {
-        let time = ui.input(|i| i.time);
-
-        // Match the natural height of text, like in expandable folders
-        let icon_size = ui.text_style_height(&egui::TextStyle::Button);
-
-        // --- 1. PASTE BUTTON (Left) ---
-        // Only visible when a color is in clipboard
-        if let Some(c) = *copied_color {
-            let paste_btn = egui::Button::image(
-                egui::Image::new(&icons.paste)
-                    .shrink_to_fit()
-                    .maintain_aspect_ratio(true)
-                    .fit_to_exact_size(egui::vec2(icon_size, icon_size))
-                    .tint(ui.visuals().widgets.inactive.fg_stroke.color),
-            );
-            let paste_res = ui
-                .add(paste_btn)
-                .on_hover_text(rust_i18n::t!("theme.paste_color"));
-            if paste_res.clicked() {
-                paste_color = Some(c);
-            }
-            ui.add_space(4.0); // Keeps them grouped close in the column
-        } else {
-            // Invisible placeholder to prevent layout shifting
-            let placeholder_width = icon_size + ui.spacing().button_padding.x * 2.0;
-            ui.add_space(placeholder_width + 4.0);
-        }
-
-        // --- 2. COPY BUTTON (Right) ---
-        // Infinite pulse if this is the source of copied color
-        let is_source = Some(row_id) == *last_copied_id;
-        let mut alpha: f32 = 0.0;
-        if is_source {
-            // Infinite pulse: fade in and out
-            alpha = ((time * 3.0).sin() * 0.5 + 0.5) as f32;
-            ui.ctx().request_repaint();
-        }
-
-        let tint = if alpha > 0.0 {
-            ui.visuals()
-                .selection
-                .bg_fill
-                .gamma_multiply(alpha.max(0.4)) // Maintain some visibility
-        } else {
-            ui.visuals().widgets.inactive.fg_stroke.color
-        };
-
-        let copy_btn = egui::Button::image(
-            egui::Image::new(&icons.copy)
-                .shrink_to_fit()
-                .maintain_aspect_ratio(true)
-                .fit_to_exact_size(egui::vec2(icon_size, icon_size))
-                .tint(tint),
-        );
-
-        let copy_res = ui
-            .add(copy_btn)
-            .on_hover_text(rust_i18n::t!("theme.copy_color"));
-
-        if copy_res.clicked() {
-            *copied_color = Some(current_color);
-            *last_copied_id = Some(row_id);
-            *last_copied_time = time;
-            ui.ctx().request_repaint();
-        }
-    });
-    paste_color
 }
 
 // ─── Custom color picker with rectangular 2D field ──────────────────────────
