@@ -10,9 +10,9 @@ pub const PREFERRED_UI_FONTS: &[&str] = &[
     "Roboto Mono",
     "Roboto",
     "Menlo",
-    "Consolas", // Common Windows Monospace fallback
+    "Consolas",        // Common Windows Monospace fallback
     "Liberation Mono", // Common Linux Monospace fallback
-    "Monaco", // MacOS Monospace fallback
+    "Monaco",          // MacOS Monospace fallback
 ];
 pub const PREFERRED_EDITOR_FONTS: &[&str] = PREFERRED_UI_FONTS;
 

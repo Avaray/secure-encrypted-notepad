@@ -362,7 +362,7 @@ impl EditorApp {
                         for entry_res in read_dir {
                             if let Ok(entry) = entry_res {
                                 let path = entry.path();
-                                
+
                                 // Hidden files filter
                                 if self.settings.hide_hidden_files {
                                     if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
@@ -894,8 +894,7 @@ impl EditorApp {
                             ),
                         );
 
-                        bg_painter
-                            .rect_filled(rect, 0.0, selection_color.linear_multiply(0.7));
+                        bg_painter.rect_filled(rect, 0.0, selection_color.linear_multiply(0.7));
                     }
                     current_char_idx = row_end_idx;
                 }

@@ -297,7 +297,8 @@ impl EditorApp {
                                 start_x + spinner_size + spacing,
                                 center_y - text_galley.rect.height() / 2.0,
                             );
-                            ui.painter().galley(text_pos, text_galley, ui.visuals().text_color());
+                            ui.painter()
+                                .galley(text_pos, text_galley, ui.visuals().text_color());
                             response
                         } else {
                             ui.add_sized(btn_size, egui::Button::new(format!("{} {}", icon, label)))

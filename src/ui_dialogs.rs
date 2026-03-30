@@ -42,7 +42,7 @@ impl EditorApp {
                         if self.keyfile_path.is_none() {
                             if ui.button(t!("dialog.btn_load_key")).clicked() {
                                 self.load_keyfile();
-                                
+
                                 if self.keyfile_path.is_some() {
                                     self.save_file();
                                     if !self.is_modified {

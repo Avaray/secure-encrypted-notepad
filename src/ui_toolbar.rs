@@ -41,7 +41,7 @@ impl EditorApp {
         // Group 4: 7 btns (history, file_tree, zen, theme, settings, batch_convert, debug)
         // Total: 17 buttons
         // Separators: 3
-        // Gaps calculation (using item_spacing): 
+        // Gaps calculation (using item_spacing):
         // 17 items + 3 separators = 20 elements -> 19 gaps
         // + 1 additional gap for the spacer
         let total_content_h = (17.0 * btn_h) + (3.0 * sep_h) + (20.0 * spacing);

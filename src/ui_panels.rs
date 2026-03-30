@@ -653,7 +653,7 @@ let _ = self.settings.save();
                     .range(1.0..=2.5)
                     .max_decimals(2)
             );
-            
+
             if response.drag_stopped() || (response.changed() && response.lost_focus()) {
                 let _ = self.settings.save();
             }
@@ -669,7 +669,7 @@ crate::app_helpers::center_row(ui, |ui| {
             .clamp_existing_to_range(true),
     )
     .on_hover_text(rust_i18n::t!("settings.scroll_speed_tooltip"));
-    
+
     if response.changed() {
         self.settings.scroll_speed_multiplier = mult;
     }
@@ -1469,7 +1469,8 @@ if ui
                                                         * (self.start_time.elapsed().as_secs_f32()
                                                             * 3.0)
                                                             .cos()
-                                                            .abs()) as f32
+                                                            .abs())
+                                                        as f32
                                                 } else {
                                                     1.0
                                                 };
@@ -1491,8 +1492,8 @@ if ui
 
                                                 let font_id =
                                                     egui::TextStyle::Button.resolve(ui.style());
-                                                let icon_size = ui
-                                                    .text_style_height(&egui::TextStyle::Button);
+                                                let icon_size =
+                                                    ui.text_style_height(&egui::TextStyle::Button);
 
                                                 let truncated_name = self.smart_truncate_text(
                                                     ui,
@@ -1512,7 +1513,9 @@ if ui
                                                             .fit_to_exact_size(egui::vec2(
                                                                 icon_size, icon_size,
                                                             ))
-                                                            .tint(color.gamma_multiply(pulse_alpha)),
+                                                            .tint(
+                                                                color.gamma_multiply(pulse_alpha),
+                                                            ),
                                                         truncated_name,
                                                     ))
                                                     .clicked()
@@ -2780,7 +2783,7 @@ fn render_copy_paste_buttons(
     let mut paste_color = None;
     crate::app_helpers::stateful_center_row(ui, cached_height, |ui| {
         let time = ui.input(|i| i.time);
-        
+
         // Match the natural height of text, like in expandable folders
         let icon_size = ui.text_style_height(&egui::TextStyle::Button);
 
@@ -2855,7 +2858,11 @@ const COLOR_N: u32 = 36; // 6×6 – identical to egui internals
 fn picker_contrast(color: egui::Color32) -> egui::Color32 {
     let [r, g, b, _] = color.to_array();
     let lum = 0.299 * r as f32 + 0.587 * g as f32 + 0.114 * b as f32;
-    if lum < 128.0 { egui::Color32::WHITE } else { egui::Color32::BLACK }
+    if lum < 128.0 {
+        egui::Color32::WHITE
+    } else {
+        egui::Color32::BLACK
+    }
 }
 
 /// Copy of egui's private `color_slider_1d` (hue / alpha bar).
@@ -2887,7 +2894,8 @@ fn picker_slider_1d(
             }
         }
         ui.painter().add(egui::Shape::mesh(mesh));
-        ui.painter().rect_stroke(rect, 0.0, vis.bg_stroke, egui::StrokeKind::Inside);
+        ui.painter()
+            .rect_stroke(rect, 0.0, vis.bg_stroke, egui::StrokeKind::Inside);
 
         // triangle position indicator
         let x = egui::lerp(rect.left()..=rect.right(), *value);
@@ -2946,7 +2954,8 @@ fn picker_slider_2d(
             }
         }
         ui.painter().add(egui::Shape::mesh(mesh));
-        ui.painter().rect_stroke(rect, 0.0, vis.bg_stroke, egui::StrokeKind::Inside);
+        ui.painter()
+            .rect_stroke(rect, 0.0, vis.bg_stroke, egui::StrokeKind::Inside);
 
         let cx = egui::lerp(rect.left()..=rect.right(), *x_value);
         let cy = egui::lerp(rect.bottom()..=rect.top(), *y_value);
@@ -2982,16 +2991,29 @@ pub fn color_picker_color32_wide(
     let width = ui.spacing().slider_width;
     let h = hsva.h;
     let (old_s, old_v) = (hsva.s, hsva.v);
-    picker_slider_2d(ui, &mut hsva.s, &mut hsva.v, width, picker_height, |s, v| {
-        Hsva { h, s, v, a: 1.0 }.into()
-    });
+    picker_slider_2d(
+        ui,
+        &mut hsva.s,
+        &mut hsva.v,
+        width,
+        picker_height,
+        |s, v| Hsva { h, s, v, a: 1.0 }.into(),
+    );
     if hsva.s != old_s || hsva.v != old_v {
         changed = true;
     }
 
     // Hue bar
     let old_h = hsva.h;
-    picker_slider_1d(ui, &mut hsva.h, |h| Hsva { h, s: 1.0, v: 1.0, a: 1.0 }.into());
+    picker_slider_1d(ui, &mut hsva.h, |h| {
+        Hsva {
+            h,
+            s: 1.0,
+            v: 1.0,
+            a: 1.0,
+        }
+        .into()
+    });
     if hsva.h != old_h {
         changed = true;
     }
@@ -3021,12 +3043,27 @@ pub fn color_picker_color32_wide(
         let mut g = srgba.g() as f32 / 255.0;
         let mut b = srgba.b() as f32 / 255.0;
 
-        let dr = ui.add(egui::DragValue::new(&mut r).speed(speed).range(0.0..=1.0)
-            .prefix("R ").custom_formatter(|n, _| format!("{n:.3}")));
-        let dg = ui.add(egui::DragValue::new(&mut g).speed(speed).range(0.0..=1.0)
-            .prefix("G ").custom_formatter(|n, _| format!("{n:.3}")));
-        let db = ui.add(egui::DragValue::new(&mut b).speed(speed).range(0.0..=1.0)
-            .prefix("B ").custom_formatter(|n, _| format!("{n:.3}")));
+        let dr = ui.add(
+            egui::DragValue::new(&mut r)
+                .speed(speed)
+                .range(0.0..=1.0)
+                .prefix("R ")
+                .custom_formatter(|n, _| format!("{n:.3}")),
+        );
+        let dg = ui.add(
+            egui::DragValue::new(&mut g)
+                .speed(speed)
+                .range(0.0..=1.0)
+                .prefix("G ")
+                .custom_formatter(|n, _| format!("{n:.3}")),
+        );
+        let db = ui.add(
+            egui::DragValue::new(&mut b)
+                .speed(speed)
+                .range(0.0..=1.0)
+                .prefix("B ")
+                .custom_formatter(|n, _| format!("{n:.3}")),
+        );
 
         if dr.changed() || dg.changed() || db.changed() {
             hsva = Hsva::from(egui::Color32::from_rgb(
@@ -3050,7 +3087,12 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: 
     let area_id = popup_id.with("area");
 
     // Calculate natural button size like a button with 8 spaces
-    let galley = egui::WidgetText::from("        ").into_galley(ui, None, f32::INFINITY, egui::TextStyle::Button);
+    let galley = egui::WidgetText::from("        ").into_galley(
+        ui,
+        None,
+        f32::INFINITY,
+        egui::TextStyle::Button,
+    );
     let desired_size = galley.size() + ui.spacing().button_padding * 2.0;
 
     let rect = ui.allocate_exact_size(desired_size, egui::Sense::hover()).0;
@@ -3082,7 +3124,6 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: 
             egui::StrokeKind::Inside,
         );
     }
-
 
     let mut changed = false;
 
