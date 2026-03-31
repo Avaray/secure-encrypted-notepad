@@ -993,26 +993,34 @@ impl EditorApp {
     ) -> bool {
         let mut close_clicked = false;
 
-        crate::app_helpers::flex_row_between(ui, 
+        crate::app_helpers::flex_row_between(
+            ui,
             |ui| {
                 ui.add_space(8.0); // Consistent padding from left edge
                 let head_font = egui::TextStyle::Heading.resolve(ui.style());
-                let truncated_title = self.smart_truncate_text(ui, title, head_font, ui.available_width() - 80.0);
+                let truncated_title =
+                    self.smart_truncate_text(ui, title, head_font, ui.available_width() - 80.0);
                 self.render_heading(ui, truncated_title);
 
                 if let Some(sub) = subtitle {
                     ui.add_space(8.0);
                     let sub_font = egui::TextStyle::Body.resolve(ui.style());
-                    let truncated_sub = self.smart_truncate_text(ui, sub, sub_font, ui.available_width() - 150.0);
+                    let truncated_sub =
+                        self.smart_truncate_text(ui, sub, sub_font, ui.available_width() - 150.0);
                     ui.label(egui::RichText::new(truncated_sub).weak());
                 }
             },
             |ui| {
                 ui.add_space(8.0); // Consistent padding from right edge
-                if ui.button("❌").on_hover_text(rust_i18n::t!("app.close_panel")).clicked() {
+                if ui
+                    .button("❌")
+                    .on_hover_text(rust_i18n::t!("app.close_panel"))
+                    .clicked()
+                {
                     close_clicked = true;
                 }
-            });
+            },
+        );
 
         if add_separator {
             let space = (self.settings.ui_font_size * 0.25).max(2.0).min(6.0);
@@ -1062,10 +1070,7 @@ pub fn flex_row_between<R1, R2>(
 
             let r1 = left_ui(ui);
             let r2 = ui
-                .with_layout(
-                    egui::Layout::right_to_left(egui::Align::Center),
-                    right_ui,
-                )
+                .with_layout(egui::Layout::right_to_left(egui::Align::Center), right_ui)
                 .inner;
             (r1, r2)
         },

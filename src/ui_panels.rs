@@ -1758,41 +1758,72 @@ if ui
             ui.separator();
             if let Some(ref mut theme) = self.editing_theme {
                 let mut theme_changed = false;
-                crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("theme.name_label"), &mut 0.0, |ui| {
-                    ui.add(
-                        egui::TextEdit::singleline(&mut theme.name)
-                            .desired_width(ui.available_width() - 8.0)
-                            .margin(ui.spacing().button_padding),
-                    );
-                });
-                crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("theme.base_scheme"), &mut 0.0, |ui| {
-                    egui::ComboBox::from_id_salt("color_scheme_selector")
-                        .width(100.0)
-                        .selected_text(format!("{:?}", theme.color_scheme))
-                        .show_ui(ui, |ui| {
-                            if ui
-                                .selectable_label(
-                                    matches!(theme.color_scheme, crate::theme::ColorScheme::Dark),
-                                    rust_i18n::t!("theme.dark"),
-                                )
-                                .clicked()
-                            {
-                                theme.color_scheme = crate::theme::ColorScheme::Dark;
-                                theme_changed = true;
-                            }
-                            if ui
-                                .selectable_label(
-                                    matches!(theme.color_scheme, crate::theme::ColorScheme::Light),
-                                    rust_i18n::t!("theme.light"),
-                                )
-                                .clicked()
-                            {
-                                theme.color_scheme = crate::theme::ColorScheme::Light;
-                                theme_changed = true;
-                            }
-                        });
-                });
+                crate::app_helpers::render_settings_row(
+                    ui,
+                    &rust_i18n::t!("theme.name_label"),
+                    &mut 0.0,
+                    |ui| {
+                        ui.add(
+                            egui::TextEdit::singleline(&mut theme.name)
+                                .desired_width(ui.available_width() - 8.0)
+                                .margin(ui.spacing().button_padding),
+                        );
+                    },
+                );
+                crate::app_helpers::render_settings_row(
+                    ui,
+                    &rust_i18n::t!("theme.base_scheme"),
+                    &mut 0.0,
+                    |ui| {
+                        egui::ComboBox::from_id_salt("color_scheme_selector")
+                            .width(100.0)
+                            .selected_text(format!("{:?}", theme.color_scheme))
+                            .show_ui(ui, |ui| {
+                                if ui
+                                    .selectable_label(
+                                        matches!(
+                                            theme.color_scheme,
+                                            crate::theme::ColorScheme::Dark
+                                        ),
+                                        rust_i18n::t!("theme.dark"),
+                                    )
+                                    .clicked()
+                                {
+                                    theme.color_scheme = crate::theme::ColorScheme::Dark;
+                                    theme_changed = true;
+                                }
+                                if ui
+                                    .selectable_label(
+                                        matches!(
+                                            theme.color_scheme,
+                                            crate::theme::ColorScheme::Light
+                                        ),
+                                        rust_i18n::t!("theme.light"),
+                                    )
+                                    .clicked()
+                                {
+                                    theme.color_scheme = crate::theme::ColorScheme::Light;
+                                    theme_changed = true;
+                                }
+                            });
+                    },
+                );
                 ui.separator();
+                // Compute reference colors for per-field reset
+                let is_builtin = theme.name == "Dark" || theme.name == "Light";
+                let ref_colors = if is_builtin {
+                    match theme.color_scheme {
+                        crate::theme::ColorScheme::Light => crate::theme::ThemeColors::light(),
+                        crate::theme::ColorScheme::Dark => crate::theme::ThemeColors::dark(),
+                    }
+                } else if let Some(ref orig) = self.original_editing_theme {
+                    orig.colors.clone()
+                } else {
+                    match theme.color_scheme {
+                        crate::theme::ColorScheme::Light => crate::theme::ThemeColors::light(),
+                        crate::theme::ColorScheme::Dark => crate::theme::ThemeColors::dark(),
+                    }
+                };
                 egui::ScrollArea::both()
                     .auto_shrink([false, false])
                     .show(ui, |ui| {
@@ -1804,459 +1835,601 @@ if ui
                                 bottom: 0,
                             })
                             .show(ui, |ui| {
-                                 let head_color = theme.colors.heading_color();
-                                 ui.heading(egui::RichText::new(rust_i18n::t!("theme.colors_heading")).color(head_color));
+                                let head_color = theme.colors.heading_color();
+                                ui.heading(
+                                    egui::RichText::new(rust_i18n::t!("theme.colors_heading"))
+                                        .color(head_color),
+                                );
                                 ui.add_space(4.0);
                                 ui.vertical(|ui| {
-                                        // --- HELPER CLOSURES FOR NEW OPTIONAL FIELDS ---
-                                        let edit_optional_color =
-    |label: &str, field: &mut Option<[u8; 3]>, default: [u8; 3], id_str: &str, ui: &mut egui::Ui| -> bool {
-        let mut changed = false;
-        ui.add_space(4.0);
-        crate::app_helpers::render_settings_row(ui, label, &mut 0.0, |ui| {
-            let mut current = field.unwrap_or(default);
-            ui.spacing_mut().item_spacing.x = 4.0;
-            if custom_color_picker_button(ui, &mut current, egui::Id::new(id_str)) {
-                *field = Some(current);
-                changed = true;
-            }
-            if field.is_some() {
-                if ui.button("↺").on_hover_text(rust_i18n::t!("theme.reset_tooltip")).clicked() {
-                    *field = None;
-                    changed = true;
-                }
-            }
-        });
-        changed
-    };
+                                    // --- HELPER CLOSURES FOR NEW OPTIONAL FIELDS ---
+                                    let edit_optional_color =
+                                        |label: &str,
+                                         field: &mut Option<[u8; 3]>,
+                                         default: [u8; 3],
+                                         ref_field: Option<[u8; 3]>,
+                                         id_str: &str,
+                                         ui: &mut egui::Ui|
+                                         -> bool {
+                                            let mut changed = false;
+                                            ui.add_space(4.0);
+                                            crate::app_helpers::render_settings_row(
+                                                ui,
+                                                label,
+                                                &mut 0.0,
+                                                |ui| {
+                                                    let mut current = field.unwrap_or(default);
+                                                    ui.spacing_mut().item_spacing.x = 4.0;
+                                                    if custom_color_picker_button(
+                                                        ui,
+                                                        &mut current,
+                                                        egui::Id::new(id_str),
+                                                    ) {
+                                                        *field = Some(current);
+                                                        changed = true;
+                                                    }
+                                                    if *field != ref_field {
+                                                        if ui
+                                                            .button("↺")
+                                                            .on_hover_text(rust_i18n::t!(
+                                                                "theme.reset_tooltip"
+                                                            ))
+                                                            .clicked()
+                                                        {
+                                                            *field = ref_field;
+                                                            changed = true;
+                                                        }
+                                                    }
+                                                },
+                                            );
+                                            changed
+                                        };
 
-                                        let edit_optional_float =
-    |label: &str, field: &mut Option<f32>, default: f32, range: std::ops::RangeInclusive<f32>, speed: f32, ui: &mut egui::Ui| -> bool {
-        let mut changed = false;
-        ui.add_space(4.0);
-        crate::app_helpers::render_settings_row(ui, label, &mut 0.0, |ui| {
-            let mut current = field.unwrap_or(default);
-            ui.spacing_mut().item_spacing.x = 4.0;
-            if ui.add(egui::DragValue::new(&mut current).speed(speed).range(range)).changed() {
-                *field = Some(current);
-                changed = true;
-            }
-            if field.is_some() {
-                if ui.button("↺").on_hover_text(rust_i18n::t!("theme.reset_tooltip")).clicked() {
-                    *field = None;
-                    changed = true;
-                }
-            }
-        });
-        changed
-    };
+                                    let edit_optional_float =
+                                        |label: &str,
+                                         field: &mut Option<f32>,
+                                         default: f32,
+                                         ref_field: Option<f32>,
+                                         range: std::ops::RangeInclusive<f32>,
+                                         speed: f32,
+                                         ui: &mut egui::Ui|
+                                         -> bool {
+                                            let mut changed = false;
+                                            ui.add_space(4.0);
+                                            crate::app_helpers::render_settings_row(
+                                                ui,
+                                                label,
+                                                &mut 0.0,
+                                                |ui| {
+                                                    let mut current = field.unwrap_or(default);
+                                                    ui.spacing_mut().item_spacing.x = 4.0;
+                                                    if ui
+                                                        .add(
+                                                            egui::DragValue::new(&mut current)
+                                                                .speed(speed)
+                                                                .range(range),
+                                                        )
+                                                        .changed()
+                                                    {
+                                                        *field = Some(current);
+                                                        changed = true;
+                                                    }
+                                                    if *field != ref_field {
+                                                        if ui
+                                                            .button("↺")
+                                                            .on_hover_text(rust_i18n::t!(
+                                                                "theme.reset_tooltip"
+                                                            ))
+                                                            .clicked()
+                                                        {
+                                                            *field = ref_field;
+                                                            changed = true;
+                                                        }
+                                                    }
+                                                },
+                                            );
+                                            changed
+                                        };
 
-                                        // --- CORE UI BACKGROUNDS & ACCENTS ---
-                                        ui.label(
-                                            egui::RichText::new(rust_i18n::t!("theme.cat_core"))
-                                                .strong(),
-                                        );
-                                        ui.add_space(4.0);
-                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.bg"), &mut theme.colors.background, egui::Id::new("bg_copy")) {
-                                            theme_changed = true;
-                                        }
-                                        ui.add_space(4.0);
-                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.selection_bg"), &mut theme.colors.selection_background, egui::Id::new("selection_bg_copy")) {
-                                            theme_changed = true;
-                                        }
+                                    // --- CORE UI BACKGROUNDS & ACCENTS ---
+                                    ui.label(
+                                        egui::RichText::new(rust_i18n::t!("theme.cat_core"))
+                                            .strong(),
+                                    );
+                                    ui.add_space(4.0);
+                                    if render_color_edit_row(
+                                        ui,
+                                        &rust_i18n::t!("theme.bg"),
+                                        &mut theme.colors.background,
+                                        ref_colors.background,
+                                        egui::Id::new("bg_copy"),
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    ui.add_space(4.0);
+                                    if render_color_edit_row(
+                                        ui,
+                                        &rust_i18n::t!("theme.selection_bg"),
+                                        &mut theme.colors.selection_background,
+                                        ref_colors.selection_background,
+                                        egui::Id::new("selection_bg_copy"),
+                                    ) {
+                                        theme_changed = true;
+                                    }
 
-                                        let icon_def = if theme.color_scheme
-                                            == crate::theme::ColorScheme::Dark
-                                        {
+                                    let icon_def =
+                                        if theme.color_scheme == crate::theme::ColorScheme::Dark {
                                             [200, 200, 200]
                                         } else {
                                             [80, 80, 80]
                                         };
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.icon_default"),
-                                            &mut theme.colors.icon_color,
-                                            icon_def,
-                                            "icon_def_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        ui.add_space(4.0);
-                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.icon_hover"), &mut theme.colors.icon_hover, egui::Id::new("icon_hover_copy")) {
-                                            theme_changed = true;
-                                        }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.icon_default"),
+                                        &mut theme.colors.icon_color,
+                                        icon_def,
+                                        ref_colors.icon_color,
+                                        "icon_def_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    ui.add_space(4.0);
+                                    if render_color_edit_row(
+                                        ui,
+                                        &rust_i18n::t!("theme.icon_hover"),
+                                        &mut theme.colors.icon_hover,
+                                        ref_colors.icon_hover,
+                                        egui::Id::new("icon_hover_copy"),
+                                    ) {
+                                        theme_changed = true;
+                                    }
 
-                                        // --- TYPOGRAPHY ---
-                                        ui.label(
-                                            egui::RichText::new(rust_i18n::t!(
-                                                "theme.cat_typography"
-                                            ))
+                                    // --- TYPOGRAPHY ---
+                                    ui.label(
+                                        egui::RichText::new(rust_i18n::t!("theme.cat_typography"))
                                             .strong(),
-                                        );
-                                        ui.add_space(4.0);
-                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.fg"), &mut theme.colors.foreground, egui::Id::new("fg_copy")) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.headings"),
-                                            &mut theme.colors.heading_text,
-                                            [255, 255, 255],
-                                            "heading_text_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.labels"),
-                                            &mut theme.colors.label_text,
-                                            [220, 220, 220],
-                                            "label_text_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.weak_text"),
-                                            &mut theme.colors.weak_text,
-                                            [150, 150, 150],
-                                            "weak_text_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.strong_text"),
-                                            &mut theme.colors.strong_text,
-                                            [255, 255, 255],
-                                            "strong_text_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.hyperlinks"),
-                                            &mut theme.colors.hyperlink,
-                                            [90, 170, 255],
-                                            "hyperlink_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
+                                    );
+                                    ui.add_space(4.0);
+                                    if render_color_edit_row(
+                                        ui,
+                                        &rust_i18n::t!("theme.fg"),
+                                        &mut theme.colors.foreground,
+                                        ref_colors.foreground,
+                                        egui::Id::new("fg_copy"),
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.headings"),
+                                        &mut theme.colors.heading_text,
+                                        [255, 255, 255],
+                                        ref_colors.heading_text,
+                                        "heading_text_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.hyperlinks"),
+                                        &mut theme.colors.hyperlink,
+                                        [90, 170, 255],
+                                        ref_colors.hyperlink,
+                                        "hyperlink_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
 
-                                        // --- MAIN TEXT EDITOR ---
-                                        ui.label(
-                                            egui::RichText::new(rust_i18n::t!("theme.cat_editor"))
-                                                .strong(),
-                                        );
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.editor_bg"),
-                                            &mut theme.colors.editor_background,
-                                            [10, 10, 10],
-                                            "editor_bg_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.editor_fg"),
-                                            &mut theme.colors.editor_foreground,
-                                            theme.colors.foreground,
-                                            "editor_fg_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        ui.add_space(4.0);
-                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.line_numbers"), &mut theme.colors.line_number, egui::Id::new("line_num_copy")) {
-                                            theme_changed = true;
-                                        }
-                                        ui.add_space(4.0);
-                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.cursor"), &mut theme.colors.cursor, egui::Id::new("cursor_copy")) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.search_highlight"),
-                                            &mut theme.colors.highlight,
-                                            theme.colors.cursor,
-                                            "highlight_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.whitespace"),
-                                            &mut theme.colors.whitespace_symbols,
-                                            [80, 80, 80],
-                                            "whitespace_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-
-                                        // --- BUTTONS & INPUTS ---
-                                        ui.label(
-                                            egui::RichText::new(rust_i18n::t!("theme.cat_buttons"))
-                                                .strong(),
-                                        );
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.btn_bg"),
-                                            &mut theme.colors.button_bg,
-                                            [60, 60, 60],
-                                            "btn_bg_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.btn_hover"),
-                                            &mut theme.colors.button_hover_bg,
-                                            [80, 80, 80],
-                                            "btn_hover_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.btn_active"),
-                                            &mut theme.colors.button_active_bg,
-                                            [100, 100, 100],
-                                            "btn_active_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.btn_fg"),
-                                            &mut theme.colors.button_fg,
-                                            theme.colors.foreground,
-                                            "btn_text_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.btn_hover_fg"),
-                                            &mut theme.colors.button_hover_fg,
-                                            theme.colors.foreground,
-                                            "btn_hover_fg_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.btn_active_fg"),
-                                            &mut theme.colors.button_active_fg,
-                                            theme.colors.foreground,
-                                            "btn_active_fg_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.btn_hover_border"),
-                                            &mut theme.colors.button_hover_border_color,
-                                            [120, 120, 120],
-                                            "btn_hover_border_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.btn_active_border"),
-                                            &mut theme.colors.button_active_border_color,
-                                            [150, 150, 150],
-                                            "btn_active_border_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-
-                                        // --- WIDGETS (unified geometry + specific widget colors) ---
-                                        ui.label(
-                                            egui::RichText::new(rust_i18n::t!("theme.cat_widgets"))
-                                                .strong(),
-                                        );
-                                        if edit_optional_float(
-                                            &rust_i18n::t!("theme.widget_rounding"),
-                                            &mut theme.colors.widget_rounding,
-                                            2.0,
-                                            0.0..=20.0,
-                                            0.1,
-                                             ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.widget_border"),
-                                            &mut theme.colors.widget_border_color,
-                                            [100, 100, 100],
-                                            "wgt_border_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_float(
-                                            &rust_i18n::t!("theme.widget_border_width"),
-                                            &mut theme.colors.widget_border_width,
-                                            0.0,
-                                            0.0..=5.0,
-                                            0.05,
-                                             ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_float(
-                                            &rust_i18n::t!("theme.widget_padding_x"),
-                                            &mut theme.colors.widget_padding_x,
-                                            4.0,
-                                            0.0..=40.0,
-                                            0.5,
-                                             ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_float(
-                                            &rust_i18n::t!("theme.widget_padding_y"),
-                                            &mut theme.colors.widget_padding_y,
-                                            2.0,
-                                            0.0..=40.0,
-                                            0.5,
-                                             ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.widget_focus_border"),
-                                            &mut theme.colors.widget_focus_border,
-                                            [100, 150, 255],
-                                            "wgt_focus_border_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.chk_check"),
-                                            &mut theme.colors.checkbox_check,
-                                            [200, 200, 200],
-                                            "chk_check_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.text_edit_bg"),
-                                            &mut theme.colors.text_edit_bg,
-                                            [15, 15, 15],
-                                            "text_edit_bg_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.selection_text"),
-                                            &mut theme.colors.selection_text,
-                                            [255, 255, 255],
-                                            "sel_text_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.separator"),
-                                            &mut theme.colors.separator,
-                                            [80, 80, 80],
-                                            "sep_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_float(
-                                            &rust_i18n::t!("theme.separator_width"),
-                                            &mut theme.colors.separator_width,
-                                            1.0,
-                                            0.0..=10.0,
-                                            0.1,
-                                             ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.tree_line"),
-                                            &mut theme.colors.tree_line,
-                                            [100, 100, 100],
-                                            "tree_line_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-
-                                        // --- WINDOW & PANELS GEOMETRY ---
-                                        ui.label(
-                                            egui::RichText::new(rust_i18n::t!(
-                                                "theme.cat_geometry"
-                                            ))
+                                    // --- MAIN TEXT EDITOR ---
+                                    ui.label(
+                                        egui::RichText::new(rust_i18n::t!("theme.cat_editor"))
                                             .strong(),
-                                        );
-                                        if edit_optional_float(
-                                            &rust_i18n::t!("theme.window_rounding"),
-                                            &mut theme.colors.window_rounding,
-                                            4.0,
-                                            0.0..=20.0,
-                                            0.1,
-                                             ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_color(
-                                            &rust_i18n::t!("theme.shadow_color"),
-                                            &mut theme.colors.shadow_color,
-                                            [0, 0, 0],
-                                            "shadow_copy", ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_float(
-                                            &rust_i18n::t!("theme.shadow_blur"),
-                                            &mut theme.colors.shadow_blur,
-                                            20.0,
-                                            0.0..=100.0,
-                                            0.5,
-                                             ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_float(
-                                            &rust_i18n::t!("theme.shadow_spread"),
-                                            &mut theme.colors.shadow_spread,
-                                            0.0,
-                                            0.0..=100.0,
-                                            0.5,
-                                             ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_float(
-                                            &rust_i18n::t!("theme.shadow_offset_x"),
-                                            &mut theme.colors.shadow_offset_x,
-                                            0.0,
-                                            -100.0..=100.0,
-                                            0.5,
-                                             ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
-                                        if edit_optional_float(
-                                            &rust_i18n::t!("theme.shadow_offset_y"),
-                                            &mut theme.colors.shadow_offset_y,
-                                            0.0,
-                                            -100.0..=100.0,
-                                            0.5,
-                                             ui,
-                                        ) {
-                                            theme_changed = true;
-                                        }
+                                    );
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.editor_bg"),
+                                        &mut theme.colors.editor_background,
+                                        [10, 10, 10],
+                                        ref_colors.editor_background,
+                                        "editor_bg_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.editor_fg"),
+                                        &mut theme.colors.editor_foreground,
+                                        theme.colors.foreground,
+                                        ref_colors.editor_foreground,
+                                        "editor_fg_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    ui.add_space(4.0);
+                                    if render_color_edit_row(
+                                        ui,
+                                        &rust_i18n::t!("theme.line_numbers"),
+                                        &mut theme.colors.line_number,
+                                        ref_colors.line_number,
+                                        egui::Id::new("line_num_copy"),
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    ui.add_space(4.0);
+                                    if render_color_edit_row(
+                                        ui,
+                                        &rust_i18n::t!("theme.cursor"),
+                                        &mut theme.colors.cursor,
+                                        ref_colors.cursor,
+                                        egui::Id::new("cursor_copy"),
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.search_highlight"),
+                                        &mut theme.colors.highlight,
+                                        theme.colors.cursor,
+                                        ref_colors.highlight,
+                                        "highlight_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.whitespace"),
+                                        &mut theme.colors.whitespace_symbols,
+                                        [80, 80, 80],
+                                        ref_colors.whitespace_symbols,
+                                        "whitespace_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
 
-                                        // --- SYNTAX ALERTS ---
-                                        ui.label(
-                                            egui::RichText::new(rust_i18n::t!("theme.cat_syntax"))
-                                                .strong(),
-                                        );
-                                        ui.add_space(4.0);
-                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.comment"), &mut theme.colors.comment, egui::Id::new("comment_copy")) {
-                                            theme_changed = true;
-                                        }
-                                        ui.add_space(4.0);
-                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.success_label"), &mut theme.colors.success, egui::Id::new("success_copy")) {
-                                            theme_changed = true;
-                                        }
-                                        ui.add_space(4.0);
-                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.info_label"), &mut theme.colors.info, egui::Id::new("info_copy")) {
-                                            theme_changed = true;
-                                        }
-                                        ui.add_space(4.0);
-                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.warning_label"), &mut theme.colors.warning, egui::Id::new("warning_copy")) {
-                                            theme_changed = true;
-                                        }
-                                        ui.add_space(4.0);
-                                        if render_color_edit_row(ui, &rust_i18n::t!("theme.error_label"), &mut theme.colors.error, egui::Id::new("error_copy")) {
-                                            theme_changed = true;
-                                        }
-                                    });
+                                    // --- BUTTONS & INPUTS ---
+                                    ui.label(
+                                        egui::RichText::new(rust_i18n::t!("theme.cat_buttons"))
+                                            .strong(),
+                                    );
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.btn_bg"),
+                                        &mut theme.colors.button_bg,
+                                        [60, 60, 60],
+                                        ref_colors.button_bg,
+                                        "btn_bg_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.btn_hover"),
+                                        &mut theme.colors.button_hover_bg,
+                                        [80, 80, 80],
+                                        ref_colors.button_hover_bg,
+                                        "btn_hover_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.btn_active"),
+                                        &mut theme.colors.button_active_bg,
+                                        [100, 100, 100],
+                                        ref_colors.button_active_bg,
+                                        "btn_active_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.btn_fg"),
+                                        &mut theme.colors.button_fg,
+                                        theme.colors.foreground,
+                                        ref_colors.button_fg,
+                                        "btn_text_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.btn_hover_fg"),
+                                        &mut theme.colors.button_hover_fg,
+                                        theme.colors.foreground,
+                                        ref_colors.button_hover_fg,
+                                        "btn_hover_fg_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.btn_active_fg"),
+                                        &mut theme.colors.button_active_fg,
+                                        theme.colors.foreground,
+                                        ref_colors.button_active_fg,
+                                        "btn_active_fg_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.btn_hover_border"),
+                                        &mut theme.colors.button_hover_border_color,
+                                        [120, 120, 120],
+                                        ref_colors.button_hover_border_color,
+                                        "btn_hover_border_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.btn_active_border"),
+                                        &mut theme.colors.button_active_border_color,
+                                        [150, 150, 150],
+                                        ref_colors.button_active_border_color,
+                                        "btn_active_border_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+
+                                    // --- WIDGETS (unified geometry + specific widget colors) ---
+                                    ui.label(
+                                        egui::RichText::new(rust_i18n::t!("theme.cat_widgets"))
+                                            .strong(),
+                                    );
+                                    if edit_optional_float(
+                                        &rust_i18n::t!("theme.widget_rounding"),
+                                        &mut theme.colors.widget_rounding,
+                                        2.0,
+                                        ref_colors.widget_rounding,
+                                        0.0..=20.0,
+                                        0.1,
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.widget_border"),
+                                        &mut theme.colors.widget_border_color,
+                                        [100, 100, 100],
+                                        ref_colors.widget_border_color,
+                                        "wgt_border_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_float(
+                                        &rust_i18n::t!("theme.widget_border_width"),
+                                        &mut theme.colors.widget_border_width,
+                                        0.0,
+                                        ref_colors.widget_border_width,
+                                        0.0..=5.0,
+                                        0.05,
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_float(
+                                        &rust_i18n::t!("theme.widget_padding_x"),
+                                        &mut theme.colors.widget_padding_x,
+                                        4.0,
+                                        ref_colors.widget_padding_x,
+                                        0.0..=40.0,
+                                        0.5,
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_float(
+                                        &rust_i18n::t!("theme.widget_padding_y"),
+                                        &mut theme.colors.widget_padding_y,
+                                        2.0,
+                                        ref_colors.widget_padding_y,
+                                        0.0..=40.0,
+                                        0.5,
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.widget_focus_border"),
+                                        &mut theme.colors.widget_focus_border,
+                                        [100, 150, 255],
+                                        ref_colors.widget_focus_border,
+                                        "wgt_focus_border_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.chk_check"),
+                                        &mut theme.colors.checkbox_check,
+                                        [200, 200, 200],
+                                        ref_colors.checkbox_check,
+                                        "chk_check_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.text_edit_bg"),
+                                        &mut theme.colors.text_edit_bg,
+                                        [15, 15, 15],
+                                        ref_colors.text_edit_bg,
+                                        "text_edit_bg_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.selection_text"),
+                                        &mut theme.colors.selection_text,
+                                        [255, 255, 255],
+                                        ref_colors.selection_text,
+                                        "sel_text_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.separator"),
+                                        &mut theme.colors.separator,
+                                        [80, 80, 80],
+                                        ref_colors.separator,
+                                        "sep_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_float(
+                                        &rust_i18n::t!("theme.separator_width"),
+                                        &mut theme.colors.separator_width,
+                                        1.0,
+                                        ref_colors.separator_width,
+                                        0.0..=10.0,
+                                        0.1,
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.tree_line"),
+                                        &mut theme.colors.tree_line,
+                                        [100, 100, 100],
+                                        ref_colors.tree_line,
+                                        "tree_line_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+
+                                    // --- WINDOW & PANELS GEOMETRY ---
+                                    ui.label(
+                                        egui::RichText::new(rust_i18n::t!("theme.cat_geometry"))
+                                            .strong(),
+                                    );
+                                    if edit_optional_float(
+                                        &rust_i18n::t!("theme.window_rounding"),
+                                        &mut theme.colors.window_rounding,
+                                        4.0,
+                                        ref_colors.window_rounding,
+                                        0.0..=20.0,
+                                        0.1,
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &rust_i18n::t!("theme.shadow_color"),
+                                        &mut theme.colors.shadow_color,
+                                        [0, 0, 0],
+                                        ref_colors.shadow_color,
+                                        "shadow_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_float(
+                                        &rust_i18n::t!("theme.shadow_blur"),
+                                        &mut theme.colors.shadow_blur,
+                                        20.0,
+                                        ref_colors.shadow_blur,
+                                        0.0..=100.0,
+                                        0.5,
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_float(
+                                        &rust_i18n::t!("theme.shadow_spread"),
+                                        &mut theme.colors.shadow_spread,
+                                        0.0,
+                                        ref_colors.shadow_spread,
+                                        0.0..=100.0,
+                                        0.5,
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_float(
+                                        &rust_i18n::t!("theme.shadow_offset_x"),
+                                        &mut theme.colors.shadow_offset_x,
+                                        0.0,
+                                        ref_colors.shadow_offset_x,
+                                        -100.0..=100.0,
+                                        0.5,
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_float(
+                                        &rust_i18n::t!("theme.shadow_offset_y"),
+                                        &mut theme.colors.shadow_offset_y,
+                                        0.0,
+                                        ref_colors.shadow_offset_y,
+                                        -100.0..=100.0,
+                                        0.5,
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+
+                                    // --- SYNTAX ALERTS ---
+                                    ui.label(
+                                        egui::RichText::new(rust_i18n::t!("theme.cat_syntax"))
+                                            .strong(),
+                                    );
+                                    ui.add_space(4.0);
+                                    if render_color_edit_row(
+                                        ui,
+                                        &rust_i18n::t!("theme.comment"),
+                                        &mut theme.colors.comment,
+                                        ref_colors.comment,
+                                        egui::Id::new("comment_copy"),
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    ui.add_space(4.0);
+                                    if render_color_edit_row(
+                                        ui,
+                                        &rust_i18n::t!("theme.success_label"),
+                                        &mut theme.colors.success,
+                                        ref_colors.success,
+                                        egui::Id::new("success_copy"),
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    ui.add_space(4.0);
+                                    if render_color_edit_row(
+                                        ui,
+                                        &rust_i18n::t!("theme.info_label"),
+                                        &mut theme.colors.info,
+                                        ref_colors.info,
+                                        egui::Id::new("info_copy"),
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    ui.add_space(4.0);
+                                    if render_color_edit_row(
+                                        ui,
+                                        &rust_i18n::t!("theme.warning_label"),
+                                        &mut theme.colors.warning,
+                                        ref_colors.warning,
+                                        egui::Id::new("warning_copy"),
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    ui.add_space(4.0);
+                                    if render_color_edit_row(
+                                        ui,
+                                        &rust_i18n::t!("theme.error_label"),
+                                        &mut theme.colors.error,
+                                        ref_colors.error,
+                                        egui::Id::new("error_copy"),
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                });
                             });
                     });
                 // KLUCZOWA ZMIANA: Synchronizuj z current_theme natychmiast!
@@ -2362,12 +2535,24 @@ fn render_color_edit_row(
     ui: &mut egui::Ui,
     label: &str,
     color: &mut [u8; 3],
+    ref_color: [u8; 3],
     row_id: egui::Id,
 ) -> bool {
     let mut changed = false;
     crate::app_helpers::render_settings_row(ui, label, &mut 0.0, |ui| {
+        ui.spacing_mut().item_spacing.x = 4.0;
         if custom_color_picker_button(ui, color, row_id.with("color_btn")) {
             changed = true;
+        }
+        if *color != ref_color {
+            if ui
+                .button("↺")
+                .on_hover_text(rust_i18n::t!("theme.reset_tooltip"))
+                .clicked()
+            {
+                *color = ref_color;
+                changed = true;
+            }
         }
     });
     changed

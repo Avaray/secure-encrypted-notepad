@@ -56,12 +56,6 @@ pub struct ThemeColors {
     #[serde(default)]
     pub heading_text: Option<[u8; 3]>,
     #[serde(default)]
-    pub label_text: Option<[u8; 3]>,
-    #[serde(default)]
-    pub weak_text: Option<[u8; 3]>,
-    #[serde(default)]
-    pub strong_text: Option<[u8; 3]>,
-    #[serde(default)]
     pub hyperlink: Option<[u8; 3]>,
 
     // --- Interactive Widgets ---
@@ -151,9 +145,6 @@ impl ThemeColors {
             whitespace_symbols: None,
 
             heading_text: None,
-            label_text: None,
-            weak_text: None,
-            strong_text: None,
             hyperlink: None,
             checkbox_check: None,
             editor_background: None,
@@ -204,9 +195,6 @@ impl ThemeColors {
             whitespace_symbols: None,
 
             heading_text: None,
-            label_text: None,
-            weak_text: None,
-            strong_text: None,
             hyperlink: None,
             checkbox_check: None,
             editor_background: None,
@@ -329,30 +317,6 @@ impl ThemeColors {
         }
     }
 
-    pub fn label_color(&self) -> egui::Color32 {
-        if let Some(c) = self.label_text {
-            egui::Color32::from_rgb(c[0], c[1], c[2])
-        } else {
-            self.to_egui_color32(self.foreground)
-        }
-    }
-
-    pub fn weak_color(&self) -> egui::Color32 {
-        if let Some(c) = self.weak_text {
-            egui::Color32::from_rgb(c[0], c[1], c[2])
-        } else {
-            self.to_egui_color32(self.foreground).linear_multiply(0.5)
-        }
-    }
-
-    pub fn strong_color(&self) -> egui::Color32 {
-        if let Some(c) = self.strong_text {
-            egui::Color32::from_rgb(c[0], c[1], c[2])
-        } else {
-            self.to_egui_color32(self.foreground)
-        }
-    }
-
     pub fn tree_line_color(&self, ui_visuals: &egui::Visuals) -> egui::Color32 {
         if let Some(c) = self.tree_line {
             egui::Color32::from_rgb(c[0], c[1], c[2])
@@ -427,16 +391,6 @@ impl Theme {
         // Remove override_text_color to allow selective coloring
         visuals.override_text_color = None;
 
-        // Apply custom label color
-        if let Some(c) = self.colors.label_text {
-            visuals.widgets.noninteractive.fg_stroke.color = self.colors.to_egui_color32(c);
-        }
-
-        // Apply custom text colors
-        // Note: weak text is derived automatically by egui's alpha multiplier. Overriding `inactive` broke checkboxes.
-        if let Some(_c) = self.colors.strong_text {
-            // Strong text is usually just a font change, but we can set a main color override if desired.
-        }
         if let Some(c) = self.colors.hyperlink {
             visuals.hyperlink_color = self.colors.to_egui_color32(c);
         }

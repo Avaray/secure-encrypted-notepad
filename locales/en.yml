@@ -367,7 +367,7 @@ theme.success_label: "Success (Green):"
 theme.info_label: "Info (Blue):"
 theme.warning_label: "Warning (Orange):"
 theme.error_label: "Error (Red):"
-theme.reset_tooltip: "Reset to Default"
+theme.reset_tooltip: "Reset"
 theme.copy_color: "Copy Color"
 theme.paste_color: "Paste Color"
 
