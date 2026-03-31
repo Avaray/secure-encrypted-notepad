@@ -379,13 +379,15 @@ crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.comment_pre
     let min_w = min_galley.size().x;
     let max_w = max_galley.size().x;
 
-    let dynamic_width = text_width.clamp(min_w, max_w) + 4.0; // Minimal buffer for the cursor
+    let padding = ui.spacing().button_padding;
+    let py = padding.y.round() as i8;
+    let dynamic_width = text_width.clamp(min_w, max_w) + 4.0;
 
     let response = ui.add(
         egui::TextEdit::singleline(&mut self.settings.comment_prefix)
             .desired_width(dynamic_width)
-            .margin(egui::Margin::ZERO) // Removes internal padding for tight fit
-            .horizontal_align(egui::Align::RIGHT) // Right-align text
+            .margin(egui::Margin { left: 0, right: 0, top: py, bottom: py })
+            .horizontal_align(egui::Align::RIGHT)
     );
 
     if response.changed() {
