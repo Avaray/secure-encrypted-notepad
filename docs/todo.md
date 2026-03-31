@@ -29,6 +29,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Theme Editor Panel Sizing**: Ensure the Theme Editor panel cannot be resized horizontally beyond its longest content. It must dynamically adapt to changes in UI font size or button padding to maintain perfect constraints.
 - [ ] **Windows Start Menu Integration**: Add an "Add to Start Menu" button (Windows-specific) in settings. It would generate the necessary manifest files and icons to allow pinning a large, high-quality tile for SEN to the Start Menu, bypassing the current limitations of portable apps.
 - [ ] **Draggable Dialogs**: Make custom dialog windows (like "Reset Settings") draggable by clicking and dragging their title bar area.
+- [ ] **Auto-Updater**: Implement an update check system (leveraging GitHub Releases) that is disabled by default. Consider supporting full automatic updates with binary replacement to streamline the update process for users.
 
 ---
 
