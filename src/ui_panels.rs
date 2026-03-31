@@ -733,6 +733,9 @@ let _ = self.settings.save();
                 "es" => ("Español", &self.icons.flag_es),
                 "fr" => ("Français", &self.icons.flag_fr),
                 "uk" => ("Українська", &self.icons.flag_ua),
+                "nl" => ("Nederlands", &self.icons.flag_nl),
+                "zh-CN" => ("简体中文", &self.icons.flag_cn),
+                "ja" => ("日本語", &self.icons.flag_jp),
                 _ => ("English", &self.icons.flag_en),
             };
 
@@ -764,6 +767,9 @@ let _ = self.settings.save();
                         if lang_row(ui, "es", "Español", &self.icons.flag_es) { changed = true; }
                         if lang_row(ui, "fr", "Français", &self.icons.flag_fr) { changed = true; }
                         if lang_row(ui, "uk", "Українська", &self.icons.flag_ua) { changed = true; }
+                        if lang_row(ui, "nl", "Nederlands", &self.icons.flag_nl) { changed = true; }
+                        if lang_row(ui, "zh-CN", "简体中文", &self.icons.flag_cn) { changed = true; }
+                        if lang_row(ui, "ja", "日本語", &self.icons.flag_jp) { changed = true; }
                     });
 
                 // Since we are in a Right-To-Left layout (from render_settings_row),

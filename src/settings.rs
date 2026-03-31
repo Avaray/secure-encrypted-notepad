@@ -264,6 +264,12 @@ fn default_language() -> String {
         "fr".to_string()
     } else if locale.starts_with("uk") {
         "uk".to_string()
+    } else if locale.starts_with("nl") {
+        "nl".to_string()
+    } else if locale.starts_with("zh") {
+        "zh-CN".to_string()
+    } else if locale.starts_with("ja") {
+        "ja".to_string()
     } else {
         "en".to_string()
     }
