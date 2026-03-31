@@ -1048,6 +1048,8 @@ pub fn flex_row<R>(
             let interact = ui.spacing().interact_size.y;
             ui.set_min_height(interact.max(text_height + padding * 2.0));
 
+            ui.spacing_mut().icon_width = text_height;
+
             add_contents(ui)
         },
     )
@@ -1067,6 +1069,8 @@ pub fn flex_row_between<R1, R2>(
             let padding = ui.spacing().button_padding.y;
             let interact = ui.spacing().interact_size.y;
             ui.set_min_height(interact.max(text_height + padding * 2.0));
+
+            ui.spacing_mut().icon_width = text_height;
 
             let r1 = left_ui(ui);
             let r2 = ui

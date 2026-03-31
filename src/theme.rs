@@ -643,6 +643,10 @@ impl Theme {
         }
         if let Some(y) = self.colors.widget_padding_y {
             style.spacing.button_padding.y = y;
+            // ComboBox and other widgets use interact_size.y as their default height.
+            // Setting it to 0.0 forces them to use (text_height + 2 * padding.y),
+            // making them consistent with buttons.
+            style.spacing.interact_size.y = 0.0;
         }
 
         // Separator width — only affects noninteractive bg_stroke width
@@ -650,9 +654,9 @@ impl Theme {
             style.visuals.widgets.noninteractive.bg_stroke.width = w;
         }
 
-        // Increase checkbox (icon) size
-        style.spacing.icon_width = 26.0;
-        style.spacing.icon_spacing = 10.0;
+        // Increase checkbox (icon) size - adjusted to stay consistent with widget height
+        style.spacing.icon_width = if self.colors.widget_padding_y.is_some() { 20.0 } else { 26.0 };
+        style.spacing.icon_spacing = if self.colors.widget_padding_y.is_some() { 6.0 } else { 10.0 };
 
         // Thicker checkmark (tick) icon
         style.visuals.widgets.inactive.fg_stroke.width = 2.0;
