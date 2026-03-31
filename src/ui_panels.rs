@@ -1758,6 +1758,13 @@ if ui
             ui.separator();
             if let Some(ref mut theme) = self.editing_theme {
                 let mut theme_changed = false;
+                ui.data_mut(|d| {
+                    d.insert_temp(egui::Id::new("__theme_info_color__"), theme.colors.info);
+                    d.insert_temp(
+                        egui::Id::new("__theme_success_color__"),
+                        theme.colors.success,
+                    );
+                });
                 crate::app_helpers::render_settings_row(
                     ui,
                     &rust_i18n::t!("theme.name_label"),
@@ -2849,36 +2856,79 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: 
                 && d.get_temp::<[u8; 3]>(copy_color_key).is_some()
         });
 
-        if is_copy_source {
-            // Pulsating border animation using egui's frame time
-            let t = ui.input(|i| i.time) as f32;
-            let alpha = 0.3 + 0.7 * (t * 4.0).sin().abs();
-            let contrast = picker_contrast(color32);
-            let pulse_color = contrast.gamma_multiply(alpha);
-            let pulse_stroke = egui::Stroke::new(2.0, pulse_color);
-            ui.painter().rect_stroke(
-                rect,
-                visuals.corner_radius,
-                pulse_stroke,
-                egui::StrokeKind::Inside,
-            );
-            // Request repaint for smooth animation
-            ui.ctx().request_repaint();
-        } else {
-            // Normal border
-            let mut stroke = visuals.bg_stroke;
-            if response.hovered() {
-                stroke.width = stroke.width.max(2.0); // Clear feedback using theme's hover border color
-            } else {
-                stroke.width = stroke.width.max(1.0);
-            }
+        // Retrieve theme colors for animations
+        let info_c = ui.data(|d| {
+            d.get_temp::<[u8; 3]>(egui::Id::new("__theme_info_color__"))
+                .unwrap_or([0, 150, 255])
+        });
+        let success_c = ui.data(|d| {
+            d.get_temp::<[u8; 3]>(egui::Id::new("__theme_success_color__"))
+                .unwrap_or([0, 200, 100])
+        });
 
-            ui.painter().rect_stroke(
-                rect,
-                visuals.corner_radius,
-                stroke,
-                egui::StrokeKind::Inside,
-            );
+        let info_color32 = egui::Color32::from_rgb(info_c[0], info_c[1], info_c[2]);
+        let success_color32 = egui::Color32::from_rgb(success_c[0], success_c[1], success_c[2]);
+
+        let paste_flash_key = popup_id.with("paste_flash");
+
+        let current_time = ui.input(|i| i.time);
+        
+        if response.secondary_clicked() && ui.input(|i| i.modifiers.ctrl) {
+            // Register flash time
+            ui.data_mut(|d| d.insert_temp::<Option<f64>>(paste_flash_key, Some(current_time)));
+        }
+
+        let flash_time = ui.data(|d| d.get_temp::<Option<f64>>(paste_flash_key).flatten());
+
+        let mut is_flashing = false;
+        if let Some(t_flash) = flash_time {
+            let elapsed = (current_time - t_flash) as f32;
+            if elapsed < 0.5 {
+                is_flashing = true;
+                let alpha = 1.0 - (elapsed / 0.5); // Fade out
+                let pulse_color = success_color32.gamma_multiply(alpha);
+                let pulse_stroke = egui::Stroke::new(2.0, pulse_color);
+                ui.painter().rect_stroke(
+                    rect,
+                    visuals.corner_radius,
+                    pulse_stroke,
+                    egui::StrokeKind::Inside,
+                );
+                ui.ctx().request_repaint(); // Keep animating
+            }
+        }
+
+        if !is_flashing {
+            if is_copy_source {
+                // Pulsating border animation using egui's frame time
+                let t = current_time as f32;
+                let alpha = 0.3 + 0.7 * (t * 4.0).sin().abs();
+                let pulse_color = info_color32.gamma_multiply(alpha);
+                let pulse_stroke = egui::Stroke::new(2.0, pulse_color);
+                ui.painter().rect_stroke(
+                    rect,
+                    visuals.corner_radius,
+                    pulse_stroke,
+                    egui::StrokeKind::Inside,
+                );
+                // Request repaint for smooth animation
+                ui.ctx().request_repaint();
+            } else {
+                // Normal border
+                let mut stroke = visuals.bg_stroke;
+                if response.hovered() {
+                    stroke.width = stroke.width.max(2.0); // Clear feedback using theme's hover border color
+                } else {
+                    stroke.width = stroke.width.max(1.0);
+                }
+
+                ui.painter().rect_stroke(
+                    rect,
+                    visuals.corner_radius,
+                    stroke,
+                    egui::StrokeKind::Inside,
+                );
+            }
         }
     }
 
