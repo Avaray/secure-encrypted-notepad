@@ -361,10 +361,31 @@ let _ = self.settings.save();
 let h = ls.get_height("set_comment_prefix");
 crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.comment_prefix"), h, |ui| {
     let mut changed = false;
+
+    // Use WidgetText to calculate exact galley width
+    let current_text = self.settings.comment_prefix.clone();
+    let text_style = egui::TextStyle::Body;
+
+    let galley =
+        egui::WidgetText::from(&current_text).into_galley(ui, None, f32::INFINITY, text_style.clone());
+    let text_width = galley.size().x;
+
+    // Calculate min/max widths based on 4 and 20 'M' characters
+    let min_galley =
+        egui::WidgetText::from("MMMM").into_galley(ui, None, f32::INFINITY, text_style.clone());
+    let max_galley =
+        egui::WidgetText::from("MMMMMMMMMMMMMMMMMMMM").into_galley(ui, None, f32::INFINITY, text_style);
+
+    let min_w = min_galley.size().x;
+    let max_w = max_galley.size().x;
+
+    let dynamic_width = text_width.clamp(min_w, max_w) + 4.0; // Minimal buffer for the cursor
+
     let response = ui.add(
         egui::TextEdit::singleline(&mut self.settings.comment_prefix)
-            .desired_width(50.0)
-            .margin(ui.spacing().button_padding)
+            .desired_width(dynamic_width)
+            .margin(egui::Margin::ZERO) // Removes internal padding for tight fit
+            .horizontal_align(egui::Align::RIGHT) // Right-align text
     );
 
     if response.changed() {
@@ -713,9 +734,6 @@ let _ = self.settings.save();
 
             let h = ls.get_height("set_lang");
             crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.language"), h, |ui| {
-                // We use text_height for the flag
-                ui.add(egui::Image::new(current_icon).max_height(text_height).maintain_aspect_ratio(true));
-
                 egui::ComboBox::from_id_salt("language_selector")
                     .selected_text(current_label)
                     .show_ui(ui, |ui| {
@@ -737,6 +755,10 @@ let _ = self.settings.save();
                         if lang_row(ui, "pl", "Polski", &self.icons.flag_pl) { changed = true; }
                         if lang_row(ui, "de", "Deutsch", &self.icons.flag_de) { changed = true; }
                     });
+
+                // Since we are in a Right-To-Left layout (from render_settings_row), 
+                // adding the image second moves it to the left of the combo box.
+                ui.add(egui::Image::new(current_icon).max_height(text_height).maintain_aspect_ratio(true));
             });
 if changed {
 rust_i18n::set_locale(&self.settings.language);
