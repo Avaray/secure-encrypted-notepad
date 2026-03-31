@@ -729,6 +729,10 @@ let _ = self.settings.save();
             let (current_label, current_icon) = match current_lang.as_str() {
                 "pl" => ("Polski", &self.icons.flag_pl),
                 "de" => ("Deutsch", &self.icons.flag_de),
+                "cz" => ("Čeština", &self.icons.flag_cz),
+                "es" => ("Español", &self.icons.flag_es),
+                "fr" => ("Français", &self.icons.flag_fr),
+                "uk" => ("Українська", &self.icons.flag_ua),
                 _ => ("English", &self.icons.flag_en),
             };
 
@@ -756,6 +760,10 @@ let _ = self.settings.save();
                         if lang_row(ui, "en", "English", &self.icons.flag_en) { changed = true; }
                         if lang_row(ui, "pl", "Polski", &self.icons.flag_pl) { changed = true; }
                         if lang_row(ui, "de", "Deutsch", &self.icons.flag_de) { changed = true; }
+                        if lang_row(ui, "cz", "Čeština", &self.icons.flag_cz) { changed = true; }
+                        if lang_row(ui, "es", "Español", &self.icons.flag_es) { changed = true; }
+                        if lang_row(ui, "fr", "Français", &self.icons.flag_fr) { changed = true; }
+                        if lang_row(ui, "uk", "Українська", &self.icons.flag_ua) { changed = true; }
                     });
 
                 // Since we are in a Right-To-Left layout (from render_settings_row),
