@@ -311,13 +311,13 @@ theme.saved_msg: "Motyw zapisany pomyślnie: %{name}"
 theme.save_error: "Nie udało się zapisać motywu: %{error}"
 
 # Kategorie
-theme.cat_core: "--- PODSTAWOWY INTERFEJS ---"
-theme.cat_typography: "--- TYPOGRAFIA ---"
-theme.cat_editor: "--- EDYTOR TEKSTU ---"
-theme.cat_buttons: "--- PRZYCISKI I POLA ---"
-theme.cat_widgets: "--- WIDGETY ---"
-theme.cat_geometry: "--- GEOMETRIA PANELI ---"
-theme.cat_syntax: "--- ALERTY SKŁADNI ---"
+theme.cat_core: "PODSTAWOWY INTERFEJS"
+theme.cat_typography: "TYPOGRAFIA"
+theme.cat_editor: "EDYTOR TEKSTU"
+theme.cat_buttons: "PRZYCISKI I POLA"
+theme.cat_widgets: "WIDGETY"
+theme.cat_geometry: "GEOMETRIA PANELI"
+theme.cat_syntax: "ALERTY SKŁADNI"
 
 # Etykiety
 theme.bg: "Tło interfejsu:"

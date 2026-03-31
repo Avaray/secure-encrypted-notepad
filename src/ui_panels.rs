@@ -756,7 +756,7 @@ let _ = self.settings.save();
                         if lang_row(ui, "de", "Deutsch", &self.icons.flag_de) { changed = true; }
                     });
 
-                // Since we are in a Right-To-Left layout (from render_settings_row), 
+                // Since we are in a Right-To-Left layout (from render_settings_row),
                 // adding the image second moves it to the left of the combo box.
                 ui.add(egui::Image::new(current_icon).max_height(text_height).maintain_aspect_ratio(true));
             });
@@ -1868,9 +1868,9 @@ if ui
                                     // --- HELPER CLOSURES FOR NEW OPTIONAL FIELDS ---
                                     let edit_optional_color =
                                         |label: &str,
-                                         field: &mut Option<[u8; 3]>,
-                                         default: [u8; 3],
-                                         ref_field: Option<[u8; 3]>,
+                                         field: &mut Option<[u8; 4]>,
+                                         default: [u8; 4],
+                                         ref_field: Option<[u8; 4]>,
                                          id_str: &str,
                                          ui: &mut egui::Ui|
                                          -> bool {
@@ -1954,11 +1954,19 @@ if ui
                                             changed
                                         };
 
+                                    let render_cat_header = |ui: &mut egui::Ui, text: std::borrow::Cow<'_, str>, color: egui::Color32| {
+                                        ui.add_space(8.0);
+                                        ui.label(
+                                            egui::RichText::new(text)
+                                                .color(color.gamma_multiply(0.5))
+                                                .strong(),
+                                        );
+                                    };
+
+                                    let fg_color32 = theme.colors.to_egui_color32(theme.colors.foreground);
+
                                     // --- CORE UI BACKGROUNDS & ACCENTS ---
-                                    ui.label(
-                                        egui::RichText::new(rust_i18n::t!("theme.cat_core"))
-                                            .strong(),
-                                    );
+                                    render_cat_header(ui, rust_i18n::t!("theme.cat_core"), fg_color32);
                                     ui.add_space(4.0);
                                     if render_color_edit_row(
                                         ui,
@@ -1982,9 +1990,9 @@ if ui
 
                                     let icon_def =
                                         if theme.color_scheme == crate::theme::ColorScheme::Dark {
-                                            [200, 200, 200]
+                                            [200, 200, 200, 255]
                                         } else {
-                                            [80, 80, 80]
+                                            [80, 80, 80, 255]
                                         };
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.icon_default"),
@@ -2008,10 +2016,7 @@ if ui
                                     }
 
                                     // --- TYPOGRAPHY ---
-                                    ui.label(
-                                        egui::RichText::new(rust_i18n::t!("theme.cat_typography"))
-                                            .strong(),
-                                    );
+                                    render_cat_header(ui, rust_i18n::t!("theme.cat_typography"), fg_color32);
                                     ui.add_space(4.0);
                                     if render_color_edit_row(
                                         ui,
@@ -2025,7 +2030,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.headings"),
                                         &mut theme.colors.heading_text,
-                                        [255, 255, 255],
+                                        [255, 255, 255, 255],
                                         ref_colors.heading_text,
                                         "heading_text_copy",
                                         ui,
@@ -2035,7 +2040,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.hyperlinks"),
                                         &mut theme.colors.hyperlink,
-                                        [90, 170, 255],
+                                        [90, 170, 255, 255],
                                         ref_colors.hyperlink,
                                         "hyperlink_copy",
                                         ui,
@@ -2044,14 +2049,11 @@ if ui
                                     }
 
                                     // --- MAIN TEXT EDITOR ---
-                                    ui.label(
-                                        egui::RichText::new(rust_i18n::t!("theme.cat_editor"))
-                                            .strong(),
-                                    );
+                                    render_cat_header(ui, rust_i18n::t!("theme.cat_editor"), fg_color32);
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.editor_bg"),
                                         &mut theme.colors.editor_background,
-                                        [10, 10, 10],
+                                        [10, 10, 10, 255],
                                         ref_colors.editor_background,
                                         "editor_bg_copy",
                                         ui,
@@ -2101,7 +2103,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.whitespace"),
                                         &mut theme.colors.whitespace_symbols,
-                                        [80, 80, 80],
+                                        [80, 80, 80, 255],
                                         ref_colors.whitespace_symbols,
                                         "whitespace_copy",
                                         ui,
@@ -2110,14 +2112,11 @@ if ui
                                     }
 
                                     // --- BUTTONS & INPUTS ---
-                                    ui.label(
-                                        egui::RichText::new(rust_i18n::t!("theme.cat_buttons"))
-                                            .strong(),
-                                    );
+                                    render_cat_header(ui, rust_i18n::t!("theme.cat_buttons"), fg_color32);
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.btn_bg"),
                                         &mut theme.colors.button_bg,
-                                        [60, 60, 60],
+                                        [60, 60, 60, 255],
                                         ref_colors.button_bg,
                                         "btn_bg_copy",
                                         ui,
@@ -2127,7 +2126,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.btn_hover"),
                                         &mut theme.colors.button_hover_bg,
-                                        [80, 80, 80],
+                                        [80, 80, 80, 255],
                                         ref_colors.button_hover_bg,
                                         "btn_hover_copy",
                                         ui,
@@ -2137,7 +2136,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.btn_active"),
                                         &mut theme.colors.button_active_bg,
-                                        [100, 100, 100],
+                                        [100, 100, 100, 255],
                                         ref_colors.button_active_bg,
                                         "btn_active_copy",
                                         ui,
@@ -2177,7 +2176,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.btn_hover_border"),
                                         &mut theme.colors.button_hover_border_color,
-                                        [120, 120, 120],
+                                        [120, 120, 120, 255],
                                         ref_colors.button_hover_border_color,
                                         "btn_hover_border_copy",
                                         ui,
@@ -2187,7 +2186,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.btn_active_border"),
                                         &mut theme.colors.button_active_border_color,
-                                        [150, 150, 150],
+                                        [150, 150, 150, 255],
                                         ref_colors.button_active_border_color,
                                         "btn_active_border_copy",
                                         ui,
@@ -2196,10 +2195,7 @@ if ui
                                     }
 
                                     // --- WIDGETS (unified geometry + specific widget colors) ---
-                                    ui.label(
-                                        egui::RichText::new(rust_i18n::t!("theme.cat_widgets"))
-                                            .strong(),
-                                    );
+                                    render_cat_header(ui, rust_i18n::t!("theme.cat_widgets"), fg_color32);
                                     if edit_optional_float(
                                         &rust_i18n::t!("theme.widget_rounding"),
                                         &mut theme.colors.widget_rounding,
@@ -2214,7 +2210,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.widget_border"),
                                         &mut theme.colors.widget_border_color,
-                                        [100, 100, 100],
+                                        [100, 100, 100, 255],
                                         ref_colors.widget_border_color,
                                         "wgt_border_copy",
                                         ui,
@@ -2257,7 +2253,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.widget_focus_border"),
                                         &mut theme.colors.widget_focus_border,
-                                        [100, 150, 255],
+                                        [100, 150, 255, 255],
                                         ref_colors.widget_focus_border,
                                         "wgt_focus_border_copy",
                                         ui,
@@ -2267,7 +2263,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.chk_check"),
                                         &mut theme.colors.checkbox_check,
-                                        [200, 200, 200],
+                                        [200, 200, 200, 255],
                                         ref_colors.checkbox_check,
                                         "chk_check_copy",
                                         ui,
@@ -2277,7 +2273,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.text_edit_bg"),
                                         &mut theme.colors.text_edit_bg,
-                                        [15, 15, 15],
+                                        [15, 15, 15, 255],
                                         ref_colors.text_edit_bg,
                                         "text_edit_bg_copy",
                                         ui,
@@ -2287,7 +2283,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.selection_text"),
                                         &mut theme.colors.selection_text,
-                                        [255, 255, 255],
+                                        [255, 255, 255, 255],
                                         ref_colors.selection_text,
                                         "sel_text_copy",
                                         ui,
@@ -2297,7 +2293,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.separator"),
                                         &mut theme.colors.separator,
-                                        [80, 80, 80],
+                                        [80, 80, 80, 255],
                                         ref_colors.separator,
                                         "sep_copy",
                                         ui,
@@ -2318,7 +2314,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.tree_line"),
                                         &mut theme.colors.tree_line,
-                                        [100, 100, 100],
+                                        [100, 100, 100, 255],
                                         ref_colors.tree_line,
                                         "tree_line_copy",
                                         ui,
@@ -2327,10 +2323,7 @@ if ui
                                     }
 
                                     // --- WINDOW & PANELS GEOMETRY ---
-                                    ui.label(
-                                        egui::RichText::new(rust_i18n::t!("theme.cat_geometry"))
-                                            .strong(),
-                                    );
+                                    render_cat_header(ui, rust_i18n::t!("theme.cat_geometry"), fg_color32);
                                     if edit_optional_float(
                                         &rust_i18n::t!("theme.window_rounding"),
                                         &mut theme.colors.window_rounding,
@@ -2345,7 +2338,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.shadow_color"),
                                         &mut theme.colors.shadow_color,
-                                        [0, 0, 0],
+                                        [0, 0, 0, 255],
                                         ref_colors.shadow_color,
                                         "shadow_copy",
                                         ui,
@@ -2398,10 +2391,7 @@ if ui
                                     }
 
                                     // --- SYNTAX ALERTS ---
-                                    ui.label(
-                                        egui::RichText::new(rust_i18n::t!("theme.cat_syntax"))
-                                            .strong(),
-                                    );
+                                    render_cat_header(ui, rust_i18n::t!("theme.cat_syntax"), fg_color32);
                                     ui.add_space(4.0);
                                     if render_color_edit_row(
                                         ui,
@@ -2557,8 +2547,8 @@ if ui
 fn render_color_edit_row(
     ui: &mut egui::Ui,
     label: &str,
-    color: &mut [u8; 3],
-    ref_color: [u8; 3],
+    color: &mut [u8; 4],
+    ref_color: [u8; 4],
     row_id: egui::Id,
 ) -> bool {
     let mut changed = false;
@@ -2773,6 +2763,8 @@ pub fn color_picker_color32_wide(
         let mut g = srgba.g() as f32 / 255.0;
         let mut b = srgba.b() as f32 / 255.0;
 
+        let mut a = srgba.a() as f32 / 255.0;
+
         let dr = ui.add(
             egui::DragValue::new(&mut r)
                 .speed(speed)
@@ -2795,11 +2787,24 @@ pub fn color_picker_color32_wide(
                 .custom_formatter(|n, _| format!("{n:.3}")),
         );
 
-        if dr.changed() || dg.changed() || db.changed() {
-            hsva = Hsva::from(egui::Color32::from_rgb(
+        let mut da_changed = false;
+        if alpha != egui::color_picker::Alpha::Opaque {
+            let da = ui.add(
+                egui::DragValue::new(&mut a)
+                    .speed(speed)
+                    .range(0.0..=1.0)
+                    .prefix("A ")
+                    .custom_formatter(|n, _| format!("{n:.3}")),
+            );
+            da_changed = da.changed();
+        }
+
+        if dr.changed() || dg.changed() || db.changed() || da_changed {
+            hsva = Hsva::from(egui::Color32::from_rgba_unmultiplied(
                 (r * 255.0).round() as u8,
                 (g * 255.0).round() as u8,
                 (b * 255.0).round() as u8,
+                (a * 255.0).round() as u8,
             ));
             changed = true;
         }
@@ -2811,12 +2816,12 @@ pub fn color_picker_color32_wide(
     changed
 }
 
-fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: egui::Id) -> bool {
+fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 4], popup_id: egui::Id) -> bool {
     // Well-known IDs for copy/paste state stored in egui temp data
     let copy_color_key = egui::Id::new("__theme_copied_color__");
     let copy_source_key = egui::Id::new("__theme_copied_source_id__");
 
-    let mut color32 = egui::Color32::from_rgb(color[0], color[1], color[2]);
+    let mut color32 = egui::Color32::from_rgba_unmultiplied(color[0], color[1], color[2], color[3]);
     let button_id = popup_id.with("btn");
     let area_id = popup_id.with("area");
 
@@ -2847,9 +2852,9 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: 
         }
         // CTRL + Right Click = Paste color
         if response.secondary_clicked() {
-            if let Some(c) = ui.data(|d| d.get_temp::<[u8; 3]>(copy_color_key)) {
+            if let Some(c) = ui.data(|d| d.get_temp::<[u8; 4]>(copy_color_key)) {
                 *color = c;
-                color32 = egui::Color32::from_rgb(c[0], c[1], c[2]);
+                color32 = egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3]);
                 changed = true;
             }
         }
@@ -2869,21 +2874,27 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: 
         // Check if this button is the source of the copied color → pulsating border
         let is_copy_source = ui.data(|d| {
             d.get_temp::<egui::Id>(copy_source_key) == Some(popup_id)
-                && d.get_temp::<[u8; 3]>(copy_color_key).is_some()
+                && d.get_temp::<[u8; 4]>(copy_color_key).is_some()
         });
 
         // Retrieve theme colors for animations
         let info_c = ui.data(|d| {
-            d.get_temp::<[u8; 3]>(egui::Id::new("__theme_info_color__"))
-                .unwrap_or([0, 150, 255])
+            d.get_temp::<[u8; 4]>(egui::Id::new("__theme_info_color__"))
+                .unwrap_or([0, 150, 255, 255])
         });
         let success_c = ui.data(|d| {
-            d.get_temp::<[u8; 3]>(egui::Id::new("__theme_success_color__"))
-                .unwrap_or([0, 200, 100])
+            d.get_temp::<[u8; 4]>(egui::Id::new("__theme_success_color__"))
+                .unwrap_or([0, 200, 100, 255])
         });
 
-        let info_color32 = egui::Color32::from_rgb(info_c[0], info_c[1], info_c[2]);
-        let success_color32 = egui::Color32::from_rgb(success_c[0], success_c[1], success_c[2]);
+        let info_color32 =
+            egui::Color32::from_rgba_unmultiplied(info_c[0], info_c[1], info_c[2], info_c[3]);
+        let success_color32 = egui::Color32::from_rgba_unmultiplied(
+            success_c[0],
+            success_c[1],
+            success_c[2],
+            success_c[3],
+        );
 
         let paste_flash_key = popup_id.with("paste_flash");
 
@@ -2966,13 +2977,14 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: 
                 if color_picker_color32_wide(
                     ui,
                     &mut color32,
-                    egui::color_picker::Alpha::Opaque,
+                    egui::color_picker::Alpha::BlendOrAdditive,
                     80.0, // height of the 2D field in pixels (half of square)
                 ) {
                     changed = true;
                     color[0] = color32.r();
                     color[1] = color32.g();
                     color[2] = color32.b();
+                    color[3] = color32.a();
                 }
 
                 // Store measured content width for next frame (stabilizes after 2 frames)

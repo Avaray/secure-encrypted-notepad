@@ -311,13 +311,13 @@ theme.saved_msg: "Theme saved successfully: %{name}"
 theme.save_error: "Failed to save theme: %{error}"
 
 # Categories
-theme.cat_core: "--- CORE UI ---"
-theme.cat_typography: "--- TYPOGRAPHY ---"
-theme.cat_editor: "--- MAIN TEXT EDITOR ---"
-theme.cat_buttons: "--- BUTTONS & INPUTS ---"
-theme.cat_widgets: "--- WIDGETS ---"
-theme.cat_geometry: "--- PANELS GEOMETRY ---"
-theme.cat_syntax: "--- SYNTAX ALERTS ---"
+theme.cat_core: "CORE UI"
+theme.cat_typography: "TYPOGRAPHY"
+theme.cat_editor: "MAIN TEXT EDITOR"
+theme.cat_buttons: "BUTTONS & INPUTS"
+theme.cat_widgets: "WIDGETS"
+theme.cat_geometry: "PANELS GEOMETRY"
+theme.cat_syntax: "SYNTAX ALERTS"
 
 # Labels
 theme.bg: "UI Background:"

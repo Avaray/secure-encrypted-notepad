@@ -16,59 +16,125 @@ impl Default for ColorScheme {
     }
 }
 
+pub mod alpha_color {
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    pub fn serialize<S>(color: &[u8; 4], serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        // Serialize as standard [u8; 4]. We don't dynamically shrink to [u8; 3] here
+        // to ensure file format consistency going forward.
+        color.serialize(serializer)
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<[u8; 4], D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let vec = Vec::<u8>::deserialize(deserializer)?;
+        match vec.len() {
+            3 => Ok([vec[0], vec[1], vec[2], 255]),
+            4 => Ok([vec[0], vec[1], vec[2], vec[3]]),
+            _ => Err(serde::de::Error::custom("expected array of length 3 or 4")),
+        }
+    }
+}
+
+pub mod opt_alpha_color {
+    use serde::{Deserialize, Deserializer, Serializer};
+
+    pub fn serialize<S>(color: &Option<[u8; 4]>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        if let Some(c) = color {
+            serializer.serialize_some(c)
+        } else {
+            serializer.serialize_none()
+        }
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<[u8; 4]>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let opt_vec = Option::<Vec<u8>>::deserialize(deserializer)?;
+        match opt_vec {
+            Some(vec) => match vec.len() {
+                3 => Ok(Some([vec[0], vec[1], vec[2], 255])),
+                4 => Ok(Some([vec[0], vec[1], vec[2], vec[3]])),
+                _ => Err(serde::de::Error::custom("expected array of length 3 or 4")),
+            },
+            None => Ok(None),
+        }
+    }
+}
+
 /// Color scheme definition
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ThemeColors {
-    pub background: [u8; 3],
-    pub foreground: [u8; 3],
-    #[serde(default)]
-    pub editor_foreground: Option<[u8; 3]>,
-    #[serde(default)]
-    pub button_bg: Option<[u8; 3]>,
-    #[serde(default)]
-    pub button_fg: Option<[u8; 3]>,
-    #[serde(default)]
-    pub separator: Option<[u8; 3]>,
-    #[serde(default)]
-    pub button_hover_bg: Option<[u8; 3]>,
-    #[serde(default)]
-    pub button_active_bg: Option<[u8; 3]>,
-    pub selection_background: [u8; 3],
-    pub cursor: [u8; 3],
-    pub line_number: [u8; 3],
-    pub comment: [u8; 3],
-    pub icon_hover: [u8; 3],
+    #[serde(with = "alpha_color")]
+    pub background: [u8; 4],
+    #[serde(with = "alpha_color")]
+    pub foreground: [u8; 4],
+    #[serde(default, with = "opt_alpha_color")]
+    pub editor_foreground: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub button_bg: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub button_fg: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub separator: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub button_hover_bg: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub button_active_bg: Option<[u8; 4]>,
+    #[serde(with = "alpha_color")]
+    pub selection_background: [u8; 4],
+    #[serde(with = "alpha_color")]
+    pub cursor: [u8; 4],
+    #[serde(with = "alpha_color")]
+    pub line_number: [u8; 4],
+    #[serde(with = "alpha_color")]
+    pub comment: [u8; 4],
+    #[serde(with = "alpha_color")]
+    pub icon_hover: [u8; 4],
     /// Default icon tint color (non-hovered state)
-    #[serde(default)]
-    pub icon_color: Option<[u8; 3]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub icon_color: Option<[u8; 4]>,
     /// Highlight color for search matches and history loaded indicator
-    #[serde(default)]
-    pub highlight: Option<[u8; 3]>,
-    pub success: [u8; 3],
-    pub info: [u8; 3],
-    pub warning: [u8; 3],
-    pub error: [u8; 3],
+    #[serde(default, with = "opt_alpha_color")]
+    pub highlight: Option<[u8; 4]>,
+    #[serde(with = "alpha_color")]
+    pub success: [u8; 4],
+    #[serde(with = "alpha_color")]
+    pub info: [u8; 4],
+    #[serde(with = "alpha_color")]
+    pub warning: [u8; 4],
+    #[serde(with = "alpha_color")]
+    pub error: [u8; 4],
     /// Color for whitespace symbols (spaces, tabs, returns)
-    #[serde(default)]
-    pub whitespace_symbols: Option<[u8; 3]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub whitespace_symbols: Option<[u8; 4]>,
 
     // --- Typography ---
-    #[serde(default)]
-    pub heading_text: Option<[u8; 3]>,
-    #[serde(default)]
-    pub hyperlink: Option<[u8; 3]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub heading_text: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub hyperlink: Option<[u8; 4]>,
 
     // --- Interactive Widgets ---
-    #[serde(default)]
-    pub checkbox_check: Option<[u8; 3]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub checkbox_check: Option<[u8; 4]>,
 
     // --- Editor Additions ---
-    #[serde(default)]
-    pub editor_background: Option<[u8; 3]>,
-    #[serde(default)]
-    pub text_edit_bg: Option<[u8; 3]>,
-    #[serde(default)]
-    pub selection_text: Option<[u8; 3]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub editor_background: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub text_edit_bg: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub selection_text: Option<[u8; 4]>,
 
     // --- Geometry & Borders (unified for all interactive widgets) ---
     #[serde(default)]
@@ -77,19 +143,29 @@ pub struct ThemeColors {
     pub widget_rounding: Option<f32>,
     #[serde(default, alias = "button_border_width")]
     pub widget_border_width: Option<f32>,
-    #[serde(default, alias = "button_border_color", alias = "input_border_color")]
-    pub widget_border_color: Option<[u8; 3]>,
+    #[serde(
+        default,
+        alias = "button_border_color",
+        alias = "input_border_color",
+        with = "opt_alpha_color"
+    )]
+    pub widget_border_color: Option<[u8; 4]>,
     #[serde(default, alias = "button_padding_x")]
     pub widget_padding_x: Option<f32>,
     #[serde(default, alias = "button_padding_y")]
     pub widget_padding_y: Option<f32>,
     /// Focus/selection border color for all interactive widgets
-    #[serde(default, alias = "focus_outline", alias = "input_focus_border_color")]
-    pub widget_focus_border: Option<[u8; 3]>,
+    #[serde(
+        default,
+        alias = "focus_outline",
+        alias = "input_focus_border_color",
+        with = "opt_alpha_color"
+    )]
+    pub widget_focus_border: Option<[u8; 4]>,
     #[serde(default)]
     pub separator_width: Option<f32>,
-    #[serde(default)]
-    pub shadow_color: Option<[u8; 3]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub shadow_color: Option<[u8; 4]>,
     #[serde(default)]
     pub shadow_blur: Option<f32>,
     #[serde(default)]
@@ -100,18 +176,18 @@ pub struct ThemeColors {
     pub shadow_offset_y: Option<f32>,
 
     // --- Granular Button States ---
-    #[serde(default)]
-    pub button_hover_fg: Option<[u8; 3]>,
-    #[serde(default)]
-    pub button_active_fg: Option<[u8; 3]>,
-    #[serde(default)]
-    pub button_hover_border_color: Option<[u8; 3]>,
-    #[serde(default)]
-    pub button_active_border_color: Option<[u8; 3]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub button_hover_fg: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub button_active_fg: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub button_hover_border_color: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub button_active_border_color: Option<[u8; 4]>,
 
     /// Color for tree view lines (indentation guides)
-    #[serde(default)]
-    pub tree_line: Option<[u8; 3]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub tree_line: Option<[u8; 4]>,
 }
 
 impl Default for ThemeColors {
@@ -123,25 +199,25 @@ impl Default for ThemeColors {
 impl ThemeColors {
     pub fn dark() -> Self {
         Self {
-            background: [27, 27, 27],
-            foreground: [255, 255, 255],
+            background: [27, 27, 27, 255],
+            foreground: [255, 255, 255, 255],
             editor_foreground: None,
             button_bg: None, // Use egui default or derived
             button_fg: None,
             separator: None,
             button_hover_bg: None, // Derived usually which is good
             button_active_bg: None,
-            selection_background: [51, 51, 51],
-            cursor: [255, 255, 255],
-            line_number: [128, 128, 128],
-            comment: [106, 153, 85],
-            icon_hover: [100, 150, 255],
-            icon_color: None, // defaults to [200, 200, 200]
+            selection_background: [51, 51, 51, 255],
+            cursor: [255, 255, 255, 255],
+            line_number: [128, 128, 128, 255],
+            comment: [106, 153, 85, 255],
+            icon_hover: [100, 150, 255, 255],
+            icon_color: None, // defaults to [200, 200, 200, 255]
             highlight: None,  // defaults to cursor color at 35% opacity
-            success: [76, 175, 80],
-            info: [33, 150, 243],
-            warning: [255, 152, 0],
-            error: [244, 67, 54],
+            success: [76, 175, 80, 255],
+            info: [33, 150, 243, 255],
+            warning: [255, 152, 0, 255],
+            error: [244, 67, 54, 255],
             whitespace_symbols: None,
 
             heading_text: None,
@@ -173,25 +249,25 @@ impl ThemeColors {
 
     pub fn light() -> Self {
         Self {
-            background: [255, 255, 255],
-            foreground: [0, 0, 0],
+            background: [255, 255, 255, 255],
+            foreground: [0, 0, 0, 255],
             editor_foreground: None,
             button_bg: None,
             button_fg: None,
             separator: None,
             button_hover_bg: None,
             button_active_bg: None,
-            selection_background: [173, 214, 255],
-            cursor: [0, 0, 0],
-            line_number: [128, 128, 128],
-            comment: [0, 128, 0],
-            icon_hover: [0, 100, 255],
-            icon_color: None, // defaults to [80, 80, 80]
+            selection_background: [173, 214, 255, 255],
+            cursor: [0, 0, 0, 255],
+            line_number: [128, 128, 128, 255],
+            comment: [0, 128, 0, 255],
+            icon_hover: [0, 100, 255, 255],
+            icon_color: None, // defaults to [80, 80, 80, 255]
             highlight: None,  // defaults to cursor color at 35% opacity
-            success: [46, 125, 50],
-            info: [13, 71, 161],
-            warning: [230, 81, 0],
-            error: [198, 40, 40],
+            success: [46, 125, 50, 255],
+            info: [13, 71, 161, 255],
+            warning: [230, 81, 0, 255],
+            error: [198, 40, 40, 255],
             whitespace_symbols: None,
 
             heading_text: None,
@@ -223,49 +299,61 @@ impl ThemeColors {
 
     pub fn editor_foreground_color(&self) -> egui::Color32 {
         let c = self.editor_foreground.unwrap_or(self.foreground);
-        egui::Color32::from_rgb(c[0], c[1], c[2])
+        egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
     }
 
-    pub fn to_egui_color32(&self, rgb: [u8; 3]) -> egui::Color32 {
-        egui::Color32::from_rgb(rgb[0], rgb[1], rgb[2])
+    pub fn to_egui_color32(&self, rgba: [u8; 4]) -> egui::Color32 {
+        egui::Color32::from_rgba_unmultiplied(rgba[0], rgba[1], rgba[2], rgba[3])
     }
 
     pub fn line_number_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgb(
+        egui::Color32::from_rgba_unmultiplied(
             self.line_number[0],
             self.line_number[1],
             self.line_number[2],
+            self.line_number[3],
         )
     }
 
     pub fn cursor_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgb(self.cursor[0], self.cursor[1], self.cursor[2])
+        egui::Color32::from_rgba_unmultiplied(
+            self.cursor[0],
+            self.cursor[1],
+            self.cursor[2],
+            self.cursor[3],
+        )
     }
 
     pub fn selection_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgb(
+        egui::Color32::from_rgba_unmultiplied(
             self.selection_background[0],
             self.selection_background[1],
             self.selection_background[2],
+            self.selection_background[3],
         )
     }
 
     pub fn icon_hover_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgb(self.icon_hover[0], self.icon_hover[1], self.icon_hover[2])
+        egui::Color32::from_rgba_unmultiplied(
+            self.icon_hover[0],
+            self.icon_hover[1],
+            self.icon_hover[2],
+            self.icon_hover[3],
+        )
     }
 
     pub fn icon_color(&self) -> egui::Color32 {
         let c = self.icon_color.unwrap_or(if self.background[0] > 128 {
-            [80, 80, 80] // light theme
+            [80, 80, 80, 255] // light theme
         } else {
-            [200, 200, 200] // dark theme
+            [200, 200, 200, 255] // dark theme
         });
-        egui::Color32::from_rgb(c[0], c[1], c[2])
+        egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
     }
 
     pub fn highlight_color(&self) -> egui::Color32 {
         if let Some(h) = self.highlight {
-            egui::Color32::from_rgb(h[0], h[1], h[2])
+            egui::Color32::from_rgba_unmultiplied(h[0], h[1], h[2], h[3])
         } else {
             self.cursor_color().linear_multiply(0.35)
         }
@@ -273,45 +361,70 @@ impl ThemeColors {
 
     pub fn hyperlink_color(&self) -> egui::Color32 {
         if let Some(c) = self.hyperlink {
-            egui::Color32::from_rgb(c[0], c[1], c[2])
+            egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
         } else {
-            egui::Color32::from_rgb(90, 170, 255) // Default fallback generic blue
+            egui::Color32::from_rgba_unmultiplied(90, 170, 255, 255) // Default fallback generic blue
         }
     }
 
     pub fn comment_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgb(self.comment[0], self.comment[1], self.comment[2])
+        egui::Color32::from_rgba_unmultiplied(
+            self.comment[0],
+            self.comment[1],
+            self.comment[2],
+            self.comment[3],
+        )
     }
 
     pub fn whitespace_symbols_color(&self) -> egui::Color32 {
         if let Some(c) = self.whitespace_symbols {
-            egui::Color32::from_rgb(c[0], c[1], c[2])
+            egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
         } else {
             self.comment_color().linear_multiply(0.4)
         }
     }
 
     pub fn success_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgb(self.success[0], self.success[1], self.success[2])
+        egui::Color32::from_rgba_unmultiplied(
+            self.success[0],
+            self.success[1],
+            self.success[2],
+            self.success[3],
+        )
     }
 
     #[allow(dead_code)]
     pub fn info_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgb(self.info[0], self.info[1], self.info[2])
+        egui::Color32::from_rgba_unmultiplied(
+            self.info[0],
+            self.info[1],
+            self.info[2],
+            self.info[3],
+        )
     }
 
     pub fn warning_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgb(self.warning[0], self.warning[1], self.warning[2])
+        egui::Color32::from_rgba_unmultiplied(
+            self.warning[0],
+            self.warning[1],
+            self.warning[2],
+            self.warning[3],
+        )
     }
 
     #[allow(dead_code)]
     pub fn error_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgb(self.error[0], self.error[1], self.error[2])
+        egui::Color32::from_rgba_unmultiplied(
+            self.error[0],
+            self.error[1],
+            self.error[2],
+            self.error[3],
+        )
     }
 
     pub fn heading_color(&self) -> egui::Color32 {
         if let Some(c) = self.heading_text {
-            egui::Color32::from_rgb(c[0], c[1], c[2])
+            egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
         } else {
             self.to_egui_color32(self.foreground)
         }
@@ -319,7 +432,7 @@ impl ThemeColors {
 
     pub fn tree_line_color(&self, ui_visuals: &egui::Visuals) -> egui::Color32 {
         if let Some(c) = self.tree_line {
-            egui::Color32::from_rgb(c[0], c[1], c[2])
+            egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
         } else {
             ui_visuals.weak_text_color()
         }
