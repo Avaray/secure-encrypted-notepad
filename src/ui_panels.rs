@@ -312,24 +312,24 @@ if ui
 let _ = self.settings.save();
 }
 // Cursor settings
-crate::app_helpers::center_row(ui, |ui| {
-ui.add(egui::Label::new(rust_i18n::t!("settings.cursor_shape")).selectable(false));
-egui::ComboBox::from_id_salt("cursor_shape_combo")
-.selected_text(format!("{:?}", self.settings.cursor_shape))
-.show_ui(ui, |ui| {
-if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Bar, "Bar").changed() {
-let _ = self.settings.save();
-self.style_dirty = true;
-}
-if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Block, "Block").changed() {
-let _ = self.settings.save();
-self.style_dirty = true;
-}
-if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Underscore, "Underscore").changed() {
-let _ = self.settings.save();
-self.style_dirty = true;
-}
-});
+let h = ls.get_height("set_cursor_shape");
+crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.cursor_shape"), h, |ui| {
+    egui::ComboBox::from_id_salt("cursor_shape_combo")
+        .selected_text(format!("{:?}", self.settings.cursor_shape))
+        .show_ui(ui, |ui| {
+            if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Bar, "Bar").changed() {
+                let _ = self.settings.save();
+                self.style_dirty = true;
+            }
+            if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Block, "Block").changed() {
+                let _ = self.settings.save();
+                self.style_dirty = true;
+            }
+            if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Underscore, "Underscore").changed() {
+                let _ = self.settings.save();
+                self.style_dirty = true;
+            }
+        });
 });
 if ui.checkbox(&mut self.settings.cursor_blink, rust_i18n::t!("settings.cursor_blink")).changed() {
 let _ = self.settings.save();
@@ -338,8 +338,8 @@ self.style_dirty = true;
 if ui.checkbox(&mut self.settings.word_wrap, rust_i18n::t!("settings.word_wrap")).changed() {
 let _ = self.settings.save();
 }
-crate::app_helpers::center_row(ui, |ui| {
-ui.add(egui::Label::new(rust_i18n::t!("settings.tab_size")).selectable(false));
+let h = ls.get_height("set_tab_sz");
+crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.tab_size"), h, |ui| {
                 if ui
                     .add(
                         egui::DragValue::new(&mut self.settings.tab_size)
@@ -358,8 +358,8 @@ if ui
 let _ = self.settings.save();
 }
 
-crate::app_helpers::center_row(ui, |ui| {
-    ui.add(egui::Label::new(rust_i18n::t!("settings.comment_prefix")).selectable(false));
+let h = ls.get_height("set_comment_prefix");
+crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.comment_prefix"), h, |ui| {
     let mut changed = false;
     let response = ui.add(
         egui::TextEdit::singleline(&mut self.settings.comment_prefix)
@@ -386,30 +386,29 @@ crate::app_helpers::center_row(ui, |ui| {
     }
 });
 // Max lines
-crate::app_helpers::center_row(ui, |ui| {
-ui.add(egui::Label::new(rust_i18n::t!("settings.max_lines")).selectable(false));
-let mut limit_val = self.settings.max_lines;
-if ui
-.add(
-                        egui::DragValue::new(&mut limit_val)
-                            .speed(10.0)
-                            .range(0..=1000000)
-                            .clamp_existing_to_range(true),
-)
-.changed()
-{
-self.settings.max_lines = limit_val;
-let _ = self.settings.save();
-}
-if self.settings.max_lines == 0 {
-ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.no_limit")).italics().weak()).selectable(false));
-}
-})
-.response
-.on_hover_text(rust_i18n::t!("settings.max_lines_tooltip"));
+let h = ls.get_height("set_max_lines");
+crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.max_lines"), h, |ui| {
+    crate::app_helpers::flex_row(ui, |ui| {
+        let mut limit_val = self.settings.max_lines;
+        let response = ui.add(
+                                egui::DragValue::new(&mut limit_val)
+                                    .speed(10.0)
+                                    .range(0..=1000000)
+                                    .clamp_existing_to_range(true),
+        )
+        .on_hover_text(rust_i18n::t!("settings.max_lines_tooltip"));
+        if response.changed() {
+            self.settings.max_lines = limit_val;
+            let _ = self.settings.save();
+        }
+        if self.settings.max_lines == 0 {
+            ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.no_limit")).italics().weak()).selectable(false));
+        }
+    });
+});
 // History capacity
-crate::app_helpers::center_row(ui, |ui| {
-ui.add(egui::Label::new(rust_i18n::t!("settings.history_limit")).selectable(false));
+let h = ls.get_height("set_history_limit");
+crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.history_limit"), h, |ui| {
 if ui
 .add(
                         egui::DragValue::new(&mut self.settings.max_history_length)
@@ -448,8 +447,8 @@ let _ = self.settings.save();
 {
 let _ = self.settings.save();
 }
-                crate::app_helpers::center_row(ui, |ui| {
-                    ui.add(egui::Label::new(rust_i18n::t!("settings.inactivity_secs")).selectable(false));
+                let h = ls.get_height("set_inactivity_secs");
+                crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.inactivity_secs"), h, |ui| {
                     if ui
                         .add(
                             egui::DragValue::new(&mut self.settings.auto_save_debounce_secs)
@@ -659,48 +658,49 @@ let _ = self.settings.save();
             }
 });
 // Global Scroll Speed
-crate::app_helpers::center_row(ui, |ui| {
-    ui.add(egui::Label::new(rust_i18n::t!("settings.scroll_speed")).selectable(false));
-    let mut mult = self.settings.scroll_speed_multiplier;
-    let response = ui.add(
-        egui::DragValue::new(&mut mult)
-            .speed(0.1)
-            .range(1.0..=10.0)
-            .clamp_existing_to_range(true),
-    )
-    .on_hover_text(rust_i18n::t!("settings.scroll_speed_tooltip"));
+                    let h = ls.get_height("set_scrl_speed");
+                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.scroll_speed"), h, |ui| {
+                        let mut mult = self.settings.scroll_speed_multiplier;
+                        let response = ui.add(
+                            egui::DragValue::new(&mut mult)
+                                .speed(0.1)
+                                .range(1.0..=10.0)
+                                .clamp_existing_to_range(true),
+                        )
+                        .on_hover_text(rust_i18n::t!("settings.scroll_speed_tooltip"));
 
-    if response.changed() {
-        self.settings.scroll_speed_multiplier = mult;
-    }
-    if response.drag_stopped() || (response.changed() && response.lost_focus()) {
-        let _ = self.settings.save();
-    }
-});
+                        if response.changed() {
+                            self.settings.scroll_speed_multiplier = mult;
+                        }
+                        if response.drag_stopped() || (response.changed() && response.lost_focus()) {
+                            let _ = self.settings.save();
+                        }
+                    });
 // Toolbar icon size
-crate::app_helpers::center_row(ui, |ui| {
-ui.add(egui::Label::new(rust_i18n::t!("settings.toolbar_icon_size")).selectable(false));
-let response = ui.add(
-egui::DragValue::new(&mut self.settings.toolbar_icon_size)
-.speed(1.0)
-.range(12.0..=96.0)
-.clamp_existing_to_range(true),
-);
+                    let h = ls.get_height("set_tb_icon_sz");
+                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.toolbar_icon_size"), h, |ui| {
+                        let response = ui.add(
+                            egui::DragValue::new(&mut self.settings.toolbar_icon_size)
+                                .speed(1.0)
+                                .range(12.0..=96.0)
+                                .clamp_existing_to_range(true),
+                        );
 
-if response.drag_stopped() || (response.changed() && response.lost_focus()) {
-let _ = self.settings.save();
-}
-});
-crate::app_helpers::center_row(ui, |ui| {
-ui.add(egui::Label::new(rust_i18n::t!("settings.toolbar_position")).selectable(false));
-let mut changed = false;
-changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Top, rust_i18n::t!("settings.toolbar_top")).changed();
-changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Left, rust_i18n::t!("settings.toolbar_left")).changed();
-changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Right, rust_i18n::t!("settings.toolbar_right")).changed();
-if changed {
-let _ = self.settings.save();
-}
-});
+                        if response.drag_stopped() || (response.changed() && response.lost_focus()) {
+                            let _ = self.settings.save();
+                        }
+                    });
+
+                    let h = ls.get_height("set_tb_pos");
+                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.toolbar_position"), h, |ui| {
+                        let mut changed = false;
+                        changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Top, rust_i18n::t!("settings.toolbar_top")).changed();
+                        changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Left, rust_i18n::t!("settings.toolbar_left")).changed();
+                        changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Right, rust_i18n::t!("settings.toolbar_right")).changed();
+                        if changed {
+                            let _ = self.settings.save();
+                        }
+                    });
 // Language Selector
             let current_lang = self.settings.language.clone();
             let mut changed = false;
@@ -712,13 +712,8 @@ let _ = self.settings.save();
 
             let text_height = ui.text_style_height(&egui::TextStyle::Body);
 
-            crate::app_helpers::center_row(ui, |ui| {
-                ui.add(
-                    egui::Button::new(rust_i18n::t!("settings.language"))
-                        .frame(false) // Disables background and border - looks like plain text!
-                        .sense(egui::Sense::hover()) // Makes it non-clickable
-                );
-
+            let h = ls.get_height("set_lang");
+            crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.language"), h, |ui| {
                 // We use text_height for the flag
                 ui.add(egui::Image::new(current_icon).max_height(text_height).maintain_aspect_ratio(true));
 
@@ -829,8 +824,8 @@ if ui
                 if self.render_panel_header(ui, &rust_i18n::t!("history.title"), None, true, h) {
                     self.show_history_panel = false;
                 }
-            crate::app_helpers::center_row(ui, |ui| {
-                ui.add(egui::Label::new(rust_i18n::t!("history.max_limit")).selectable(false));
+            let h = ls.get_height("history_max_limit");
+            crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("history.max_limit"), h, |ui| {
                 let mut temp_limit = doc_max_limit;
                 let response = ui.add(
                     egui::DragValue::new(&mut temp_limit)
@@ -2872,7 +2867,7 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: 
         let paste_flash_key = popup_id.with("paste_flash");
 
         let current_time = ui.input(|i| i.time);
-        
+
         if response.secondary_clicked() && ui.input(|i| i.modifiers.ctrl) {
             // Register flash time
             ui.data_mut(|d| d.insert_temp::<Option<f64>>(paste_flash_key, Some(current_time)));
