@@ -2789,6 +2789,10 @@ pub fn color_picker_color32_wide(
 }
 
 fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: egui::Id) -> bool {
+    // Well-known IDs for copy/paste state stored in egui temp data
+    let copy_color_key = egui::Id::new("__theme_copied_color__");
+    let copy_source_key = egui::Id::new("__theme_copied_source_id__");
+
     let mut color32 = egui::Color32::from_rgb(color[0], color[1], color[2]);
     let button_id = popup_id.with("btn");
     let area_id = popup_id.with("area");
@@ -2803,11 +2807,34 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: 
     let desired_size = galley.size() + ui.spacing().button_padding * 2.0;
 
     let rect = ui.allocate_exact_size(desired_size, egui::Sense::hover()).0;
-    let response = ui.interact(rect, button_id, egui::Sense::click());
+    let response = ui.interact(rect, button_id, egui::Sense::click_and_drag());
 
+    let ctrl_held = ui.input(|i| i.modifiers.ctrl);
     let is_open = ui.data(|d| d.get_temp::<bool>(popup_id).unwrap_or(false));
-    if response.clicked() {
-        ui.data_mut(|d| d.insert_temp(popup_id, !is_open));
+
+    let mut changed = false;
+
+    if ctrl_held {
+        // CTRL + Left Click = Copy color
+        if response.clicked() {
+            ui.data_mut(|d| {
+                d.insert_temp(copy_color_key, *color);
+                d.insert_temp(copy_source_key, popup_id);
+            });
+        }
+        // CTRL + Right Click = Paste color
+        if response.secondary_clicked() {
+            if let Some(c) = ui.data(|d| d.get_temp::<[u8; 3]>(copy_color_key)) {
+                *color = c;
+                color32 = egui::Color32::from_rgb(c[0], c[1], c[2]);
+                changed = true;
+            }
+        }
+    } else {
+        // Normal click: toggle color picker
+        if response.clicked() {
+            ui.data_mut(|d| d.insert_temp(popup_id, !is_open));
+        }
     }
 
     // Draw button manually to avoid egui default button hover artifacts
@@ -2816,23 +2843,44 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 3], popup_id: 
         ui.painter()
             .rect_filled(rect, visuals.corner_radius, color32);
 
-        // Enhance border visibility on hover to compensate for the fixed background color
-        let mut stroke = visuals.bg_stroke;
-        if response.hovered() {
-            stroke.width = stroke.width.max(2.0); // Clear feedback using theme's hover border color
+        // Check if this button is the source of the copied color → pulsating border
+        let is_copy_source = ui.data(|d| {
+            d.get_temp::<egui::Id>(copy_source_key) == Some(popup_id)
+                && d.get_temp::<[u8; 3]>(copy_color_key).is_some()
+        });
+
+        if is_copy_source {
+            // Pulsating border animation using egui's frame time
+            let t = ui.input(|i| i.time) as f32;
+            let alpha = 0.3 + 0.7 * (t * 4.0).sin().abs();
+            let contrast = picker_contrast(color32);
+            let pulse_color = contrast.gamma_multiply(alpha);
+            let pulse_stroke = egui::Stroke::new(2.0, pulse_color);
+            ui.painter().rect_stroke(
+                rect,
+                visuals.corner_radius,
+                pulse_stroke,
+                egui::StrokeKind::Inside,
+            );
+            // Request repaint for smooth animation
+            ui.ctx().request_repaint();
         } else {
-            stroke.width = stroke.width.max(1.0);
+            // Normal border
+            let mut stroke = visuals.bg_stroke;
+            if response.hovered() {
+                stroke.width = stroke.width.max(2.0); // Clear feedback using theme's hover border color
+            } else {
+                stroke.width = stroke.width.max(1.0);
+            }
+
+            ui.painter().rect_stroke(
+                rect,
+                visuals.corner_radius,
+                stroke,
+                egui::StrokeKind::Inside,
+            );
         }
-
-        ui.painter().rect_stroke(
-            rect,
-            visuals.corner_radius,
-            stroke,
-            egui::StrokeKind::Inside,
-        );
     }
-
-    let mut changed = false;
 
     if is_open {
         let area = egui::Area::new(area_id)
