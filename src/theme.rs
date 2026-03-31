@@ -139,28 +139,18 @@ pub struct ThemeColors {
     // --- Geometry & Borders (unified for all interactive widgets) ---
     #[serde(default)]
     pub window_rounding: Option<f32>,
-    #[serde(default, alias = "button_rounding", alias = "input_rounding")]
+    #[serde(default)]
     pub widget_rounding: Option<f32>,
-    #[serde(default, alias = "button_border_width")]
+    #[serde(default)]
     pub widget_border_width: Option<f32>,
-    #[serde(
-        default,
-        alias = "button_border_color",
-        alias = "input_border_color",
-        with = "opt_alpha_color"
-    )]
+    #[serde(default, with = "opt_alpha_color")]
     pub widget_border_color: Option<[u8; 4]>,
-    #[serde(default, alias = "button_padding_x")]
+    #[serde(default)]
     pub widget_padding_x: Option<f32>,
-    #[serde(default, alias = "button_padding_y")]
+    #[serde(default)]
     pub widget_padding_y: Option<f32>,
     /// Focus/selection border color for all interactive widgets
-    #[serde(
-        default,
-        alias = "focus_outline",
-        alias = "input_focus_border_color",
-        with = "opt_alpha_color"
-    )]
+    #[serde(default, with = "opt_alpha_color")]
     pub widget_focus_border: Option<[u8; 4]>,
     #[serde(default)]
     pub separator_width: Option<f32>,
@@ -743,11 +733,11 @@ mod tests {
         let dark = Theme::dark();
         assert_eq!(dark.name, "Dark");
         assert_eq!(dark.color_scheme, ColorScheme::Dark);
-        assert_eq!(dark.colors.background, [27, 27, 27]);
+        assert_eq!(dark.colors.background, [27, 27, 27, 255]);
 
         let light = Theme::light();
         assert_eq!(light.name, "Light");
         assert_eq!(light.color_scheme, ColorScheme::Light);
-        assert_eq!(light.colors.background, [255, 255, 255]);
+        assert_eq!(light.colors.background, [255, 255, 255, 255]);
     }
 }

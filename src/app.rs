@@ -887,8 +887,8 @@ impl eframe::App for EditorApp {
 
         // Apply styles & font sizes if dirty
         if self.style_dirty {
-            self.apply_theme(ctx);
             self.apply_style(ctx);
+            self.apply_theme(ctx);
             self.style_dirty = false;
         }
 

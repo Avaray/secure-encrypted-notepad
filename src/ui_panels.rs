@@ -1678,6 +1678,7 @@ if ui
     /// Render theme editor panel
     pub(crate) fn render_theme_editor_panel(&mut self, ui: &mut egui::Ui) {
         let mut ls = std::mem::take(&mut self.layout_state);
+        let mut save_clicked = false;
         let mut theme_to_save: Option<crate::theme::Theme> = None;
         let mut should_reset = false;
         ui.vertical(|ui| {
@@ -1688,7 +1689,7 @@ if ui
             if let Some(theme) = &mut self.editing_theme {
                 ui.horizontal_wrapped(|ui| {
                     if ui.button(rust_i18n::t!("theme.save")).clicked() {
-                        theme_to_save = Some(theme.clone());
+                        save_clicked = true;
                     }
                     let mut modified = true;
                     if let Some(original) = &self.original_editing_theme {
@@ -2485,6 +2486,11 @@ if ui
                 }
                 theme.apply(ui.ctx());
                 self.current_theme = theme.clone();
+            }
+        }
+        if save_clicked {
+            if let Some(theme) = &self.editing_theme {
+                theme_to_save = Some(theme.clone());
             }
         }
         if let Some(theme) = theme_to_save {
