@@ -1098,6 +1098,8 @@ pub fn render_settings_row<F>(
 {
     flex_row(ui, |ui| {
         ui.label(label);
-        add_contents(ui)
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            add_contents(ui)
+        });
     });
 }

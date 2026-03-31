@@ -1758,16 +1758,14 @@ if ui
             ui.separator();
             if let Some(ref mut theme) = self.editing_theme {
                 let mut theme_changed = false;
-                crate::app_helpers::center_row(ui, |ui| {
-                    ui.label(rust_i18n::t!("theme.name_label"));
+                crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("theme.name_label"), &mut 0.0, |ui| {
                     ui.add(
                         egui::TextEdit::singleline(&mut theme.name)
-                            .desired_width(ui.available_width() - 24.0)
+                            .desired_width(ui.available_width() - 8.0)
                             .margin(ui.spacing().button_padding),
                     );
                 });
-                crate::app_helpers::center_row(ui, |ui| {
-                    ui.label(rust_i18n::t!("theme.base_scheme"));
+                crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("theme.base_scheme"), &mut 0.0, |ui| {
                     egui::ComboBox::from_id_salt("color_scheme_selector")
                         .width(100.0)
                         .selected_text(format!("{:?}", theme.color_scheme))
