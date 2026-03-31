@@ -327,7 +327,7 @@ impl EditorApp {
 
                 if ui.available_width() > 320.0 {
                     crate::app_helpers::center_row(ui, |ui| {
-                        ui.heading(&heading_text);
+                        self.render_heading(ui, &heading_text);
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             if ui.button(t!("batch.btn_clean")).clicked() {
                                 self.batch_files.clear();
@@ -344,7 +344,7 @@ impl EditorApp {
                         });
                     });
                 } else {
-                    ui.heading(&heading_text);
+                    self.render_heading(ui, &heading_text);
                     crate::app_helpers::center_row(ui, |ui| {
                         if ui.button(t!("batch.btn_add")).clicked() {
                             if let Some(files) = rfd::FileDialog::new().pick_files() {

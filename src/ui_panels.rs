@@ -51,7 +51,7 @@ ui.add_space(8.0);
 // =========================================================================
 // 1. SECURITY
 // =========================================================================
-ui.heading(rust_i18n::t!("settings.security"));
+self.render_heading(ui, rust_i18n::t!("settings.security"));
 crate::app_helpers::stateful_center_row(ui, ls.get_height("sec_pick_btns"), |ui| {
 if ui.button(rust_i18n::t!("settings.set_global_keyfile")).clicked() {
 if let Some(path) = rfd::FileDialog::new().pick_file() {
@@ -190,7 +190,7 @@ ui.add_space(8.0);
 // =========================================================================
 // 2. WORKSPACE / FILE TREE
 // =========================================================================
-ui.heading(rust_i18n::t!("settings.workspace"));
+self.render_heading(ui, rust_i18n::t!("settings.workspace"));
 // Starting directory setting
 ui.add_space(4.0);
                     let h = ls.get_height("ws_start_dir");
@@ -297,7 +297,7 @@ ui.add_space(8.0);
 // =========================================================================
 // 3. EDITOR
 // =========================================================================
-ui.heading(rust_i18n::t!("settings.editor"));
+self.render_heading(ui, rust_i18n::t!("settings.editor"));
 if ui
 .checkbox(&mut self.settings.show_line_numbers, rust_i18n::t!("settings.show_line_numbers"))
 .changed()
@@ -428,7 +428,7 @@ ui.add_space(8.0);
 // =========================================================================
 // 4. RELIABILITY
 // =========================================================================
-ui.heading(rust_i18n::t!("settings.reliability"));
+self.render_heading(ui, rust_i18n::t!("settings.reliability"));
 ui.vertical(|ui| {
 ui.set_min_width(ui.available_width());
 ui.group(|ui| {
@@ -470,7 +470,7 @@ ui.add_space(8.0);
 // =========================================================================
 // 5. APPEARANCE
 // =========================================================================
-ui.heading(rust_i18n::t!("settings.appearance"));
+self.render_heading(ui, rust_i18n::t!("settings.appearance"));
 // Theme selection
                     let h = ls.get_height("set_theme");
                     crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.theme"), h, |ui| {
@@ -776,7 +776,7 @@ if ui
                         // =========================================================================
                         // 5. SYSTEM
                         // =========================================================================
-                        ui.heading(rust_i18n::t!("settings.window_panels"));
+                        self.render_heading(ui, rust_i18n::t!("settings.window_panels"));
 
                         #[cfg(any(target_os = "windows", target_os = "linux"))]
                         {
@@ -1804,7 +1804,8 @@ if ui
                                 bottom: 0,
                             })
                             .show(ui, |ui| {
-                                ui.heading(rust_i18n::t!("theme.colors_heading"));
+                                 let head_color = theme.colors.heading_color();
+                                 ui.heading(egui::RichText::new(rust_i18n::t!("theme.colors_heading")).color(head_color));
                                 ui.add_space(4.0);
                                 ui.vertical(|ui| {
                                         // --- HELPER CLOSURES FOR NEW OPTIONAL FIELDS ---

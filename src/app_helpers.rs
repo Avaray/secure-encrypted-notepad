@@ -998,7 +998,7 @@ impl EditorApp {
                 ui.add_space(8.0); // Consistent padding from left edge
                 let head_font = egui::TextStyle::Heading.resolve(ui.style());
                 let truncated_title = self.smart_truncate_text(ui, title, head_font, ui.available_width() - 80.0);
-                ui.heading(truncated_title);
+                self.render_heading(ui, truncated_title);
 
                 if let Some(sub) = subtitle {
                     ui.add_space(8.0);
@@ -1102,4 +1102,12 @@ pub fn render_settings_row<F>(
             add_contents(ui)
         });
     });
+}
+
+impl EditorApp {
+    /// Render a heading that respects the current theme's heading color
+    pub(crate) fn render_heading(&self, ui: &mut egui::Ui, text: impl Into<String>) {
+        let text_color = self.current_theme.colors.heading_color();
+        ui.heading(egui::RichText::new(text).color(text_color));
+    }
 }

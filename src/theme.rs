@@ -321,6 +321,38 @@ impl ThemeColors {
         egui::Color32::from_rgb(self.error[0], self.error[1], self.error[2])
     }
 
+    pub fn heading_color(&self) -> egui::Color32 {
+        if let Some(c) = self.heading_text {
+            egui::Color32::from_rgb(c[0], c[1], c[2])
+        } else {
+            self.to_egui_color32(self.foreground)
+        }
+    }
+
+    pub fn label_color(&self) -> egui::Color32 {
+        if let Some(c) = self.label_text {
+            egui::Color32::from_rgb(c[0], c[1], c[2])
+        } else {
+            self.to_egui_color32(self.foreground)
+        }
+    }
+
+    pub fn weak_color(&self) -> egui::Color32 {
+        if let Some(c) = self.weak_text {
+            egui::Color32::from_rgb(c[0], c[1], c[2])
+        } else {
+            self.to_egui_color32(self.foreground).linear_multiply(0.5)
+        }
+    }
+
+    pub fn strong_color(&self) -> egui::Color32 {
+        if let Some(c) = self.strong_text {
+            egui::Color32::from_rgb(c[0], c[1], c[2])
+        } else {
+            self.to_egui_color32(self.foreground)
+        }
+    }
+
     pub fn tree_line_color(&self, ui_visuals: &egui::Visuals) -> egui::Color32 {
         if let Some(c) = self.tree_line {
             egui::Color32::from_rgb(c[0], c[1], c[2])
