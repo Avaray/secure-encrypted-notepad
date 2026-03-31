@@ -48,3 +48,4 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
     - This happens when a scrollbar appears in the same location as the splitter, causing the layout to enter an unstable state where it cannot decide if the scrollbar should be visible/grown or not.
     - Goal: Ensure stable layout even when scrollbars and splitters overlap or interact.
 - [ ] **Minimum Panel Widths**: Implement minimum width constraints for all side panels to prevent them from overlapping or becoming completely hidden. The user should always be able to easily find and grab the panel edge handles without confusion.
+- [ ] **Color Picker Interaction Bug**: Fix a critical issue in the Theme Editor where the color picker popup's internal sliders and selection fields (hue/shade/saturation) become unresponsive or 'stuck' during use, making it impossible to adjust colors correctly.
