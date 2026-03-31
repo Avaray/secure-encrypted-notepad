@@ -388,23 +388,22 @@ crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.comment_pre
 // Max lines
 let h = ls.get_height("set_max_lines");
 crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.max_lines"), h, |ui| {
-    crate::app_helpers::flex_row(ui, |ui| {
-        let mut limit_val = self.settings.max_lines;
-        let response = ui.add(
-                                egui::DragValue::new(&mut limit_val)
-                                    .speed(10.0)
-                                    .range(0..=1000000)
-                                    .clamp_existing_to_range(true),
-        )
-        .on_hover_text(rust_i18n::t!("settings.max_lines_tooltip"));
-        if response.changed() {
-            self.settings.max_lines = limit_val;
-            let _ = self.settings.save();
-        }
-        if self.settings.max_lines == 0 {
-            ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.no_limit")).italics().weak()).selectable(false));
-        }
-    });
+    let mut limit_val = self.settings.max_lines;
+    let response = ui.add(
+        egui::DragValue::new(&mut limit_val)
+            .speed(10.0)
+            .range(0..=1000000)
+            .clamp_existing_to_range(true),
+    )
+    .on_hover_text(rust_i18n::t!("settings.max_lines_tooltip"));
+
+    if response.changed() {
+        self.settings.max_lines = limit_val;
+        let _ = self.settings.save();
+    }
+    if self.settings.max_lines == 0 {
+        ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.no_limit")).italics().weak()).selectable(false));
+    }
 });
 // History capacity
 let h = ls.get_height("set_history_limit");
