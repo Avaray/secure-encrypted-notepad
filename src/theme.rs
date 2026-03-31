@@ -16,30 +16,6 @@ impl Default for ColorScheme {
     }
 }
 
-pub mod alpha_color {
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
-    pub fn serialize<S>(color: &[u8; 4], serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        // Serialize as standard [u8; 4]. We don't dynamically shrink to [u8; 3] here
-        // to ensure file format consistency going forward.
-        color.serialize(serializer)
-    }
-
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<[u8; 4], D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let vec = Vec::<u8>::deserialize(deserializer)?;
-        match vec.len() {
-            3 => Ok([vec[0], vec[1], vec[2], 255]),
-            4 => Ok([vec[0], vec[1], vec[2], vec[3]]),
-            _ => Err(serde::de::Error::custom("expected array of length 3 or 4")),
-        }
-    }
-}
 
 pub mod opt_alpha_color {
     use serde::{Deserialize, Deserializer, Serializer};
@@ -74,10 +50,10 @@ pub mod opt_alpha_color {
 /// Color scheme definition
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ThemeColors {
-    #[serde(with = "alpha_color")]
-    pub background: [u8; 4],
-    #[serde(with = "alpha_color")]
-    pub foreground: [u8; 4],
+    #[serde(default, with = "opt_alpha_color")]
+    pub background: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub foreground: Option<[u8; 4]>,
     #[serde(default, with = "opt_alpha_color")]
     pub editor_foreground: Option<[u8; 4]>,
     #[serde(default, with = "opt_alpha_color")]
@@ -90,30 +66,30 @@ pub struct ThemeColors {
     pub button_hover_bg: Option<[u8; 4]>,
     #[serde(default, with = "opt_alpha_color")]
     pub button_active_bg: Option<[u8; 4]>,
-    #[serde(with = "alpha_color")]
-    pub selection_background: [u8; 4],
-    #[serde(with = "alpha_color")]
-    pub cursor: [u8; 4],
-    #[serde(with = "alpha_color")]
-    pub line_number: [u8; 4],
-    #[serde(with = "alpha_color")]
-    pub comment: [u8; 4],
-    #[serde(with = "alpha_color")]
-    pub icon_hover: [u8; 4],
+    #[serde(default, with = "opt_alpha_color")]
+    pub selection_background: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub cursor: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub line_number: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub comment: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub icon_hover: Option<[u8; 4]>,
     /// Default icon tint color (non-hovered state)
     #[serde(default, with = "opt_alpha_color")]
     pub icon_color: Option<[u8; 4]>,
     /// Highlight color for search matches and history loaded indicator
     #[serde(default, with = "opt_alpha_color")]
     pub highlight: Option<[u8; 4]>,
-    #[serde(with = "alpha_color")]
-    pub success: [u8; 4],
-    #[serde(with = "alpha_color")]
-    pub info: [u8; 4],
-    #[serde(with = "alpha_color")]
-    pub warning: [u8; 4],
-    #[serde(with = "alpha_color")]
-    pub error: [u8; 4],
+    #[serde(default, with = "opt_alpha_color")]
+    pub success: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub info: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub warning: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub error: Option<[u8; 4]>,
     /// Color for whitespace symbols (spaces, tabs, returns)
     #[serde(default, with = "opt_alpha_color")]
     pub whitespace_symbols: Option<[u8; 4]>,
@@ -189,25 +165,25 @@ impl Default for ThemeColors {
 impl ThemeColors {
     pub fn dark() -> Self {
         Self {
-            background: [27, 27, 27, 255],
-            foreground: [255, 255, 255, 255],
+            background: Some([27, 27, 27, 255]),
+            foreground: Some([255, 255, 255, 255]),
             editor_foreground: None,
             button_bg: None, // Use egui default or derived
             button_fg: None,
             separator: None,
             button_hover_bg: None, // Derived usually which is good
             button_active_bg: None,
-            selection_background: [51, 51, 51, 255],
-            cursor: [255, 255, 255, 255],
-            line_number: [128, 128, 128, 255],
-            comment: [106, 153, 85, 255],
-            icon_hover: [100, 150, 255, 255],
+            selection_background: Some([51, 51, 51, 255]),
+            cursor: Some([255, 255, 255, 255]),
+            line_number: Some([128, 128, 128, 255]),
+            comment: Some([106, 153, 85, 255]),
+            icon_hover: Some([100, 150, 255, 255]),
             icon_color: None, // defaults to [200, 200, 200, 255]
             highlight: None,  // defaults to cursor color at 35% opacity
-            success: [76, 175, 80, 255],
-            info: [33, 150, 243, 255],
-            warning: [255, 152, 0, 255],
-            error: [244, 67, 54, 255],
+            success: Some([76, 175, 80, 255]),
+            info: Some([33, 150, 243, 255]),
+            warning: Some([255, 152, 0, 255]),
+            error: Some([244, 67, 54, 255]),
             whitespace_symbols: None,
 
             heading_text: None,
@@ -239,25 +215,25 @@ impl ThemeColors {
 
     pub fn light() -> Self {
         Self {
-            background: [255, 255, 255, 255],
-            foreground: [0, 0, 0, 255],
+            background: Some([255, 255, 255, 255]),
+            foreground: Some([0, 0, 0, 255]),
             editor_foreground: None,
             button_bg: None,
             button_fg: None,
             separator: None,
             button_hover_bg: None,
             button_active_bg: None,
-            selection_background: [173, 214, 255, 255],
-            cursor: [0, 0, 0, 255],
-            line_number: [128, 128, 128, 255],
-            comment: [0, 128, 0, 255],
-            icon_hover: [0, 100, 255, 255],
+            selection_background: Some([173, 214, 255, 255]),
+            cursor: Some([0, 0, 0, 255]),
+            line_number: Some([128, 128, 128, 255]),
+            comment: Some([0, 128, 0, 255]),
+            icon_hover: Some([0, 100, 255, 255]),
             icon_color: None, // defaults to [80, 80, 80, 255]
             highlight: None,  // defaults to cursor color at 35% opacity
-            success: [46, 125, 50, 255],
-            info: [13, 71, 161, 255],
-            warning: [230, 81, 0, 255],
-            error: [198, 40, 40, 255],
+            success: Some([46, 125, 50, 255]),
+            info: Some([13, 71, 161, 255]),
+            warning: Some([230, 81, 0, 255]),
+            error: Some([198, 40, 40, 255]),
             whitespace_symbols: None,
 
             heading_text: None,
@@ -287,8 +263,50 @@ impl ThemeColors {
         }
     }
 
+    /// Fill all None fields with defaults based on selected ColorScheme
+    pub fn resolve(&mut self, scheme: ColorScheme) {
+        let defaults = match scheme {
+            ColorScheme::Dark => Self::dark(),
+            ColorScheme::Light => Self::light(),
+        };
+
+        if self.background.is_none() {
+            self.background = defaults.background;
+        }
+        if self.foreground.is_none() {
+            self.foreground = defaults.foreground;
+        }
+        if self.selection_background.is_none() {
+            self.selection_background = defaults.selection_background;
+        }
+        if self.cursor.is_none() {
+            self.cursor = defaults.cursor;
+        }
+        if self.line_number.is_none() {
+            self.line_number = defaults.line_number;
+        }
+        if self.comment.is_none() {
+            self.comment = defaults.comment;
+        }
+        if self.icon_hover.is_none() {
+            self.icon_hover = defaults.icon_hover;
+        }
+        if self.success.is_none() {
+            self.success = defaults.success;
+        }
+        if self.info.is_none() {
+            self.info = defaults.info;
+        }
+        if self.warning.is_none() {
+            self.warning = defaults.warning;
+        }
+        if self.error.is_none() {
+            self.error = defaults.error;
+        }
+    }
+
     pub fn editor_foreground_color(&self) -> egui::Color32 {
-        let c = self.editor_foreground.unwrap_or(self.foreground);
+        let c = self.editor_foreground.or(self.foreground).unwrap_or([255, 255, 255, 255]);
         egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
     }
 
@@ -296,48 +314,38 @@ impl ThemeColors {
         egui::Color32::from_rgba_unmultiplied(rgba[0], rgba[1], rgba[2], rgba[3])
     }
 
+    fn to_color32_opt(&self, rgba: Option<[u8; 4]>, fallback: [u8; 4]) -> egui::Color32 {
+        let c = rgba.unwrap_or(fallback);
+        egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
+    }
+
     pub fn line_number_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgba_unmultiplied(
-            self.line_number[0],
-            self.line_number[1],
-            self.line_number[2],
-            self.line_number[3],
-        )
+        self.to_color32_opt(self.line_number, [128, 128, 128, 255])
     }
 
     pub fn cursor_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgba_unmultiplied(
-            self.cursor[0],
-            self.cursor[1],
-            self.cursor[2],
-            self.cursor[3],
-        )
+        self.to_color32_opt(self.cursor, [255, 255, 255, 255])
     }
 
     pub fn selection_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgba_unmultiplied(
-            self.selection_background[0],
-            self.selection_background[1],
-            self.selection_background[2],
-            self.selection_background[3],
-        )
+        self.to_color32_opt(self.selection_background, [51, 51, 51, 255])
     }
 
     pub fn icon_hover_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgba_unmultiplied(
-            self.icon_hover[0],
-            self.icon_hover[1],
-            self.icon_hover[2],
-            self.icon_hover[3],
-        )
+        self.to_color32_opt(self.icon_hover, [100, 150, 255, 255])
     }
 
     pub fn icon_color(&self) -> egui::Color32 {
-        let c = self.icon_color.unwrap_or(if self.background[0] > 128 {
+        if let Some(c) = self.icon_color {
+            return egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3]);
+        }
+        // Intelligent default if not defined
+        let bg = self.background.unwrap_or([27, 27, 27, 255]);
+        let c = if bg[0] > 128 {
             [80, 80, 80, 255] // light theme
         } else {
             [200, 200, 200, 255] // dark theme
-        });
+        };
         egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
     }
 
@@ -358,12 +366,7 @@ impl ThemeColors {
     }
 
     pub fn comment_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgba_unmultiplied(
-            self.comment[0],
-            self.comment[1],
-            self.comment[2],
-            self.comment[3],
-        )
+        self.to_color32_opt(self.comment, [106, 153, 85, 255])
     }
 
     pub fn whitespace_symbols_color(&self) -> egui::Color32 {
@@ -375,48 +378,29 @@ impl ThemeColors {
     }
 
     pub fn success_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgba_unmultiplied(
-            self.success[0],
-            self.success[1],
-            self.success[2],
-            self.success[3],
-        )
+        self.to_color32_opt(self.success, [76, 175, 80, 255])
     }
 
     #[allow(dead_code)]
     pub fn info_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgba_unmultiplied(
-            self.info[0],
-            self.info[1],
-            self.info[2],
-            self.info[3],
-        )
+        self.to_color32_opt(self.info, [33, 150, 243, 255])
     }
 
     pub fn warning_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgba_unmultiplied(
-            self.warning[0],
-            self.warning[1],
-            self.warning[2],
-            self.warning[3],
-        )
+        self.to_color32_opt(self.warning, [255, 152, 0, 255])
     }
 
     #[allow(dead_code)]
     pub fn error_color(&self) -> egui::Color32 {
-        egui::Color32::from_rgba_unmultiplied(
-            self.error[0],
-            self.error[1],
-            self.error[2],
-            self.error[3],
-        )
+        self.to_color32_opt(self.error, [244, 67, 54, 255])
     }
 
     pub fn heading_color(&self) -> egui::Color32 {
         if let Some(c) = self.heading_text {
             egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
         } else {
-            self.to_egui_color32(self.foreground)
+            let fg = self.foreground.unwrap_or([255, 255, 255, 255]);
+            self.to_egui_color32(fg)
         }
     }
 
@@ -462,30 +446,34 @@ impl Theme {
             egui::Visuals::dark()
         };
 
+        // Create a resolved copy of colors for application
+        let mut colors = self.colors.clone();
+        colors.resolve(self.color_scheme);
+
         // --- Apply Global Background ---
-        let bg_color = self.colors.to_egui_color32(self.colors.background);
+        let bg_color = colors.to_egui_color32(colors.background.unwrap_or([27, 27, 27, 255]));
         visuals.window_fill = bg_color;
         visuals.panel_fill = bg_color;
         visuals.extreme_bg_color = bg_color;
 
         // Custom text edit background if defined
-        if let Some(c) = self.colors.text_edit_bg {
-            visuals.extreme_bg_color = self.colors.to_egui_color32(c);
+        if let Some(c) = colors.text_edit_bg {
+            visuals.extreme_bg_color = colors.to_egui_color32(c);
         }
 
-        visuals.selection.bg_fill = self.colors.selection_color();
+        visuals.selection.bg_fill = colors.selection_color();
 
         // Custom selection text color
-        if let Some(c) = self.colors.selection_text {
-            visuals.selection.stroke.color = self.colors.to_egui_color32(c);
+        if let Some(c) = colors.selection_text {
+            visuals.selection.stroke.color = colors.to_egui_color32(c);
         } else {
-            visuals.selection.stroke.color = self.colors.cursor_color();
+            visuals.selection.stroke.color = colors.cursor_color();
         }
 
-        visuals.text_cursor.stroke.color = self.colors.cursor_color();
+        visuals.text_cursor.stroke.color = colors.cursor_color();
 
         // Apply foreground (text) color
-        let foreground = self.colors.to_egui_color32(self.colors.foreground);
+        let foreground = colors.to_egui_color32(colors.foreground.unwrap_or([255, 255, 255, 255]));
         visuals.widgets.noninteractive.fg_stroke.color = foreground;
         visuals.widgets.inactive.fg_stroke.color = foreground;
         visuals.widgets.hovered.fg_stroke.color = foreground;
@@ -494,103 +482,100 @@ impl Theme {
         // Remove override_text_color to allow selective coloring
         visuals.override_text_color = None;
 
-        if let Some(c) = self.colors.hyperlink {
-            visuals.hyperlink_color = self.colors.to_egui_color32(c);
+        if let Some(c) = colors.hyperlink {
+            visuals.hyperlink_color = colors.to_egui_color32(c);
         }
 
         // Apply Button Colors
-        if let Some(bg) = self.colors.button_bg {
-            let bg_color = self.colors.to_egui_color32(bg);
+        if let Some(bg) = colors.button_bg {
+            let bg_color = colors.to_egui_color32(bg);
             visuals.widgets.inactive.weak_bg_fill = bg_color;
             visuals.widgets.inactive.bg_fill = bg_color;
-
-            // If hover/active not explicitly set, they will use egui defaults or be derived.
-            // But we can set them to stay consistent if desired.
         }
 
-        if let Some(hover_bg) = self.colors.button_hover_bg {
-            let color = self.colors.to_egui_color32(hover_bg);
+        if let Some(hover_bg) = colors.button_hover_bg {
+            let color = colors.to_egui_color32(hover_bg);
             visuals.widgets.hovered.weak_bg_fill = color;
             visuals.widgets.hovered.bg_fill = color;
         }
 
-        if let Some(active_bg) = self.colors.button_active_bg {
-            let color = self.colors.to_egui_color32(active_bg);
+        if let Some(active_bg) = colors.button_active_bg {
+            let color = colors.to_egui_color32(active_bg);
             visuals.widgets.active.weak_bg_fill = color;
             visuals.widgets.active.bg_fill = color;
         }
-        if let Some(fg) = self.colors.button_fg {
-            let fg_color = self.colors.to_egui_color32(fg);
+        if let Some(fg) = colors.button_fg {
+            let fg_color = colors.to_egui_color32(fg);
             // Only set inactive; hover/active have their own explicit fields
             visuals.widgets.inactive.fg_stroke.color = fg_color;
             // Also set hover/active as fallback, but specific overrides below will take priority
-            if self.colors.button_hover_fg.is_none() {
+            if colors.button_hover_fg.is_none() {
                 visuals.widgets.hovered.fg_stroke.color = fg_color;
             }
-            if self.colors.button_active_fg.is_none() {
+            if colors.button_active_fg.is_none() {
                 visuals.widgets.active.fg_stroke.color = fg_color;
             }
         }
 
         // Apply Separator Color
-        if let Some(sep) = self.colors.separator {
-            let sep_color = self.colors.to_egui_color32(sep);
+        if let Some(sep) = colors.separator {
+            let sep_color = colors.to_egui_color32(sep);
             visuals.widgets.noninteractive.bg_stroke.color = sep_color; // Used for separators
         }
 
         // Apply Focus/Selection Border (unified)
-        if let Some(c) = self.colors.widget_focus_border {
-            visuals.selection.stroke = egui::Stroke::new(1.0, self.colors.to_egui_color32(c));
+        if let Some(c) = colors.widget_focus_border {
+            visuals.selection.stroke = egui::Stroke::new(1.0, colors.to_egui_color32(c));
         }
 
         // Apply Shadow Color
-        if let Some(c) = self.colors.shadow_color {
-            visuals.window_shadow.color = self.colors.to_egui_color32(c);
-            visuals.popup_shadow.color = self.colors.to_egui_color32(c);
+        if let Some(c) = colors.shadow_color {
+            visuals.window_shadow.color = colors.to_egui_color32(c);
+            visuals.popup_shadow.color = colors.to_egui_color32(c);
         }
 
-        if let Some(b) = self.colors.shadow_blur {
+        if let Some(b) = colors.shadow_blur {
             visuals.window_shadow.blur = b as u8;
             visuals.popup_shadow.blur = b as u8;
         }
 
-        if let Some(s) = self.colors.shadow_spread {
+        if let Some(s) = colors.shadow_spread {
             visuals.window_shadow.spread = s as u8;
             visuals.popup_shadow.spread = s as u8;
         }
 
         // When both spread and blur are zero, force shadow to be invisible
         {
-            let spread = self.colors.shadow_spread.unwrap_or(0.0);
-            let blur = self.colors.shadow_blur.unwrap_or(0.0);
+            let spread = colors.shadow_spread.unwrap_or(0.0);
+            let blur = colors.shadow_blur.unwrap_or(0.0);
             if spread == 0.0 && blur == 0.0 {
                 visuals.window_shadow.color = egui::Color32::TRANSPARENT;
                 visuals.popup_shadow.color = egui::Color32::TRANSPARENT;
             }
         }
 
-        if let Some(x) = self.colors.shadow_offset_x {
+        if let Some(x) = colors.shadow_offset_x {
             visuals.window_shadow.offset[0] = x as i8;
             visuals.popup_shadow.offset[0] = x as i8;
         }
 
-        if let Some(y) = self.colors.shadow_offset_y {
+        if let Some(y) = colors.shadow_offset_y {
             visuals.window_shadow.offset[1] = y as i8;
             visuals.popup_shadow.offset[1] = y as i8;
         }
 
         // --- Apply Button States (Foreground & Border) ---
-        if let Some(fg) = self.colors.button_hover_fg {
-            visuals.widgets.hovered.fg_stroke.color = self.colors.to_egui_color32(fg);
+        if let Some(fg) = colors.button_hover_fg {
+            visuals.widgets.hovered.fg_stroke.color = colors.to_egui_color32(fg);
         }
-        if let Some(fg) = self.colors.button_active_fg {
-            visuals.widgets.active.fg_stroke.color = self.colors.to_egui_color32(fg);
+        if let Some(fg) = colors.button_active_fg {
+            visuals.widgets.active.fg_stroke.color = colors.to_egui_color32(fg);
         }
-        if let Some(c) = self.colors.button_hover_border_color {
-            visuals.widgets.hovered.bg_stroke.color = self.colors.to_egui_color32(c);
+        if let Some(c) = colors.button_hover_border_color {
+            visuals.widgets.hovered.bg_stroke.color = colors.to_egui_color32(c);
         }
-        if let Some(c) = self.colors.button_active_border_color {
-            visuals.widgets.active.bg_stroke.color = self.colors.to_egui_color32(c);
+        if let Some(c) = colors.button_active_border_color {
+            visuals.widgets.active.bg_stroke.color = colors.to_egui_color32(c);
         }
 
         ctx.set_visuals(visuals);
@@ -598,14 +583,14 @@ impl Theme {
         // --- Apply Global Style Additions ---
         let mut style = (*ctx.style()).clone();
 
-        if let Some(r) = self.colors.window_rounding {
+        if let Some(r) = colors.window_rounding {
             let radius = egui::CornerRadius::same(r as u8);
             style.visuals.window_corner_radius = radius;
             style.visuals.menu_corner_radius = radius;
         }
 
         // Unified widget rounding (applies to buttons, inputs, checkboxes, etc.)
-        if let Some(r) = self.colors.widget_rounding {
+        if let Some(r) = colors.widget_rounding {
             let radius = egui::CornerRadius::same(r as u8);
             style.visuals.widgets.noninteractive.corner_radius = radius;
             style.visuals.widgets.inactive.corner_radius = radius;
@@ -615,23 +600,23 @@ impl Theme {
         }
 
         // Unified widget border width
-        if let Some(w) = self.colors.widget_border_width {
+        if let Some(w) = colors.widget_border_width {
             style.visuals.widgets.inactive.bg_stroke.width = w;
             style.visuals.widgets.hovered.bg_stroke.width = w;
             style.visuals.widgets.active.bg_stroke.width = w;
         }
 
         // Unified widget border color (idle state)
-        if let Some(c) = self.colors.widget_border_color {
-            let stroke_color = self.colors.to_egui_color32(c);
+        if let Some(c) = colors.widget_border_color {
+            let stroke_color = colors.to_egui_color32(c);
             style.visuals.widgets.inactive.bg_stroke.color = stroke_color;
         }
 
         // Unified widget padding
-        if let Some(x) = self.colors.widget_padding_x {
+        if let Some(x) = colors.widget_padding_x {
             style.spacing.button_padding.x = x;
         }
-        if let Some(y) = self.colors.widget_padding_y {
+        if let Some(y) = colors.widget_padding_y {
             style.spacing.button_padding.y = y;
             // ComboBox and other widgets use interact_size.y as their default height.
             // Setting it to 0.0 forces them to use (text_height + 2 * padding.y),
@@ -640,13 +625,13 @@ impl Theme {
         }
 
         // Separator width — only affects noninteractive bg_stroke width
-        if let Some(w) = self.colors.separator_width {
+        if let Some(w) = colors.separator_width {
             style.visuals.widgets.noninteractive.bg_stroke.width = w;
         }
 
         // Increase checkbox (icon) size - adjusted to stay consistent with widget height
-        style.spacing.icon_width = if self.colors.widget_padding_y.is_some() { 20.0 } else { 26.0 };
-        style.spacing.icon_spacing = if self.colors.widget_padding_y.is_some() { 6.0 } else { 10.0 };
+        style.spacing.icon_width = if colors.widget_padding_y.is_some() { 20.0 } else { 26.0 };
+        style.spacing.icon_spacing = if colors.widget_padding_y.is_some() { 6.0 } else { 10.0 };
 
         // Thicker checkmark (tick) icon
         style.visuals.widgets.inactive.fg_stroke.width = 2.0;

@@ -604,7 +604,7 @@ impl EditorApp {
         let fg_color = self
             .current_theme
             .colors
-            .to_egui_color32(self.current_theme.colors.foreground);
+            .to_egui_color32(self.current_theme.colors.foreground.unwrap_or([255, 255, 255, 255]));
 
         crate::app_helpers::center_row(ui, |ui| {
             // Status message on the left
@@ -658,7 +658,7 @@ impl EditorApp {
                     let fg_color = self
                         .current_theme
                         .colors
-                        .to_egui_color32(self.current_theme.colors.foreground);
+                        .to_egui_color32(self.current_theme.colors.foreground.unwrap_or([255, 255, 255, 255]));
 
                     if let Some(path) = &self.current_file_path {
                         ui.label(

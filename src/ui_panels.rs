@@ -1966,27 +1966,34 @@ if ui
                                         );
                                     };
 
-                                    let fg_color32 = theme.colors.to_egui_color32(theme.colors.foreground);
+                                     let mut hardcoded_defaults = match theme.color_scheme {
+                                         crate::theme::ColorScheme::Light => crate::theme::ThemeColors::light(),
+                                         crate::theme::ColorScheme::Dark => crate::theme::ThemeColors::dark(),
+                                     };
+                                     hardcoded_defaults.resolve(theme.color_scheme);
+                                     let fg_color32 = theme.colors.heading_color();
 
                                     // --- CORE UI BACKGROUNDS & ACCENTS ---
                                     render_cat_header(ui, rust_i18n::t!("theme.cat_core"), fg_color32);
                                     ui.add_space(4.0);
-                                    if render_color_edit_row(
-                                        ui,
+                                    if edit_optional_color(
                                         &rust_i18n::t!("theme.bg"),
                                         &mut theme.colors.background,
+                                        hardcoded_defaults.background.unwrap(),
                                         ref_colors.background,
-                                        egui::Id::new("bg_copy"),
+                                        "bg_pick",
+                                        ui,
                                     ) {
                                         theme_changed = true;
                                     }
                                     ui.add_space(4.0);
-                                    if render_color_edit_row(
-                                        ui,
+                                    if edit_optional_color(
                                         &rust_i18n::t!("theme.selection_bg"),
                                         &mut theme.colors.selection_background,
+                                        hardcoded_defaults.selection_background.unwrap(),
                                         ref_colors.selection_background,
-                                        egui::Id::new("selection_bg_copy"),
+                                        "selection_bg_pick",
+                                        ui,
                                     ) {
                                         theme_changed = true;
                                     }
@@ -2008,12 +2015,13 @@ if ui
                                         theme_changed = true;
                                     }
                                     ui.add_space(4.0);
-                                    if render_color_edit_row(
-                                        ui,
+                                    if edit_optional_color(
                                         &rust_i18n::t!("theme.icon_hover"),
                                         &mut theme.colors.icon_hover,
+                                        hardcoded_defaults.icon_hover.unwrap(),
                                         ref_colors.icon_hover,
-                                        egui::Id::new("icon_hover_copy"),
+                                        "icon_hover_pick",
+                                        ui,
                                     ) {
                                         theme_changed = true;
                                     }
@@ -2021,12 +2029,13 @@ if ui
                                     // --- TYPOGRAPHY ---
                                     render_cat_header(ui, rust_i18n::t!("theme.cat_typography"), fg_color32);
                                     ui.add_space(4.0);
-                                    if render_color_edit_row(
-                                        ui,
+                                    if edit_optional_color(
                                         &rust_i18n::t!("theme.fg"),
                                         &mut theme.colors.foreground,
+                                        hardcoded_defaults.foreground.unwrap(),
                                         ref_colors.foreground,
-                                        egui::Id::new("fg_copy"),
+                                        "fg_pick",
+                                        ui,
                                     ) {
                                         theme_changed = true;
                                     }
@@ -2066,7 +2075,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.editor_fg"),
                                         &mut theme.colors.editor_foreground,
-                                        theme.colors.foreground,
+                                        hardcoded_defaults.foreground.unwrap(),
                                         ref_colors.editor_foreground,
                                         "editor_fg_copy",
                                         ui,
@@ -2074,29 +2083,31 @@ if ui
                                         theme_changed = true;
                                     }
                                     ui.add_space(4.0);
-                                    if render_color_edit_row(
-                                        ui,
+                                    if edit_optional_color(
                                         &rust_i18n::t!("theme.line_numbers"),
                                         &mut theme.colors.line_number,
+                                        hardcoded_defaults.line_number.unwrap(),
                                         ref_colors.line_number,
-                                        egui::Id::new("line_num_copy"),
+                                        "line_no_pick",
+                                        ui,
                                     ) {
                                         theme_changed = true;
                                     }
                                     ui.add_space(4.0);
-                                    if render_color_edit_row(
-                                        ui,
+                                    if edit_optional_color(
                                         &rust_i18n::t!("theme.cursor"),
                                         &mut theme.colors.cursor,
+                                        hardcoded_defaults.cursor.unwrap(),
                                         ref_colors.cursor,
-                                        egui::Id::new("cursor_copy"),
+                                        "cursor_pick",
+                                        ui,
                                     ) {
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.search_highlight"),
                                         &mut theme.colors.highlight,
-                                        theme.colors.cursor,
+                                        hardcoded_defaults.cursor.unwrap(),
                                         ref_colors.highlight,
                                         "highlight_copy",
                                         ui,
@@ -2149,7 +2160,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.btn_fg"),
                                         &mut theme.colors.button_fg,
-                                        theme.colors.foreground,
+                                        hardcoded_defaults.foreground.unwrap(),
                                         ref_colors.button_fg,
                                         "btn_text_copy",
                                         ui,
@@ -2159,7 +2170,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.btn_hover_fg"),
                                         &mut theme.colors.button_hover_fg,
-                                        theme.colors.foreground,
+                                        hardcoded_defaults.foreground.unwrap(),
                                         ref_colors.button_hover_fg,
                                         "btn_hover_fg_copy",
                                         ui,
@@ -2169,7 +2180,7 @@ if ui
                                     if edit_optional_color(
                                         &rust_i18n::t!("theme.btn_active_fg"),
                                         &mut theme.colors.button_active_fg,
-                                        theme.colors.foreground,
+                                        hardcoded_defaults.foreground.unwrap(),
                                         ref_colors.button_active_fg,
                                         "btn_active_fg_copy",
                                         ui,
@@ -2396,53 +2407,58 @@ if ui
                                     // --- SYNTAX ALERTS ---
                                     render_cat_header(ui, rust_i18n::t!("theme.cat_syntax"), fg_color32);
                                     ui.add_space(4.0);
-                                    if render_color_edit_row(
-                                        ui,
+                                    if edit_optional_color(
                                         &rust_i18n::t!("theme.comment"),
                                         &mut theme.colors.comment,
+                                        hardcoded_defaults.comment.unwrap(),
                                         ref_colors.comment,
-                                        egui::Id::new("comment_copy"),
-                                    ) {
+                                        "comment_pick",
+                                        ui,
+                                     ) {
                                         theme_changed = true;
                                     }
                                     ui.add_space(4.0);
-                                    if render_color_edit_row(
-                                        ui,
+                                    if edit_optional_color(
                                         &rust_i18n::t!("theme.success_label"),
                                         &mut theme.colors.success,
+                                        hardcoded_defaults.success.unwrap(),
                                         ref_colors.success,
-                                        egui::Id::new("success_copy"),
-                                    ) {
+                                        "success_pick",
+                                        ui,
+                                     ) {
                                         theme_changed = true;
                                     }
                                     ui.add_space(4.0);
-                                    if render_color_edit_row(
-                                        ui,
+                                    if edit_optional_color(
                                         &rust_i18n::t!("theme.info_label"),
                                         &mut theme.colors.info,
+                                        hardcoded_defaults.info.unwrap(),
                                         ref_colors.info,
-                                        egui::Id::new("info_copy"),
-                                    ) {
+                                        "info_pick",
+                                        ui,
+                                     ) {
                                         theme_changed = true;
                                     }
                                     ui.add_space(4.0);
-                                    if render_color_edit_row(
-                                        ui,
+                                    if edit_optional_color(
                                         &rust_i18n::t!("theme.warning_label"),
                                         &mut theme.colors.warning,
+                                        hardcoded_defaults.warning.unwrap(),
                                         ref_colors.warning,
-                                        egui::Id::new("warning_copy"),
-                                    ) {
+                                        "warning_pick",
+                                        ui,
+                                     ) {
                                         theme_changed = true;
                                     }
                                     ui.add_space(4.0);
-                                    if render_color_edit_row(
-                                        ui,
+                                    if edit_optional_color(
                                         &rust_i18n::t!("theme.error_label"),
                                         &mut theme.colors.error,
+                                        hardcoded_defaults.error.unwrap(),
                                         ref_colors.error,
-                                        egui::Id::new("error_copy"),
-                                    ) {
+                                        "error_pick",
+                                        ui,
+                                     ) {
                                         theme_changed = true;
                                     }
                                 });
@@ -2551,33 +2567,7 @@ if ui
     }
 }
 
-/// Helper for theme editor to render a color row with copy/paste buttons
-fn render_color_edit_row(
-    ui: &mut egui::Ui,
-    label: &str,
-    color: &mut [u8; 4],
-    ref_color: [u8; 4],
-    row_id: egui::Id,
-) -> bool {
-    let mut changed = false;
-    crate::app_helpers::render_settings_row(ui, label, &mut 0.0, |ui| {
-        ui.spacing_mut().item_spacing.x = 4.0;
-        if custom_color_picker_button(ui, color, row_id.with("color_btn")) {
-            changed = true;
-        }
-        if *color != ref_color {
-            if ui
-                .button("↺")
-                .on_hover_text(rust_i18n::t!("theme.reset_tooltip"))
-                .clicked()
-            {
-                *color = ref_color;
-                changed = true;
-            }
-        }
-    });
-    changed
-}
+
 
 // ─── Custom color picker with rectangular 2D field ──────────────────────────
 

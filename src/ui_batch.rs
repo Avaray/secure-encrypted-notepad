@@ -18,7 +18,7 @@ impl EditorApp {
         central_panel_frame.fill = self
             .current_theme
             .colors
-            .to_egui_color32(self.current_theme.colors.background);
+            .to_egui_color32(self.current_theme.colors.background.unwrap_or([27, 27, 27, 255]));
 
         egui::CentralPanel::default()
             .frame(central_panel_frame)
