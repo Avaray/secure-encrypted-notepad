@@ -138,6 +138,25 @@ impl EditorApp {
                                     let was_maximized = self.settings.start_maximized;
                                     self.settings = crate::settings::Settings::default();
                                     self.settings.start_maximized = was_maximized;
+
+                                    // Run smart font detection after reset
+                                    let available_fonts = crate::fonts::get_system_fonts();
+                                    if let Some(font) = crate::fonts::detect_best_font(&available_fonts, crate::fonts::PREFERRED_UI_FONTS) {
+                                        self.settings.ui_font_family = font.clone();
+                                        self.settings.editor_font_family = font;
+
+                                        // Update UI indices so ComboBoxes refresh correctly
+                                        if let Some(idx) = self.available_fonts.iter().position(|f| f == &self.settings.ui_font_family) {
+                                            self.ui_font_index = idx;
+                                        }
+                                        if let Some(idx) = self.available_fonts.iter().position(|f| f == &self.settings.editor_font_family) {
+                                            self.editor_font_index = idx;
+                                        }
+                                    }
+
+                                    self.fonts_dirty = true;
+                                    self.style_dirty = true;
+
                                     let _ = self.settings.save();
 
                                     // Apply theme immediately

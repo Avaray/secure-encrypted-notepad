@@ -16,11 +16,18 @@ pub const PREFERRED_UI_FONTS: &[&str] = &[
 ];
 pub const PREFERRED_EDITOR_FONTS: &[&str] = PREFERRED_UI_FONTS;
 
-/// Get list of available system fonts
+/// Detect best matching font from preferred list
 pub fn detect_best_font(available_fonts: &[String], preferences: &[&str]) -> Option<String> {
     for pref in preferences {
-        if available_fonts.iter().any(|f| f == *pref) {
-            return Some(pref.to_string());
+        // Case-insensitive matching to ensure Segoe UI matches "segoe ui" etc.
+        let pref_lower = pref.to_lowercase();
+        if let Some(matched_font) = available_fonts
+            .iter()
+            .find(|f| f.to_lowercase() == pref_lower)
+        {
+            #[cfg(debug_assertions)]
+            println!("[SEN] Font match found: '{}' -> '{}'", pref, matched_font);
+            return Some(matched_font.clone());
         }
     }
     None

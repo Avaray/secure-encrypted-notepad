@@ -231,20 +231,20 @@ impl EditorApp {
         let themes = load_themes();
         let available_fonts = crate::fonts::get_system_fonts();
 
-        // Smart font detection on first run
-        if settings.is_first_run {
-            if let Some(font) =
-                crate::fonts::detect_best_font(&available_fonts, crate::fonts::PREFERRED_UI_FONTS)
-            {
-                settings.ui_font_family = font;
+        // Smart font detection on first run OR when using generic defaults
+        let needs_detect = settings.is_first_run 
+            || settings.ui_font_family.contains("(Default)") 
+            || settings.editor_font_family.contains("(Default)");
+
+        if needs_detect {
+            if let Some(font) = crate::fonts::detect_best_font(&available_fonts, crate::fonts::PREFERRED_UI_FONTS) {
+                // By default, we use the same detected high-quality font for both UI and Editor
+                if settings.ui_font_family != font || settings.editor_font_family != font {
+                    settings.ui_font_family = font.clone();
+                    settings.editor_font_family = font;
+                    let _ = settings.save();
+                }
             }
-            if let Some(font) = crate::fonts::detect_best_font(
-                &available_fonts,
-                crate::fonts::PREFERRED_EDITOR_FONTS,
-            ) {
-                settings.editor_font_family = font;
-            }
-            let _ = settings.save();
         }
 
         let mut debug_log = Vec::new();
@@ -1198,7 +1198,6 @@ impl eframe::App for EditorApp {
                 let panel_res = egui::SidePanel::left("file_tree_panel")
                     .frame(left_panel_frame)
                     .resizable(true)
-                    .min_width(min_tree_width)
                     .max_width(max_tree_width)
                     .default_width(self.settings.file_tree_width)
                     .show(ctx, |ui| {
@@ -1222,7 +1221,6 @@ impl eframe::App for EditorApp {
                     .frame(right_panel_frame.clone())
                     .resizable(true)
                     .default_width(self.settings.theme_editor_width)
-                    .min_width(100.0)
                     .max_width(max_panel_width)
                     .show(ctx, |ui| {
                         self.render_theme_editor_panel(ui);
@@ -1241,7 +1239,6 @@ impl eframe::App for EditorApp {
                     .frame(right_panel_frame.clone())
                     .resizable(true)
                     .default_width(self.settings.settings_panel_width)
-                    .min_width(300.0)
                     .max_width(max_panel_width)
                     .show(ctx, |ui| {
                         self.render_settings_panel(ui);

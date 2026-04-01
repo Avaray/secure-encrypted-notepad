@@ -62,7 +62,6 @@ impl EditorApp {
         egui::SidePanel::left("batch_left_panel")
             .resizable(true)
             .default_width(initial_width)
-            .width_range((initial_width * 0.5)..=(ui.available_width() * 0.8))
             .frame(egui::Frame::NONE.inner_margin(8.0))
             .show_inside(ui, |ui| {
                 if self.batch_is_running {
