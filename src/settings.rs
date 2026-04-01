@@ -274,6 +274,12 @@ fn default_language() -> String {
         "pt-BR".to_string()
     } else if locale.starts_with("sk") {
         "sk".to_string()
+    } else if locale.starts_with("ru") {
+        "ru".to_string()
+    } else if locale.starts_with("it") {
+        "it".to_string()
+    } else if locale.starts_with("ar") {
+        "ar".to_string()
     } else {
         "en".to_string()
     }

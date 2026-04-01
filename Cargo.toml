@@ -1,6 +1,6 @@
 [package]
 name = "sen"
-version = "0.6.18"
+version = "0.6.19"
 edition = "2021"
 default-run = "sen"
 authors = ["Dawid Wasowski"]
