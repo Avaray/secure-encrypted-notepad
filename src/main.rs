@@ -49,6 +49,7 @@ mod ui_toolbar;
 use app::EditorApp;
 
 fn main() -> Result<(), eframe::Error> {
+    let start_time = std::time::Instant::now();
     let settings = crate::settings::Settings::load();
 
     // Set the UI language from saved settings
@@ -106,6 +107,7 @@ fn main() -> Result<(), eframe::Error> {
                 settings,
                 file_to_open,
                 ipc_queue,
+                start_time,
             )))
         }),
     )

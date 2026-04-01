@@ -97,6 +97,8 @@ pub struct EditorApp {
 
     /// Show goto line dialog
     pub(crate) show_goto_line: bool,
+    /// Time to first frame
+    pub(crate) startup_duration: Option<std::time::Duration>,
 
     /// Goto line input
     pub(crate) goto_line_input: String,
@@ -225,7 +227,7 @@ pub struct EditorApp {
 }
 
 impl EditorApp {
-    pub fn from_settings(mut settings: Settings) -> Self {
+    pub fn from_settings(mut settings: Settings, start_time: Instant) -> Self {
         let themes = load_themes();
         let available_fonts = crate::fonts::get_system_fonts();
 
@@ -294,7 +296,8 @@ impl EditorApp {
             current_file_path: None,
             status_message: status,
             settings: settings.clone(),
-            start_time: Instant::now(),
+            start_time,
+            startup_duration: None,
             themes,
             current_theme: current_theme.clone(),
             show_settings_panel: if restore_all {
@@ -555,7 +558,7 @@ impl EditorApp {
 
 impl Default for EditorApp {
     fn default() -> Self {
-        Self::from_settings(Settings::load())
+        Self::from_settings(Settings::load(), Instant::now())
     }
 }
 
@@ -565,6 +568,7 @@ impl EditorApp {
         mut settings: Settings,
         file_to_open: Option<std::path::PathBuf>,
         ipc_queue: Option<std::sync::Arc<std::sync::Mutex<Vec<std::path::PathBuf>>>>,
+        start_time: Instant,
     ) -> Self {
         let mut system_log = None;
         // On first run, detect system theme preference
@@ -582,7 +586,7 @@ impl EditorApp {
             }
         }
 
-        let mut app = Self::from_settings(settings);
+        let mut app = Self::from_settings(settings, start_time);
 
         if let Some(msg) = system_log {
             app.log_info(msg);
@@ -590,7 +594,8 @@ impl EditorApp {
 
         app.icons = crate::icons::Icons::load(&cc.egui_ctx);
         app.current_theme.apply(&cc.egui_ctx);
-        app.log_info(t!("app.log_started", version = env!("CARGO_PKG_VERSION")));
+        // Removed the immediate app.log_started call - it's now deferred to the first update() call
+        // app.log_info(t!("app.log_started", version = env!("CARGO_PKG_VERSION")));
         app.refresh_file_tree();
         app.setup_watcher();
 
@@ -686,6 +691,17 @@ impl EditorApp {
 
 impl eframe::App for EditorApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Startup timing (Time To First Frame)
+        if self.startup_duration.is_none() {
+            let duration = self.start_time.elapsed();
+            self.startup_duration = Some(duration);
+            self.log_info(t!(
+                "app.log_started_timed",
+                version = env!("CARGO_PKG_VERSION"),
+                duration = format!("{:.2?}", duration)
+            ));
+        }
+
         // Intercept global scroll speed
         if (self.settings.scroll_speed_multiplier - 1.0).abs() > f32::EPSILON {
             let mult = self.settings.scroll_speed_multiplier;
