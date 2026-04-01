@@ -165,7 +165,7 @@ impl Default for ThemeColors {
 impl ThemeColors {
     pub fn dark() -> Self {
         Self {
-            background: Some([27, 27, 27, 255]),
+            background: Some([18, 18, 18, 255]),
             foreground: Some([255, 255, 255, 255]),
             editor_foreground: None,
             button_bg: None, // Use egui default or derived
@@ -173,7 +173,7 @@ impl ThemeColors {
             separator: None,
             button_hover_bg: None, // Derived usually which is good
             button_active_bg: None,
-            selection_background: Some([51, 51, 51, 255]),
+            selection_background: Some([40, 40, 40, 255]),
             cursor: Some([255, 255, 255, 255]),
             line_number: Some([128, 128, 128, 255]),
             comment: Some([106, 153, 85, 255]),
@@ -215,7 +215,7 @@ impl ThemeColors {
 
     pub fn light() -> Self {
         Self {
-            background: Some([255, 255, 255, 255]),
+            background: Some([245, 245, 245, 255]),
             foreground: Some([0, 0, 0, 255]),
             editor_foreground: None,
             button_bg: None,
@@ -223,7 +223,7 @@ impl ThemeColors {
             separator: None,
             button_hover_bg: None,
             button_active_bg: None,
-            selection_background: Some([173, 214, 255, 255]),
+            selection_background: Some([210, 230, 255, 255]),
             cursor: Some([0, 0, 0, 255]),
             line_number: Some([128, 128, 128, 255]),
             comment: Some([0, 128, 0, 255]),
@@ -340,7 +340,7 @@ impl ThemeColors {
             return egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3]);
         }
         // Intelligent default if not defined
-        let bg = self.background.unwrap_or([27, 27, 27, 255]);
+        let bg = self.background.unwrap_or([18, 18, 18, 255]);
         let c = if bg[0] > 128 {
             [80, 80, 80, 255] // light theme
         } else {
@@ -451,7 +451,7 @@ impl Theme {
         colors.resolve(self.color_scheme);
 
         // --- Apply Global Background ---
-        let bg_color = colors.to_egui_color32(colors.background.unwrap_or([27, 27, 27, 255]));
+        let bg_color = colors.to_egui_color32(colors.background.unwrap_or([18, 18, 18, 255]));
         visuals.window_fill = bg_color;
         visuals.panel_fill = bg_color;
         visuals.extreme_bg_color = bg_color;
@@ -718,11 +718,11 @@ mod tests {
         let dark = Theme::dark();
         assert_eq!(dark.name, "Dark");
         assert_eq!(dark.color_scheme, ColorScheme::Dark);
-        assert_eq!(dark.colors.background, [27, 27, 27, 255]);
+        assert_eq!(dark.colors.background, Some([18, 18, 18, 255]));
 
         let light = Theme::light();
         assert_eq!(light.name, "Light");
         assert_eq!(light.color_scheme, ColorScheme::Light);
-        assert_eq!(light.colors.background, [255, 255, 255, 255]);
+        assert_eq!(light.colors.background, Some([245, 245, 245, 255]));
     }
 }
