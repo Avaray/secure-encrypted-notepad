@@ -134,6 +134,8 @@ settings.hide_panel_headers_tooltip: "如果启用，面板标题（如“设置
 settings.zen_mode: "禅模式 (F11)"
 settings.remember_zen: "记住禅模式"
 settings.remember_zen_tooltip: "如果启用，并且在关闭时禅模式处于活动状态，则下次启动时将恢复禅模式。"
+settings.show_status_bar: "显示状态栏"
+settings.show_status_bar_tooltip: "切换窗口底部状态栏的可见性。"
 settings.preserve_panels: "启动时恢复面板状态"
 settings.preserve_panels_tooltip: "如果启用，所有打开的面板（设置、历史记录等）将在下次启动时恢复。"
 settings.associate_sen: "将 .sen 文件与此程序关联"

@@ -239,6 +239,10 @@ pub struct Settings {
     #[serde(default = "default_language")]
     pub language: String,
 
+    /// Whether to show the status bar at the bottom
+    #[serde(default = "default_true")]
+    pub show_status_bar: bool,
+
     /// Volatile flag to indicate if this is the first run (no config file existed)
     #[serde(skip)]
     pub is_first_run: bool,
@@ -397,6 +401,7 @@ impl Default for Settings {
             single_instance: true,
             scroll_speed_multiplier: default_scroll_speed(),
             language: default_language(),
+            show_status_bar: true,
             is_first_run: false,
         }
     }

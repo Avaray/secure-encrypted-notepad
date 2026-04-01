@@ -1144,7 +1144,7 @@ impl eframe::App for EditorApp {
         // Main content area
         if self.show_batch_converter {
             // Render global panels FIRST so they reserve space
-            if !self.zen_mode {
+            if !self.zen_mode && self.settings.show_status_bar {
                 let mut status_bar_frame = bar_frame.clone();
                 status_bar_frame.inner_margin.left = 12;
                 status_bar_frame.inner_margin.right = 12;
@@ -1176,7 +1176,7 @@ impl eframe::App for EditorApp {
             }
 
             // Status bar
-            if !self.zen_mode {
+            if !self.zen_mode && self.settings.show_status_bar {
                 let mut status_bar_frame = bar_frame.clone();
                 status_bar_frame.inner_margin.left = 12;
                 status_bar_frame.inner_margin.right = 12;
@@ -1198,6 +1198,7 @@ impl eframe::App for EditorApp {
                 let panel_res = egui::SidePanel::left("file_tree_panel")
                     .frame(left_panel_frame)
                     .resizable(true)
+                    .min_width(min_tree_width)
                     .max_width(max_tree_width)
                     .default_width(self.settings.file_tree_width)
                     .show(ctx, |ui| {

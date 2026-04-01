@@ -810,6 +810,13 @@ if ui
 {
                             let _ = self.settings.save();
                         }
+                        if ui
+                            .checkbox(&mut self.settings.show_status_bar, rust_i18n::t!("settings.show_status_bar"))
+                            .on_hover_text(rust_i18n::t!("settings.show_status_bar_tooltip"))
+                            .changed()
+                        {
+                            let _ = self.settings.save();
+                        }
 
                         ui.add_space(8.0);
                         ui.separator();

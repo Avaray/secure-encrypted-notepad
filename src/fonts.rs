@@ -14,7 +14,6 @@ pub const PREFERRED_UI_FONTS: &[&str] = &[
     "Liberation Mono", // Common Linux Monospace fallback
     "Monaco",          // MacOS Monospace fallback
 ];
-pub const PREFERRED_EDITOR_FONTS: &[&str] = PREFERRED_UI_FONTS;
 
 /// Detect best matching font from preferred list
 pub fn detect_best_font(available_fonts: &[String], preferences: &[&str]) -> Option<String> {

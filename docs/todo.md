@@ -21,7 +21,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Auto-Updater**: Implement an update check system (leveraging GitHub Releases) that is disabled by default. Consider supporting full automatic updates with binary replacement to streamline the update process for users.
 - [ ] **Debug Panel Log Filter Layout**: Improve the layout of log type toggles in the debug panel. Currently, text wraps and expands vertically, causing layout instability.
 - [ ] **Status Bar Activity Feedback**: Add more status bar messages about user actions (e.g., "File saved", "Search finished", etc.).
-- [ ] **Hide Status Bar Option**: Add a setting to completely hide the application's status bar.
+- [x] **Hide Status Bar Option**: Add a setting to completely hide the application's status bar.
 - [ ] **Square Icon Buttons**: Ensure buttons containing only an SVG icon have their horizontal padding adjusted based on vertical padding to maintain a 1:1 aspect ratio (square shape).
 
 ---

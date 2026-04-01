@@ -134,6 +134,8 @@ settings.hide_panel_headers_tooltip: "有効にすると、すっきりとした
 settings.zen_mode: "Zenモード (F11)"
 settings.remember_zen: "Zenモードを記憶する"
 settings.remember_zen_tooltip: "有効にすると、終了時にZenモードがアクティブだった場合、次回の起動時に復元されます。"
+settings.show_status_bar: "ステータスバーを表示"
+settings.show_status_bar_tooltip: "ウィンドウ下部のステータスバーの表示/非表示を切り替えます。"
 settings.preserve_panels: "起動時にパネルの状態を復元する"
 settings.preserve_panels_tooltip: "有効にすると、開いているすべてのパネル（設定、履歴など）が次回の起動時に復元されます。"
 settings.associate_sen: ".senファイルをこのプログラムに関連付ける"

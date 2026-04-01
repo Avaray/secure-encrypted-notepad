@@ -134,6 +134,8 @@ settings.hide_panel_headers_tooltip: "Po włączeniu, tytuły paneli (takie jak 
 settings.zen_mode: "Tryb Zen (F11)"
 settings.remember_zen: "Zapamiętaj tryb Zen"
 settings.remember_zen_tooltip: "Po włączeniu, tryb Zen zostanie przywrócony przy następnym uruchomieniu, jeśli był aktywny podczas zamykania."
+settings.show_status_bar: "Pokaż pasek stanu"
+settings.show_status_bar_tooltip: "Przełącz widoczność paska stanu na dole okna."
 settings.preserve_panels: "Przywróć stan paneli przy uruchomieniu"
 settings.preserve_panels_tooltip: "Po włączeniu, wszystkie otwarte panele (Ustawienia, Historia itp.) zostaną przywrócone przy następnym uruchomieniu."
 settings.associate_sen: "Powiąż pliki .sen z tym programem"

@@ -134,6 +134,8 @@ settings.hide_panel_headers_tooltip: "في حال التمكين، سيتم إخ
 settings.zen_mode: "وضع Zen (F11)"
 settings.remember_zen: "تذكر وضع Zen"
 settings.remember_zen_tooltip: "في حال التمكين، ستتم استعادة وضع Zen عند التشغيل التالي إذا كان نشطًا عند الإغلاق."
+settings.show_status_bar: "إظهار شريط الحالة"
+settings.show_status_bar_tooltip: "تبديل رؤية شريط الحالة في أسفل النافذة."
 settings.preserve_panels: "استعادة حالة اللوحات عند بدء التشغيل"
 settings.preserve_panels_tooltip: "في حال التمكين، ستتم استعادة جميع اللوحات المفتوحة (الإعدادات، السجل، إلخ) عند التشغيل التالي."
 settings.associate_sen: "ربط ملفات .sen بهذا البرنامج"

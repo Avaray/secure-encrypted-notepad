@@ -134,6 +134,8 @@ settings.hide_panel_headers_tooltip: "If enabled, panel titles (like 'Settings',
 settings.zen_mode: "Zen Mode (F11)"
 settings.remember_zen: "Remember Zen Mode"
 settings.remember_zen_tooltip: "If enabled, Zen mode will be restored on next launch if it was active when closing."
+settings.show_status_bar: "Show Status Bar"
+settings.show_status_bar_tooltip: "Toggle the visibility of the status bar at the bottom of the window."
 settings.preserve_panels: "Restore panel state on startup"
 settings.preserve_panels_tooltip: "If enabled, all open panels (Settings, History, etc.) will be restored on next launch."
 settings.associate_sen: "Associate .sen files with this program"

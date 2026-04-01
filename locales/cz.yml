@@ -134,6 +134,8 @@ settings.hide_panel_headers_tooltip: "Je-li povoleno, názvy panelů (např. 'Na
 settings.zen_mode: "Režim Zen (F11)"
 settings.remember_zen: "Pamatovat si režim Zen"
 settings.remember_zen_tooltip: "Je-li povoleno, režim Zen bude obnoven při dalším spuštění, pokud byl aktivní při zavírání."
+settings.show_status_bar: "Zobrazit stavový řádek"
+settings.show_status_bar_tooltip: "Přepnout viditelnost stavového řádku v dolní části okna."
 settings.preserve_panels: "Obnovit stav panelů při spuštění"
 settings.preserve_panels_tooltip: "Je-li povoleno, všechny otevřené panely (Nastavení, Historie atd.) budou obnoveny při dalším spuštění."
 settings.associate_sen: "Přidružit soubory .sen k tomuto programu"

@@ -134,6 +134,8 @@ settings.hide_panel_headers_tooltip: "Indien ingeschakeld, worden paneeltitels (
 settings.zen_mode: "Zen-modus (F11)"
 settings.remember_zen: "Zen-modus onthouden"
 settings.remember_zen_tooltip: "Indien ingeschakeld, wordt de Zen-modus bij de volgende start hersteld als deze actief was bij het sluiten."
+settings.show_status_bar: "Statusbalk weergeven"
+settings.show_status_bar_tooltip: "Schakel de zichtbaarheid van de statusbalk onderaan het venster in of uit."
 settings.preserve_panels: "Paneelstatus herstellen bij opstarten"
 settings.preserve_panels_tooltip: "Indien ingeschakeld, worden alle geopende panelen (Instellingen, Geschiedenis, enz.) bij de volgende start hersteld."
 settings.associate_sen: ".sen-bestanden koppelen aan dit programma"

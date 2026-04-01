@@ -134,6 +134,8 @@ settings.hide_panel_headers_tooltip: "Se abilitato, i titoli dei pannelli (come 
 settings.zen_mode: "Modalità Zen (F11)"
 settings.remember_zen: "Ricorda modalità Zen"
 settings.remember_zen_tooltip: "Se abilitato, la modalità Zen verrà ripristinata al prossimo avvio se era attiva al momento della chiusura."
+settings.show_status_bar: "Mostra barra di stato"
+settings.show_status_bar_tooltip: "Attiva o disattiva la visibilità della barra di stato nella parte inferiore della finestra."
 settings.preserve_panels: "Ripristina stato dei pannelli all'avvio"
 settings.preserve_panels_tooltip: "Se abilitato, tutti i pannelli aperti (Impostazioni, Cronologia, ecc.) verranno ripristinati al prossimo avvio."
 settings.associate_sen: "Associa file .sen a questo programma"
