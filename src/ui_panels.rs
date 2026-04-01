@@ -734,13 +734,13 @@ let _ = self.settings.save();
                 "fr" => ("Français", &self.icons.flag_fr),
                 "uk" => ("Українська", &self.icons.flag_ua),
                 "nl" => ("Nederlands", &self.icons.flag_nl),
-                "zh-CN" => ("简体中文", &self.icons.flag_cn),
-                "ja" => ("日本語", &self.icons.flag_jp),
+                "zh-CN" => ("简体中文 (Chinese)", &self.icons.flag_cn),
+                "ja" => ("日本語 (Japanese)", &self.icons.flag_jp),
                 "pt-BR" => ("Português (Brasil)", &self.icons.flag_br),
                 "sk" => ("Slovenčina", &self.icons.flag_sk),
                 "ru" => ("Русский", &self.icons.flag_ru),
                 "it" => ("Italiano", &self.icons.flag_it),
-                "ar" => ("العربية", &self.icons.flag_en), // Placeholder icon
+                "ar" => ("العربية (Arabic)", &self.icons.flag_ar),
                 _ => ("English", &self.icons.flag_en),
             };
 
@@ -773,13 +773,13 @@ let _ = self.settings.save();
                         if lang_row(ui, "fr", "Français", &self.icons.flag_fr) { changed = true; }
                         if lang_row(ui, "uk", "Українська", &self.icons.flag_ua) { changed = true; }
                         if lang_row(ui, "nl", "Nederlands", &self.icons.flag_nl) { changed = true; }
-                        if lang_row(ui, "zh-CN", "简体中文", &self.icons.flag_cn) { changed = true; }
-                        if lang_row(ui, "ja", "日本語", &self.icons.flag_jp) { changed = true; }
+                        if lang_row(ui, "zh-CN", "简体中文 (Chinese)", &self.icons.flag_cn) { changed = true; }
+                        if lang_row(ui, "ja", "日本語 (Japanese)", &self.icons.flag_jp) { changed = true; }
                         if lang_row(ui, "pt-BR", "Português (Brasil)", &self.icons.flag_br) { changed = true; }
                         if lang_row(ui, "sk", "Slovenčina", &self.icons.flag_sk) { changed = true; }
                         if lang_row(ui, "ru", "Русский", &self.icons.flag_ru) { changed = true; }
                         if lang_row(ui, "it", "Italiano", &self.icons.flag_it) { changed = true; }
-                        if lang_row(ui, "ar", "العربية", &self.icons.flag_en) { changed = true; }
+                        if lang_row(ui, "ar", "العربية (Arabic)", &self.icons.flag_ar) { changed = true; }
                     });
 
                 // Since we are in a Right-To-Left layout (from render_settings_row),

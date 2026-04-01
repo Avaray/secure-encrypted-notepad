@@ -38,6 +38,7 @@ pub struct Icons {
     pub flag_nl: TextureHandle,
     pub flag_ru: TextureHandle,
     pub flag_it: TextureHandle,
+    pub flag_ar: TextureHandle,
     pub folder_filled: TextureHandle,
     pub folder_open: TextureHandle,
     pub unknown_file: TextureHandle,
@@ -250,6 +251,11 @@ impl Icons {
                 ctx,
                 include_bytes!("../assets/flags/EmojioneV1FlagForItaly.svg"),
                 "flag_it",
+            ),
+            flag_ar: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/flags/ArabicFlag.svg"),
+                "flag_ar",
             ),
             close: Self::load_svg(
                 ctx,
