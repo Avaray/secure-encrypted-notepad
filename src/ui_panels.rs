@@ -716,9 +716,9 @@ let _ = self.settings.save();
                     let h = ls.get_height("set_tb_pos");
                     crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.toolbar_position"), h, |ui| {
                         let mut changed = false;
-                        changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Top, rust_i18n::t!("settings.toolbar_top")).changed();
-                        changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Left, rust_i18n::t!("settings.toolbar_left")).changed();
                         changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Right, rust_i18n::t!("settings.toolbar_right")).changed();
+                        changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Left, rust_i18n::t!("settings.toolbar_left")).changed();
+                        changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Top, rust_i18n::t!("settings.toolbar_top")).changed();
                         if changed {
                             let _ = self.settings.save();
                         }
