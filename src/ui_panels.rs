@@ -1985,7 +1985,7 @@ if ui
                                         ui.add_space(8.0);
                                         ui.label(
                                             egui::RichText::new(text)
-                                                .color(color.gamma_multiply(0.5))
+                                                .color(color.gamma_multiply(0.75))
                                                 .strong(),
                                         );
                                     };
