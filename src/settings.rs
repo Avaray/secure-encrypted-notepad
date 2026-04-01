@@ -347,7 +347,7 @@ impl Default for Settings {
             auto_backup_dir: None,
             auto_backup_enabled: false,
             screen_capture_protection: true,
-            show_line_numbers: true,
+            show_line_numbers: false,
             show_file_tree: true,
             tree_style_file_tree: false,
             show_whitespace: false,
