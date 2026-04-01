@@ -19,6 +19,9 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Windows Start Menu Integration**: Add an "Add to Start Menu" button (Windows-specific) in settings. It would generate the necessary manifest files and icons to allow pinning a large, high-quality tile for SEN to the Start Menu, bypassing the current limitations of portable apps.
 - [ ] **Draggable Dialogs**: Make custom dialog windows (like "Reset Settings") draggable by clicking and dragging their title bar area.
 - [ ] **Auto-Updater**: Implement an update check system (leveraging GitHub Releases) that is disabled by default. Consider supporting full automatic updates with binary replacement to streamline the update process for users.
+- [ ] **Debug Panel Log Filter Layout**: Improve the layout of log type toggles in the debug panel. Currently, text wraps and expands vertically, causing layout instability.
+- [ ] **Status Bar Activity Feedback**: Add more status bar messages about user actions (e.g., "File saved", "Search finished", etc.).
+- [ ] **Hide Status Bar Option**: Add a setting to completely hide the application's status bar.
 
 ---
 
@@ -28,3 +31,4 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Minimum Panel Widths**: Implement minimum width constraints for all side panels to prevent them from overlapping or becoming completely hidden. The user should always be able to easily find and grab the panel edge handles without confusion.
 - [ ] **Font Detection Audit**: Investigating why preferred fonts from `PREFERRED_UI_FONTS` are not being correctly auto-detected and applied during first launch or settings reset on Windows, even when those fonts are installed in the system. Current behavior defaults to system fonts instead of the high-priority list.
 - [ ] **Color Picker Interaction Bug**: Fix a critical issue in the Theme Editor where the color picker popup's internal sliders and selection fields (hue/shade/saturation) become unresponsive or 'stuck' during use, making it impossible to adjust colors correctly.
+- [ ] **Vertical Alignment Refinement**: Fix UI layouts for better vertical centering of heterogeneous single-line elements. Comboboxes still do not respect proper vertical alignment in some contexts.
