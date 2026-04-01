@@ -237,17 +237,6 @@ impl EditorApp {
             }
         }
 
-        if lines_to_toggle.len() == 1 {
-            self.log_info(t!(
-                "helpers.log_comment_line",
-                line = lines_to_toggle[0] + 1
-            ));
-        } else {
-            self.log_info(t!(
-                "helpers.log_comment_lines",
-                count = lines_to_toggle.len()
-            ));
-        }
     }
 
     /// Setup file system watcher for the current directory
@@ -436,8 +425,6 @@ impl EditorApp {
 
             // Refresh access status for the newly loaded tree
             self.refresh_file_access_status();
-        } else {
-            self.log_info(t!("helpers.log_tree_no_dir"));
         }
     }
 
