@@ -890,7 +890,8 @@ impl eframe::App for EditorApp {
             // Always save final panel state on close
             let _ = self.settings.save();
 
-            if self.is_modified {
+            let is_empty = self.document.current_content.is_empty();
+            if self.is_modified && !is_empty {
                 ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
                 self.check_changes_before_action(PendingAction::Exit);
             }

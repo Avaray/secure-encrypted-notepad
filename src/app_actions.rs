@@ -14,7 +14,8 @@ impl EditorApp {
             PendingAction::OpenDirectory | PendingAction::ChangeDirectory(_)
         );
 
-        if self.is_modified && !skip_check {
+        let is_empty = self.document.current_content.is_empty();
+        if self.is_modified && !skip_check && !is_empty {
             self.pending_action = action;
             self.show_close_confirmation = true;
         } else {
