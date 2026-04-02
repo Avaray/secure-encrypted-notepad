@@ -79,19 +79,33 @@ fn main() -> Result<(), eframe::Error> {
     // Load application icon for window/taskbar
     let app_icon = crate::icons::Icons::load_app_icon();
 
-    let mut viewport_builder = eframe::egui::ViewportBuilder::default()
+    // `with_visible(false)` is reliable on macOS and Linux (X11 + Wayland).
+    // On Windows, DWM can briefly render the window frame before WS_VISIBLE is
+    // cleared, causing a one-frame flicker.  The workaround is to create the
+    // window off-screen at (-32000, -32000) — the Win32 sentinel value for a
+    // minimized window — so any DWM flash is outside the visible desktop.
+    // The saved position is restored in EditorApp::update() just before Visible(true).
+    //
+    // We do NOT use this trick on macOS/Linux:
+    //   • macOS clamps window positions to the visible screen area.
+    //   • Wayland forbids applications from setting their own position entirely.
+    //   • with_visible(false) already works reliably on both platforms.
+    #[cfg(target_os = "windows")]
+    let initial_position = eframe::egui::pos2(-32000.0, -32000.0);
+
+    #[cfg(not(target_os = "windows"))]
+    let initial_position = if settings.window_pos_x >= 0.0 && settings.window_pos_y >= 0.0 {
+        eframe::egui::pos2(settings.window_pos_x, settings.window_pos_y)
+    } else {
+        eframe::egui::pos2(100.0, 100.0)
+    };
+
+    let viewport_builder = eframe::egui::ViewportBuilder::default()
         .with_inner_size([settings.window_width, settings.window_height])
         .with_icon(app_icon)
-        .with_min_inner_size([800.0, 600.0]);
-
-    // Always apply saved position (even when start_maximized is true) so the window
-    // has sensible geometry if the user later unmaximizes.
-    if settings.window_pos_x >= 0.0 && settings.window_pos_y >= 0.0 {
-        viewport_builder = viewport_builder.with_position(eframe::egui::pos2(
-            settings.window_pos_x,
-            settings.window_pos_y,
-        ));
-    }
+        .with_min_inner_size([800.0, 600.0])
+        .with_visible(false)
+        .with_position(initial_position);
 
     let options = eframe::NativeOptions {
         viewport: viewport_builder,

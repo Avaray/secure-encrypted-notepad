@@ -160,9 +160,10 @@ pub struct EditorApp {
     pub(crate) batch_progress_receiver:
         Option<std::sync::mpsc::Receiver<crate::app_state::BatchProgressUpdate>>,
 
-    // Window state tracking
-    /// True only for the very first update() call — used for the first-frame maximize trick
-    pub(crate) first_frame: bool,
+    /// True until the window has been made visible for the first time
+    pub(crate) initial_visible_applied: bool,
+    /// Counter of frames since the application started
+    pub(crate) frames_since_startup: u32,
     /// Whether the window should start maximized (from saved settings)
     pub(crate) start_maximized: bool,
     /// Current maximized state, updated every frame from the OS viewport
@@ -384,7 +385,8 @@ impl EditorApp {
             batch_failed_count: 0,
             batch_output_extension: settings.batch_last_extension.clone(),
             batch_progress_receiver: None,
-            first_frame: true,
+            initial_visible_applied: false,
+            frames_since_startup: 0,
             start_maximized: settings.start_maximized,
             is_maximized: false,
             last_is_maximized: false,
@@ -807,13 +809,56 @@ impl eframe::App for EditorApp {
         self.last_is_maximized = self.is_maximized;
         self.is_maximized = ctx.input(|i| i.viewport().maximized.unwrap_or(false));
 
-        // First-frame maximize trick: with_maximized(true) in ViewportBuilder has a
-        // race condition on Windows 10/11.  Instead we send a ViewportCommand on the
-        // very first frame, which fires after the window is fully created.
-        if self.first_frame {
-            self.first_frame = false;
+        self.frames_since_startup += 1;
+
+        // Apply fonts and styles while the window is still hidden so the very
+        // first visible frame is already fully styled (no flicker).
+        if self.fonts_dirty {
+            self.load_custom_fonts(ctx);
+            self.fonts_dirty = false;
+        }
+        if self.style_dirty {
+            self.apply_style(ctx);
+            self.apply_theme(ctx);
+            self.style_dirty = false;
+        }
+
+        if !self.initial_visible_applied {
             if self.start_maximized {
-                ctx.send_viewport_cmd(egui::ViewportCommand::Maximized(true));
+                // Send maximization command on the very first frame
+                if self.frames_since_startup == 1 {
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Maximized(true));
+                }
+
+                // Show the window only AFTER the OS reports it is indeed maximized,
+                // or after a safety timeout (10 frames) to prevent hanging if maximization fails.
+                if self.is_maximized || self.frames_since_startup > 10 {
+                    // No need to restore position — maximized state overrides it anyway.
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+                    self.initial_visible_applied = true;
+                }
+            } else {
+                // Wait for frame 2: frame 1 ran fonts/style above while still hidden,
+                // so the window's first visible frame is already fully styled.
+                if self.frames_since_startup >= 2 {
+                    // On Windows the window was created at (-32000, -32000) to prevent
+                    // DWM flicker, so we must restore the saved position before showing.
+                    // On macOS/Wayland the position was already set correctly at creation
+                    // (Wayland ignores it anyway), so no move is needed.
+                    #[cfg(target_os = "windows")]
+                    if self.settings.window_pos_x >= 0.0 && self.settings.window_pos_y >= 0.0 {
+                        ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(
+                            egui::pos2(self.settings.window_pos_x, self.settings.window_pos_y),
+                        ));
+                    }
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+                    self.initial_visible_applied = true;
+                }
+            }
+            // Keep repainting while hidden to quickly reach the ready state
+            if !self.initial_visible_applied {
+                ctx.request_repaint();
+                return; // Skip UI rendering until ready to show
             }
         }
 
@@ -897,6 +942,8 @@ impl eframe::App for EditorApp {
             }
         }
 
+        // Fonts/styles are also applied above before the visibility guard (startup path).
+        // This block handles runtime changes (user switches theme/font after startup).
         if self.fonts_dirty {
             self.load_custom_fonts(ctx);
             self.fonts_dirty = false;
