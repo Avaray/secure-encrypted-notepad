@@ -554,15 +554,12 @@ impl Theme {
             }
         }
 
-        if let Some(x) = colors.shadow_offset_x {
-            visuals.window_shadow.offset[0] = x as i8;
-            visuals.popup_shadow.offset[0] = x as i8;
-        }
-
-        if let Some(y) = colors.shadow_offset_y {
-            visuals.window_shadow.offset[1] = y as i8;
-            visuals.popup_shadow.offset[1] = y as i8;
-        }
+        // Always apply shadow offset (default to 0 when not set,
+        // otherwise egui's built-in non-zero defaults take over)
+        let offset_x = colors.shadow_offset_x.unwrap_or(0.0) as i8;
+        let offset_y = colors.shadow_offset_y.unwrap_or(0.0) as i8;
+        visuals.window_shadow.offset = [offset_x, offset_y];
+        visuals.popup_shadow.offset = [offset_x, offset_y];
 
         // --- Apply Button States (Foreground & Border) ---
         if let Some(fg) = colors.button_hover_fg {
