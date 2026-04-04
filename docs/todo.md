@@ -22,7 +22,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Debug Panel Log Filter Layout**: Improve the layout of log type toggles in the debug panel. Currently, text wraps and expands vertically, causing layout instability.
 - [ ] **Status Bar Activity Feedback**: Add more status bar messages about user actions (e.g., "File saved", "Search finished", etc.).
 - [x] **Hide Status Bar Option**: Add a setting to completely hide the application's status bar.
-- [ ] **Square Icon Buttons**: Ensure buttons containing only an SVG icon have their horizontal padding adjusted based on vertical padding to maintain a 1:1 aspect ratio (square shape).
+- [x] **Square Icon Buttons**: Ensure buttons containing only an SVG icon have their horizontal padding adjusted based on vertical padding to maintain a 1:1 aspect ratio (square shape).
 - [x] **Arabic Flag**: Add a universal "AR" flag for the Arabic language selector.
 - [x] **Font Glyph Fallback**: Implement a mechanism to handle missing glyphs for Arabic, Japanese, and Chinese characters. If the current font cannot display them, provide a fallback (e.g., showing the language/country name in a Latin font) to ensure the UI remains readable.
 - [x] **Startup Flicker Prevention**: Prevent the window from "flicking" or flashing a default state before settings, themes, and maximization state are fully loaded. The application window should remains hidden until the initial configuration is applied.

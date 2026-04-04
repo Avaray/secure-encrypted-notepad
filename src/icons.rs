@@ -14,6 +14,7 @@ pub struct Icons {
     pub debug: TextureHandle,
     pub file_tree: TextureHandle,
     pub theme: TextureHandle,
+    pub reset: TextureHandle,
 
     pub export: TextureHandle,
     pub rotate: TextureHandle,
@@ -259,8 +260,13 @@ impl Icons {
             ),
             close: Self::load_svg(
                 ctx,
-                include_bytes!("../assets/ui/QlementineIconsCross16.svg"),
+                include_bytes!("../assets/ui/IconamoonCloseLight.svg"),
                 "icon_close",
+            ),
+            reset: Self::load_svg(
+                ctx,
+                include_bytes!("../assets/ui/CarbonResetAlt.svg"),
+                "icon_reset",
             ),
         }
     }

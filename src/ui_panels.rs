@@ -215,7 +215,14 @@ self.settings.file_tree_starting_dir = Some(dir.clone());
 self.file_tree_dir = Some(dir);
 let _ = self.settings.save();
 self.refresh_file_tree();
-self.log_info("Starting directory set");
+self.log_info(rust_i18n::t!("settings.log_starting_dir_set"));
+}
+}
+if let Some(current_dir) = &self.file_tree_dir {
+if ui.button(rust_i18n::t!("settings.use_current_dir")).clicked() {
+self.settings.file_tree_starting_dir = Some(current_dir.clone());
+let _ = self.settings.save();
+self.log_info(rust_i18n::t!("settings.log_starting_dir_set_current"));
 }
 }
             if self.settings.file_tree_starting_dir.is_some() {
@@ -1068,8 +1075,8 @@ if ui
                                         let (label_res, delete_clicked, revert_clicked) = ui.with_layout(
                                             egui::Layout::right_to_left(egui::Align::Center),
                                             |ui| {
-                                                let del = ui.button("X").on_hover_text(rust_i18n::t!("history.delete_entry")).clicked();
-                                                let rev = ui.button("R").on_hover_text(rust_i18n::t!("history.revert_entry")).clicked();
+                                                let del = crate::app_helpers::square_icon_btn(ui, &self.icons.close, &rust_i18n::t!("history.delete_entry"), self.current_theme.colors.icon_color()).clicked();
+                                                let rev = crate::app_helpers::square_icon_btn(ui, &self.icons.reset, &rust_i18n::t!("history.revert_entry"), self.current_theme.colors.icon_color()).clicked();
 
                                                 let lbl = ui.with_layout(
                                                     egui::Layout::left_to_right(egui::Align::Center),
@@ -1926,12 +1933,7 @@ if ui
                                                         changed = true;
                                                     }
                                                     if *field != ref_field {
-                                                        if ui
-                                                            .button("↺")
-                                                            .on_hover_text(rust_i18n::t!(
-                                                                "theme.reset_tooltip"
-                                                            ))
-                                                            .clicked()
+                                                        if crate::app_helpers::square_icon_btn(ui, &self.icons.reset, &rust_i18n::t!("theme.reset_tooltip"), self.current_theme.colors.icon_color()).clicked()
                                                         {
                                                             *field = ref_field;
                                                             changed = true;
@@ -1972,12 +1974,7 @@ if ui
                                                         changed = true;
                                                     }
                                                     if *field != ref_field {
-                                                        if ui
-                                                            .button("↺")
-                                                            .on_hover_text(rust_i18n::t!(
-                                                                "theme.reset_tooltip"
-                                                            ))
-                                                            .clicked()
+                                                        if crate::app_helpers::square_icon_btn(ui, &self.icons.reset, &rust_i18n::t!("theme.reset_tooltip"), self.current_theme.colors.icon_color()).clicked()
                                                         {
                                                             *field = ref_field;
                                                             changed = true;

@@ -999,11 +999,7 @@ impl EditorApp {
             },
             |ui| {
                 ui.add_space(8.0); // Consistent padding from right edge
-                if ui
-                    .button("❌")
-                    .on_hover_text(rust_i18n::t!("app.close_panel"))
-                    .clicked()
-                {
+                if square_icon_btn(ui, &self.icons.close, &rust_i18n::t!("app.close_panel"), self.current_theme.colors.icon_color()).clicked() {
                     close_clicked = true;
                 }
             },
@@ -1106,4 +1102,27 @@ impl EditorApp {
         let text_color = self.current_theme.colors.heading_color();
         ui.heading(egui::RichText::new(text).color(text_color));
     }
+}
+
+/// Render a perfectly square button containing only an SVG icon scaled to text size
+pub(crate) fn square_icon_btn(
+    ui: &mut egui::Ui,
+    texture: &egui::TextureHandle,
+    tooltip: &str,
+    tint: egui::Color32,
+) -> egui::Response {
+    let icon_size = ui.text_style_height(&egui::TextStyle::Button);
+    let mut pad = ui.spacing().button_padding;
+    pad.x = pad.y; // force square
+    
+    ui.scope(|ui| {
+        ui.spacing_mut().button_padding = pad;
+        ui.add(
+            egui::Button::image(
+                egui::Image::new(texture)
+                    .fit_to_exact_size(egui::vec2(icon_size, icon_size))
+                    .tint(tint),
+            )
+        ).on_hover_text(tooltip)
+    }).inner
 }
