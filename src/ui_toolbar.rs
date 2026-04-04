@@ -69,27 +69,31 @@ impl EditorApp {
     }
 
     fn render_toolbar_horizontal(&mut self, ui: &mut egui::Ui) {
-        crate::app_helpers::center_row(ui, |ui| {
-            // Group 1-3: Handled with global disable
-            ui.add_enabled_ui(!self.show_batch_converter, |ui| {
-                // Group 1: Files
-                self.render_toolbar_file_group(ui);
-                ui.separator();
+        ui.allocate_ui_with_layout(
+            egui::vec2(ui.available_width(), 0.0),
+            egui::Layout::left_to_right(egui::Align::Center),
+            |ui| {
+                // Group 1-3: Handled with global disable
+                ui.add_enabled_ui(!self.show_batch_converter, |ui| {
+                    // Group 1: Files
+                    self.render_toolbar_file_group(ui);
+                    ui.separator();
 
-                // Group 2: Batch/Export
-                self.render_toolbar_batch_group(ui);
-                ui.separator();
+                    // Group 2: Batch/Export
+                    self.render_toolbar_batch_group(ui);
+                    ui.separator();
 
-                // Group 3: Keyfile management
-                self.render_toolbar_key_ops_group(ui);
-                ui.separator();
-            });
+                    // Group 3: Keyfile management
+                    self.render_toolbar_key_ops_group(ui);
+                    ui.separator();
+                });
 
-            // ── Settings group (right-aligned) ────────────────────────────────
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                self.render_toolbar_settings_group_rtl(ui);
-            });
-        });
+                // ── Settings group (right-aligned) ────────────────────────────────
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    self.render_toolbar_settings_group_rtl(ui);
+                });
+            },
+        );
     }
 
     // ─── Shared icon-button primitive (no `self` borrow – avoids conflicts) ─────

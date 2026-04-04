@@ -1166,14 +1166,11 @@ impl eframe::App for EditorApp {
         // Calculation:
         // Vertical: icon_size + 4 (button) + 12 (6+6 margins) + 1 (separator) = icon_size + 17
         let toolbar_v_size = self.settings.toolbar_icon_size + 17.0;
-        // Horizontal: icon_size + 4 (button) + 8 (4+4 top/bottom margins) + 1 (separator) = icon_size + 13
-        let toolbar_h_size = self.settings.toolbar_icon_size + 13.0;
-
         match self.settings.toolbar_position {
             crate::settings::ToolbarPosition::Top => {
                 egui::TopBottomPanel::top("toolbar")
                     .frame(bar_frame.clone())
-                    .exact_height(toolbar_h_size)
+                    .min_height(0.0)
                     .resizable(false)
                     .show(ctx, |ui| {
                         self.render_toolbar(ui);
