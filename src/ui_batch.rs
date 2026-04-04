@@ -67,26 +67,29 @@ impl EditorApp {
                 if self.batch_is_running {
                     ui.disable();
                 }
+                let label_color = self.current_theme.colors.heading_color();
+
                 // --- Mode Selector ---
                 ui.vertical(|ui| {
-                    ui.label(egui::RichText::new(t!("batch.mode_label")).strong());
-                    ui.add_space(4.0);
                     crate::app_helpers::center_row(ui, |ui| {
-                        ui.selectable_value(
-                            &mut self.batch_mode,
-                            BatchMode::Encrypt,
-                            t!("batch.mode_encrypt"),
-                        );
-                        ui.selectable_value(
-                            &mut self.batch_mode,
-                            BatchMode::Decrypt,
-                            t!("batch.mode_decrypt"),
-                        );
-                        ui.selectable_value(
-                            &mut self.batch_mode,
-                            BatchMode::Rotate,
-                            t!("batch.mode_rotate"),
-                        );
+                        ui.label(egui::RichText::new(t!("batch.mode_label")).strong().color(label_color));
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            ui.selectable_value(
+                                &mut self.batch_mode,
+                                BatchMode::Rotate,
+                                t!("batch.mode_rotate"),
+                            );
+                            ui.selectable_value(
+                                &mut self.batch_mode,
+                                BatchMode::Decrypt,
+                                t!("batch.mode_decrypt"),
+                            );
+                            ui.selectable_value(
+                                &mut self.batch_mode,
+                                BatchMode::Encrypt,
+                                t!("batch.mode_encrypt"),
+                            );
+                        });
                     });
                     ui.add_space(4.0);
                     let mode_desc = match self.batch_mode {
@@ -108,31 +111,35 @@ impl EditorApp {
                 };
 
                 ui.vertical(|ui| {
-                    ui.label(egui::RichText::new(keyfile_label).strong());
-                    ui.add_space(4.0);
                     crate::app_helpers::center_row(ui, |ui| {
-                        if ui.button(t!("batch.btn_select_key")).clicked() {
-                            if let Some(path) = rfd::FileDialog::new().pick_file() {
-                                self.batch_keyfile = Some(path);
+                        ui.label(egui::RichText::new(keyfile_label).strong().color(label_color));
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if let Some(path) = &self.keyfile_path {
+                                if ui
+                                    .button(t!("batch.btn_load_editor"))
+                                    .on_hover_text(t!("batch.load_editor_tooltip"))
+                                    .clicked()
+                                {
+                                    self.batch_keyfile = Some(path.clone());
+                                }
                             }
-                        }
-                        if let Some(path) = &self.keyfile_path {
-                            if ui
-                                .button(t!("batch.btn_load_editor"))
-                                .on_hover_text(t!("batch.load_editor_tooltip"))
-                                .clicked()
-                            {
-                                self.batch_keyfile = Some(path.clone());
+                            if ui.button(t!("batch.btn_select_key")).clicked() {
+                                if let Some(path) = rfd::FileDialog::new().pick_file() {
+                                    self.batch_keyfile = Some(path);
+                                }
                             }
-                        }
+                        });
                     });
                     ui.add_space(2.0);
                     ui.horizontal_wrapped(|ui| {
                         if let Some(path) = &self.batch_keyfile {
-                            ui.label(
-                                egui::RichText::new(self.mask_keyfile_path(path))
-                                    .color(self.current_theme.colors.success_color()),
-                            );
+                            let text = self.mask_keyfile_path(path);
+                            let color = if self.settings.show_keyfile_paths {
+                                self.current_theme.colors.warning_color()
+                            } else {
+                                self.current_theme.colors.success_color()
+                            };
+                            ui.label(egui::RichText::new(text).color(color));
                         } else {
                             ui.label(egui::RichText::new(t!("batch.key_none")).weak());
                         }
@@ -146,22 +153,26 @@ impl EditorApp {
                     ui.add_space(12.0);
 
                     ui.vertical(|ui| {
-                        ui.label(egui::RichText::new(t!("batch.key_new_label")).strong());
-                        ui.add_space(4.0);
                         crate::app_helpers::center_row(ui, |ui| {
-                            if ui.button(t!("batch.btn_select_key")).clicked() {
-                                if let Some(path) = rfd::FileDialog::new().pick_file() {
-                                    self.batch_keyfile_new = Some(path);
+                            ui.label(egui::RichText::new(t!("batch.key_new_label")).strong().color(label_color));
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                if ui.button(t!("batch.btn_select_key")).clicked() {
+                                    if let Some(path) = rfd::FileDialog::new().pick_file() {
+                                        self.batch_keyfile_new = Some(path);
+                                    }
                                 }
-                            }
+                            });
                         });
                         ui.add_space(2.0);
                         ui.horizontal_wrapped(|ui| {
                             if let Some(path) = &self.batch_keyfile_new {
-                                ui.label(
-                                    egui::RichText::new(self.mask_keyfile_path(path))
-                                        .color(self.current_theme.colors.success_color()),
-                                );
+                                let text = self.mask_keyfile_path(path);
+                                let color = if self.settings.show_keyfile_paths {
+                                    self.current_theme.colors.warning_color()
+                                } else {
+                                    self.current_theme.colors.success_color()
+                                };
+                                ui.label(egui::RichText::new(text).color(color));
                             } else {
                                 ui.label(egui::RichText::new(t!("batch.key_none")).weak());
                             }
@@ -175,30 +186,29 @@ impl EditorApp {
 
                 // --- Output Configuration ---
                 ui.vertical(|ui| {
-                    ui.label(egui::RichText::new(t!("batch.output_label")).strong());
-                    ui.add_space(4.0);
-
-                    // Output Directory
                     crate::app_helpers::center_row(ui, |ui| {
-                        if ui.button(t!("batch.btn_select_out_dir")).clicked() {
-                            if let Some(path) = rfd::FileDialog::new().pick_folder() {
-                                self.batch_output_dir = Some(path);
+                        ui.label(egui::RichText::new(t!("batch.output_label")).strong().color(label_color));
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if self.batch_output_dir.is_some() {
+                                if ui.button(t!("batch.btn_clear_out_dir")).clicked() {
+                                    self.batch_output_dir = None;
+                                }
                             }
-                        }
-                        if self.batch_output_dir.is_some() {
-                            if ui.button(t!("batch.btn_clear_out_dir")).clicked() {
-                                self.batch_output_dir = None;
+                            if ui.button(t!("batch.btn_select_out_dir")).clicked() {
+                                if let Some(path) = rfd::FileDialog::new().pick_folder() {
+                                    self.batch_output_dir = Some(path);
+                                }
                             }
-                        }
+                        });
                     });
                     ui.add_space(2.0);
                     ui.horizontal_wrapped(|ui| {
                         if let Some(path) = &self.batch_output_dir {
                             let masked = self.mask_directory_path(path);
-                            let color = if masked == "Secured" {
-                                self.current_theme.colors.success_color()
-                            } else {
+                            let color = if self.settings.show_directory_paths {
                                 self.current_theme.colors.warning_color()
+                            } else {
+                                self.current_theme.colors.success_color()
                             };
                             ui.label(egui::RichText::new(masked).color(color));
                         } else {
@@ -210,20 +220,23 @@ impl EditorApp {
                     if self.batch_mode == BatchMode::Decrypt {
                         ui.add_space(8.0);
                         crate::app_helpers::center_row(ui, |ui| {
-                            ui.label(t!("batch.extension_label"));
-                            let mut ext = self.batch_output_extension.clone();
-                            if ui
-                                .add(
-                                    egui::TextEdit::singleline(&mut ext)
-                                        .hint_text("txt")
-                                        .margin(ui.spacing().button_padding),
-                                )
-                                .changed()
-                            {
-                                let new_ext = ext.trim_start_matches('.').to_string();
-                                self.batch_output_extension = new_ext.clone();
-                                self.settings.batch_last_extension = new_ext;
-                            }
+                            ui.label(egui::RichText::new(t!("batch.extension_label")).color(label_color));
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                let mut ext = self.batch_output_extension.clone();
+                                if ui
+                                    .add(
+                                        egui::TextEdit::singleline(&mut ext)
+                                            .desired_width(50.0)
+                                            .hint_text("txt")
+                                            .margin(ui.spacing().button_padding),
+                                    )
+                                    .changed()
+                                {
+                                    let new_ext = ext.trim_start_matches('.').to_string();
+                                    self.batch_output_extension = new_ext.clone();
+                                    self.settings.batch_last_extension = new_ext;
+                                }
+                            });
                         });
                     }
                 });
