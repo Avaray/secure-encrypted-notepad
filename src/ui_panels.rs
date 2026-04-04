@@ -2717,7 +2717,7 @@ fn picker_slider_2d(
 
 /// Replacement for `egui::color_picker::color_picker_color32`.
 ///
-/// `picker_height` – height of the 2D field in pixels (e.g. 80.0).
+/// `picker_height` – height of the 2D field in pixels (e.g. 160.0).
 /// Width comes from `ui.spacing().slider_width`, so the popup
 /// keeps the same width as before – only the 2D field height changes.
 pub fn color_picker_color32_wide(
@@ -2731,9 +2731,10 @@ pub fn color_picker_color32_wide(
     let mut hsva = Hsva::from(*srgba);
     let mut changed = false;
 
+    // Remove default vertical spacing between items — we control gaps with explicit add_space()
+    ui.spacing_mut().item_spacing.y = 0.0;
+
     // 2D field (saturation × value)
-    // NOTE: Response::changed() doesn't work for raw allocations (allocate_at_least),
-    // so we track old values and compare after the slider modifies them.
     let width = ui.spacing().slider_width;
     let h = hsva.h;
     let (old_s, old_v) = (hsva.s, hsva.v);
@@ -2749,17 +2750,53 @@ pub fn color_picker_color32_wide(
         changed = true;
     }
 
-    // Hue bar
+    ui.add_space(6.0);
+
+    // Hue bar — base color selector
     let old_h = hsva.h;
-    picker_slider_1d(ui, &mut hsva.h, |h| {
-        Hsva {
-            h,
-            s: 1.0,
-            v: 1.0,
-            a: 1.0,
+    let hue_bar_height = ui.spacing().interact_size.y.max(18.0);
+    {
+        let desired = egui::vec2(width, hue_bar_height);
+        let (rect, resp) = ui.allocate_at_least(desired, egui::Sense::click_and_drag());
+
+        if let Some(p) = resp.interact_pointer_pos() {
+            hsva.h = egui::remap_clamp(p.x, rect.left()..=rect.right(), 0.0..=1.0);
         }
-        .into()
-    });
+
+        if ui.is_rect_visible(rect) {
+            let vis = ui.style().interact(&resp);
+            let mut mesh = egui::epaint::Mesh::default();
+            for i in 0..=COLOR_N {
+                let t = i as f32 / COLOR_N as f32;
+                let c: egui::Color32 = Hsva { h: t, s: 1.0, v: 1.0, a: 1.0 }.into();
+                let x = egui::lerp(rect.left()..=rect.right(), t);
+                mesh.colored_vertex(egui::pos2(x, rect.top()), c);
+                mesh.colored_vertex(egui::pos2(x, rect.bottom()), c);
+                if i < COLOR_N {
+                    let b = 2 * i;
+                    mesh.add_triangle(b, b + 1, b + 2);
+                    mesh.add_triangle(b + 1, b + 2, b + 3);
+                }
+            }
+            ui.painter().add(egui::Shape::mesh(mesh));
+            ui.painter()
+                .rect_stroke(rect, 0.0, vis.bg_stroke, egui::StrokeKind::Inside);
+
+            // Triangle position indicator
+            let x = egui::lerp(rect.left()..=rect.right(), hsva.h);
+            let r = rect.height() / 4.0;
+            let picked: egui::Color32 = Hsva { h: hsva.h, s: 1.0, v: 1.0, a: 1.0 }.into();
+            ui.painter().add(egui::Shape::convex_polygon(
+                vec![
+                    egui::pos2(x, rect.center().y),
+                    egui::pos2(x + r, rect.bottom()),
+                    egui::pos2(x - r, rect.bottom()),
+                ],
+                picked,
+                egui::Stroke::new(vis.fg_stroke.width, picker_contrast(picked)),
+            ));
+        }
+    }
     if hsva.h != old_h {
         changed = true;
     }
@@ -2770,6 +2807,7 @@ pub fn color_picker_color32_wide(
             hsva.a = 1.0;
         }
         egui::color_picker::Alpha::OnlyBlend | egui::color_picker::Alpha::BlendOrAdditive => {
+            ui.add_space(6.0);
             let (h, s, v) = (hsva.h, hsva.s, hsva.v);
             let old_a = hsva.a;
             picker_slider_1d(ui, &mut hsva.a, |a| Hsva { h, s, v, a }.into());
@@ -2779,9 +2817,49 @@ pub fn color_picker_color32_wide(
         }
     }
 
-    // Color swatch + R/G/B fields
-    let swatch = egui::vec2(ui.spacing().slider_width, ui.spacing().interact_size.y);
-    egui::color_picker::show_color(ui, *srgba, swatch);
+    ui.add_space(6.0);
+
+    // Color preview — manually painted rectangle so it's always visible
+    let live_color = egui::Color32::from(hsva);
+    let preview_height = ui.spacing().interact_size.y.max(20.0);
+    let preview_size = egui::vec2(ui.spacing().slider_width, preview_height);
+    let (preview_rect, _) = ui.allocate_exact_size(preview_size, egui::Sense::hover());
+    if ui.is_rect_visible(preview_rect) {
+        // Checkerboard background for alpha visibility
+        let rounding = ui.style().visuals.widgets.inactive.corner_radius;
+        ui.painter().rect_filled(preview_rect, rounding, egui::Color32::from_gray(128));
+        let checker = 6.0;
+        for row in 0..(preview_rect.height() / checker) as u32 {
+            for col in 0..(preview_rect.width() / checker) as u32 {
+                if (row + col) % 2 == 0 {
+                    let min = egui::pos2(
+                        preview_rect.left() + col as f32 * checker,
+                        preview_rect.top() + row as f32 * checker,
+                    );
+                    let max = egui::pos2(
+                        (min.x + checker).min(preview_rect.right()),
+                        (min.y + checker).min(preview_rect.bottom()),
+                    );
+                    ui.painter().rect_filled(
+                        egui::Rect::from_min_max(min, max),
+                        0.0,
+                        egui::Color32::from_gray(200),
+                    );
+                }
+            }
+        }
+        // Actual color on top
+        ui.painter().rect_filled(preview_rect, rounding, live_color);
+        // Border
+        ui.painter().rect_stroke(
+            preview_rect,
+            rounding,
+            ui.style().visuals.widgets.inactive.bg_stroke,
+            egui::StrokeKind::Inside,
+        );
+    }
+
+    ui.add_space(6.0);
 
     ui.horizontal(|ui| {
         let speed = 1.0 / 255.0;
@@ -2861,7 +2939,7 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 4], popup_id: 
     let desired_size = galley.size() + ui.spacing().button_padding * 2.0;
 
     let rect = ui.allocate_exact_size(desired_size, egui::Sense::hover()).0;
-    let response = ui.interact(rect, button_id, egui::Sense::click_and_drag());
+    let response = ui.interact(rect, button_id, egui::Sense::click());
 
     let ctrl_held = ui.input(|i| i.modifiers.ctrl);
     let is_open = ui.data(|d| d.get_temp::<bool>(popup_id).unwrap_or(false));
@@ -3004,7 +3082,7 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 4], popup_id: 
                     ui,
                     &mut color32,
                     egui::color_picker::Alpha::BlendOrAdditive,
-                    80.0, // height of the 2D field in pixels (half of square)
+                    160.0, // height of the 2D field in pixels
                 ) {
                     changed = true;
                     color[0] = color32.r();
