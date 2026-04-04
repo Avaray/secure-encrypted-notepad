@@ -295,11 +295,11 @@ impl EditorApp {
         }
 
         let default_name = if let Some(path) = &self.current_file_path {
-            let file_name = path.file_name().unwrap_or_default().to_string_lossy();
             if path.extension().and_then(|e| e.to_str()).unwrap_or("") == "sen" {
-                file_name.into_owned()
+                path.file_name().unwrap_or_default().to_string_lossy().into_owned()
             } else {
-                format!("{}.sen", file_name)
+                let file_stem = path.file_stem().unwrap_or_default().to_string_lossy();
+                format!("{}.sen", file_stem)
             }
         } else {
             "document.sen".to_string()
