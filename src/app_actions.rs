@@ -86,6 +86,56 @@ impl EditorApp {
 
     /// Open file implementation
     pub(crate) fn perform_open_file(&mut self, path: PathBuf, exit_on_cancel: bool) {
+        // Enforce 1GB file size limit
+        if let Ok(metadata) = std::fs::metadata(&path) {
+            let max_size: u64 = 1024 * 1024 * 1024; // 1 GB
+            if metadata.len() > max_size {
+                let msg = t!("actions.log_key_large", size = metadata.len()).to_string();
+                self.status_message = msg.clone();
+                self.log_error(msg);
+                if exit_on_cancel {
+                    std::process::exit(0);
+                }
+                return;
+            }
+        }
+
+        // Check if it's an encrypted SEN file
+        if !crate::crypto::is_sen_file(&path) {
+            match std::fs::read(&path) {
+                Ok(buffer) => {
+                    let content_str = String::from_utf8_lossy(&buffer).to_string();
+                    self.document = DocumentWithHistory::new_with_limit(self.settings.max_history_length);
+                    self.document.current_content = content_str;
+                    self.current_file_path = Some(path.clone());
+                    self.is_modified = false;
+                    
+                    if self.show_search_panel {
+                        self.perform_search();
+                    }
+                    self.replace_undo_stack.clear();
+                    self.loaded_history_index = None;
+                    self.show_autosave_restore = false;
+
+                    let masked_path = self.mask_directory_path(&path);
+                    self.status_message = t!("actions.status_opened_plaintext").to_string();
+                    self.log_info(t!("actions.log_opened_plaintext", file = masked_path));
+                    
+                    self.commit_history_state();
+                    return;
+                }
+                Err(e) => {
+                    let msg = format!("Failed to read file: {}", e);
+                    self.status_message = msg.clone();
+                    self.log_error(msg);
+                    if exit_on_cancel {
+                        std::process::exit(0);
+                    }
+                    return;
+                }
+            }
+        }
+
         if self.keyfile_path.is_none() {
             let filename = path.file_name().unwrap_or_default().to_string_lossy();
             self.status_message = t!("actions.status_open_key_needed", file = filename).to_string();
@@ -226,7 +276,11 @@ impl EditorApp {
         }
 
         if let Some(path) = self.current_file_path.clone() {
-            self.perform_save(path);
+            if path.extension().and_then(|e| e.to_str()).unwrap_or("") == "sen" {
+                self.perform_save(path);
+            } else {
+                self.save_file_as();
+            }
         } else {
             self.save_file_as();
         }
@@ -240,9 +294,20 @@ impl EditorApp {
             return;
         }
 
+        let default_name = if let Some(path) = &self.current_file_path {
+            let file_name = path.file_name().unwrap_or_default().to_string_lossy();
+            if path.extension().and_then(|e| e.to_str()).unwrap_or("") == "sen" {
+                file_name.into_owned()
+            } else {
+                format!("{}.sen", file_name)
+            }
+        } else {
+            "document.sen".to_string()
+        };
+
         let mut dialog = rfd::FileDialog::new()
             .add_filter(t!("actions.filter_sen"), &["sen"])
-            .set_file_name("document.sen");
+            .set_file_name(&default_name);
 
         // If a directory is open in the file tree, use it as default
         if let Some(dir) = &self.file_tree_dir {
@@ -746,6 +811,13 @@ Terminal=false"#,
         // Only save if file is open, and keyfile exists
         if self.current_file_path.is_none() || self.keyfile_path.is_none() {
             return;
+        }
+
+        // Do not auto-save plaintext files in-place! They must be explicitly saved as .sen first.
+        if let Some(path) = &self.current_file_path {
+            if path.extension().and_then(|e| e.to_str()).unwrap_or("") != "sen" {
+                return;
+            }
         }
 
         let now = std::time::Instant::now();

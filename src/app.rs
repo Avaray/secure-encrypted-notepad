@@ -737,7 +737,18 @@ impl eframe::App for EditorApp {
 
         // Process pending file to open from command line
         if let Some(path) = self.pending_file_to_open.take() {
+            // Check for unsaved changes before opening the CLI file (in case the app is reusing a window, or something else)
+            // But wait, pending_file_to_open is at startup, so there shouldn't be changes?
+            // Actually, we can just use perform_open_file since it's startup, but just in case:
             self.perform_open_file(path, true);
+        }
+
+        // Handle dropped files (Drag and Drop)
+        let dropped_files = ctx.input(|i| i.raw.dropped_files.clone());
+        if !dropped_files.is_empty() {
+            if let Some(file) = dropped_files.into_iter().find_map(|df| df.path) {
+                self.check_changes_before_action(crate::app_state::PendingAction::OpenFileFromTree(file));
+            }
         }
 
         // Poll IPC queue for files forwarded from another instance
