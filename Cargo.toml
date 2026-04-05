@@ -1,6 +1,6 @@
 [package]
 name = "sen"
-version = "0.6.23"
+version = "0.6.24"
 edition = "2021"
 default-run = "sen"
 authors = ["Dawid Wasowski"]
@@ -25,8 +25,9 @@ aes-gcm = "0.10"
 # File dialogs
 rfd = "0.16"
 
-# SHA-256 hashing
+# SHA-256 hashing & key derivation
 sha2 = "0.10"
+hkdf = "0.12"
 
 # Random number generation
 rand = "0.9"

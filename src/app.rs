@@ -857,10 +857,32 @@ impl eframe::App for EditorApp {
                     // On macOS/Wayland the position was already set correctly at creation
                     // (Wayland ignores it anyway), so no move is needed.
                     #[cfg(target_os = "windows")]
-                    if self.settings.window_pos_x >= 0.0 && self.settings.window_pos_y >= 0.0 {
-                        ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(
-                            egui::pos2(self.settings.window_pos_x, self.settings.window_pos_y),
-                        ));
+                    {
+                        if self.settings.window_pos_x >= 0.0
+                            && self.settings.window_pos_y >= 0.0
+                        {
+                            // Restore saved position
+                            ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(
+                                egui::pos2(
+                                    self.settings.window_pos_x,
+                                    self.settings.window_pos_y,
+                                ),
+                            ));
+                        } else {
+                            // Fresh start: no saved position (defaults are -1.0).
+                            // The window was created at (-32000, -32000) to prevent
+                            // DWM flicker.  We must move it to a visible location
+                            // before making it visible.  Center it on the primary
+                            // monitor as a safe default.
+                            let screen = ctx.input(|i| i.viewport().outer_rect.unwrap_or(egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(1920.0, 1080.0))));
+                            let win_w = self.settings.window_width;
+                            let win_h = self.settings.window_height;
+                            let x = ((screen.width() - win_w) / 2.0).max(0.0);
+                            let y = ((screen.height() - win_h) / 2.0).max(0.0);
+                            ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(
+                                egui::pos2(x, y),
+                            ));
+                        }
                     }
                     ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
                     self.initial_visible_applied = true;
