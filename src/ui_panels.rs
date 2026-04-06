@@ -689,17 +689,23 @@ let _ = self.settings.save();
 // Global Scroll Speed
                     let h = ls.get_height("set_scrl_speed");
                     crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.scroll_speed"), h, |ui| {
-                        let mut mult = self.settings.scroll_speed_multiplier;
+                        // Use integer DragValue internally (10..=100) to avoid egui's smart_aim
+                        // debug_assert panic that occurs with narrow floating-point ranges
+                        let mut scroll_int = (self.settings.scroll_speed_multiplier * 10.0).round() as i32;
                         let response = ui.add(
-                            egui::DragValue::new(&mut mult)
-                                .speed(0.1)
-                                .range(1.0..=10.0)
-                                .clamp_existing_to_range(true),
+                            egui::DragValue::new(&mut scroll_int)
+                                .range(10..=100)
+                                .speed(1)
+                                .custom_formatter(|v, _| format!("{:.1}", v / 10.0))
+                                .custom_parser(|s| s.parse::<f64>().ok().map(|v| (v * 10.0).round())),
                         )
                         .on_hover_text(rust_i18n::t!("settings.scroll_speed_tooltip"));
 
                         if response.changed() {
-                            self.settings.scroll_speed_multiplier = mult;
+                            self.settings.scroll_speed_multiplier = scroll_int as f32 / 10.0;
+                        }
+                        if response.dragged() || response.hovered() {
+                            self.is_adjusting_scroll_speed = true;
                         }
                         if response.drag_stopped() || (response.changed() && response.lost_focus()) {
                             let _ = self.settings.save();

@@ -24,6 +24,5 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 
 ## 🐛 Bug Fixes (To Fix)
 
-- [ ] **Settings Slider Crash**: Investigate and fix application crashes occurring when rapidly dragging value-based sliders (e.g., Scroll Speed) in the settings and theme panels.
 - [ ] **Minimum Panel Widths**: Implement minimum width constraints for all side panels to prevent them from overlapping or becoming completely hidden. The user should always be able to easily find and grab the panel edge handles without confusion.
 - [ ] **Vertical Alignment Refinement**: Fix UI layouts for better vertical centering of heterogeneous single-line elements. Comboboxes still do not respect proper vertical alignment in some contexts.

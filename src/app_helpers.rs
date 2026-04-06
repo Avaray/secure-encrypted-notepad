@@ -111,7 +111,7 @@ impl EditorApp {
                 ),
                 (
                     TextStyle::Small,
-                    FontId::new(self.settings.ui_font_size - 4.0, ui_family),
+                    FontId::new((self.settings.ui_font_size - 4.0).max(6.0), ui_family),
                 ),
             ]
             .into();
@@ -119,8 +119,8 @@ impl EditorApp {
             // Item spacing - increase vertical spacing
             style.spacing.item_spacing = egui::vec2(8.0, 6.0);
 
-            // Interact size - height of interactive elements
-            style.spacing.interact_size.y = self.settings.ui_font_size + 8.0;
+            // Interact size - height of interactive elements (clamped for safety)
+            style.spacing.interact_size.y = (self.settings.ui_font_size + 8.0).max(16.0);
 
             // Text cursor settings
             style.visuals.text_cursor.blink = self.settings.cursor_blink;

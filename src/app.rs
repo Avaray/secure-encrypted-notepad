@@ -182,6 +182,8 @@ pub struct EditorApp {
     pub(crate) focus_search: bool,
     /// Track actual window focus to trigger auto-save on focus loss
     pub(crate) focused: bool,
+    /// Flag to indicate we are currently adjusting scroll speed (to avoid feedback loop)
+    pub(crate) is_adjusting_scroll_speed: bool,
 
     // Settings Reset State
     pub(crate) show_reset_confirmation: bool,
@@ -402,6 +404,7 @@ impl EditorApp {
             focused: true, // Default to focused on start
             show_reset_confirmation: false,
             reset_slider_val: 0.0,
+            is_adjusting_scroll_speed: false,
             show_clear_keyfile_confirmation: false,
             show_delete_theme_confirmation: false,
             show_clear_backup_dir_confirmation: false,
@@ -705,7 +708,8 @@ impl eframe::App for EditorApp {
         }
 
         // Intercept global scroll speed
-        if (self.settings.scroll_speed_multiplier - 1.0).abs() > f32::EPSILON {
+        // Apply scroll multiplier - SKIP if we are currently adjusting the multiplier to avoid feedback loop
+        if !self.is_adjusting_scroll_speed && (self.settings.scroll_speed_multiplier - 1.0).abs() > f32::EPSILON {
             let mult = self.settings.scroll_speed_multiplier;
             ctx.input_mut(|i| {
                 // Modify raw_scroll_delta
@@ -720,6 +724,10 @@ impl eframe::App for EditorApp {
                 }
             });
         }
+
+        // Reset the scroll speed adjusting flag for THIS frame's UI pass.
+        // If the UI is interacted with, it will be set to true and persist to the next frame.
+        self.is_adjusting_scroll_speed = false;
 
         // Detect focus loss
         let is_focused = ctx.input(|i| i.focused);
