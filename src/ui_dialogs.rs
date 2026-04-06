@@ -116,17 +116,35 @@ impl EditorApp {
                     ui.add_space(8.0);
 
                     crate::app_helpers::center_row(ui, |ui| {
-                        ui.label(t!("dialog.reset_slider"));
+                        // 1. Prepare the text galley (calculate size, but don't draw it yet)
+                        let text = t!("dialog.reset_slider");
+                        let font_id = egui::TextStyle::Body.resolve(ui.style());
+                        let color = ui.visuals().text_color();
+                        let galley = ui.painter().layout_no_wrap(text.to_string(), font_id, color);
+
+                        // 2. Allocate the exact space needed for the label in the layout
+                        let (label_rect, _) = ui.allocate_exact_size(galley.size(), egui::Sense::hover());
+
+                        // 3. Draw the slider, taking up the remaining width
                         ui.spacing_mut().slider_width = ui.available_width();
                         let slider_bg = ui.visuals().widgets.inactive.bg_fill;
                         // Hide slider rail after thumbnail
                         ui.visuals_mut().widgets.inactive.bg_fill = egui::Color32::TRANSPARENT;
-                        ui.add(
+                        let slider_response = ui.add(
                             egui::Slider::new(&mut self.reset_slider_val, 0.0..=1.0)
                                 .show_value(false)
                                 .trailing_fill(true),
                         );
                         ui.visuals_mut().widgets.inactive.bg_fill = slider_bg;
+
+                        // 4. Retroactively position and draw the label text
+                        let slider_center_y = slider_response.rect.center().y;
+                        let text_pos = egui::pos2(
+                            label_rect.left(),
+                            slider_center_y - (galley.size().y / 2.0),
+                        );
+
+                        ui.painter().galley(text_pos, galley, color);
                     });
                     ui.add_space(8.0);
 
