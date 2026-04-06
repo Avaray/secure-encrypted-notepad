@@ -127,15 +127,12 @@ impl EditorApp {
 
                         // 3. Draw the slider, taking up the remaining width
                         ui.spacing_mut().slider_width = ui.available_width();
-                        let slider_bg = ui.visuals().widgets.inactive.bg_fill;
-                        // Hide slider rail after thumbnail
-                        ui.visuals_mut().widgets.inactive.bg_fill = egui::Color32::TRANSPARENT;
+                        
                         let slider_response = ui.add(
                             egui::Slider::new(&mut self.reset_slider_val, 0.0..=1.0)
                                 .show_value(false)
                                 .trailing_fill(true),
                         );
-                        ui.visuals_mut().widgets.inactive.bg_fill = slider_bg;
 
                         // 4. Retroactively position and draw the label text
                         let slider_center_y = slider_response.rect.center().y;
