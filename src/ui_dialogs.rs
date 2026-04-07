@@ -11,7 +11,8 @@ impl EditorApp {
             egui::Window::new(t!("dialog.unsaved_title"))
                 .collapsible(false)
                 .resizable(false)
-                .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+                .pivot(egui::Align2::CENTER_CENTER)
+                .default_pos(ctx.viewport_rect().center())
                 .show(ctx, |ui| {
                     let font_id = egui::TextStyle::Body.resolve(ui.style());
                     let text1 = t!("dialog.unsaved_line1");
@@ -102,7 +103,8 @@ impl EditorApp {
             egui::Window::new(t!("dialog.reset_title"))
                 .collapsible(false)
                 .resizable(false)
-                .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+                .pivot(egui::Align2::CENTER_CENTER)
+                .default_pos(ctx.viewport_rect().center())
                 .show(ctx, |ui| {
                     ui.set_max_width(400.0);
                     ui.add(
@@ -218,7 +220,8 @@ impl EditorApp {
         egui::Window::new(t!("dialog.goto_title"))
             .collapsible(false)
             .resizable(false)
-            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .pivot(egui::Align2::CENTER_CENTER)
+            .default_pos(ctx.viewport_rect().center())
             .show(ctx, |ui| {
                 crate::app_helpers::center_row(ui, |ui| {
                     ui.label(t!("dialog.goto_label"));
@@ -289,7 +292,8 @@ impl EditorApp {
         egui::Window::new(t!("dialog.autosave_title"))
             .collapsible(false)
             .resizable(false)
-            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .pivot(egui::Align2::CENTER_CENTER)
+            .default_pos(ctx.viewport_rect().center())
             .show(ctx, |ui| {
                 let font_id = egui::TextStyle::Body.resolve(ui.style());
                 let text1 = t!("dialog.autosave_msg1");
