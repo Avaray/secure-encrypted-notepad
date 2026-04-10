@@ -33,7 +33,7 @@ The JSON `HistoryData` object contains the document's history state, including s
 ---
 
 ## 2. Configuration Encryption (config.toml)
-To improve usability, SEN remembers your global keyfile path and starting directory without exposing them in plaintext on the file system.
+SEN remembers your global keyfile path and starting directory without exposing them in plaintext on the file system.
 
 ### Methods & Algorithms
 - **Path Encryption**: Target values in `config.toml` are encrypted with `AES-256-GCM`.
