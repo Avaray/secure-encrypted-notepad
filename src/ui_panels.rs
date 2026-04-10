@@ -2577,16 +2577,9 @@ if ui
             crate::app_helpers::center_row(ui, |ui| {
                 if tree_on {
                     ui.add_space((depth + 1) as f32 * tree_indent);
-                } else {
-                    ui.add_space(32.0); // Simple view doesn't use tree_indent
                 }
                 ui.add(egui::Spinner::new().size(12.0));
-                ui.label(
-                    egui::RichText::new(rust_i18n::t!("theme.verifying"))
-                        .italics()
-                        .size(10.0)
-                        .weak(),
-                );
+                ui.label(rust_i18n::t!("theme.verifying"));
             });
         }
     }
