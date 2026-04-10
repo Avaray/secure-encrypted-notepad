@@ -754,9 +754,11 @@ impl EditorApp {
             }
         } else {
             if self.is_modified {
+                let untitled = t!("helpers.title_untitled").to_string();
+                let display_name = untitled.strip_suffix(" - SEN").unwrap_or(&untitled);
                 t!(
                     "helpers.title_untitled_mod",
-                    file = t!("helpers.title_untitled")
+                    file = display_name
                 )
                 .to_string()
             } else {
