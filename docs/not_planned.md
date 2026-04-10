@@ -6,11 +6,11 @@ This document lists all features, ideas, or proposals that are **explicitly not 
 
 ## Not Planned Items
 
-- **Tabs**: Support for multiple open tabs (the app remains a single-document editor).
-- **Multiple Keys per .sen File**: Each .sen file can be associated with only one keyfile.
-- **Custom Panel Ordering**: Allowing the user to reorder panels is not planned, especially via drag-and-drop.
-- **Pinned or Favorite Files**: Feature to pin files or add them to favorites is not planned.
-- **Syntax Highlighting**: Not planned because this is just a Notes app, not an IDE.
 - **Markdown Support**: Not planned because this is just a notes app.
-- **File icons**: Not planning to add file icons for the File Explorer panel.
 - **Diff**: Not planned as it would require significant changes to the text editor panel.
+- **Tabs**: The application remains a strict single-document editor.
+- **Multiple Keys**: Each `.sen` file is encrypted with exactly one keyfile.
+- **Custom Panel Ordering**: Manual panel reorganization (e.g., drag-and-drop) is out of scope.
+- **File Favorites**: Pinning or starring files in the explorer will not be supported.
+- **Syntax Highlighting**: The focus remains strictly on plaintext editing, not IDE capabilities.
+- **File Icons**: The file explorer will maintain a clean, icon-free layout.
