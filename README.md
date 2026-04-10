@@ -2,7 +2,7 @@
 
 **SEN** is a local-first desktop application built in **Rust**, designed for security. It uses **keyfile-only authentication** instead of passwords, ensuring that your documents cannot be decrypted without physical access to your unique keyfile.
 
-![SEN Screenshot](assets/screenshot.jpg)
+![SEN Screenshot](crates/sen-desktop/assets/screenshot.jpg)
 
 🚧 Please note that **SEN** is still in development. While the core functionality is in place, you may encounter bugs or missing features.
 
