@@ -3641,8 +3641,8 @@ dependencies = [
  "rand 0.9.2",
  "resvg",
  "rfd",
- "rust-i18n",
  "sen-core",
+ "sen-i18n",
  "serde",
  "serde_json",
  "sha2",
@@ -3654,6 +3654,13 @@ dependencies = [
  "winreg",
  "winresource",
  "zeroize",
+]
+
+[[package]]
+name = "sen-i18n"
+version = "0.1.0"
+dependencies = [
+ "rust-i18n",
 ]
 
 [[package]]

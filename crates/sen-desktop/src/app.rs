@@ -549,7 +549,7 @@ impl EditorApp {
         if self.settings.show_keyfile_paths {
             path.display().to_string()
         } else {
-            rust_i18n::t!("settings.secured").to_string()
+            t!("settings.secured").to_string()
         }
     }
 
@@ -558,7 +558,7 @@ impl EditorApp {
         if self.settings.show_directory_paths {
             path.display().to_string()
         } else {
-            rust_i18n::t!("settings.secured").to_string()
+            t!("settings.secured").to_string()
         }
     }
 }
@@ -658,7 +658,7 @@ impl EditorApp {
                     };
                     ui.add(
                         egui::Label::new(
-                            egui::RichText::new(rust_i18n::t!("app.no_keyfile"))
+                            egui::RichText::new(t!("app.no_keyfile"))
                                 .color(icon_tint.gamma_multiply(pulse_alpha)),
                         )
                         .selectable(false),
@@ -678,7 +678,7 @@ impl EditorApp {
 
                     if self.settings.stealth_mode {
                         ui.label(
-                            egui::RichText::new(rust_i18n::t!("app.status_stealth")).color(self.current_theme.colors.success_color())
+                            egui::RichText::new(t!("app.status_stealth")).color(self.current_theme.colors.success_color())
                         );
                         ui.separator();
                     }
@@ -692,7 +692,7 @@ impl EditorApp {
                         );
                     } else {
                         ui.label(
-                            egui::RichText::new(rust_i18n::t!("app.unsaved_document"))
+                            egui::RichText::new(t!("app.unsaved_document"))
                                 .color(fg_color),
                         );
                     }

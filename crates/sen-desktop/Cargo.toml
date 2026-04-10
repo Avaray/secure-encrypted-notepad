@@ -42,7 +42,7 @@ rand = { workspace = true }
 zeroize = { workspace = true }
 
 # Internationalization
-rust-i18n = { workspace = true }
+sen-i18n = { path = "../sen-i18n" }
 sys-locale = { workspace = true }
 
 # Serialization (used in UI serialization)

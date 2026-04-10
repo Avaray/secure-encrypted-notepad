@@ -2,7 +2,7 @@ use crate::app_state::PendingAction;
 use crate::crypto::{encrypt_file, generate_keyfile};
 use crate::history::DocumentWithHistory;
 use crate::EditorApp;
-use rust_i18n::t;
+
 use std::path::PathBuf;
 
 impl EditorApp {

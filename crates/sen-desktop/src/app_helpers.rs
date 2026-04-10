@@ -1,7 +1,7 @@
 use crate::app_state::{FileTreeEntry, KeyStatus, LogEntry, LogLevel};
 use crate::theme::{ThemeColorsExt, ThemeExt};
 use crate::EditorApp;
-use rust_i18n::t;
+
 use std::path::PathBuf;
 
 impl EditorApp {
@@ -316,7 +316,7 @@ impl EditorApp {
 
         if let Some(dir) = dir_opt {
             let masked = self.mask_directory_path(&dir);
-            if masked == crate::rust_i18n::t!("settings.secured") {
+            if masked == crate::t!("settings.secured") {
                 self.log_info(t!("helpers.log_refresh_tree_secured"));
             } else {
                 self.log_info(t!("helpers.log_refresh_tree", file = masked));
@@ -1026,7 +1026,7 @@ impl EditorApp {
                 if square_icon_btn(
                     ui,
                     &self.icons.close,
-                    &rust_i18n::t!("app.close_panel"),
+                    &t!("app.close_panel"),
                     self.current_theme.colors.icon_color(),
                 )
                 .clicked()

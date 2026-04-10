@@ -10,7 +10,7 @@ impl EditorApp {
         let mut ls = std::mem::take(&mut self.layout_state);
         ui.vertical(|ui| {
             let h = ls.get_height("settings_header");
-            if self.render_panel_header(ui, &rust_i18n::t!("settings.settings"), None, true, h) {
+            if self.render_panel_header(ui, &t!("settings.settings"), None, true, h) {
                 self.show_settings_panel = false;
             }
             egui::ScrollArea::vertical()
@@ -25,7 +25,7 @@ impl EditorApp {
                         })
                         .show(ui, |ui| {
 crate::app_helpers::center_row(ui, |ui| {
-if ui.button(rust_i18n::t!("settings.open_folder")).on_hover_text(rust_i18n::t!("settings.open_folder_tooltip")).clicked() {
+if ui.button(t!("settings.open_folder")).on_hover_text(t!("settings.open_folder_tooltip")).clicked() {
 if let Some(path) = crate::settings::Settings::get_config_dir() {
 #[cfg(target_os = "windows")]
 {
@@ -41,7 +41,7 @@ let _ = std::process::Command::new("open").arg(path).spawn();
 }
 }
 }
-if ui.button(rust_i18n::t!("settings.reset_settings")).on_hover_text(rust_i18n::t!("settings.reset_settings_tooltip")).clicked() {
+if ui.button(t!("settings.reset_settings")).on_hover_text(t!("settings.reset_settings_tooltip")).clicked() {
 self.show_reset_confirmation = true;
 self.reset_slider_val = 0.0;
 }
@@ -52,9 +52,9 @@ ui.add_space(8.0);
 // =========================================================================
 // 1. SECURITY
 // =========================================================================
-self.render_heading(ui, rust_i18n::t!("settings.security"));
+self.render_heading(ui, t!("settings.security"));
 crate::app_helpers::stateful_center_row(ui, ls.get_height("sec_pick_btns"), |ui| {
-if ui.button(rust_i18n::t!("settings.set_global_keyfile")).clicked() {
+if ui.button(t!("settings.set_global_keyfile")).clicked() {
 if let Some(path) = rfd::FileDialog::new().pick_file() {
 self.settings.global_keyfile_path = Some(path.clone());
 if self.settings.use_global_keyfile {
@@ -66,7 +66,7 @@ self.log_info("Global keyfile set");
 }
 }
         if let Some(path) = self.settings.global_keyfile_path.clone() {
-            if ui.button(rust_i18n::t!("settings.use_now")).on_hover_text(rust_i18n::t!("settings.use_now_tooltip")).clicked() {
+            if ui.button(t!("settings.use_now")).on_hover_text(t!("settings.use_now_tooltip")).clicked() {
                 self.keyfile_path = Some(path);
                 self.refresh_file_tree();
                 self.log_info("Global keyfile applied");
@@ -74,12 +74,12 @@ self.log_info("Global keyfile set");
         }
         if self.settings.global_keyfile_path.is_some() {
             if !self.show_clear_keyfile_confirmation {
-                if ui.button(rust_i18n::t!("settings.clear")).clicked() {
+                if ui.button(t!("settings.clear")).clicked() {
                     self.show_clear_keyfile_confirmation = true;
                 }
             } else {
-                ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.are_you_sure")).color(self.current_theme.colors.error_color())).selectable(false));
-                if ui.button(rust_i18n::t!("settings.yes")).clicked() {
+                ui.add(egui::Label::new(egui::RichText::new(t!("settings.are_you_sure")).color(self.current_theme.colors.error_color())).selectable(false));
+                if ui.button(t!("settings.yes")).clicked() {
                     self.settings.global_keyfile_path = None;
                     self.settings.keyfile_path_encrypted = None;
                     let _ = self.settings.save();
@@ -87,53 +87,53 @@ self.log_info("Global keyfile set");
                     self.show_clear_keyfile_confirmation = false;
                     self.log_info("Global keyfile cleared");
                 }
-                if ui.button(rust_i18n::t!("settings.no")).clicked() {
+                if ui.button(t!("settings.no")).clicked() {
                     self.show_clear_keyfile_confirmation = false;
                 }
             }
         }
 });
 crate::app_helpers::stateful_center_row(ui, ls.get_height("sec_cur_path"), |ui| {
-                ui.add(egui::Label::new(rust_i18n::t!("settings.current")).selectable(false));
+                ui.add(egui::Label::new(t!("settings.current")).selectable(false));
 if let Some(path) = &self.settings.global_keyfile_path {
 if self.settings.show_keyfile_paths {
 ui.add(egui::Label::new(egui::RichText::new(path.to_string_lossy()).color(self.current_theme.colors.warning_color())).selectable(false));
 } else {
-ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.secured")).color(self.current_theme.colors.success_color())).selectable(false));
+ui.add(egui::Label::new(egui::RichText::new(t!("settings.secured")).color(self.current_theme.colors.success_color())).selectable(false));
 }
 } else {
-    ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.none")).color(self.current_theme.colors.info_color())).selectable(false));
+    ui.add(egui::Label::new(egui::RichText::new(t!("settings.none")).color(self.current_theme.colors.info_color())).selectable(false));
 }
 });
 if ui
 .checkbox(
 &mut self.settings.use_global_keyfile,
-rust_i18n::t!("settings.use_global_keyfile"),
+t!("settings.use_global_keyfile"),
 )
 .changed()
 {
 let _ = self.settings.save();
 }
-if ui.checkbox(&mut self.settings.show_keyfile_paths, rust_i18n::t!("settings.show_keyfile_paths"))
-.on_hover_text(rust_i18n::t!("settings.show_keyfile_paths_tooltip"))
+if ui.checkbox(&mut self.settings.show_keyfile_paths, t!("settings.show_keyfile_paths"))
+.on_hover_text(t!("settings.show_keyfile_paths_tooltip"))
 .changed() {
 let _ = self.settings.save();
 }
-if ui.checkbox(&mut self.settings.show_directory_paths, rust_i18n::t!("settings.show_directory_paths"))
-.on_hover_text(rust_i18n::t!("settings.show_directory_paths_tooltip"))
+if ui.checkbox(&mut self.settings.show_directory_paths, t!("settings.show_directory_paths"))
+.on_hover_text(t!("settings.show_directory_paths_tooltip"))
 .changed() {
 let _ = self.settings.save();
 }
 
 ui.add_space(8.0);
-ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.auto_backup")).strong()).selectable(false));
-if ui.checkbox(&mut self.settings.auto_backup_enabled, rust_i18n::t!("settings.auto_backup_enable"))
-    .on_hover_text(rust_i18n::t!("settings.auto_backup_enable_tooltip"))
+ui.add(egui::Label::new(egui::RichText::new(t!("settings.auto_backup")).strong()).selectable(false));
+if ui.checkbox(&mut self.settings.auto_backup_enabled, t!("settings.auto_backup_enable"))
+    .on_hover_text(t!("settings.auto_backup_enable_tooltip"))
     .changed() {
     let _ = self.settings.save();
 }
 crate::app_helpers::center_row(ui, |ui| {
-    if ui.button(rust_i18n::t!("settings.set_backup_dir")).clicked() {
+    if ui.button(t!("settings.set_backup_dir")).clicked() {
         if let Some(dir) = rfd::FileDialog::new().pick_folder() {
             self.settings.auto_backup_dir = Some(dir.clone());
             let _ = self.settings.save();
@@ -143,42 +143,42 @@ crate::app_helpers::center_row(ui, |ui| {
 
     if self.settings.auto_backup_dir.is_some() {
         if !self.show_clear_backup_dir_confirmation {
-            if ui.button(rust_i18n::t!("settings.clear")).clicked() {
+            if ui.button(t!("settings.clear")).clicked() {
                 self.show_clear_backup_dir_confirmation = true;
             }
         } else {
-            ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.are_you_sure")).color(self.current_theme.colors.error_color())).selectable(false));
-            if ui.button(rust_i18n::t!("settings.yes")).clicked() {
+            ui.add(egui::Label::new(egui::RichText::new(t!("settings.are_you_sure")).color(self.current_theme.colors.error_color())).selectable(false));
+            if ui.button(t!("settings.yes")).clicked() {
                 self.settings.auto_backup_dir = None;
                 self.settings.auto_backup_dir_encrypted = None;
                 let _ = self.settings.save();
                 self.show_clear_backup_dir_confirmation = false;
                 self.log_info("Auto-backup directory cleared");
             }
-            if ui.button(rust_i18n::t!("settings.no")).clicked() {
+            if ui.button(t!("settings.no")).clicked() {
                 self.show_clear_backup_dir_confirmation = false;
             }
         }
     }
 });
 crate::app_helpers::stateful_center_row(ui, ls.get_height("bkp_cur_path"), |ui| {
-    ui.add(egui::Label::new(rust_i18n::t!("settings.current")).selectable(false));
+    ui.add(egui::Label::new(t!("settings.current")).selectable(false));
     if let Some(path) = &self.settings.auto_backup_dir {
         if self.settings.show_directory_paths {
             ui.add(egui::Label::new(egui::RichText::new(path.to_string_lossy()).color(self.current_theme.colors.warning_color())).selectable(false));
         } else {
-            ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.secured")).color(self.current_theme.colors.success_color())).selectable(false));
+            ui.add(egui::Label::new(egui::RichText::new(t!("settings.secured")).color(self.current_theme.colors.success_color())).selectable(false));
         }
     } else {
-        ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.none")).color(self.current_theme.colors.info_color())).selectable(false));
+        ui.add(egui::Label::new(egui::RichText::new(t!("settings.none")).color(self.current_theme.colors.info_color())).selectable(false));
     }
 });
 
 #[cfg(target_os = "windows")]
 {
     ui.add_space(8.0);
-    if ui.checkbox(&mut self.settings.screen_capture_protection, rust_i18n::t!("settings.screen_capture"))
-        .on_hover_text(rust_i18n::t!("settings.screen_capture_tooltip"))
+    if ui.checkbox(&mut self.settings.screen_capture_protection, t!("settings.screen_capture"))
+        .on_hover_text(t!("settings.screen_capture_tooltip"))
         .changed() {
         let _ = self.settings.save();
         self.apply_screen_capture_protection();
@@ -191,11 +191,11 @@ ui.add_space(8.0);
 // =========================================================================
 // 2. WORKSPACE / FILE TREE
 // =========================================================================
-self.render_heading(ui, rust_i18n::t!("settings.workspace"));
+self.render_heading(ui, t!("settings.workspace"));
 // Starting directory setting
 ui.add_space(4.0);
                     let h = ls.get_height("ws_start_dir");
-                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.starting_dir"), h, |ui| {
+                    crate::app_helpers::render_settings_row(ui, &t!("settings.starting_dir"), h, |ui| {
 if let Some(ref dir) = self.settings.file_tree_starting_dir {
 if self.settings.show_directory_paths {
 ui.add(egui::Label::new(
@@ -203,65 +203,65 @@ egui::RichText::new(dir.display().to_string())
 .color(self.current_theme.colors.warning_color())
 ).selectable(false));
 } else {
-ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.secured")).color(self.current_theme.colors.success_color())).selectable(false));
+ui.add(egui::Label::new(egui::RichText::new(t!("settings.secured")).color(self.current_theme.colors.success_color())).selectable(false));
 }
 } else {
-ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.not_set")).color(self.current_theme.colors.info_color())).selectable(false));
+ui.add(egui::Label::new(egui::RichText::new(t!("settings.not_set")).color(self.current_theme.colors.info_color())).selectable(false));
 }
 });
 crate::app_helpers::stateful_center_row(ui, ls.get_height("ws_pick_btns"), |ui| {
-if ui.button(rust_i18n::t!("settings.set_starting_dir")).clicked() {
+if ui.button(t!("settings.set_starting_dir")).clicked() {
 if let Some(dir) = rfd::FileDialog::new().pick_folder() {
 self.settings.file_tree_starting_dir = Some(dir.clone());
 self.file_tree_dir = Some(dir);
 let _ = self.settings.save();
 self.refresh_file_tree();
-self.log_info(rust_i18n::t!("settings.log_starting_dir_set"));
+self.log_info(t!("settings.log_starting_dir_set"));
 }
 }
 if let Some(current_dir) = &self.file_tree_dir {
-if ui.button(rust_i18n::t!("settings.use_current_dir")).clicked() {
+if ui.button(t!("settings.use_current_dir")).clicked() {
 self.settings.file_tree_starting_dir = Some(current_dir.clone());
 let _ = self.settings.save();
-self.log_info(rust_i18n::t!("settings.log_starting_dir_set_current"));
+self.log_info(t!("settings.log_starting_dir_set_current"));
 }
 }
             if self.settings.file_tree_starting_dir.is_some() {
                 if !self.show_clear_workspace_confirmation {
-                    if ui.button(rust_i18n::t!("settings.clear")).clicked() {
+                    if ui.button(t!("settings.clear")).clicked() {
                         self.show_clear_workspace_confirmation = true;
                     }
                 } else {
-                    ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.are_you_sure")).color(self.current_theme.colors.error_color())).selectable(false));
-                    if ui.button(rust_i18n::t!("settings.yes")).clicked() {
+                    ui.add(egui::Label::new(egui::RichText::new(t!("settings.are_you_sure")).color(self.current_theme.colors.error_color())).selectable(false));
+                    if ui.button(t!("settings.yes")).clicked() {
                         self.settings.file_tree_starting_dir = None;
                         self.settings.file_tree_dir_encrypted = None;
                         let _ = self.settings.save();
                         self.log_info("Starting directory cleared");
                         self.show_clear_workspace_confirmation = false;
                     }
-                    if ui.button(rust_i18n::t!("settings.no")).clicked() {
+                    if ui.button(t!("settings.no")).clicked() {
                         self.show_clear_workspace_confirmation = false;
                     }
                 }
             }
 });
 if ui
-.checkbox(&mut self.settings.show_subfolders, rust_i18n::t!("settings.show_subfolders"))
+.checkbox(&mut self.settings.show_subfolders, t!("settings.show_subfolders"))
 .changed()
 {
 let _ = self.settings.save();
 self.refresh_file_tree();
 }
 if ui
-.checkbox(&mut self.settings.hide_sen_extension, rust_i18n::t!("settings.hide_sen_ext"))
+.checkbox(&mut self.settings.hide_sen_extension, t!("settings.hide_sen_ext"))
 .changed()
 {
 let _ = self.settings.save();
 }
 if ui
-.checkbox(&mut self.settings.hide_undecryptable_files, rust_i18n::t!("settings.hide_undecryptable"))
-.on_hover_text(rust_i18n::t!("settings.hide_undecryptable_tooltip"))
+.checkbox(&mut self.settings.hide_undecryptable_files, t!("settings.hide_undecryptable"))
+.on_hover_text(t!("settings.hide_undecryptable_tooltip"))
 .changed()
 {
 let _ = self.settings.save();
@@ -269,18 +269,18 @@ self.refresh_file_tree();
 }
 
 ui.add_space(8.0);
-ui.label(egui::RichText::new(rust_i18n::t!("settings.stealth_mode")).strong());
+ui.label(egui::RichText::new(t!("settings.stealth_mode")).strong());
 if ui
-.checkbox(&mut self.settings.stealth_mode, rust_i18n::t!("settings.stealth_mode_enable"))
-.on_hover_text(rust_i18n::t!("settings.stealth_mode_tooltip"))
+.checkbox(&mut self.settings.stealth_mode, t!("settings.stealth_mode_enable"))
+.on_hover_text(t!("settings.stealth_mode_tooltip"))
 .changed()
 {
 let _ = self.settings.save();
 }
 
 if ui
-.checkbox(&mut self.settings.stealth_scan, rust_i18n::t!("settings.stealth_scan_enable"))
-.on_hover_text(rust_i18n::t!("settings.stealth_scan_tooltip"))
+.checkbox(&mut self.settings.stealth_scan, t!("settings.stealth_scan_enable"))
+.on_hover_text(t!("settings.stealth_scan_tooltip"))
 .changed()
 {
 let _ = self.settings.save();
@@ -290,30 +290,30 @@ ui.add_space(8.0);
 
 
 if ui
-.checkbox(&mut self.settings.hide_filename_in_title, rust_i18n::t!("settings.hide_filename_title"))
-.on_hover_text(rust_i18n::t!("settings.hide_filename_title_tooltip"))
+.checkbox(&mut self.settings.hide_filename_in_title, t!("settings.hide_filename_title"))
+.on_hover_text(t!("settings.hide_filename_title_tooltip"))
 .changed()
 {
 let _ = self.settings.save();
 }
 if ui
-.checkbox(&mut self.settings.capitalize_tree_names, rust_i18n::t!("settings.capitalize_names"))
-.on_hover_text(rust_i18n::t!("settings.capitalize_names_tooltip"))
+.checkbox(&mut self.settings.capitalize_tree_names, t!("settings.capitalize_names"))
+.on_hover_text(t!("settings.capitalize_names_tooltip"))
 .changed()
 {
 let _ = self.settings.save();
 }
 if ui
-.checkbox(&mut self.settings.hide_hidden_files, rust_i18n::t!("settings.hide_hidden"))
-.on_hover_text(rust_i18n::t!("settings.hide_hidden_tooltip"))
+.checkbox(&mut self.settings.hide_hidden_files, t!("settings.hide_hidden"))
+.on_hover_text(t!("settings.hide_hidden_tooltip"))
 .changed()
 {
 let _ = self.settings.save();
 self.refresh_file_tree();
 }
 if ui
-.checkbox(&mut self.settings.tree_style_file_tree, rust_i18n::t!("settings.tree_view"))
-.on_hover_text(rust_i18n::t!("settings.tree_view_tooltip"))
+.checkbox(&mut self.settings.tree_style_file_tree, t!("settings.tree_view"))
+.on_hover_text(t!("settings.tree_view_tooltip"))
 .changed()
 {
 let _ = self.settings.save();
@@ -326,23 +326,23 @@ ui.add_space(8.0);
 // =========================================================================
 // 3. EDITOR
 // =========================================================================
-self.render_heading(ui, rust_i18n::t!("settings.editor"));
+self.render_heading(ui, t!("settings.editor"));
 if ui
-.checkbox(&mut self.settings.show_line_numbers, rust_i18n::t!("settings.show_line_numbers"))
+.checkbox(&mut self.settings.show_line_numbers, t!("settings.show_line_numbers"))
 .changed()
 {
 let _ = self.settings.save();
 }
 if ui
-.checkbox(&mut self.settings.show_whitespace, rust_i18n::t!("settings.show_whitespace"))
-.on_hover_text(rust_i18n::t!("settings.show_whitespace_tooltip"))
+.checkbox(&mut self.settings.show_whitespace, t!("settings.show_whitespace"))
+.on_hover_text(t!("settings.show_whitespace_tooltip"))
 .changed()
 {
 let _ = self.settings.save();
 }
 // Cursor settings
 let h = ls.get_height("set_cursor_shape");
-crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.cursor_shape"), h, |ui| {
+crate::app_helpers::render_settings_row(ui, &t!("settings.cursor_shape"), h, |ui| {
     egui::ComboBox::from_id_salt("cursor_shape_combo")
         .selected_text(format!("{:?}", self.settings.cursor_shape))
         .show_ui(ui, |ui| {
@@ -360,15 +360,15 @@ crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.cursor_shap
             }
         });
 });
-if ui.checkbox(&mut self.settings.cursor_blink, rust_i18n::t!("settings.cursor_blink")).changed() {
+if ui.checkbox(&mut self.settings.cursor_blink, t!("settings.cursor_blink")).changed() {
 let _ = self.settings.save();
 self.style_dirty = true;
 }
-if ui.checkbox(&mut self.settings.word_wrap, rust_i18n::t!("settings.word_wrap")).changed() {
+if ui.checkbox(&mut self.settings.word_wrap, t!("settings.word_wrap")).changed() {
 let _ = self.settings.save();
 }
 let h = ls.get_height("set_tab_sz");
-crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.tab_size"), h, |ui| {
+crate::app_helpers::render_settings_row(ui, &t!("settings.tab_size"), h, |ui| {
                 if ui
                     .add(
                         egui::DragValue::new(&mut self.settings.tab_size)
@@ -381,14 +381,14 @@ let _ = self.settings.save();
 }
 });
 if ui
-.checkbox(&mut self.settings.use_spaces_for_tabs, rust_i18n::t!("settings.spaces_for_tabs"))
+.checkbox(&mut self.settings.use_spaces_for_tabs, t!("settings.spaces_for_tabs"))
 .changed()
 {
 let _ = self.settings.save();
 }
 
 let h = ls.get_height("set_comment_prefix");
-crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.comment_prefix"), h, |ui| {
+crate::app_helpers::render_settings_row(ui, &t!("settings.comment_prefix"), h, |ui| {
     let mut changed = false;
 
     // Use WidgetText to calculate exact galley width
@@ -439,7 +439,7 @@ crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.comment_pre
 });
 // Max lines
 let h = ls.get_height("set_max_lines");
-crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.max_lines"), h, |ui| {
+crate::app_helpers::render_settings_row(ui, &t!("settings.max_lines"), h, |ui| {
     let mut limit_val = self.settings.max_lines;
     let response = ui.add(
         egui::DragValue::new(&mut limit_val)
@@ -447,19 +447,19 @@ crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.max_lines")
             .range(0..=1000000)
             .clamp_existing_to_range(true),
     )
-    .on_hover_text(rust_i18n::t!("settings.max_lines_tooltip"));
+    .on_hover_text(t!("settings.max_lines_tooltip"));
 
     if response.changed() {
         self.settings.max_lines = limit_val;
         let _ = self.settings.save();
     }
     if self.settings.max_lines == 0 {
-        ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.no_limit")).italics().weak()).selectable(false));
+        ui.add(egui::Label::new(egui::RichText::new(t!("settings.no_limit")).italics().weak()).selectable(false));
     }
 });
 // History capacity
 let h = ls.get_height("set_history_limit");
-crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.history_limit"), h, |ui| {
+crate::app_helpers::render_settings_row(ui, &t!("settings.history_limit"), h, |ui| {
 if ui
 .add(
                         egui::DragValue::new(&mut self.settings.max_history_length)
@@ -478,28 +478,28 @@ ui.add_space(8.0);
 // =========================================================================
 // 4. RELIABILITY
 // =========================================================================
-self.render_heading(ui, rust_i18n::t!("settings.reliability"));
+self.render_heading(ui, t!("settings.reliability"));
 ui.vertical(|ui| {
 ui.set_min_width(ui.available_width());
 ui.group(|ui| {
 ui.set_min_width(ui.available_width());
-ui.add(egui::Label::new(rust_i18n::t!("settings.auto_save")).selectable(false));
+ui.add(egui::Label::new(t!("settings.auto_save")).selectable(false));
 if ui
-.checkbox(&mut self.settings.auto_save_on_focus_loss, rust_i18n::t!("settings.auto_save_focus"))
-.on_hover_text(rust_i18n::t!("settings.auto_save_focus_tooltip"))
+.checkbox(&mut self.settings.auto_save_on_focus_loss, t!("settings.auto_save_focus"))
+.on_hover_text(t!("settings.auto_save_focus_tooltip"))
 .changed()
 {
 let _ = self.settings.save();
 }
                 if ui
-                    .checkbox(&mut self.settings.auto_save_enabled, rust_i18n::t!("settings.auto_save_debounce"))
-                    .on_hover_text(rust_i18n::t!("settings.auto_save_debounce_tooltip"))
+                    .checkbox(&mut self.settings.auto_save_enabled, t!("settings.auto_save_debounce"))
+                    .on_hover_text(t!("settings.auto_save_debounce_tooltip"))
                     .changed()
 {
 let _ = self.settings.save();
 }
                 let h = ls.get_height("set_inactivity_secs");
-                crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.inactivity_secs"), h, |ui| {
+                crate::app_helpers::render_settings_row(ui, &t!("settings.inactivity_secs"), h, |ui| {
                     if ui
                         .add(
                             egui::DragValue::new(&mut self.settings.auto_save_debounce_secs)
@@ -520,10 +520,10 @@ ui.add_space(8.0);
 // =========================================================================
 // 5. APPEARANCE
 // =========================================================================
-self.render_heading(ui, rust_i18n::t!("settings.appearance"));
+self.render_heading(ui, t!("settings.appearance"));
 // Theme selection
                     let h = ls.get_height("set_theme");
-                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.theme"), h, |ui| {
+                    crate::app_helpers::render_settings_row(ui, &t!("settings.theme"), h, |ui| {
 egui::ComboBox::from_id_salt("theme_selector")
 .selected_text(&self.current_theme.name)
 .show_ui(ui, |ui| {
@@ -543,7 +543,7 @@ let _ = self.settings.save();
 }
 }
 });
-if ui.button(rust_i18n::t!("settings.refresh")).clicked() {
+if ui.button(t!("settings.refresh")).clicked() {
 self.themes = crate::theme::load_themes();
 self.log_info("Themes refreshed");
 }
@@ -551,7 +551,7 @@ self.log_info("Themes refreshed");
 ui.separator();
 // UI font family with keyboard navigation
                     let h = ls.get_height("set_ui_font");
-                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.ui_font"), h, |ui| {
+                    crate::app_helpers::render_settings_row(ui, &t!("settings.ui_font"), h, |ui| {
 let _response = egui::ComboBox::from_id_salt("ui_font_selector")
 .selected_text(&self.available_fonts[self.ui_font_index])
 .show_ui(ui, |ui| {
@@ -608,7 +608,7 @@ self.settings.ui_font_family
 });
 });
                     let h = ls.get_height("set_ui_font_sz");
-                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.ui_font_size"), h, |ui| {
+                    crate::app_helpers::render_settings_row(ui, &t!("settings.ui_font_size"), h, |ui| {
 let response = ui.add(
 egui::DragValue::new(&mut self.settings.ui_font_size)
 .speed(0.5)
@@ -624,7 +624,7 @@ let _ = self.settings.save();
 });
 ui.separator();
                     let h = ls.get_height("set_ed_font");
-                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.editor_font"), h, |ui| {
+                    crate::app_helpers::render_settings_row(ui, &t!("settings.editor_font"), h, |ui| {
 let _response = egui::ComboBox::from_id_salt("editor_font_selector")
 .selected_text(&self.available_fonts[self.editor_font_index])
 .show_ui(ui, |ui| {
@@ -681,7 +681,7 @@ self.settings.editor_font_family
 });
 });
                     let h = ls.get_height("set_ed_font_sz");
-                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.editor_font_size"), h, |ui| {
+                    crate::app_helpers::render_settings_row(ui, &t!("settings.editor_font_size"), h, |ui| {
 let response = ui.add(
 egui::DragValue::new(&mut self.settings.editor_font_size)
 .speed(0.5)
@@ -696,7 +696,7 @@ let _ = self.settings.save();
 }
 });
                     let h = ls.get_height("set_line_h");
-                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.line_height"), h, |ui| {
+                    crate::app_helpers::render_settings_row(ui, &t!("settings.line_height"), h, |ui| {
             let response = ui.add(
                 egui::DragValue::new(&mut self.settings.line_height)
                     .speed(0.05)
@@ -710,7 +710,7 @@ let _ = self.settings.save();
 });
 // Global Scroll Speed
                     let h = ls.get_height("set_scrl_speed");
-                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.scroll_speed"), h, |ui| {
+                    crate::app_helpers::render_settings_row(ui, &t!("settings.scroll_speed"), h, |ui| {
                         // Use integer DragValue internally (10..=100) to avoid egui's smart_aim
                         // debug_assert panic that occurs with narrow floating-point ranges
                         let mut scroll_int = (self.settings.scroll_speed_multiplier * 10.0).round() as i32;
@@ -721,7 +721,7 @@ let _ = self.settings.save();
                                 .custom_formatter(|v, _| format!("{:.1}", v / 10.0))
                                 .custom_parser(|s| s.parse::<f64>().ok().map(|v| (v * 10.0).round())),
                         )
-                        .on_hover_text(rust_i18n::t!("settings.scroll_speed_tooltip"));
+                        .on_hover_text(t!("settings.scroll_speed_tooltip"));
 
                         if response.changed() {
                             self.settings.scroll_speed_multiplier = scroll_int as f32 / 10.0;
@@ -735,7 +735,7 @@ let _ = self.settings.save();
                     });
 // Toolbar icon size
                     let h = ls.get_height("set_tb_icon_sz");
-                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.toolbar_icon_size"), h, |ui| {
+                    crate::app_helpers::render_settings_row(ui, &t!("settings.toolbar_icon_size"), h, |ui| {
                         let response = ui.add(
                             egui::DragValue::new(&mut self.settings.toolbar_icon_size)
                                 .speed(1.0)
@@ -749,11 +749,11 @@ let _ = self.settings.save();
                     });
 
                     let h = ls.get_height("set_tb_pos");
-                    crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.toolbar_position"), h, |ui| {
+                    crate::app_helpers::render_settings_row(ui, &t!("settings.toolbar_position"), h, |ui| {
                         let mut changed = false;
-                        changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Right, rust_i18n::t!("settings.toolbar_right")).changed();
-                        changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Left, rust_i18n::t!("settings.toolbar_left")).changed();
-                        changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Top, rust_i18n::t!("settings.toolbar_top")).changed();
+                        changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Right, t!("settings.toolbar_right")).changed();
+                        changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Left, t!("settings.toolbar_left")).changed();
+                        changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Top, t!("settings.toolbar_top")).changed();
                         if changed {
                             let _ = self.settings.save();
                         }
@@ -782,7 +782,7 @@ let _ = self.settings.save();
             let text_height = ui.text_style_height(&egui::TextStyle::Body);
 
             let h = ls.get_height("set_lang");
-            crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("settings.language"), h, |ui| {
+            crate::app_helpers::render_settings_row(ui, &t!("settings.language"), h, |ui| {
                 egui::ComboBox::from_id_salt("language_selector")
                     .selected_text(current_label)
                     .show_ui(ui, |ui| {
@@ -822,32 +822,32 @@ let _ = self.settings.save();
                 ui.add(egui::Image::new(current_icon).max_height(text_height).maintain_aspect_ratio(true));
             });
 if changed {
-rust_i18n::set_locale(&self.settings.language);
+sen_i18n::set_locale(&self.settings.language);
 let _ = self.settings.save();
 }
 if ui
-.checkbox(&mut self.settings.preserve_all_panels, rust_i18n::t!("settings.preserve_panels"))
-.on_hover_text(rust_i18n::t!("settings.preserve_panels_tooltip"))
+.checkbox(&mut self.settings.preserve_all_panels, t!("settings.preserve_panels"))
+.on_hover_text(t!("settings.preserve_panels_tooltip"))
 .changed()
 {
 let _ = self.settings.save();
 }
 if ui
-.checkbox(&mut self.settings.start_maximized, rust_i18n::t!("settings.start_maximized"))
+.checkbox(&mut self.settings.start_maximized, t!("settings.start_maximized"))
 .changed()
 {
 let _ = self.settings.save();
 }
 if ui
-.checkbox(&mut self.settings.remember_zen_mode, rust_i18n::t!("settings.remember_zen"))
-.on_hover_text(rust_i18n::t!("settings.remember_zen_tooltip"))
+.checkbox(&mut self.settings.remember_zen_mode, t!("settings.remember_zen"))
+.on_hover_text(t!("settings.remember_zen_tooltip"))
 .changed()
 {
                             let _ = self.settings.save();
                         }
                         if ui
-                            .checkbox(&mut self.settings.show_status_bar, rust_i18n::t!("settings.show_status_bar"))
-                            .on_hover_text(rust_i18n::t!("settings.show_status_bar_tooltip"))
+                            .checkbox(&mut self.settings.show_status_bar, t!("settings.show_status_bar"))
+                            .on_hover_text(t!("settings.show_status_bar_tooltip"))
                             .changed()
                         {
                             let _ = self.settings.save();
@@ -860,30 +860,30 @@ if ui
                         // =========================================================================
                         // 5. SYSTEM
                         // =========================================================================
-                        self.render_heading(ui, rust_i18n::t!("settings.window_panels"));
+                        self.render_heading(ui, t!("settings.window_panels"));
 
                         #[cfg(any(target_os = "windows", target_os = "linux"))]
                         {
                             ui.add_space(4.0);
-                            if ui.button(rust_i18n::t!("settings.associate_sen"))
-                                .on_hover_text(rust_i18n::t!("settings.associate_sen_tooltip"))
+                            if ui.button(t!("settings.associate_sen"))
+                                .on_hover_text(t!("settings.associate_sen_tooltip"))
                                 .clicked() {
                                 self.associate_sen_files();
                             }
-                            ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.assoc_warning")).small().weak()).selectable(false));
+                            ui.add(egui::Label::new(egui::RichText::new(t!("settings.assoc_warning")).small().weak()).selectable(false));
                         }
 
                         #[cfg(target_os = "macos")]
                         {
                             ui.add_space(4.0);
-                            ui.add(egui::Label::new(rust_i18n::t!("settings.assoc_macos")).weak());
+                            ui.add(egui::Label::new(t!("settings.assoc_macos")).weak());
                         }
 
                         ui.add_space(8.0);
 
                         if ui
-                            .checkbox(&mut self.settings.single_instance, rust_i18n::t!("settings.single_instance"))
-                            .on_hover_text(rust_i18n::t!("settings.single_instance_tooltip"))
+                            .checkbox(&mut self.settings.single_instance, t!("settings.single_instance"))
+                            .on_hover_text(t!("settings.single_instance_tooltip"))
                             .changed()
                         {
                             let _ = self.settings.save();
@@ -910,11 +910,11 @@ if ui
 
         ui.vertical(|ui| {
                 let h = ls.get_height("history_header");
-                if self.render_panel_header(ui, &rust_i18n::t!("history.title"), None, true, h) {
+                if self.render_panel_header(ui, &t!("history.title"), None, true, h) {
                     self.show_history_panel = false;
                 }
             let h = ls.get_height("history_max_limit");
-            crate::app_helpers::render_settings_row(ui, &rust_i18n::t!("history.max_limit"), h, |ui| {
+            crate::app_helpers::render_settings_row(ui, &t!("history.max_limit"), h, |ui| {
                 let mut temp_limit = doc_max_limit;
                 let response = ui.add(
                     egui::DragValue::new(&mut temp_limit)
@@ -935,14 +935,14 @@ if ui
             };
 
             ui.add(egui::Label::new(
-                egui::RichText::new(rust_i18n::t!("history.current_entries", current = history_len, max = doc_max_limit))
+                egui::RichText::new(t!("history.current_entries", current = history_len, max = doc_max_limit))
                 .color(history_status_color),
             ).selectable(false));
 
             if history_len > doc_max_limit {
                 let to_delete = history_len - doc_max_limit;
                 ui.add(egui::Label::new(
-                    egui::RichText::new(rust_i18n::t!("history.will_be_deleted", count = to_delete))
+                    egui::RichText::new(t!("history.will_be_deleted", count = to_delete))
                         .color(self.current_theme.colors.warning_color())
                         .small(),
                 ).selectable(false));
@@ -983,18 +983,18 @@ if ui
 
                 crate::app_helpers::center_row(ui, |ui| {
                     if self.show_clear_history_confirmation {
-                        ui.add(egui::Label::new(egui::RichText::new(rust_i18n::t!("settings.are_you_sure")).color(self.current_theme.colors.error_color())).selectable(false));
-                        if ui.button(rust_i18n::t!("settings.yes")).clicked() {
+                        ui.add(egui::Label::new(egui::RichText::new(t!("settings.are_you_sure")).color(self.current_theme.colors.error_color())).selectable(false));
+                        if ui.button(t!("settings.yes")).clicked() {
                             self.clear_all_history();
                             self.loaded_history_index = None;
                             self.show_clear_history_confirmation = false;
                         }
-                        if ui.button(rust_i18n::t!("settings.no")).clicked() {
+                        if ui.button(t!("settings.no")).clicked() {
                             self.show_clear_history_confirmation = false;
                         }
                     } else {
                         ui.horizontal(|ui| {
-                            if ui.button(rust_i18n::t!("history.clear_all")).clicked() {
+                            if ui.button(t!("history.clear_all")).clicked() {
                                 self.show_clear_history_confirmation = true;
                             }
 
@@ -1003,8 +1003,8 @@ if ui
                                 || self.document.max_history_length != self.initial_max_history_length;
 
                             if history_changed {
-                                if ui.button(rust_i18n::t!("history.revert_changes"))
-                                    .on_hover_text(rust_i18n::t!("history.log_reverted"))
+                                if ui.button(t!("history.revert_changes"))
+                                    .on_hover_text(t!("history.log_reverted"))
                                     .clicked()
                                 {
                                     self.revert_history_changes();
@@ -1062,7 +1062,7 @@ if ui
                                 })
                                 .show(ui, |ui| {
                                     if history_len == 0 {
-                                ui.add(egui::Label::new(rust_i18n::t!("history.no_history")).selectable(false));
+                                ui.add(egui::Label::new(t!("history.no_history")).selectable(false));
                             } else {
                                 let to_delete_count = if history_len > doc_max_limit {
                                     history_len - doc_max_limit
@@ -1103,8 +1103,8 @@ if ui
                                         let (label_res, delete_clicked, revert_clicked) = ui.with_layout(
                                             egui::Layout::right_to_left(egui::Align::Center),
                                             |ui| {
-                                                let del = crate::app_helpers::square_icon_btn(ui, &self.icons.close, &rust_i18n::t!("history.delete_entry"), self.current_theme.colors.icon_color()).clicked();
-                                                let rev = crate::app_helpers::square_icon_btn(ui, &self.icons.reset, &rust_i18n::t!("history.revert_entry"), self.current_theme.colors.icon_color()).clicked();
+                                                let del = crate::app_helpers::square_icon_btn(ui, &self.icons.close, &t!("history.delete_entry"), self.current_theme.colors.icon_color()).clicked();
+                                                let rev = crate::app_helpers::square_icon_btn(ui, &self.icons.reset, &t!("history.revert_entry"), self.current_theme.colors.icon_color()).clicked();
 
                                                 let lbl = ui.with_layout(
                                                     egui::Layout::left_to_right(egui::Align::Center),
@@ -1156,7 +1156,7 @@ if ui
         let mut ls = std::mem::take(&mut self.layout_state);
         ui.vertical(|ui| {
             let h = ls.get_height("debug_header");
-            if self.render_panel_header(ui, &rust_i18n::t!("debug.title"), None, true, h) {
+            if self.render_panel_header(ui, &t!("debug.title"), None, true, h) {
                 self.show_debug_panel = false;
             }
             egui::Frame::NONE
@@ -1171,7 +1171,7 @@ if ui
                         ui.spacing_mut().item_spacing.x = 8.0;
 
                         // Clear button on the left
-                        if ui.button(rust_i18n::t!("debug.clear")).clicked() {
+                        if ui.button(t!("debug.clear")).clicked() {
                             self.debug_log.clear();
                         }
 
@@ -1189,7 +1189,7 @@ if ui
                                     ui.visuals().widgets.noninteractive.bg_stroke.color
                                 };
                                 job.append(
-                                    &rust_i18n::t!("debug.filter_error"),
+                                    &t!("debug.filter_error"),
                                     0.0,
                                     egui::text::TextFormat {
                                         font_id: egui::TextStyle::Button.resolve(ui.style()),
@@ -1210,7 +1210,7 @@ if ui
                                     ui.visuals().widgets.noninteractive.bg_stroke.color
                                 };
                                 job.append(
-                                    &rust_i18n::t!("debug.filter_warning"),
+                                    &t!("debug.filter_warning"),
                                     0.0,
                                     egui::text::TextFormat {
                                         font_id: egui::TextStyle::Button.resolve(ui.style()),
@@ -1231,7 +1231,7 @@ if ui
                                     ui.visuals().widgets.noninteractive.bg_stroke.color
                                 };
                                 job.append(
-                                    &rust_i18n::t!("debug.filter_success"),
+                                    &t!("debug.filter_success"),
                                     0.0,
                                     egui::text::TextFormat {
                                         font_id: egui::TextStyle::Button.resolve(ui.style()),
@@ -1252,7 +1252,7 @@ if ui
                                     ui.visuals().widgets.noninteractive.bg_stroke.color
                                 };
                                 job.append(
-                                    &rust_i18n::t!("debug.filter_info"),
+                                    &t!("debug.filter_info"),
                                     0.0,
                                     egui::text::TextFormat {
                                         font_id: egui::TextStyle::Button.resolve(ui.style()),
@@ -1312,7 +1312,7 @@ if ui
                             if visible_count == 0 {
                                 ui.add(
                                     egui::Label::new(
-                                        egui::RichText::new(rust_i18n::t!("debug.all_filtered"))
+                                        egui::RichText::new(t!("debug.all_filtered"))
                                             .italics()
                                             .weak(),
                                     )
@@ -1335,7 +1335,7 @@ if ui
             ui.set_max_width(ui.available_width());
             ui.set_min_width(0.0);
             let h = ls.get_height("tree_header");
-            if self.render_panel_header(ui, &rust_i18n::t!("file_tree.title"), None, true, h) {
+            if self.render_panel_header(ui, &t!("file_tree.title"), None, true, h) {
                 self.show_file_tree = false;
             }
             egui::ScrollArea::vertical()
@@ -1737,8 +1737,8 @@ if ui
                                     }
                                 }
                             } else {
-                                ui.label(rust_i18n::t!("settings.no_dir_opened"));
-                                if ui.button(rust_i18n::t!("settings.open_dir")).clicked() {
+                                ui.label(t!("settings.no_dir_opened"));
+                                if ui.button(t!("settings.open_dir")).clicked() {
                                     self.open_directory();
                                 }
                             }
@@ -1755,12 +1755,12 @@ if ui
         let mut should_reset = false;
         ui.vertical(|ui| {
             let h = ls.get_height("theme_header");
-            if self.render_panel_header(ui, &rust_i18n::t!("theme.title"), None, true, h) {
+            if self.render_panel_header(ui, &t!("theme.title"), None, true, h) {
                 self.show_theme_editor = false;
             }
             if let Some(theme) = &mut self.editing_theme {
                 ui.horizontal_wrapped(|ui| {
-                    if ui.button(rust_i18n::t!("theme.save")).clicked() {
+                    if ui.button(t!("theme.save")).clicked() {
                         save_clicked = true;
                     }
                     let mut modified = true;
@@ -1773,9 +1773,9 @@ if ui
                     if modified {
                         let is_builtin = theme.name == "Dark" || theme.name == "Light";
                         let reset_text = if is_builtin {
-                            rust_i18n::t!("theme.reset_default").to_string()
+                            t!("theme.reset_default").to_string()
                         } else {
-                            rust_i18n::t!("theme.reset_saved").to_string()
+                            t!("theme.reset_saved").to_string()
                         };
                         if ui.button(reset_text).clicked() {
                             should_reset = true;
@@ -1811,10 +1811,10 @@ if ui
                             }
                         }
                     });
-                if ui.button(rust_i18n::t!("theme.new")).clicked() {
+                if ui.button(t!("theme.new")).clicked() {
                     let mut new_theme = self.current_theme.clone();
                     new_theme.name =
-                        format!("{} {}", new_theme.name, rust_i18n::t!("theme.copy_suffix"));
+                        format!("{} {}", new_theme.name, t!("theme.copy_suffix"));
                     self.editing_theme = Some(new_theme.clone());
                     self.original_editing_theme = Some(new_theme);
                     self.show_delete_theme_confirmation = false; // Reset confirmation
@@ -1824,22 +1824,22 @@ if ui
                     let is_builtin = theme.name == "Dark" || theme.name == "Light";
                     if !is_builtin {
                         if !self.show_delete_theme_confirmation {
-                            if ui.button(rust_i18n::t!("theme.delete")).clicked() {
+                            if ui.button(t!("theme.delete")).clicked() {
                                 self.show_delete_theme_confirmation = true;
                             }
                         } else {
                             ui.label(
-                                egui::RichText::new(rust_i18n::t!("settings.are_you_sure"))
+                                egui::RichText::new(t!("settings.are_you_sure"))
                                     .color(self.current_theme.colors.error_color()),
                             );
-                            if ui.button(rust_i18n::t!("settings.yes")).clicked() {
+                            if ui.button(t!("settings.yes")).clicked() {
                                 let _ = crate::theme::delete_theme(&theme.name);
                                 self.themes = crate::theme::load_themes(); // Reload
                                 self.editing_theme = Some(crate::theme::Theme::dark());
                                 self.show_delete_theme_confirmation = false;
                                 // Reset to safe default
                             }
-                            if ui.button(rust_i18n::t!("settings.no")).clicked() {
+                            if ui.button(t!("settings.no")).clicked() {
                                 self.show_delete_theme_confirmation = false;
                             }
                         }
@@ -1858,7 +1858,7 @@ if ui
                 });
                 crate::app_helpers::render_settings_row(
                     ui,
-                    &rust_i18n::t!("theme.name_label"),
+                    &t!("theme.name_label"),
                     &mut 0.0,
                     |ui| {
                         ui.add(
@@ -1870,7 +1870,7 @@ if ui
                 );
                 crate::app_helpers::render_settings_row(
                     ui,
-                    &rust_i18n::t!("theme.base_scheme"),
+                    &t!("theme.base_scheme"),
                     &mut 0.0,
                     |ui| {
                         egui::ComboBox::from_id_salt("color_scheme_selector")
@@ -1883,7 +1883,7 @@ if ui
                                             theme.color_scheme,
                                             crate::theme::ColorScheme::Dark
                                         ),
-                                        rust_i18n::t!("theme.dark"),
+                                        t!("theme.dark"),
                                     )
                                     .clicked()
                                 {
@@ -1896,7 +1896,7 @@ if ui
                                             theme.color_scheme,
                                             crate::theme::ColorScheme::Light
                                         ),
-                                        rust_i18n::t!("theme.light"),
+                                        t!("theme.light"),
                                     )
                                     .clicked()
                                 {
@@ -1935,7 +1935,7 @@ if ui
                             .show(ui, |ui| {
                                 let head_color = theme.colors.heading_color();
                                 ui.heading(
-                                    egui::RichText::new(rust_i18n::t!("theme.colors_heading"))
+                                    egui::RichText::new(t!("theme.colors_heading"))
                                         .color(head_color),
                                 );
                                 ui.add_space(4.0);
@@ -1967,7 +1967,7 @@ if ui
                                                         changed = true;
                                                     }
                                                     if *field != ref_field {
-                                                        if crate::app_helpers::square_icon_btn(ui, &self.icons.reset, &rust_i18n::t!("theme.reset_tooltip"), self.current_theme.colors.icon_color()).clicked()
+                                                        if crate::app_helpers::square_icon_btn(ui, &self.icons.reset, &t!("theme.reset_tooltip"), self.current_theme.colors.icon_color()).clicked()
                                                         {
                                                             *field = ref_field;
                                                             changed = true;
@@ -2008,7 +2008,7 @@ if ui
                                                         changed = true;
                                                     }
                                                     if *field != ref_field {
-                                                        if crate::app_helpers::square_icon_btn(ui, &self.icons.reset, &rust_i18n::t!("theme.reset_tooltip"), self.current_theme.colors.icon_color()).clicked()
+                                                        if crate::app_helpers::square_icon_btn(ui, &self.icons.reset, &t!("theme.reset_tooltip"), self.current_theme.colors.icon_color()).clicked()
                                                         {
                                                             *field = ref_field;
                                                             changed = true;
@@ -2036,10 +2036,10 @@ if ui
                                      let fg_color32 = theme.colors.heading_color();
 
                                     // --- CORE UI BACKGROUNDS & ACCENTS ---
-                                    render_cat_header(ui, rust_i18n::t!("theme.cat_core"), fg_color32);
+                                    render_cat_header(ui, t!("theme.cat_core"), fg_color32);
                                     ui.add_space(4.0);
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.bg"),
+                                        &t!("theme.bg"),
                                         &mut theme.colors.background,
                                         hardcoded_defaults.background.unwrap(),
                                         ref_colors.background,
@@ -2050,7 +2050,7 @@ if ui
                                     }
                                     ui.add_space(4.0);
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.selection_bg"),
+                                        &t!("theme.selection_bg"),
                                         &mut theme.colors.selection_background,
                                         hardcoded_defaults.selection_background.unwrap(),
                                         ref_colors.selection_background,
@@ -2067,7 +2067,7 @@ if ui
                                             [80, 80, 80, 255]
                                         };
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.icon_default"),
+                                        &t!("theme.icon_default"),
                                         &mut theme.colors.icon_color,
                                         icon_def,
                                         ref_colors.icon_color,
@@ -2078,7 +2078,7 @@ if ui
                                     }
                                     ui.add_space(4.0);
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.icon_hover"),
+                                        &t!("theme.icon_hover"),
                                         &mut theme.colors.icon_hover,
                                         hardcoded_defaults.icon_hover.unwrap(),
                                         ref_colors.icon_hover,
@@ -2089,10 +2089,10 @@ if ui
                                     }
 
                                     // --- TYPOGRAPHY ---
-                                    render_cat_header(ui, rust_i18n::t!("theme.cat_typography"), fg_color32);
+                                    render_cat_header(ui, t!("theme.cat_typography"), fg_color32);
                                     ui.add_space(4.0);
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.fg"),
+                                        &t!("theme.fg"),
                                         &mut theme.colors.foreground,
                                         hardcoded_defaults.foreground.unwrap(),
                                         ref_colors.foreground,
@@ -2102,7 +2102,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.headings"),
+                                        &t!("theme.headings"),
                                         &mut theme.colors.heading_text,
                                         [255, 255, 255, 255],
                                         ref_colors.heading_text,
@@ -2112,7 +2112,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.hyperlinks"),
+                                        &t!("theme.hyperlinks"),
                                         &mut theme.colors.hyperlink,
                                         [90, 170, 255, 255],
                                         ref_colors.hyperlink,
@@ -2123,9 +2123,9 @@ if ui
                                     }
 
                                     // --- MAIN TEXT EDITOR ---
-                                    render_cat_header(ui, rust_i18n::t!("theme.cat_editor"), fg_color32);
+                                    render_cat_header(ui, t!("theme.cat_editor"), fg_color32);
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.editor_bg"),
+                                        &t!("theme.editor_bg"),
                                         &mut theme.colors.editor_background,
                                         [10, 10, 10, 255],
                                         ref_colors.editor_background,
@@ -2135,7 +2135,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.editor_fg"),
+                                        &t!("theme.editor_fg"),
                                         &mut theme.colors.editor_foreground,
                                         hardcoded_defaults.foreground.unwrap(),
                                         ref_colors.editor_foreground,
@@ -2146,7 +2146,7 @@ if ui
                                     }
                                     ui.add_space(4.0);
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.line_numbers"),
+                                        &t!("theme.line_numbers"),
                                         &mut theme.colors.line_number,
                                         hardcoded_defaults.line_number.unwrap(),
                                         ref_colors.line_number,
@@ -2157,7 +2157,7 @@ if ui
                                     }
                                     ui.add_space(4.0);
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.cursor"),
+                                        &t!("theme.cursor"),
                                         &mut theme.colors.cursor,
                                         hardcoded_defaults.cursor.unwrap(),
                                         ref_colors.cursor,
@@ -2167,7 +2167,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.search_highlight"),
+                                        &t!("theme.search_highlight"),
                                         &mut theme.colors.highlight,
                                         hardcoded_defaults.cursor.unwrap(),
                                         ref_colors.highlight,
@@ -2177,7 +2177,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.whitespace"),
+                                        &t!("theme.whitespace"),
                                         &mut theme.colors.whitespace_symbols,
                                         [80, 80, 80, 255],
                                         ref_colors.whitespace_symbols,
@@ -2188,9 +2188,9 @@ if ui
                                     }
 
                                     // --- BUTTONS & INPUTS ---
-                                    render_cat_header(ui, rust_i18n::t!("theme.cat_buttons"), fg_color32);
+                                    render_cat_header(ui, t!("theme.cat_buttons"), fg_color32);
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.btn_bg"),
+                                        &t!("theme.btn_bg"),
                                         &mut theme.colors.button_bg,
                                         [60, 60, 60, 255],
                                         ref_colors.button_bg,
@@ -2200,7 +2200,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.btn_hover"),
+                                        &t!("theme.btn_hover"),
                                         &mut theme.colors.button_hover_bg,
                                         [80, 80, 80, 255],
                                         ref_colors.button_hover_bg,
@@ -2210,7 +2210,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.btn_active"),
+                                        &t!("theme.btn_active"),
                                         &mut theme.colors.button_active_bg,
                                         [100, 100, 100, 255],
                                         ref_colors.button_active_bg,
@@ -2220,7 +2220,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.btn_fg"),
+                                        &t!("theme.btn_fg"),
                                         &mut theme.colors.button_fg,
                                         hardcoded_defaults.foreground.unwrap(),
                                         ref_colors.button_fg,
@@ -2230,7 +2230,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.btn_hover_fg"),
+                                        &t!("theme.btn_hover_fg"),
                                         &mut theme.colors.button_hover_fg,
                                         hardcoded_defaults.foreground.unwrap(),
                                         ref_colors.button_hover_fg,
@@ -2240,7 +2240,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.btn_active_fg"),
+                                        &t!("theme.btn_active_fg"),
                                         &mut theme.colors.button_active_fg,
                                         hardcoded_defaults.foreground.unwrap(),
                                         ref_colors.button_active_fg,
@@ -2250,7 +2250,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.btn_hover_border"),
+                                        &t!("theme.btn_hover_border"),
                                         &mut theme.colors.button_hover_border_color,
                                         [120, 120, 120, 255],
                                         ref_colors.button_hover_border_color,
@@ -2260,7 +2260,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.btn_active_border"),
+                                        &t!("theme.btn_active_border"),
                                         &mut theme.colors.button_active_border_color,
                                         [150, 150, 150, 255],
                                         ref_colors.button_active_border_color,
@@ -2271,9 +2271,9 @@ if ui
                                     }
 
                                     // --- WIDGETS (unified geometry + specific widget colors) ---
-                                    render_cat_header(ui, rust_i18n::t!("theme.cat_widgets"), fg_color32);
+                                    render_cat_header(ui, t!("theme.cat_widgets"), fg_color32);
                                     if edit_optional_float(
-                                        &rust_i18n::t!("theme.widget_rounding"),
+                                        &t!("theme.widget_rounding"),
                                         &mut theme.colors.widget_rounding,
                                         2.0,
                                         ref_colors.widget_rounding,
@@ -2284,7 +2284,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.widget_border"),
+                                        &t!("theme.widget_border"),
                                         &mut theme.colors.widget_border_color,
                                         [100, 100, 100, 255],
                                         ref_colors.widget_border_color,
@@ -2294,7 +2294,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_float(
-                                        &rust_i18n::t!("theme.widget_border_width"),
+                                        &t!("theme.widget_border_width"),
                                         &mut theme.colors.widget_border_width,
                                         0.0,
                                         ref_colors.widget_border_width,
@@ -2305,7 +2305,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_float(
-                                        &rust_i18n::t!("theme.widget_padding_x"),
+                                        &t!("theme.widget_padding_x"),
                                         &mut theme.colors.widget_padding_x,
                                         4.0,
                                         ref_colors.widget_padding_x,
@@ -2316,7 +2316,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_float(
-                                        &rust_i18n::t!("theme.widget_padding_y"),
+                                        &t!("theme.widget_padding_y"),
                                         &mut theme.colors.widget_padding_y,
                                         2.0,
                                         ref_colors.widget_padding_y,
@@ -2327,7 +2327,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.widget_focus_border"),
+                                        &t!("theme.widget_focus_border"),
                                         &mut theme.colors.widget_focus_border,
                                         [100, 150, 255, 255],
                                         ref_colors.widget_focus_border,
@@ -2337,7 +2337,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.chk_check"),
+                                        &t!("theme.chk_check"),
                                         &mut theme.colors.checkbox_check,
                                         [200, 200, 200, 255],
                                         ref_colors.checkbox_check,
@@ -2347,7 +2347,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.text_edit_bg"),
+                                        &t!("theme.text_edit_bg"),
                                         &mut theme.colors.text_edit_bg,
                                         [15, 15, 15, 255],
                                         ref_colors.text_edit_bg,
@@ -2357,7 +2357,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.selection_text"),
+                                        &t!("theme.selection_text"),
                                         &mut theme.colors.selection_text,
                                         [255, 255, 255, 255],
                                         ref_colors.selection_text,
@@ -2367,7 +2367,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.separator"),
+                                        &t!("theme.separator"),
                                         &mut theme.colors.separator,
                                         [80, 80, 80, 255],
                                         ref_colors.separator,
@@ -2377,7 +2377,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_float(
-                                        &rust_i18n::t!("theme.separator_width"),
+                                        &t!("theme.separator_width"),
                                         &mut theme.colors.separator_width,
                                         1.0,
                                         ref_colors.separator_width,
@@ -2388,7 +2388,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.tree_line"),
+                                        &t!("theme.tree_line"),
                                         &mut theme.colors.tree_line,
                                         [100, 100, 100, 255],
                                         ref_colors.tree_line,
@@ -2399,9 +2399,9 @@ if ui
                                     }
 
                                     // --- WINDOW & PANELS GEOMETRY ---
-                                    render_cat_header(ui, rust_i18n::t!("theme.cat_geometry"), fg_color32);
+                                    render_cat_header(ui, t!("theme.cat_geometry"), fg_color32);
                                     if edit_optional_float(
-                                        &rust_i18n::t!("theme.window_rounding"),
+                                        &t!("theme.window_rounding"),
                                         &mut theme.colors.window_rounding,
                                         4.0,
                                         ref_colors.window_rounding,
@@ -2412,7 +2412,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.shadow_color"),
+                                        &t!("theme.shadow_color"),
                                         &mut theme.colors.shadow_color,
                                         [0, 0, 0, 255],
                                         ref_colors.shadow_color,
@@ -2422,7 +2422,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_float(
-                                        &rust_i18n::t!("theme.shadow_blur"),
+                                        &t!("theme.shadow_blur"),
                                         &mut theme.colors.shadow_blur,
                                         20.0,
                                         ref_colors.shadow_blur,
@@ -2433,7 +2433,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_float(
-                                        &rust_i18n::t!("theme.shadow_spread"),
+                                        &t!("theme.shadow_spread"),
                                         &mut theme.colors.shadow_spread,
                                         0.0,
                                         ref_colors.shadow_spread,
@@ -2444,7 +2444,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_float(
-                                        &rust_i18n::t!("theme.shadow_offset_x"),
+                                        &t!("theme.shadow_offset_x"),
                                         &mut theme.colors.shadow_offset_x,
                                         0.0,
                                         ref_colors.shadow_offset_x,
@@ -2455,7 +2455,7 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_float(
-                                        &rust_i18n::t!("theme.shadow_offset_y"),
+                                        &t!("theme.shadow_offset_y"),
                                         &mut theme.colors.shadow_offset_y,
                                         0.0,
                                         ref_colors.shadow_offset_y,
@@ -2467,10 +2467,10 @@ if ui
                                     }
 
                                     // --- SYNTAX ALERTS ---
-                                    render_cat_header(ui, rust_i18n::t!("theme.cat_syntax"), fg_color32);
+                                    render_cat_header(ui, t!("theme.cat_syntax"), fg_color32);
                                     ui.add_space(4.0);
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.comment"),
+                                        &t!("theme.comment"),
                                         &mut theme.colors.comment,
                                         hardcoded_defaults.comment.unwrap(),
                                         ref_colors.comment,
@@ -2481,7 +2481,7 @@ if ui
                                     }
                                     ui.add_space(4.0);
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.success_label"),
+                                        &t!("theme.success_label"),
                                         &mut theme.colors.success,
                                         hardcoded_defaults.success.unwrap(),
                                         ref_colors.success,
@@ -2492,7 +2492,7 @@ if ui
                                     }
                                     ui.add_space(4.0);
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.info_label"),
+                                        &t!("theme.info_label"),
                                         &mut theme.colors.info,
                                         hardcoded_defaults.info.unwrap(),
                                         ref_colors.info,
@@ -2503,7 +2503,7 @@ if ui
                                     }
                                     ui.add_space(4.0);
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.warning_label"),
+                                        &t!("theme.warning_label"),
                                         &mut theme.colors.warning,
                                         hardcoded_defaults.warning.unwrap(),
                                         ref_colors.warning,
@@ -2514,7 +2514,7 @@ if ui
                                     }
                                     ui.add_space(4.0);
                                     if edit_optional_color(
-                                        &rust_i18n::t!("theme.error_label"),
+                                        &t!("theme.error_label"),
                                         &mut theme.colors.error,
                                         hardcoded_defaults.error.unwrap(),
                                         ref_colors.error,
@@ -2532,7 +2532,7 @@ if ui
                     self.current_theme = theme.clone();
                 }
             } else {
-                ui.label(rust_i18n::t!("theme.no_theme_editing"));
+                ui.label(t!("theme.no_theme_editing"));
             }
         });
         // Execute actions
@@ -2580,13 +2580,13 @@ if ui
                     let _ = self.settings.save();
                     self.themes = crate::theme::load_themes();
                     self.status_message =
-                        rust_i18n::t!("theme.saved_msg", name = theme.name).to_string();
-                    self.log_info(rust_i18n::t!("theme.saved_msg", name = theme.name));
+                        t!("theme.saved_msg", name = theme.name).to_string();
+                    self.log_info(t!("theme.saved_msg", name = theme.name));
                 }
                 Err(e) => {
                     self.status_message =
-                        rust_i18n::t!("theme.save_error", error = e.to_string()).to_string();
-                    self.log_error(rust_i18n::t!("theme.save_error", error = e.to_string()));
+                        t!("theme.save_error", error = e.to_string()).to_string();
+                    self.log_error(t!("theme.save_error", error = e.to_string()));
                 }
             }
         }
@@ -2607,7 +2607,7 @@ if ui
                     ui.add_space((depth + 1) as f32 * tree_indent);
                 }
                 ui.add(egui::Spinner::new().size(12.0));
-                ui.label(rust_i18n::t!("theme.verifying"));
+                ui.label(t!("theme.verifying"));
             });
         }
     }

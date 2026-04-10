@@ -2,7 +2,7 @@ use crate::app_state::PendingAction;
 use crate::theme::{ThemeColorsExt, ThemeExt};
 use crate::EditorApp;
 use eframe::egui;
-use rust_i18n::t;
+
 
 impl EditorApp {
     /// Render confirmation dialog for unsaved changes
@@ -204,7 +204,7 @@ impl EditorApp {
                                     self.original_editing_theme = Some(new_theme);
 
                                     // Apply language immediately
-                                    rust_i18n::set_locale(&self.settings.language);
+                                    sen_i18n::set_locale(&self.settings.language);
                                     self.refresh_file_tree(); // Refresh headers/stats if needed
 
                                     self.show_reset_confirmation = false;

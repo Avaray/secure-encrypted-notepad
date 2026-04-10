@@ -164,7 +164,7 @@ impl EditorApp {
         if Self::icon_btn(
             ui,
             &self.icons.new_doc,
-            &rust_i18n::t!("toolbar.new"),
+            &t!("toolbar.new"),
             false,
             bs,
             is,
@@ -178,7 +178,7 @@ impl EditorApp {
         if Self::icon_btn(
             ui,
             &self.icons.open,
-            &rust_i18n::t!("toolbar.open"),
+            &t!("toolbar.open"),
             false,
             bs,
             is,
@@ -192,7 +192,7 @@ impl EditorApp {
         if Self::icon_btn(
             ui,
             &self.icons.open_folder,
-            &rust_i18n::t!("toolbar.open_dir"),
+            &t!("toolbar.open_dir"),
             false,
             bs,
             is,
@@ -206,7 +206,7 @@ impl EditorApp {
         if Self::icon_btn(
             ui,
             &self.icons.save,
-            &rust_i18n::t!("toolbar.save"),
+            &t!("toolbar.save"),
             false,
             bs,
             is,
@@ -221,7 +221,7 @@ impl EditorApp {
         if Self::icon_btn(
             ui,
             &self.icons.save_as,
-            &rust_i18n::t!("toolbar.save_as"),
+            &t!("toolbar.save_as"),
             false,
             bs,
             is,
@@ -235,7 +235,7 @@ impl EditorApp {
         if Self::icon_btn(
             ui,
             &self.icons.close,
-            &rust_i18n::t!("toolbar.close"),
+            &t!("toolbar.close"),
             false,
             bs,
             is,
@@ -259,7 +259,7 @@ impl EditorApp {
         if Self::icon_btn(
             ui,
             &self.icons.export,
-            &*rust_i18n::t!("toolbar.export"),
+            &*t!("toolbar.export"),
             false,
             bs,
             is,
@@ -295,7 +295,7 @@ impl EditorApp {
         if Self::icon_btn(
             ui,
             &self.icons.key,
-            &*rust_i18n::t!("toolbar.load_keyfile"),
+            &*t!("toolbar.load_keyfile"),
             false,
             bs,
             is,
@@ -309,7 +309,7 @@ impl EditorApp {
         if Self::icon_btn(
             ui,
             &self.icons.rotate,
-            &*rust_i18n::t!("toolbar.rotate_keyfile"),
+            &*t!("toolbar.rotate_keyfile"),
             false,
             bs,
             is,
@@ -323,7 +323,7 @@ impl EditorApp {
         if Self::icon_btn(
             ui,
             &self.icons.generate,
-            &*rust_i18n::t!("toolbar.generate_keyfile"),
+            &*t!("toolbar.generate_keyfile"),
             false,
             bs,
             is,
@@ -352,7 +352,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.history,
-                &*rust_i18n::t!("toolbar.toggle_history"),
+                &*t!("toolbar.toggle_history"),
                 self.show_history_panel,
                 bs,
                 is,
@@ -367,7 +367,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.file_tree,
-                &*rust_i18n::t!("toolbar.toggle_file_tree"),
+                &*t!("toolbar.toggle_file_tree"),
                 self.show_file_tree,
                 bs,
                 is,
@@ -382,7 +382,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.zen,
-                &*rust_i18n::t!("toolbar.toggle_zen"),
+                &*t!("toolbar.toggle_zen"),
                 self.zen_mode,
                 bs,
                 is,
@@ -396,7 +396,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.theme,
-                &*rust_i18n::t!("toolbar.toggle_theme"),
+                &*t!("toolbar.toggle_theme"),
                 self.show_theme_editor,
                 bs,
                 is,
@@ -415,7 +415,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.settings,
-                &*rust_i18n::t!("toolbar.toggle_settings"),
+                &*t!("toolbar.toggle_settings"),
                 self.show_settings_panel,
                 bs,
                 is,
@@ -433,7 +433,7 @@ impl EditorApp {
         if Self::icon_btn(
             ui,
             &self.icons.batch_convert,
-            &*rust_i18n::t!("toolbar.toggle_batch"),
+            &*t!("toolbar.toggle_batch"),
             self.show_batch_converter,
             bs,
             is,
@@ -449,7 +449,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.debug,
-                &*rust_i18n::t!("toolbar.toggle_debug"),
+                &*t!("toolbar.toggle_debug"),
                 self.show_debug_panel,
                 bs,
                 is,
@@ -486,7 +486,7 @@ impl EditorApp {
         if Self::icon_btn(
             ui,
             &self.icons.batch_convert,
-            &*rust_i18n::t!("toolbar.toggle_batch"),
+            &*t!("toolbar.toggle_batch"),
             self.show_batch_converter,
             bs,
             is,
@@ -503,7 +503,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.debug,
-                &*rust_i18n::t!("toolbar.toggle_debug"),
+                &*t!("toolbar.toggle_debug"),
                 self.show_debug_panel,
                 bs,
                 is,
@@ -519,7 +519,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.settings,
-                &*rust_i18n::t!("toolbar.toggle_settings"),
+                &*t!("toolbar.toggle_settings"),
                 self.show_settings_panel,
                 bs,
                 is,
@@ -535,7 +535,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.theme,
-                &*rust_i18n::t!("toolbar.toggle_theme"),
+                &*t!("toolbar.toggle_theme"),
                 self.show_theme_editor,
                 bs,
                 is,
@@ -555,7 +555,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.zen,
-                &*rust_i18n::t!("toolbar.toggle_zen"),
+                &*t!("toolbar.toggle_zen"),
                 self.zen_mode,
                 bs,
                 is,
@@ -570,7 +570,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.file_tree,
-                &*rust_i18n::t!("toolbar.toggle_file_tree"),
+                &*t!("toolbar.toggle_file_tree"),
                 self.show_file_tree,
                 bs,
                 is,
@@ -586,7 +586,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.history,
-                &*rust_i18n::t!("toolbar.toggle_history"),
+                &*t!("toolbar.toggle_history"),
                 self.show_history_panel,
                 bs,
                 is,

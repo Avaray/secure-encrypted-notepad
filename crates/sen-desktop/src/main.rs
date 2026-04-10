@@ -1,10 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-#[macro_use]
-extern crate rust_i18n;
 
-// Initialize i18n with locale files from ./locales, fallback to English
-i18n!("locales", fallback = "en");
 
 /// Custom debug logging macro that only prints to console in debug builds.
 /// This prevents sensitive data leakage in release versions.
@@ -22,8 +18,24 @@ macro_rules! sen_debug {
         }
     };
 }
-
 pub(crate) use sen_debug;
+
+/// Wrapper around the extracted i18n t! macro to make it available to all modules easily.
+macro_rules! t {
+    ($key:expr) => {
+        sen_i18n::_rust_i18n_translate(&*sen_i18n::locale(), $key)
+    };
+    ($key:expr, $($name:ident = $val:expr),+ $(,)?) => {
+        {
+            let mut s = sen_i18n::_rust_i18n_translate(&*sen_i18n::locale(), $key).into_owned();
+            $(
+                s = s.replace(concat!("%{", stringify!($name), "}"), &format!("{}", $val));
+            )+
+            std::borrow::Cow::<'static, str>::Owned(s)
+        }
+    };
+}
+pub(crate) use t;
 
 // Re-export core types for convenience within this crate
 // pub(crate) use sen_core::config_crypto;
@@ -56,7 +68,7 @@ fn main() -> Result<(), eframe::Error> {
     let settings = sen_core::settings::Settings::load();
 
     // Set the UI language from saved settings
-    rust_i18n::set_locale(&settings.language);
+    sen_i18n::set_locale(&settings.language);
 
     let mut args = std::env::args();
     let _cmd = args.next(); // Skip executable path

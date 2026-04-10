@@ -3,7 +3,7 @@ use crate::crypto::{decrypt_bytes, encrypt_bytes};
 use crate::theme::ThemeColorsExt;
 use crate::EditorApp;
 use eframe::egui;
-use rust_i18n::t;
+
 use std::path::Path;
 
 impl EditorApp {
