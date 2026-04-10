@@ -2281,7 +2281,7 @@ if ui
                                         &mut theme.colors.widget_padding_x,
                                         4.0,
                                         ref_colors.widget_padding_x,
-                                        0.0..=40.0,
+                                        0.0..=24.0,
                                         0.5,
                                         ui,
                                     ) {
@@ -2292,7 +2292,7 @@ if ui
                                         &mut theme.colors.widget_padding_y,
                                         2.0,
                                         ref_colors.widget_padding_y,
-                                        0.0..=40.0,
+                                        0.0..=12.0,
                                         0.5,
                                         ui,
                                     ) {
