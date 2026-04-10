@@ -58,12 +58,15 @@ The Android version will intentionally feature a streamlined and more constraine
 *   **Save / Save As**: Saving documents securely back to the device storage.
 *   **Password & Keyfile Management**: Interfaces to input encryption passwords or select keyfiles.
 *   **Core Text Editor**: The primary workspace for reading and editing text.
+*   **Custom Themes**: The Android app will fully support customizable themes like the desktop version, ensuring personal aesthetics are maintained natively.
 *   **Basic Settings**: Minimal settings required for app functionality, such as language/localization toggles.
 
 **Excluded Features:**
-*   **Custom Theme Editor**: The complex color picking and theme generation tools will be removed. The app will strictly use a polished, pre-defined light/dark scheme.
 *   **Advanced Font Customization**: Options to load external fonts or manually adjust all typography sizes will be omitted. Desktop-centric font rendering tools will be replaced with standard system typography.
 *   **Complex Debug/Developer Panels**: The desktop debug/log UI will be hidden or removed for the end-user release.
+
+**UI Strategy (The 'Easiest Way Possible' Approach):**
+Rather than building a massively abstracted shared UI layer that bloats the core, `sen-android` will implement its own distinct lightweight Egui interfaces that directly call `sen-core` business logic. It will reuse the existing SVG icons, logos, and app icons from the desktop app to ensure visual consistency while avoiding layout abstraction hell.
 
 ## 5. Permissions & AndroidManifest.xml
 
