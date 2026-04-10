@@ -13,7 +13,8 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Logo & App Icon**: Create a new professional logo for SEN and replace the current application icon.
 - [ ] **Action-Bar Icon Refresh**: Replace current temporary icons with custom-made icons.
 - [ ] **Auto-Updater**: Implement an update check system (leveraging GitHub Releases) that is disabled by default. Consider supporting full automatic updates with binary replacement to streamline the update process for users.
-- [ ] **Cargo Workspace Refactoring**: Consider refactoring the project into a [workspace](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html) to better support future platforms like Android, allowing shared logic between desktop and mobile versions.
+- [x] **Cargo Workspace Refactoring**: Consider refactoring the project into a [workspace](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html) to better support future platforms like Android, allowing shared logic between desktop and mobile versions.
+- [ ] **I18n Synchronization Script**: Create a `/scripts` directory containing helpful scripts. The first script (which can be written in Rust or TypeScript/Bun.sh) should compare `en.yml` against other translation files, identify missing keys, and automatically add them. The script should use an AI/LLM API to translate the missing sentences properly into the target languages.
 
 ---
 
