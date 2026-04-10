@@ -348,7 +348,7 @@ impl Default for Settings {
             auto_backup_enabled: false,
             screen_capture_protection: true,
             show_line_numbers: false,
-            show_file_tree: true,
+            show_file_tree: false,
             tree_style_file_tree: false,
             show_whitespace: false,
             tab_size: 4,
