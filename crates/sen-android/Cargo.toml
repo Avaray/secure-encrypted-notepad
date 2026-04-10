@@ -1,0 +1,32 @@
+[package]
+name = "sen-android"
+version = "0.1.0"
+edition = "2021"
+authors = ["Dawid Wasowski"]
+description = "Android target for Secure Encrypted Notepad"
+license = "MIT"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[package.metadata.android]
+apk_name = "sen"
+
+[dependencies]
+# Core library
+sen-core = { path = "../sen-core" }
+
+# GUI Framework
+eframe = { workspace = true, features = ["android-game-activity"] }
+egui = { workspace = true }
+egui_extras = { workspace = true }
+
+# SVG support
+resvg = { workspace = true }
+usvg = { workspace = true }
+tiny-skia = { workspace = true }
+
+# Native Android
+android-activity = { version = "0.6.0", features = ["game-activity"] }
+jni = "0.21"

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.sen.android">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@android:drawable/sym_def_app_icon"
+        android:label="SEN Mobile"
+        android:theme="@style/Theme.AppCompat.NoActionBar">
+        
+        <!-- Native Activity wrapping our compiled Rust `.so` library -->
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:exported="true">
+            
+            <!-- Tells Android which library to load upon running -->
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="sen_android" />
+                
+            <!-- Important: ensures app handles its own soft keyboard popping -->
+            <meta-data 
+                android:name="android.app.func_name" 
+                android:value="android_main" />
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

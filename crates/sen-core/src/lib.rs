@@ -31,3 +31,4 @@ pub mod crypto;
 pub mod history;
 pub mod settings;
 pub mod theme;
+pub mod fs;

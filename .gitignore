@@ -1,6 +1,12 @@
 /target
 debug*
 tmp*
-*.py
-*.js
-*.ts
+/*.py
+/*.js
+/*.ts
+
+# IDE settings
+.vscode/
+.idea/
+*.swp
+*.bak

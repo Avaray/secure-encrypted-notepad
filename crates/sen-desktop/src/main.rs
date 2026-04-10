@@ -48,6 +48,7 @@ mod icons;
 mod single_instance;
 mod theme;
 mod theme_ext;
+mod desktop_fs;
 
 // Module declarations for app
 mod app;

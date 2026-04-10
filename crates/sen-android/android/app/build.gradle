@@ -1,0 +1,67 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.sen.android'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.sen.android"
+        minSdk 26 // For newer SAF APIs
+        targetSdk 34
+        versionCode 1
+        versionName "0.1.0"
+        
+        // This stops android from complaining about multiple stdlibs if any
+        packagingOptions {
+            jniLibs {
+                useLegacyPackaging true
+            }
+        }
+    }
+
+    // Tell Android Studio where to find the .so files constructed by cargo-ndk
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.10.1'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation "androidx.games:games-activity:2.0.2"
+}
+
+// Simple logic to drive cargo-ndk since it's already installed globally
+tasks.register("cargoBuild", Exec) {
+    workingDir "../../"
+    // Output directory where Android expects the jniLibs
+    def outDir = "${projectDir}/src/main/jniLibs"
+    commandLine "cargo", "ndk", "-t", "aarch64-linux-android", "-t", "x86_64-linux-android", "-o", outDir, "build", "--release", "-p", "sen-android"
+}
+
+tasks.configureEach { task ->
+    if (task.name == 'preBuild') {
+        task.finalizedBy 'cargoBuild'
+    }
+}

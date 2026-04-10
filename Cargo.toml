@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/sen-core", "crates/sen-desktop", "crates/sen-i18n"]
+members = ["crates/sen-core", "crates/sen-desktop", "crates/sen-i18n", "crates/sen-android"]
 resolver = "2"
 
 # ============================================================================

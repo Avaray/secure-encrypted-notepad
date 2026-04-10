@@ -1,0 +1,17 @@
+# Gradle artifacts
+.gradle/
+build/
+app/build/
+**/build/
+
+# Android Studio settings
+.idea/
+*.iml
+captures/
+
+# Local configuration (machine-specific SDK paths)
+local.properties
+
+# NDK build artifacts
+.cxx/
+jniLibs/
