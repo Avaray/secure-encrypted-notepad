@@ -119,15 +119,15 @@ jobs:
             pkg-config
 
       - name: Build Release Binary
-        run: cargo build --release --target ${{ matrix.target }}
+        run: cargo build --profile release-final --target ${{ matrix.target }}
 
       - name: Rename Binary
-        run: mv target/${{ matrix.target }}/release/${{ matrix.binary }} target/${{ matrix.target }}/release/${{ matrix.artifact }}
+        run: mv target/${{ matrix.target }}/release-final/${{ matrix.binary }} target/${{ matrix.target }}/release-final/${{ matrix.artifact }}
         shell: bash
 
       - name: Generate Checksum
         run: |
-          cd target/${{ matrix.target }}/release
+          cd target/${{ matrix.target }}/release-final
           sha256sum ${{ matrix.artifact }} > ${{ matrix.artifact }}.sha256
         shell: bash
 
@@ -136,8 +136,8 @@ jobs:
         with:
           name: binaries-${{ matrix.target }}
           path: |
-            target/${{ matrix.target }}/release/${{ matrix.artifact }}
-            target/${{ matrix.target }}/release/${{ matrix.artifact }}.sha256
+            target/${{ matrix.target }}/release-final/${{ matrix.artifact }}
+            target/${{ matrix.target }}/release-final/${{ matrix.artifact }}.sha256
           retention-days: 1
 
   create-release:
