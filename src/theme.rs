@@ -579,11 +579,15 @@ impl Theme {
 
         // --- Apply Global Style Additions ---
         let mut style = (*ctx.style()).clone();
+        let default_style = egui::Style::default();
 
         if let Some(r) = colors.window_rounding {
             let radius = egui::CornerRadius::same(r as u8);
             style.visuals.window_corner_radius = radius;
             style.visuals.menu_corner_radius = radius;
+        } else {
+            style.visuals.window_corner_radius = default_style.visuals.window_corner_radius;
+            style.visuals.menu_corner_radius = default_style.visuals.menu_corner_radius;
         }
 
         // Unified widget rounding (applies to buttons, inputs, checkboxes, etc.)
@@ -594,6 +598,12 @@ impl Theme {
             style.visuals.widgets.hovered.corner_radius = radius;
             style.visuals.widgets.active.corner_radius = radius;
             style.visuals.widgets.open.corner_radius = radius;
+        } else {
+            style.visuals.widgets.noninteractive.corner_radius = default_style.visuals.widgets.noninteractive.corner_radius;
+            style.visuals.widgets.inactive.corner_radius = default_style.visuals.widgets.inactive.corner_radius;
+            style.visuals.widgets.hovered.corner_radius = default_style.visuals.widgets.hovered.corner_radius;
+            style.visuals.widgets.active.corner_radius = default_style.visuals.widgets.active.corner_radius;
+            style.visuals.widgets.open.corner_radius = default_style.visuals.widgets.open.corner_radius;
         }
 
         // Unified widget border width
@@ -601,17 +611,26 @@ impl Theme {
             style.visuals.widgets.inactive.bg_stroke.width = w;
             style.visuals.widgets.hovered.bg_stroke.width = w;
             style.visuals.widgets.active.bg_stroke.width = w;
+        } else {
+            style.visuals.widgets.inactive.bg_stroke.width = default_style.visuals.widgets.inactive.bg_stroke.width;
+            style.visuals.widgets.hovered.bg_stroke.width = default_style.visuals.widgets.hovered.bg_stroke.width;
+            style.visuals.widgets.active.bg_stroke.width = default_style.visuals.widgets.active.bg_stroke.width;
         }
 
         // Unified widget border color (idle state)
         if let Some(c) = colors.widget_border_color {
             let stroke_color = colors.to_egui_color32(c);
             style.visuals.widgets.inactive.bg_stroke.color = stroke_color;
+        } else {
+            let visuals_def = if self.color_scheme == ColorScheme::Light { egui::Visuals::light() } else { egui::Visuals::dark() };
+            style.visuals.widgets.inactive.bg_stroke.color = visuals_def.widgets.inactive.bg_stroke.color;
         }
 
         // Unified widget padding
         if let Some(x) = colors.widget_padding_x {
             style.spacing.button_padding.x = x;
+        } else {
+            style.spacing.button_padding.x = default_style.spacing.button_padding.x;
         }
         if let Some(y) = colors.widget_padding_y {
             style.spacing.button_padding.y = y;
@@ -619,11 +638,16 @@ impl Theme {
             // Setting it to 0.0 forces them to use (text_height + 2 * padding.y),
             // making them consistent with buttons.
             style.spacing.interact_size.y = 0.0;
+        } else {
+            style.spacing.button_padding.y = default_style.spacing.button_padding.y;
+            style.spacing.interact_size.y = default_style.spacing.interact_size.y;
         }
 
         // Separator width — only affects noninteractive bg_stroke width
         if let Some(w) = colors.separator_width {
             style.visuals.widgets.noninteractive.bg_stroke.width = w;
+        } else {
+            style.visuals.widgets.noninteractive.bg_stroke.width = default_style.visuals.widgets.noninteractive.bg_stroke.width;
         }
 
         // Increase checkbox (icon) size - adjusted to stay consistent with widget height
