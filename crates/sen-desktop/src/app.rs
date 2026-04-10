@@ -678,7 +678,7 @@ impl EditorApp {
 
                     if self.settings.stealth_mode {
                         ui.label(
-                            egui::RichText::new("Stealth").color(self.current_theme.colors.success_color())
+                            egui::RichText::new(rust_i18n::t!("app.status_stealth")).color(self.current_theme.colors.success_color())
                         );
                         ui.separator();
                     }

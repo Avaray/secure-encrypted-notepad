@@ -2,6 +2,7 @@ _version: 1
 app.close_panel: "Close Panel"
 app.unsaved_document: "Unsaved document"
 app.no_keyfile: "No keyfile"
+app.status_stealth: "Stealth"
 
 # ═══════════════════════════════════════
 # TOOLBAR
