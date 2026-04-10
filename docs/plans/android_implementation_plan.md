@@ -10,6 +10,14 @@ Thanks to the workspace refactoring, we can create a dedicated crate for the And
 
 *   **New Crate**: Create a new crate named `sen-android` within the workspace (`crates/sen-android`).
 *   **Shared Logic**: Ensure `sen-core` (or the unified logic crate) is heavily utilized by `sen-android`. Egui UI definitions and state management should remain platform-agnostic as much as possible.
+*   **Storage Abstraction Layer**: To keep our core clean and prevent JNI/native logic from bleeding into it, we will define a `FileSystem` trait in `sen-core`:
+    ```rust
+    sen-core
+      └── trait FileSystem { open, save, ... }
+            ├── DesktopFs  (std::fs)
+            └── AndroidFs  (JNI/SAF)
+    ```
+    This way, `sen-android` and `sen-desktop` simply provide their platform-specific implementation.
 
 ## 2. Tooling & Prerequisites
 
@@ -20,14 +28,17 @@ To compile Rust code for Android, we will need to set up the appropriate cross-c
     *   `armv7-linux-androideabi` (Older 32-bit ARM, if supported)
     *   `x86_64-linux-android` (For emulators)
 *   **NDK and SDK**: Install the Android SDK and NDK via Android Studio. Set the `ANDROID_SDK_ROOT` and `ANDROID_NDK_ROOT` environment variables.
-*   **Build Tools**: Use `cargo-apk` or `xbuild` (cross-platform build tool) to generate the APK and Android App Bundle (.aab). Google Play requires the `.aab` format for new submissions.
+*   **Build Tools**: Use `cargo-ndk` to generate the APK and Android App Bundle (.aab), as it is newer and better supported than `cargo-apk`. Google Play requires the `.aab` format for new submissions.
 *   **Windowing/Integration**: Use `android-activity` backend (now standard in modern `winit`/`eframe`) to handle Android application lifecycles natively in Rust.
 
 ## 3. Platform-Specific Adjustments
 
 ### 3.1. File System & Storage (Scoped Storage)
 Android 11+ enforces Scoped Storage. Direct filesystem access using standard `std::fs` to arbitrary paths is not allowed.
-*   **Solution**: We must use Android's Storage Access Framework (SAF). We will need to write a JNI bridge (using the `jni` crate) to call native Android intents for `ACTION_OPEN_DOCUMENT` and `ACTION_CREATE_DOCUMENT`.
+*   **Solution**: We must use Android's Storage Access Framework (SAF). Writing a custom JNI bridge to SAF from scratch is tedious and error-prone. Instead, we should explore using:
+    *   **`android-document-picker`** or an abstraction at the `winit`/`eframe` level.
+    *   `android-activity` 0.6+, which might support `ACTION_OPEN_DOCUMENT` and handle intents without manual JNI.
+    *   Alternatively, the `jni` crate combined with ready-made wrappers from the `ndk` crate instead of starting from zero.
 *   **File Handling**: The returned URIs will need to be resolved to file streams or temporarily copied into the app's cache directory to be manipulated by Rust.
 
 ### 3.2. Soft Keyboard Handling
@@ -70,10 +81,10 @@ For a successful release over Google Play, the following steps are mandatory:
 
 ## 7. Implementation Phases
 
-1.  **Phase 1: Proof of Concept**: Initialize `sen-android`, configure `cargo-apk`, and get a basic Egui window rendering on an Android emulator.
-2.  **Phase 2: JNI Storage Implementation**: Build the Rust-to-Java bridges required to open and save files using Android's native file picker.
-3.  **Phase 3: Mobile UI Polish**: Implement the mobile layout adjustments, dynamic font scaling, and soft keyboard integration.
-4.  **Phase 4: Feature Streamlining**: Strip out the desktop-specific settings and enforce the simplified Android-centric user interface.
-5.  **Phase 5: Build & Release Pipeline**: Update GitHub Actions to automatically compile `.aab` files using the Android NDK and sign them for release.
+1.  **Phase 1: Proof of Concept**: Initialize `sen-android`, configure `cargo-ndk`, and get a basic Egui window rendering on an Android emulator.
+2.  **Phase 2: Storage Abstraction & Integration**: Implement the `FileSystem` trait for desktop and Android, leveraging `android-activity`/SAF intents for the latter.
+3.  **Phase 3: Feature Streamlining**: Strip out the desktop-specific settings and enforce the simplified Android-centric user interface. Doing this first reduces the surface area that needs styling making the subsequent step simpler.
+4.  **Phase 4: Mobile UI Polish**: Implement the mobile layout adjustments, dynamic font scaling, and soft keyboard integration.
+5.  **Phase 5: Build & Release Pipeline**: Update GitHub Actions to automatically compile `.aab` files using the Android NDK and sign them for release. Properly configure NDK toolchain caching (e.g., via `actions/cache`) to eliminate minutes of setup overhead on every CI build.
 
 This plan sets the foundation for standardizing SEN across desktop and Android without compromising its foundational security and performance elements.
