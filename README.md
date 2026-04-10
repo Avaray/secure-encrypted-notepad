@@ -8,52 +8,12 @@
 
 ---
 
-## ✨ Core Features
-
-### 🔒 Security
-
-- **Keyfile-Only Auth:** No passwords to remember or crack. Any file (image, binary, text) can act as your keyfile.
-- **XChaCha20-Poly1305:** State-of-the-art authenticated encryption.
-- **Argon2id KDF & SHA-256:** Robust key derivation and hashing.
-- **Encrypted Global Configuration:** Your settings and global keyfile paths are securely encrypted via OS keychain integration.
-- **Zero Memory Leaks:** Cryptographic operations use `zeroize` to wipe secrets from RAM.
-
-### 📝 Seamless Editing
-
-- **Modern Interface:** Distraction-free text editing with line numbers, custom font sizes, and word wrap.
-- **Auto-Save & Embedded History:** The editor automatically saves your progress. Every `.sen` file contains its own embedded version history (up to 100 snapshots), allowing you to restore or review older versions of the text.
-- **Search & Replace:** Built-in powerful text search and replace capabilities.
-- **Batch Converter:** Easily encrypt or decrypt multiple files at once.
-
-### 🎨 Fully Customizable
-
-- **Theme Editor:** Built-in GUI tool to create, edit, and apply custom color themes on the fly.
-- **File Tree & Logs:** Integrated file browser and debug log console for power users.
-
----
-
 ## 📚 Documentation
 
-For more detailed information, check out the following guides in the `/docs` directory:
+For detailed information, check out the following guides in the `/docs` directory:
 - [Encryption Architecture](docs/encryption_architecture.md) – Technical details on how your data is protected.
 - [Development Guide](docs/development.md) – Instructions on how to set up the environment and build the project.
 - [Project TODO](docs/todo.md) – A list of planned features and known issues.
-
----
-
-## 🚀 How It Works
-
-SEN encrypts everything into a single `.sen` file. The file format securely bundles your text and your version history:
-
-```text
-[4-byte Magic: "SEN1"] + [32-byte Random Salt] + [Encrypted Payload (Nonce + Ciphertext + Tag)]
-```
-
-Inside the **Encrypted Payload** (which can only be decrypted with the correct keyfile), SEN stores:
-1.  **32-byte Keyfile Hash**: Used for verification before revealing the content.
-2.  **Composite Document String**: Your text content followed by the `\n<>\n` separator and JSON-serialized history metadata.
-
-To read or write a document, you must provide the exact same keyfile used to create it. You can set a **Global Keyfile** in the settings so you don't have to manually load it every time.
 
 ---
 
