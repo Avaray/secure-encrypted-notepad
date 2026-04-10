@@ -13,4 +13,4 @@ This document lists all features, ideas, or proposals that are **explicitly not 
 - **Syntax Highlighting**: The focus remains strictly on plaintext editing, not IDE capabilities.
 - **Rich Text / Markdown**: Rendered text formatting conflicts with the minimalist text design.
 - **File Icons**: The file explorer will maintain a clean, icon-free layout.
-- **Diff Viewer**: Complex file comparison tools fall outside the core text editor scope.
+- **Diff Viewer**: Built-in text comparison functionality is beyond the project's minimalist scope.
