@@ -471,7 +471,7 @@ impl EditorApp {
                 + ui.style().spacing.scroll.bar_width
                 + ui.style().spacing.scroll.bar_inner_margin;
             // Added more right margin so text doesn't touch the edge (Editor Comfort Phase 2)
-            let text_right_padding = 120.0;
+            let text_right_padding = 24.0;
             let viewport_width =
                 (text_area_rect.width() - scrollbar_outer_margin - text_right_padding).max(100.0);
 
