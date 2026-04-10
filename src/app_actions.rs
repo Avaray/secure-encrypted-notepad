@@ -1,5 +1,5 @@
 use crate::app_state::PendingAction;
-use crate::crypto::{decrypt_file, encrypt_file, generate_keyfile};
+use crate::crypto::{encrypt_file, generate_keyfile};
 use crate::history::DocumentWithHistory;
 use crate::EditorApp;
 use rust_i18n::t;
@@ -100,38 +100,49 @@ impl EditorApp {
             }
         }
 
-        // Check if it's an encrypted SEN file
+        let mut is_stealth = false;
         if !crate::crypto::is_sen_file(&path) {
-            match std::fs::read(&path) {
-                Ok(buffer) => {
-                    let content_str = String::from_utf8_lossy(&buffer).to_string();
-                    self.document = DocumentWithHistory::new_with_limit(self.settings.max_history_length);
-                    self.document.current_content = content_str;
-                    self.current_file_path = Some(path.clone());
-                    self.is_modified = false;
-                    
-                    if self.show_search_panel {
-                        self.perform_search();
+            // Check for stealth compatibility first
+            if let Some(keyfile) = &self.keyfile_path {
+                if let Ok(key_hash) = crate::crypto::get_keyfile_hash(keyfile) {
+                    if let Ok(true) = crate::crypto::check_stealth_compatibility(&key_hash, &path) {
+                        is_stealth = true;
                     }
-                    self.replace_undo_stack.clear();
-                    self.loaded_history_index = None;
-                    self.show_autosave_restore = false;
-
-                    let masked_path = self.mask_directory_path(&path);
-                    self.status_message = t!("actions.status_opened_plaintext").to_string();
-                    self.log_info(t!("actions.log_opened_plaintext", file = masked_path));
-                    
-                    self.commit_history_state();
-                    return;
                 }
-                Err(e) => {
-                    let msg = format!("Failed to read file: {}", e);
-                    self.status_message = msg.clone();
-                    self.log_error(msg);
-                    if exit_on_cancel {
-                        std::process::exit(0);
+            }
+
+            if !is_stealth {
+                match std::fs::read(&path) {
+                    Ok(buffer) => {
+                        let content_str = String::from_utf8_lossy(&buffer).to_string();
+                        self.document = DocumentWithHistory::new_with_limit(self.settings.max_history_length);
+                        self.document.current_content = content_str;
+                        self.current_file_path = Some(path.clone());
+                        self.is_modified = false;
+                        
+                        if self.show_search_panel {
+                            self.perform_search();
+                        }
+                        self.replace_undo_stack.clear();
+                        self.loaded_history_index = None;
+                        self.show_autosave_restore = false;
+
+                        let masked_path = self.mask_directory_path(&path);
+                        self.status_message = t!("actions.status_opened_plaintext").to_string();
+                        self.log_info(t!("actions.log_opened_plaintext", file = masked_path));
+                        
+                        self.commit_history_state();
+                        return;
                     }
-                    return;
+                    Err(e) => {
+                        let msg = format!("Failed to read file: {}", e);
+                        self.status_message = msg.clone();
+                        self.log_error(msg);
+                        if exit_on_cancel {
+                            std::process::exit(0);
+                        }
+                        return;
+                    }
                 }
             }
         }
@@ -169,8 +180,16 @@ impl EditorApp {
 
         let mut current_keyfile = keyfile;
         loop {
-            match decrypt_file(&current_keyfile, &path) {
-                Ok(content) => {
+            let decrypt_result = if is_stealth || (!crate::crypto::is_sen_file(&path) && self.settings.stealth_mode) {
+                // If it was detected as stealth, or if it failed standard headers and stealth mode is aggressively on
+                crate::crypto::decrypt_stealth(&current_keyfile, &path)
+            } else {
+                crate::crypto::decrypt_bytes(&current_keyfile, &path)
+            };
+
+            match decrypt_result {
+                Ok(content_bytes) => {
+                    let content = String::from_utf8_lossy(&content_bytes).to_string();
                     self.keyfile_path = Some(current_keyfile);
                     self.document = DocumentWithHistory::from_file_content(&content);
                     self.current_file_path = Some(path.clone());
@@ -276,7 +295,7 @@ impl EditorApp {
         }
 
         if let Some(path) = self.current_file_path.clone() {
-            if path.extension().and_then(|e| e.to_str()).unwrap_or("") == "sen" {
+            if self.settings.stealth_mode || path.extension().and_then(|e| e.to_str()).unwrap_or("") == "sen" {
                 self.perform_save(path);
             } else {
                 self.save_file_as();
@@ -295,19 +314,31 @@ impl EditorApp {
         }
 
         let default_name = if let Some(path) = &self.current_file_path {
-            if path.extension().and_then(|e| e.to_str()).unwrap_or("") == "sen" {
-                path.file_name().unwrap_or_default().to_string_lossy().into_owned()
+            if self.settings.stealth_mode {
+                let filename = path.file_stem().unwrap_or_default().to_string_lossy();
+                if path.extension().is_none() || path.extension().unwrap() == "sen" {
+                    filename.to_string()
+                } else {
+                    path.file_name().unwrap_or_default().to_string_lossy().to_string()
+                }
             } else {
-                let file_stem = path.file_stem().unwrap_or_default().to_string_lossy();
-                format!("{}.sen", file_stem)
+                if path.extension().and_then(|e| e.to_str()).unwrap_or("") == "sen" {
+                    path.file_name().unwrap_or_default().to_string_lossy().into_owned()
+                } else {
+                    let file_stem = path.file_stem().unwrap_or_default().to_string_lossy();
+                    format!("{}.sen", file_stem)
+                }
             }
         } else {
-            "document.sen".to_string()
+            if self.settings.stealth_mode { "document".to_string() } else { "document.sen".to_string() }
         };
 
         let mut dialog = rfd::FileDialog::new()
-            .add_filter(t!("actions.filter_sen"), &["sen"])
             .set_file_name(&default_name);
+
+        if !self.settings.stealth_mode {
+            dialog = dialog.add_filter(t!("actions.filter_sen"), &["sen"]);
+        }
 
         // If a directory is open in the file tree, use it as default
         if let Some(dir) = &self.file_tree_dir {
@@ -339,7 +370,13 @@ impl EditorApp {
 
         let file_content = self.document.to_file_content();
 
-        match encrypt_file(&file_content, &keyfile, &path) {
+        let save_result = if self.settings.stealth_mode {
+            crate::crypto::encrypt_stealth(file_content.as_bytes(), &keyfile, &path)
+        } else {
+            encrypt_file(&file_content, &keyfile, &path)
+        };
+
+        match save_result {
             Ok(_) => {
                 self.current_file_path = Some(path.clone());
                 self.is_modified = false;

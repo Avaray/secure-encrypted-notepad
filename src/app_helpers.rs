@@ -369,15 +369,19 @@ impl EditorApp {
                                         depth: 0,
                                     });
                                 } else if path.is_file() {
+                                    let mut is_sen = false;
                                     if let Some(ext) = path.extension() {
                                         if ext == "sen" {
-                                            files.push(FileTreeEntry {
-                                                path: path.clone(),
-                                                is_dir: false,
-                                                is_expanded: false,
-                                                depth: 0,
-                                            });
+                                            is_sen = true;
                                         }
+                                    }
+                                    if is_sen || self.settings.stealth_scan {
+                                        files.push(FileTreeEntry {
+                                            path: path.clone(),
+                                            is_dir: false,
+                                            is_expanded: false,
+                                            depth: 0,
+                                        });
                                     }
                                 }
                             }
@@ -458,10 +462,14 @@ impl EditorApp {
                 if path.is_dir() {
                     child_folders.push(path);
                 } else if path.is_file() {
+                    let mut is_sen = false;
                     if let Some(ext) = path.extension() {
                         if ext == "sen" {
-                            child_files.push(path);
+                            is_sen = true;
                         }
+                    }
+                    if is_sen || self.settings.stealth_scan {
+                        child_files.push(path);
                     }
                 }
             }
@@ -533,12 +541,24 @@ impl EditorApp {
         let mut paths_to_check = Vec::new();
         for entry in &self.file_tree_entries {
             if !entry.is_dir {
-                if entry.path.extension().and_then(|s| s.to_str()) == Some("sen") {
-                    if !self.file_access_cache.contains_key(&entry.path)
-                        && !self.pending_access_checks.contains(&entry.path)
-                    {
-                        paths_to_check.push(entry.path.clone());
+                let is_sen = entry.path.extension().and_then(|s| s.to_str()) == Some("sen");
+
+                if !self.file_access_cache.contains_key(&entry.path)
+                    && !self.pending_access_checks.contains(&entry.path)
+                {
+                    if is_sen {
+                        paths_to_check.push((entry.path.clone(), true));
                         self.pending_access_checks.insert(entry.path.clone());
+                    } else if self.settings.stealth_scan {
+                        // Skip large files for stealth checking
+                        if let Ok(metadata) = std::fs::metadata(&entry.path) {
+                            if metadata.len() < 50 * 1024 * 1024 {
+                                paths_to_check.push((entry.path.clone(), false));
+                                self.pending_access_checks.insert(entry.path.clone());
+                            } else {
+                                self.file_access_cache.insert(entry.path.clone(), KeyStatus::NotSen);
+                            }
+                        }
                     }
                 }
             }
@@ -554,17 +574,22 @@ impl EditorApp {
         let (tx, rx) = std::sync::mpsc::channel();
         self.access_check_receiver = Some(rx);
 
-        // We'll use a thread to check these files one by one.
-        // For very large trees, we might want a pool, but this is simple and doesn't block UI.
         std::thread::spawn(move || {
-            for path in paths_to_check {
-                let status = match crate::crypto::check_key_compatibility(&key_hash, &path) {
-                    Ok(true) => KeyStatus::Decryptable,
-                    Ok(false) => KeyStatus::WrongKey,
-                    Err(e) => match e {
-                        crate::crypto::CryptoError::InvalidMagicNumber => KeyStatus::NotSen,
-                        _ => KeyStatus::WrongKey,
-                    },
+            for (path, is_sen) in paths_to_check {
+                let status = if is_sen {
+                    match crate::crypto::check_key_compatibility(&key_hash, &path) {
+                        Ok(true) => KeyStatus::Decryptable,
+                        Ok(false) => KeyStatus::WrongKey,
+                        Err(e) => match e {
+                            crate::crypto::CryptoError::InvalidMagicNumber => KeyStatus::NotSen,
+                            _ => KeyStatus::WrongKey,
+                        },
+                    }
+                } else {
+                    match crate::crypto::check_stealth_compatibility(&key_hash, &path) {
+                        Ok(true) => KeyStatus::StealthMatch,
+                        _ => KeyStatus::NotSen,
+                    }
                 };
                 let _ = tx.send((path, status));
             }

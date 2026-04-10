@@ -61,6 +61,13 @@ settings.set_backup_dir: "Set Backup Directory"
 settings.screen_capture: "Prevent screen capture"
 settings.screen_capture_tooltip: "Prevents screenshots and screen recordings from capturing this window's content. Requires Windows 10 2004 or later."
 
+# Stealth Mode
+settings.stealth_mode: "Stealth Mode Settings"
+settings.stealth_mode_enable: "Enable Stealth Mode (Save headerless)"
+settings.stealth_mode_tooltip: "When enabled, files are saved without the .sen extension and SEN magic header, making them indistinguishable from random binary noise."
+settings.stealth_scan_enable: "Enable Stealth Mode File Scanning"
+settings.stealth_scan_tooltip: "When enabled, the file tree and batch converter will attempt to trial-decrypt unknown files to identify stealth mode documents."
+
 # Workspace / File Tree
 settings.starting_dir: "Starting directory:"
 settings.not_set: "Not set"

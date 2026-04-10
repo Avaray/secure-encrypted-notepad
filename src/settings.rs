@@ -216,6 +216,13 @@ pub struct Settings {
     #[serde(default)]
     pub toolbar_position: ToolbarPosition,
 
+    /// Stealth mode: save without .sen extension and SEN1 header
+    #[serde(default)]
+    pub stealth_mode: bool,
+    /// Scan for stealth files in file tree
+    #[serde(default)]
+    pub stealth_scan: bool,
+
     /// Text cursor shape
     #[serde(default)]
     pub cursor_shape: CursorShape,
@@ -395,6 +402,8 @@ impl Default for Settings {
             window_pos_y: -1.0,
             toolbar_icon_size: 24.0, // Default 24px icon
             toolbar_position: ToolbarPosition::Top,
+            stealth_mode: false,
+            stealth_scan: false,
             cursor_shape: crate::settings::CursorShape::Bar,
             cursor_blink: true,
             batch_last_extension: String::new(),

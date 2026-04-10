@@ -146,6 +146,118 @@ pub fn encrypt_bytes(
     Ok(())
 }
 
+/// Encrypt in stealth mode: [SALT(32B)][CIPHERTEXT] — no magic header.
+pub fn encrypt_stealth(
+    content_bytes: &[u8],
+    keyfile_path: &Path,
+    output_path: &Path,
+) -> Result<(), CryptoError> {
+    let mut salt = [0u8; SALT_SIZE];
+    rand::rng().fill_bytes(&mut salt);
+
+    let keyfile_hash = hash_keyfile(keyfile_path)?;
+    let secret_key = derive_key_from_keyfile(&keyfile_hash, &salt)?;
+
+    // Same payload: [keyfile_hash(32B)] + [content]
+    let mut payload = Zeroizing::new(Vec::with_capacity(KEYFILE_HASH_SIZE + content_bytes.len()));
+    payload.extend_from_slice(keyfile_hash.as_bytes());
+    payload.extend_from_slice(content_bytes);
+
+    let ciphertext = aead::seal(&secret_key, &payload)?;
+
+    // NO magic header — just salt + ciphertext
+    let mut file_data = Vec::with_capacity(SALT_SIZE + ciphertext.len());
+    file_data.extend_from_slice(&salt);
+    file_data.extend_from_slice(&ciphertext);
+
+    fs::write(output_path, file_data)?;
+    Ok(())
+}
+
+/// Decrypt a stealth file: [SALT(32B)][CIPHERTEXT] — no magic header.
+/// Returns Err if the keyfile doesn't match or data is corrupted.
+pub fn decrypt_stealth(
+    keyfile_path: &Path,
+    encrypted_file_path: &Path,
+) -> Result<Vec<u8>, CryptoError> {
+    let file_data = fs::read(encrypted_file_path)?;
+
+    if file_data.len() < SALT_SIZE + 1 {
+        return Err(CryptoError::InvalidFormat);
+    }
+
+    let salt = &file_data[..SALT_SIZE];
+    let encrypted_data = &file_data[SALT_SIZE..];
+
+    let keyfile_hash = hash_keyfile(keyfile_path)?;
+    let secret_key = derive_key_from_keyfile(&keyfile_hash, salt)?;
+
+    let plaintext_bytes =
+        aead::open(&secret_key, encrypted_data).map_err(|_| CryptoError::DecryptionFailed)?;
+    let plaintext = Zeroizing::new(plaintext_bytes);
+
+    if plaintext.len() < KEYFILE_HASH_SIZE {
+        return Err(CryptoError::InvalidFormat);
+    }
+
+    let stored_hash = &plaintext[..KEYFILE_HASH_SIZE];
+    if keyfile_hash.as_bytes() != stored_hash {
+        return Err(CryptoError::KeyfileError(
+            "Keyfile mismatch".to_string(),
+        ));
+    }
+
+    Ok(plaintext[KEYFILE_HASH_SIZE..].to_vec())
+}
+
+/// Attempt to decrypt a file as stealth format.
+/// Used for background verification in the file tree.
+/// Returns Ok(true) if the file is a valid stealth SEN file decryptable
+/// with the given keyfile hash.
+pub fn check_stealth_compatibility(
+    keyfile_hash: &[u8; 32],
+    file_path: &Path,
+) -> Result<bool, CryptoError> {
+    let file_data = fs::read(file_path)?;
+
+    if file_data.len() < SALT_SIZE + KEYFILE_HASH_SIZE + 16 {
+        return Ok(false); // Too small to be a stealth file
+    }
+
+    // Skip files that start with known magic numbers (SEN1, PNG, ZIP, etc.)
+    // to avoid wasting time on obviously non-stealth files
+    if is_known_format(&file_data[..4]) {
+        return Ok(false);
+    }
+
+    let salt = &file_data[..SALT_SIZE];
+    let encrypted_data = &file_data[SALT_SIZE..];
+
+    let k_hash = KeyfileHash::from_slice(keyfile_hash);
+    let secret_key = derive_key_from_keyfile(&k_hash, salt)?;
+
+    match aead::open(&secret_key, encrypted_data) {
+        Ok(plaintext) => {
+            if plaintext.len() < KEYFILE_HASH_SIZE {
+                return Ok(false);
+            }
+            Ok(&plaintext[..KEYFILE_HASH_SIZE] == keyfile_hash)
+        }
+        Err(_) => Ok(false), // Not a stealth file or wrong key
+    }
+}
+
+/// Quick reject: skip files that start with known magic numbers
+fn is_known_format(header: &[u8]) -> bool {
+    if header.len() < 4 { return false; }
+    matches!(
+        &header[..4],
+        b"SEN1" | b"\x89PNG" | b"PK\x03\x04" | b"%PDF"
+        | b"GIF8" | b"\xFF\xD8\xFF\xE0" | b"RIFF"
+        | b"\x7FELF" | b"MZ\x90\x00"
+    )
+}
+
 /// Heuristic: Check if a buffer looks like a text file.
 /// Standard check: looks for NULL bytes in the first 8KB.
 pub fn is_buffer_text(data: &[u8]) -> bool {
@@ -277,15 +389,7 @@ pub fn decrypt_bytes(
 
     Ok(plaintext[KEYFILE_HASH_SIZE..].to_vec())
 }
-
-/// FILE DECRYPTION (String wrapper)
-pub fn decrypt_file(
-    keyfile_path: &Path,
-    encrypted_file_path: &Path,
-) -> Result<String, CryptoError> {
-    let bytes = decrypt_bytes(keyfile_path, encrypted_file_path)?;
-    String::from_utf8(bytes).map_err(|_| CryptoError::InvalidFormat)
-}
+// Removed decrypt_file wrapper
 
 #[cfg(test)]
 mod tests {
@@ -320,7 +424,8 @@ mod tests {
 
         encrypt_file(content, &keyfile, &output).expect("Encryption should succeed");
 
-        let decrypted = decrypt_file(&keyfile, &output).expect("Decryption should succeed");
+        let decrypted_bytes = decrypt_bytes(&keyfile, &output).expect("Decryption should succeed");
+        let decrypted = String::from_utf8(decrypted_bytes).unwrap();
         assert_eq!(decrypted, content);
 
         // Verify SEN1 magic
@@ -351,7 +456,7 @@ mod tests {
 
         encrypt_file("Secret data", &keyfile1, &output).unwrap();
 
-        let result = decrypt_file(&keyfile2, &output);
+        let result = decrypt_bytes(&keyfile2, &output);
         assert!(result.is_err(), "Decryption with wrong keyfile should fail");
 
         // Cleanup
@@ -372,7 +477,7 @@ mod tests {
         data[0..4].copy_from_slice(b"FAKE");
         fs::write(&output, &data).unwrap();
 
-        let result = decrypt_file(&keyfile, &output);
+        let result = decrypt_bytes(&keyfile, &output);
         assert!(matches!(result, Err(CryptoError::InvalidMagicNumber)));
 
         // Cleanup
@@ -392,7 +497,7 @@ mod tests {
         data[0..4].copy_from_slice(MAGIC_NUMBER);
         fs::write(&output, &data).unwrap();
 
-        let result = decrypt_file(&keyfile, &output);
+        let result = decrypt_bytes(&keyfile, &output);
         assert!(result.is_err(), "Truncated file should fail");
 
         // Cleanup
@@ -422,7 +527,8 @@ mod tests {
         let output = dir.join("empty_content.sen");
 
         encrypt_file("", &keyfile, &output).expect("Encrypting empty content should succeed");
-        let decrypted = decrypt_file(&keyfile, &output).expect("Decrypting should succeed");
+        let decrypted_bytes = decrypt_bytes(&keyfile, &output).expect("Decrypting should succeed");
+        let decrypted = String::from_utf8(decrypted_bytes).unwrap();
         assert_eq!(decrypted, "");
 
         // Cleanup
@@ -439,8 +545,35 @@ mod tests {
         let content = "A".repeat(100_000); // 100KB content
 
         encrypt_file(&content, &keyfile, &output).unwrap();
-        let decrypted = decrypt_file(&keyfile, &output).unwrap();
+        let decrypted_bytes = decrypt_bytes(&keyfile, &output).unwrap();
+        let decrypted = String::from_utf8(decrypted_bytes).unwrap();
         assert_eq!(decrypted, content);
+
+        // Cleanup
+        let _ = fs::remove_file(&output);
+        let _ = fs::remove_file(&keyfile);
+    }
+
+    #[test]
+    fn test_stealth_roundtrip() {
+        let keyfile = create_random_keyfile("test_stealth.key");
+        let dir = std::env::temp_dir().join("sen_tests");
+        fs::create_dir_all(&dir).unwrap();
+        let output = dir.join("stealth_test");
+        let content = b"Stealth mode content!";
+
+        encrypt_stealth(content, &keyfile, &output).unwrap();
+        
+        // Not a standard SEN file!
+        assert!(!is_sen_file(&output));
+
+        // Decrypt successfully
+        let decrypted = decrypt_stealth(&keyfile, &output).unwrap();
+        assert_eq!(decrypted, content);
+
+        // Check compatibility
+        let hash = hash_keyfile(&keyfile).unwrap();
+        assert!(check_stealth_compatibility(hash.as_bytes(), &output).unwrap());
 
         // Cleanup
         let _ = fs::remove_file(&output);

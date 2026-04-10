@@ -267,6 +267,27 @@ let _ = self.settings.save();
 self.refresh_file_tree();
 }
 
+ui.add_space(8.0);
+ui.label(egui::RichText::new(rust_i18n::t!("settings.stealth_mode")).strong());
+if ui
+.checkbox(&mut self.settings.stealth_mode, rust_i18n::t!("settings.stealth_mode_enable"))
+.on_hover_text(rust_i18n::t!("settings.stealth_mode_tooltip"))
+.changed()
+{
+let _ = self.settings.save();
+}
+
+if ui
+.checkbox(&mut self.settings.stealth_scan, rust_i18n::t!("settings.stealth_scan_enable"))
+.on_hover_text(rust_i18n::t!("settings.stealth_scan_tooltip"))
+.changed()
+{
+let _ = self.settings.save();
+self.refresh_file_tree();
+}
+ui.add_space(8.0);
+
+
 if ui
 .checkbox(&mut self.settings.hide_filename_in_title, rust_i18n::t!("settings.hide_filename_title"))
 .on_hover_text(rust_i18n::t!("settings.hide_filename_title_tooltip"))
@@ -1399,19 +1420,17 @@ if ui
                                     };
 
                                     // Hide undecryptable files check
-                                    if !entry.is_dir
-                                        && raw_filename.to_lowercase().ends_with(".sen")
-                                    {
+                                    if !entry.is_dir {
                                         let status = self
                                             .file_access_cache
                                             .get(path)
                                             .cloned()
                                             .unwrap_or(KeyStatus::Unknown);
 
-                                        if self.settings.hide_undecryptable_files
-                                            && status != KeyStatus::Decryptable
-                                        {
-                                            continue;
+                                        if self.settings.hide_undecryptable_files {
+                                            if status != KeyStatus::Decryptable && status != KeyStatus::StealthMatch {
+                                                continue;
+                                            }
                                         }
                                     }
 
@@ -1506,16 +1525,20 @@ if ui
                                                 filename.to_string()
                                             };
 
-                                            if raw_filename.to_lowercase().ends_with(".sen") {
-                                                let status = self
-                                                    .file_access_cache
-                                                    .get(path)
-                                                    .cloned()
-                                                    .unwrap_or(KeyStatus::Unknown);
+                                            let is_sen = raw_filename.to_lowercase().ends_with(".sen");
+                                            let status = self
+                                                .file_access_cache
+                                                .get(path)
+                                                .cloned()
+                                                .unwrap_or(KeyStatus::Unknown);
 
+                                            if is_sen || status == KeyStatus::StealthMatch {
                                                 let color = match status {
                                                     KeyStatus::Decryptable => {
                                                         self.current_theme.colors.success_color()
+                                                    }
+                                                    KeyStatus::StealthMatch => {
+                                                        egui::Color32::from_rgb(0, 200, 255)
                                                     }
                                                     KeyStatus::WrongKey => {
                                                         self.current_theme.colors.error_color()
@@ -1540,7 +1563,7 @@ if ui
                                                 let icon = match status {
                                                     KeyStatus::Unknown => &self.icons.unknown_file,
                                                     KeyStatus::WrongKey => &self.icons.locked_file,
-                                                    KeyStatus::Decryptable => {
+                                                    KeyStatus::Decryptable | KeyStatus::StealthMatch => {
                                                         &self.icons.asterisk_file
                                                     }
                                                     _ => {

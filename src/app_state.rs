@@ -71,6 +71,7 @@ pub enum PendingAction {
 pub enum KeyStatus {
     Unknown,     // Not checked yet
     Decryptable, // Matches current keyfile (Green)
+    StealthMatch, // Stealth file, matches current keyfile (Cyan)
     WrongKey,    // Keyfile doesn't match (Red)
     NotSen,      // Not a SEN file (Default)
 }

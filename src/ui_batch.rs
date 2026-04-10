@@ -462,6 +462,7 @@ impl EditorApp {
         let batch_files = self.batch_files.clone();
         let keyfile = self.batch_keyfile.clone().unwrap();
         let batch_output_dir = self.batch_output_dir.clone();
+        let stealth_mode = self.settings.stealth_mode;
 
         if let Err(e) = crate::crypto::get_keyfile_hash(&keyfile) {
             let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(
@@ -503,8 +504,13 @@ impl EditorApp {
                 };
 
                 let file_name = file.file_name().unwrap_or_default();
-                let output_path =
-                    output_dir.join(format!("{}.sen", file_name.to_string_lossy().to_string()));
+                let output_name = if stealth_mode {
+                    file_name.to_string_lossy().to_string()
+                } else {
+                    format!("{}.sen", file_name.to_string_lossy().to_string())
+                };
+
+                let output_path = output_dir.join(output_name);
 
                 match std::fs::read(file) {
                     Ok(buffer) => {
@@ -528,7 +534,13 @@ impl EditorApp {
                             continue;
                         }
 
-                        match encrypt_bytes(&buffer, &keyfile, &output_path) {
+                        let enc_result = if stealth_mode {
+                            crate::crypto::encrypt_stealth(&buffer, &keyfile, &output_path)
+                        } else {
+                            encrypt_bytes(&buffer, &keyfile, &output_path)
+                        };
+
+                        match enc_result {
                             Ok(_) => {
                                 success += 1;
                                 let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(
@@ -594,6 +606,7 @@ impl EditorApp {
         let keyfile = self.batch_keyfile.clone().unwrap();
         let batch_output_dir = self.batch_output_dir.clone();
         let batch_output_extension = self.batch_output_extension.clone();
+        let stealth_scan = self.settings.stealth_scan;
 
         std::thread::spawn(move || {
             let mut success = 0;
@@ -601,7 +614,14 @@ impl EditorApp {
 
             for (i, file) in batch_files.iter().enumerate() {
                 // Heuristic Check: Is it a SEN file?
-                if !crate::crypto::is_sen_file(file) {
+                let is_sen = crate::crypto::is_sen_file(file);
+                let is_stealth = if !is_sen && stealth_scan {
+                    if let Ok(key_hash) = crate::crypto::get_keyfile_hash(&keyfile) {
+                        crate::crypto::check_stealth_compatibility(&key_hash, file).unwrap_or(false)
+                    } else { false }
+                } else { false };
+
+                if !is_sen && !is_stealth {
                     failed += 1;
                     let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(
                         crate::app_state::LogLevel::Warning,
@@ -643,7 +663,13 @@ impl EditorApp {
                     output_path = output_dir.join(format!("{}.decrypted", new_name));
                 }
 
-                match decrypt_bytes(&keyfile, file) {
+                let decrypt_result = if is_stealth {
+                    crate::crypto::decrypt_stealth(&keyfile, file)
+                } else {
+                    decrypt_bytes(&keyfile, file)
+                };
+
+                match decrypt_result {
                     Ok(buffer) => {
                         let content_str = String::from_utf8_lossy(&buffer);
                         let doc =
@@ -717,6 +743,8 @@ impl EditorApp {
         let batch_files = self.batch_files.clone();
         let old_keyfile = self.batch_keyfile.clone().unwrap();
         let new_keyfile = self.batch_keyfile_new.clone().unwrap();
+        let stealth_scan = self.settings.stealth_scan;
+        let stealth_mode = self.settings.stealth_mode;
 
         std::thread::spawn(move || {
             let mut success = 0;
@@ -724,7 +752,14 @@ impl EditorApp {
 
             for (i, file) in batch_files.iter().enumerate() {
                 // Heuristic Check: Is it a SEN file?
-                if !crate::crypto::is_sen_file(file) {
+                let is_sen = crate::crypto::is_sen_file(file);
+                let is_stealth = if !is_sen && stealth_scan {
+                    if let Ok(key_hash) = crate::crypto::get_keyfile_hash(&old_keyfile) {
+                        crate::crypto::check_stealth_compatibility(&key_hash, file).unwrap_or(false)
+                    } else { false }
+                } else { false };
+
+                if !is_sen && !is_stealth {
                     failed += 1;
                     let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(
                         crate::app_state::LogLevel::Warning,
@@ -743,10 +778,22 @@ impl EditorApp {
                 }
 
                 // Step 1: Decrypt with old keyfile
-                match decrypt_bytes(&old_keyfile, file) {
+                let dec_result = if is_stealth {
+                    crate::crypto::decrypt_stealth(&old_keyfile, file)
+                } else {
+                    decrypt_bytes(&old_keyfile, file)
+                };
+
+                match dec_result {
                     Ok(buffer) => {
                         // Step 2: Re-encrypt with new keyfile, writing back to the same file
-                        match encrypt_bytes(&buffer, &new_keyfile, file) {
+                        let enc_result = if stealth_mode {
+                            crate::crypto::encrypt_stealth(&buffer, &new_keyfile, file)
+                        } else {
+                            encrypt_bytes(&buffer, &new_keyfile, file)
+                        };
+
+                        match enc_result {
                             Ok(_) => {
                                 success += 1;
                                 let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(
