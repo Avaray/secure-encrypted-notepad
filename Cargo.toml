@@ -1,13 +1,46 @@
-[package]
-name = "sen"
-version = "0.7.0"
-edition = "2021"
-default-run = "sen"
-authors = ["Dawid Wasowski"]
-description = "Secure Encrypted Notepad with keyfile-only auth"
-license = "MIT"
+[workspace]
+members = ["crates/sen-core", "crates/sen-desktop"]
+resolver = "2"
 
-[dependencies]
+# ============================================================================
+# WORKSPACE DEPENDENCIES — shared version pins
+# ============================================================================
+[workspace.dependencies]
+# Cryptography
+orion = "0.17"
+aes-gcm = "0.10"
+sha2 = "0.10"
+hkdf = "0.12"
+
+# Random number generation
+rand = "0.9"
+
+# Secure memory zeroing
+zeroize = { version = "1.8", features = ["derive"] }
+
+# Serialization & persistence
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+
+# Base64 encoding
+base64 = "0.22"
+
+# Hex encoding
+hex = "0.4"
+
+# Timestamps
+chrono = { version = "0.4", features = ["serde"] }
+
+# Config/data directories
+dirs = "5.0"
+
+# OS keyring
+keyring = "3"
+
+# Locale detection
+sys-locale = "0.3"
+
 # GUI Framework
 eframe = "0.33.3"
 egui = "0.33.3"
@@ -18,50 +51,31 @@ resvg = "0.45"
 usvg = "0.45"
 tiny-skia = "0.11"
 
-# Cryptography
-orion = "0.17"
-aes-gcm = "0.10"
-
 # File dialogs
 rfd = "0.16"
 
-# SHA-256 hashing & key derivation
-sha2 = "0.10"
-hkdf = "0.12"
-
-# Random number generation
-rand = "0.9"
-
-# Secure memory zeroing
-zeroize = { version = "1.8", features = ["derive"] }
-
 # Internationalization
 rust-i18n = "3"
-sys-locale = "0.3"
 
-# Settings persistence and theme system
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-toml = "0.8"
-dirs = "5.0"
-
-# Timestamps for version control
-chrono = { version = "0.4", features = ["serde"] }
-
-# Base64 encoding for embedded history
-base64 = "0.22"
-
+# Font detection
 font-kit = "0.14"
-keyring = "3"
-hex = "0.4"
-notify = "8.0"
-windows-sys = { version = "0.61.2", features = ["Win32_UI_WindowsAndMessaging", "Win32_Foundation", "Win32_System_Threading", "Win32_UI_Shell", "Win32_System_Pipes", "Win32_Security", "Win32_System_IO"] }
-[target.'cfg(windows)'.dependencies]
-winreg = "0.55"
 
+# File watching
+notify = "8.0"
+
+# Windows API
+windows-sys = { version = "0.61.2", features = [
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Foundation",
+    "Win32_System_Threading",
+    "Win32_UI_Shell",
+    "Win32_System_Pipes",
+    "Win32_Security",
+    "Win32_System_IO",
+] }
 
 # ============================================================================
-# BUILD PROFILES - Optimized for compilation speed
+# BUILD PROFILES — Optimized for compilation speed
 # ============================================================================
 
 [profile.dev]
@@ -97,6 +111,3 @@ lto = true                 # Full LTO (slow, but small file)
 codegen-units = 1          # No parallelism (slow)
 strip = true
 panic = "abort"
-
-[build-dependencies]
-winresource = "0.1"

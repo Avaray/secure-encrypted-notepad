@@ -69,11 +69,11 @@ pub enum PendingAction {
 /// Status of file access relative to currently loaded key
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum KeyStatus {
-    Unknown,     // Not checked yet
-    Decryptable, // Matches current keyfile (Green)
+    Unknown,      // Not checked yet
+    Decryptable,  // Matches current keyfile (Green)
     StealthMatch, // Stealth file, matches current keyfile (Cyan)
-    WrongKey,    // Keyfile doesn't match (Red)
-    NotSen,      // Not a SEN file (Default)
+    WrongKey,     // Keyfile doesn't match (Red)
+    NotSen,       // Not a SEN file (Default)
 }
 
 impl Default for KeyStatus {

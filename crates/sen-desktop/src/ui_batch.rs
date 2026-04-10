@@ -1,5 +1,6 @@
 use crate::app_state::{BatchMode, KeyStatus};
 use crate::crypto::{decrypt_bytes, encrypt_bytes};
+use crate::theme::ThemeColorsExt;
 use crate::EditorApp;
 use eframe::egui;
 use rust_i18n::t;
@@ -15,10 +16,12 @@ impl EditorApp {
 
         let mut central_panel_frame = egui::Frame::NONE;
         central_panel_frame.inner_margin = egui::Margin::same(0);
-        central_panel_frame.fill = self
-            .current_theme
-            .colors
-            .to_egui_color32(self.current_theme.colors.background.unwrap_or([27, 27, 27, 255]));
+        central_panel_frame.fill = self.current_theme.colors.to_egui_color32(
+            self.current_theme
+                .colors
+                .background
+                .unwrap_or([27, 27, 27, 255]),
+        );
 
         egui::CentralPanel::default()
             .frame(central_panel_frame)
@@ -72,7 +75,11 @@ impl EditorApp {
                 // --- Mode Selector ---
                 ui.vertical(|ui| {
                     crate::app_helpers::center_row(ui, |ui| {
-                        ui.label(egui::RichText::new(t!("batch.mode_label")).strong().color(label_color));
+                        ui.label(
+                            egui::RichText::new(t!("batch.mode_label"))
+                                .strong()
+                                .color(label_color),
+                        );
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             ui.selectable_value(
                                 &mut self.batch_mode,
@@ -112,7 +119,11 @@ impl EditorApp {
 
                 ui.vertical(|ui| {
                     crate::app_helpers::center_row(ui, |ui| {
-                        ui.label(egui::RichText::new(keyfile_label).strong().color(label_color));
+                        ui.label(
+                            egui::RichText::new(keyfile_label)
+                                .strong()
+                                .color(label_color),
+                        );
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             if let Some(path) = &self.keyfile_path {
                                 if ui
@@ -154,14 +165,21 @@ impl EditorApp {
 
                     ui.vertical(|ui| {
                         crate::app_helpers::center_row(ui, |ui| {
-                            ui.label(egui::RichText::new(t!("batch.key_new_label")).strong().color(label_color));
-                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                if ui.button(t!("batch.btn_select_key")).clicked() {
-                                    if let Some(path) = rfd::FileDialog::new().pick_file() {
-                                        self.batch_keyfile_new = Some(path);
+                            ui.label(
+                                egui::RichText::new(t!("batch.key_new_label"))
+                                    .strong()
+                                    .color(label_color),
+                            );
+                            ui.with_layout(
+                                egui::Layout::right_to_left(egui::Align::Center),
+                                |ui| {
+                                    if ui.button(t!("batch.btn_select_key")).clicked() {
+                                        if let Some(path) = rfd::FileDialog::new().pick_file() {
+                                            self.batch_keyfile_new = Some(path);
+                                        }
                                     }
-                                }
-                            });
+                                },
+                            );
                         });
                         ui.add_space(2.0);
                         ui.horizontal_wrapped(|ui| {
@@ -187,7 +205,11 @@ impl EditorApp {
                 // --- Output Configuration ---
                 ui.vertical(|ui| {
                     crate::app_helpers::center_row(ui, |ui| {
-                        ui.label(egui::RichText::new(t!("batch.output_label")).strong().color(label_color));
+                        ui.label(
+                            egui::RichText::new(t!("batch.output_label"))
+                                .strong()
+                                .color(label_color),
+                        );
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             if self.batch_output_dir.is_some() {
                                 if ui.button(t!("batch.btn_clear_out_dir")).clicked() {
@@ -220,23 +242,28 @@ impl EditorApp {
                     if self.batch_mode == BatchMode::Decrypt {
                         ui.add_space(8.0);
                         crate::app_helpers::center_row(ui, |ui| {
-                            ui.label(egui::RichText::new(t!("batch.extension_label")).color(label_color));
-                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                let mut ext = self.batch_output_extension.clone();
-                                if ui
-                                    .add(
-                                        egui::TextEdit::singleline(&mut ext)
-                                            .desired_width(50.0)
-                                            .hint_text("txt")
-                                            .margin(ui.spacing().button_padding),
-                                    )
-                                    .changed()
-                                {
-                                    let new_ext = ext.trim_start_matches('.').to_string();
-                                    self.batch_output_extension = new_ext.clone();
-                                    self.settings.batch_last_extension = new_ext;
-                                }
-                            });
+                            ui.label(
+                                egui::RichText::new(t!("batch.extension_label")).color(label_color),
+                            );
+                            ui.with_layout(
+                                egui::Layout::right_to_left(egui::Align::Center),
+                                |ui| {
+                                    let mut ext = self.batch_output_extension.clone();
+                                    if ui
+                                        .add(
+                                            egui::TextEdit::singleline(&mut ext)
+                                                .desired_width(50.0)
+                                                .hint_text("txt")
+                                                .margin(ui.spacing().button_padding),
+                                        )
+                                        .changed()
+                                    {
+                                        let new_ext = ext.trim_start_matches('.').to_string();
+                                        self.batch_output_extension = new_ext.clone();
+                                        self.settings.batch_last_extension = new_ext;
+                                    }
+                                },
+                            );
                         });
                     }
                 });
@@ -618,8 +645,12 @@ impl EditorApp {
                 let is_stealth = if !is_sen && stealth_scan {
                     if let Ok(key_hash) = crate::crypto::get_keyfile_hash(&keyfile) {
                         crate::crypto::check_stealth_compatibility(&key_hash, file).unwrap_or(false)
-                    } else { false }
-                } else { false };
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                };
 
                 if !is_sen && !is_stealth {
                     failed += 1;
@@ -756,8 +787,12 @@ impl EditorApp {
                 let is_stealth = if !is_sen && stealth_scan {
                     if let Ok(key_hash) = crate::crypto::get_keyfile_hash(&old_keyfile) {
                         crate::crypto::check_stealth_compatibility(&key_hash, file).unwrap_or(false)
-                    } else { false }
-                } else { false };
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                };
 
                 if !is_sen && !is_stealth {
                     failed += 1;

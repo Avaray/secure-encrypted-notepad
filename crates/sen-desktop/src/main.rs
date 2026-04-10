@@ -25,20 +25,23 @@ macro_rules! sen_debug {
 
 pub(crate) use sen_debug;
 
-mod crypto;
+// Re-export core types for convenience within this crate
+// pub(crate) use sen_core::config_crypto;
+pub(crate) use sen_core::crypto;
+pub(crate) use sen_core::history;
+pub(crate) use sen_core::settings;
+
 mod fonts;
-mod history;
 mod icons;
-mod settings;
 mod single_instance;
 mod theme;
+mod theme_ext;
 
 // Module declarations for app
 mod app;
 mod app_actions;
 mod app_helpers;
 mod app_state;
-mod config_crypto;
 mod ui_batch;
 mod ui_dialogs;
 mod ui_editor;
@@ -50,7 +53,7 @@ use app::EditorApp;
 
 fn main() -> Result<(), eframe::Error> {
     let start_time = std::time::Instant::now();
-    let settings = crate::settings::Settings::load();
+    let settings = sen_core::settings::Settings::load();
 
     // Set the UI language from saved settings
     rust_i18n::set_locale(&settings.language);

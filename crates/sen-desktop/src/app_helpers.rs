@@ -1,4 +1,5 @@
 use crate::app_state::{FileTreeEntry, KeyStatus, LogEntry, LogLevel};
+use crate::theme::{ThemeColorsExt, ThemeExt};
 use crate::EditorApp;
 use rust_i18n::t;
 use std::path::PathBuf;
@@ -236,7 +237,6 @@ impl EditorApp {
                 }
             }
         }
-
     }
 
     /// Setup file system watcher for the current directory
@@ -556,7 +556,8 @@ impl EditorApp {
                                 paths_to_check.push((entry.path.clone(), false));
                                 self.pending_access_checks.insert(entry.path.clone());
                             } else {
-                                self.file_access_cache.insert(entry.path.clone(), KeyStatus::NotSen);
+                                self.file_access_cache
+                                    .insert(entry.path.clone(), KeyStatus::NotSen);
                             }
                         }
                     }
@@ -781,11 +782,7 @@ impl EditorApp {
             if self.is_modified {
                 let untitled = t!("helpers.title_untitled").to_string();
                 let display_name = untitled.strip_suffix(" - SEN").unwrap_or(&untitled);
-                t!(
-                    "helpers.title_untitled_mod",
-                    file = display_name
-                )
-                .to_string()
+                t!("helpers.title_untitled_mod", file = display_name).to_string()
             } else {
                 t!("helpers.title_untitled").to_string()
             }
@@ -1026,7 +1023,14 @@ impl EditorApp {
             },
             |ui| {
                 ui.add_space(8.0); // Consistent padding from right edge
-                if square_icon_btn(ui, &self.icons.close, &rust_i18n::t!("app.close_panel"), self.current_theme.colors.icon_color()).clicked() {
+                if square_icon_btn(
+                    ui,
+                    &self.icons.close,
+                    &rust_i18n::t!("app.close_panel"),
+                    self.current_theme.colors.icon_color(),
+                )
+                .clicked()
+                {
                     close_clicked = true;
                 }
             },
@@ -1141,15 +1145,15 @@ pub(crate) fn square_icon_btn(
     let icon_size = ui.text_style_height(&egui::TextStyle::Button);
     let mut pad = ui.spacing().button_padding;
     pad.x = pad.y; // force square
-    
+
     ui.scope(|ui| {
         ui.spacing_mut().button_padding = pad;
-        ui.add(
-            egui::Button::image(
-                egui::Image::new(texture)
-                    .fit_to_exact_size(egui::vec2(icon_size, icon_size))
-                    .tint(tint),
-            )
-        ).on_hover_text(tooltip)
-    }).inner
+        ui.add(egui::Button::image(
+            egui::Image::new(texture)
+                .fit_to_exact_size(egui::vec2(icon_size, icon_size))
+                .tint(tint),
+        ))
+        .on_hover_text(tooltip)
+    })
+    .inner
 }

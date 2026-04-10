@@ -1,4 +1,5 @@
 use crate::app_state::PendingAction;
+use crate::theme::{ThemeColorsExt, ThemeExt};
 use crate::EditorApp;
 use eframe::egui;
 use rust_i18n::t;
@@ -122,14 +123,17 @@ impl EditorApp {
                         let text = t!("dialog.reset_slider");
                         let font_id = egui::TextStyle::Body.resolve(ui.style());
                         let color = ui.visuals().text_color();
-                        let galley = ui.painter().layout_no_wrap(text.to_string(), font_id, color);
+                        let galley = ui
+                            .painter()
+                            .layout_no_wrap(text.to_string(), font_id, color);
 
                         // 2. Allocate the exact space needed for the label in the layout
-                        let (label_rect, _) = ui.allocate_exact_size(galley.size(), egui::Sense::hover());
+                        let (label_rect, _) =
+                            ui.allocate_exact_size(galley.size(), egui::Sense::hover());
 
                         // 3. Draw the slider, taking up the remaining width
                         ui.spacing_mut().slider_width = ui.available_width();
-                        
+
                         let slider_response = ui.add(
                             egui::Slider::new(&mut self.reset_slider_val, 0.0..=1.0)
                                 .show_value(false)
@@ -158,15 +162,26 @@ impl EditorApp {
 
                                     // Run smart font detection after reset
                                     let available_fonts = crate::fonts::get_system_fonts();
-                                    if let Some(font) = crate::fonts::detect_best_font(&available_fonts, crate::fonts::PREFERRED_UI_FONTS) {
+                                    if let Some(font) = crate::fonts::detect_best_font(
+                                        &available_fonts,
+                                        crate::fonts::PREFERRED_UI_FONTS,
+                                    ) {
                                         self.settings.ui_font_family = font.clone();
                                         self.settings.editor_font_family = font;
 
                                         // Update UI indices so ComboBoxes refresh correctly
-                                        if let Some(idx) = self.available_fonts.iter().position(|f| f == &self.settings.ui_font_family) {
+                                        if let Some(idx) = self
+                                            .available_fonts
+                                            .iter()
+                                            .position(|f| f == &self.settings.ui_font_family)
+                                        {
                                             self.ui_font_index = idx;
                                         }
-                                        if let Some(idx) = self.available_fonts.iter().position(|f| f == &self.settings.editor_font_family) {
+                                        if let Some(idx) = self
+                                            .available_fonts
+                                            .iter()
+                                            .position(|f| f == &self.settings.editor_font_family)
+                                        {
                                             self.editor_font_index = idx;
                                         }
                                     }

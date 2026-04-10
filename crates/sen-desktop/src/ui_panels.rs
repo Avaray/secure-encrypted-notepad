@@ -1,5 +1,6 @@
 use crate::app_state::{KeyStatus, LogLevel};
 use crate::history::HistoryEntry;
+use crate::theme::{ThemeColorsExt, ThemeExt};
 use crate::EditorApp;
 use eframe::egui;
 use std::path::{Path, PathBuf};
@@ -1428,7 +1429,9 @@ if ui
                                             .unwrap_or(KeyStatus::Unknown);
 
                                         if self.settings.hide_undecryptable_files {
-                                            if status != KeyStatus::Decryptable && status != KeyStatus::StealthMatch {
+                                            if status != KeyStatus::Decryptable
+                                                && status != KeyStatus::StealthMatch
+                                            {
                                                 continue;
                                             }
                                         }
@@ -1525,7 +1528,8 @@ if ui
                                                 filename.to_string()
                                             };
 
-                                            let is_sen = raw_filename.to_lowercase().ends_with(".sen");
+                                            let is_sen =
+                                                raw_filename.to_lowercase().ends_with(".sen");
                                             let status = self
                                                 .file_access_cache
                                                 .get(path)
@@ -1563,7 +1567,8 @@ if ui
                                                 let icon = match status {
                                                     KeyStatus::Unknown => &self.icons.unknown_file,
                                                     KeyStatus::WrongKey => &self.icons.locked_file,
-                                                    KeyStatus::Decryptable | KeyStatus::StealthMatch => {
+                                                    KeyStatus::Decryptable
+                                                    | KeyStatus::StealthMatch => {
                                                         &self.icons.asterisk_file
                                                     }
                                                     _ => {
@@ -2617,8 +2622,6 @@ if ui
     }
 }
 
-
-
 // ─── Custom color picker with rectangular 2D field ──────────────────────────
 
 const COLOR_N: u32 = 36; // 6×6 – identical to egui internals
@@ -2790,7 +2793,13 @@ pub fn color_picker_color32_wide(
             let mut mesh = egui::epaint::Mesh::default();
             for i in 0..=COLOR_N {
                 let t = i as f32 / COLOR_N as f32;
-                let c: egui::Color32 = Hsva { h: t, s: 1.0, v: 1.0, a: 1.0 }.into();
+                let c: egui::Color32 = Hsva {
+                    h: t,
+                    s: 1.0,
+                    v: 1.0,
+                    a: 1.0,
+                }
+                .into();
                 let x = egui::lerp(rect.left()..=rect.right(), t);
                 mesh.colored_vertex(egui::pos2(x, rect.top()), c);
                 mesh.colored_vertex(egui::pos2(x, rect.bottom()), c);
@@ -2807,7 +2816,13 @@ pub fn color_picker_color32_wide(
             // Triangle position indicator
             let x = egui::lerp(rect.left()..=rect.right(), hsva.h);
             let r = rect.height() / 4.0;
-            let picked: egui::Color32 = Hsva { h: hsva.h, s: 1.0, v: 1.0, a: 1.0 }.into();
+            let picked: egui::Color32 = Hsva {
+                h: hsva.h,
+                s: 1.0,
+                v: 1.0,
+                a: 1.0,
+            }
+            .into();
             ui.painter().add(egui::Shape::convex_polygon(
                 vec![
                     egui::pos2(x, rect.center().y),
@@ -2849,7 +2864,8 @@ pub fn color_picker_color32_wide(
     if ui.is_rect_visible(preview_rect) {
         // Checkerboard background for alpha visibility
         let rounding = ui.style().visuals.widgets.inactive.corner_radius;
-        ui.painter().rect_filled(preview_rect, rounding, egui::Color32::from_gray(128));
+        ui.painter()
+            .rect_filled(preview_rect, rounding, egui::Color32::from_gray(128));
         let checker = 6.0;
         for row in 0..(preview_rect.height() / checker) as u32 {
             for col in 0..(preview_rect.width() / checker) as u32 {

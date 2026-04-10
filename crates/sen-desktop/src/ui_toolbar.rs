@@ -1,3 +1,4 @@
+use crate::theme::ThemeColorsExt;
 use crate::EditorApp;
 use eframe::egui;
 

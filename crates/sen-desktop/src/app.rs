@@ -6,7 +6,7 @@ use std::time::Instant;
 use crate::app_state::{BatchMode, FileTreeEntry, KeyStatus, LogEntry, LogLevel, PendingAction};
 use crate::history::DocumentWithHistory;
 use crate::settings::Settings;
-use crate::theme::{load_themes, Theme};
+use crate::theme::{load_themes, Theme, ThemeColorsExt, ThemeExt};
 
 #[derive(Debug, Clone, Default)]
 pub struct LayoutState {
@@ -235,12 +235,14 @@ impl EditorApp {
         let available_fonts = crate::fonts::get_system_fonts();
 
         // Smart font detection on first run OR when using generic defaults
-        let needs_detect = settings.is_first_run 
-            || settings.ui_font_family.contains("(Default)") 
+        let needs_detect = settings.is_first_run
+            || settings.ui_font_family.contains("(Default)")
             || settings.editor_font_family.contains("(Default)");
 
         if needs_detect {
-            if let Some(font) = crate::fonts::detect_best_font(&available_fonts, crate::fonts::PREFERRED_UI_FONTS) {
+            if let Some(font) =
+                crate::fonts::detect_best_font(&available_fonts, crate::fonts::PREFERRED_UI_FONTS)
+            {
                 // By default, we use the same detected high-quality font for both UI and Editor
                 if settings.ui_font_family != font || settings.editor_font_family != font {
                     settings.ui_font_family = font.clone();
@@ -611,10 +613,12 @@ impl EditorApp {
     }
 
     pub(crate) fn render_status_bar(&mut self, ui: &mut egui::Ui, show_file_info: bool) {
-        let fg_color = self
-            .current_theme
-            .colors
-            .to_egui_color32(self.current_theme.colors.foreground.unwrap_or([255, 255, 255, 255]));
+        let fg_color = self.current_theme.colors.to_egui_color32(
+            self.current_theme
+                .colors
+                .foreground
+                .unwrap_or([255, 255, 255, 255]),
+        );
 
         crate::app_helpers::center_row(ui, |ui| {
             // Status message on the left
@@ -665,10 +669,19 @@ impl EditorApp {
                     ui.separator();
 
                     // File indicator
-                    let fg_color = self
-                        .current_theme
-                        .colors
-                        .to_egui_color32(self.current_theme.colors.foreground.unwrap_or([255, 255, 255, 255]));
+                    let fg_color = self.current_theme.colors.to_egui_color32(
+                        self.current_theme
+                            .colors
+                            .foreground
+                            .unwrap_or([255, 255, 255, 255]),
+                    );
+
+                    if self.settings.stealth_mode {
+                        ui.label(
+                            egui::RichText::new("👻 Stealth").color(self.current_theme.colors.success_color())
+                        );
+                        ui.separator();
+                    }
 
                     if let Some(path) = &self.current_file_path {
                         ui.label(
@@ -709,7 +722,9 @@ impl eframe::App for EditorApp {
 
         // Intercept global scroll speed
         // Apply scroll multiplier - SKIP if we are currently adjusting the multiplier to avoid feedback loop
-        if !self.is_adjusting_scroll_speed && (self.settings.scroll_speed_multiplier - 1.0).abs() > f32::EPSILON {
+        if !self.is_adjusting_scroll_speed
+            && (self.settings.scroll_speed_multiplier - 1.0).abs() > f32::EPSILON
+        {
             let mult = self.settings.scroll_speed_multiplier;
             ctx.input_mut(|i| {
                 // Modify raw_scroll_delta
@@ -755,7 +770,9 @@ impl eframe::App for EditorApp {
         let dropped_files = ctx.input(|i| i.raw.dropped_files.clone());
         if !dropped_files.is_empty() {
             if let Some(file) = dropped_files.into_iter().find_map(|df| df.path) {
-                self.check_changes_before_action(crate::app_state::PendingAction::OpenFileFromTree(file));
+                self.check_changes_before_action(
+                    crate::app_state::PendingAction::OpenFileFromTree(file),
+                );
             }
         }
 
@@ -866,15 +883,10 @@ impl eframe::App for EditorApp {
                     // (Wayland ignores it anyway), so no move is needed.
                     #[cfg(target_os = "windows")]
                     {
-                        if self.settings.window_pos_x >= 0.0
-                            && self.settings.window_pos_y >= 0.0
-                        {
+                        if self.settings.window_pos_x >= 0.0 && self.settings.window_pos_y >= 0.0 {
                             // Restore saved position
                             ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(
-                                egui::pos2(
-                                    self.settings.window_pos_x,
-                                    self.settings.window_pos_y,
-                                ),
+                                egui::pos2(self.settings.window_pos_x, self.settings.window_pos_y),
                             ));
                         } else {
                             // Fresh start: no saved position (defaults are -1.0).
@@ -882,7 +894,12 @@ impl eframe::App for EditorApp {
                             // DWM flicker.  We must move it to a visible location
                             // before making it visible.  Center it on the primary
                             // monitor as a safe default.
-                            let screen = ctx.input(|i| i.viewport().outer_rect.unwrap_or(egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(1920.0, 1080.0))));
+                            let screen = ctx.input(|i| {
+                                i.viewport().outer_rect.unwrap_or(egui::Rect::from_min_size(
+                                    egui::Pos2::ZERO,
+                                    egui::vec2(1920.0, 1080.0),
+                                ))
+                            });
                             let win_w = self.settings.window_width;
                             let win_h = self.settings.window_height;
                             let x = ((screen.width() - win_w) / 2.0).max(0.0);

@@ -202,9 +202,7 @@ pub fn decrypt_stealth(
 
     let stored_hash = &plaintext[..KEYFILE_HASH_SIZE];
     if keyfile_hash.as_bytes() != stored_hash {
-        return Err(CryptoError::KeyfileError(
-            "Keyfile mismatch".to_string(),
-        ));
+        return Err(CryptoError::KeyfileError("Keyfile mismatch".to_string()));
     }
 
     Ok(plaintext[KEYFILE_HASH_SIZE..].to_vec())
@@ -249,12 +247,20 @@ pub fn check_stealth_compatibility(
 
 /// Quick reject: skip files that start with known magic numbers
 fn is_known_format(header: &[u8]) -> bool {
-    if header.len() < 4 { return false; }
+    if header.len() < 4 {
+        return false;
+    }
     matches!(
         &header[..4],
-        b"SEN1" | b"\x89PNG" | b"PK\x03\x04" | b"%PDF"
-        | b"GIF8" | b"\xFF\xD8\xFF\xE0" | b"RIFF"
-        | b"\x7FELF" | b"MZ\x90\x00"
+        b"SEN1"
+            | b"\x89PNG"
+            | b"PK\x03\x04"
+            | b"%PDF"
+            | b"GIF8"
+            | b"\xFF\xD8\xFF\xE0"
+            | b"RIFF"
+            | b"\x7FELF"
+            | b"MZ\x90\x00"
     )
 }
 
@@ -563,7 +569,7 @@ mod tests {
         let content = b"Stealth mode content!";
 
         encrypt_stealth(content, &keyfile, &output).unwrap();
-        
+
         // Not a standard SEN file!
         assert!(!is_sen_file(&output));
 

@@ -115,11 +115,12 @@ impl EditorApp {
                 match std::fs::read(&path) {
                     Ok(buffer) => {
                         let content_str = String::from_utf8_lossy(&buffer).to_string();
-                        self.document = DocumentWithHistory::new_with_limit(self.settings.max_history_length);
+                        self.document =
+                            DocumentWithHistory::new_with_limit(self.settings.max_history_length);
                         self.document.current_content = content_str;
                         self.current_file_path = Some(path.clone());
                         self.is_modified = false;
-                        
+
                         if self.show_search_panel {
                             self.perform_search();
                         }
@@ -130,7 +131,7 @@ impl EditorApp {
                         let masked_path = self.mask_directory_path(&path);
                         self.status_message = t!("actions.status_opened_plaintext").to_string();
                         self.log_info(t!("actions.log_opened_plaintext", file = masked_path));
-                        
+
                         self.commit_history_state();
                         return;
                     }
@@ -180,7 +181,9 @@ impl EditorApp {
 
         let mut current_keyfile = keyfile;
         loop {
-            let decrypt_result = if is_stealth || (!crate::crypto::is_sen_file(&path) && self.settings.stealth_mode) {
+            let decrypt_result = if is_stealth
+                || (!crate::crypto::is_sen_file(&path) && self.settings.stealth_mode)
+            {
                 // If it was detected as stealth, or if it failed standard headers and stealth mode is aggressively on
                 crate::crypto::decrypt_stealth(&current_keyfile, &path)
             } else {
@@ -295,7 +298,9 @@ impl EditorApp {
         }
 
         if let Some(path) = self.current_file_path.clone() {
-            if self.settings.stealth_mode || path.extension().and_then(|e| e.to_str()).unwrap_or("") == "sen" {
+            if self.settings.stealth_mode
+                || path.extension().and_then(|e| e.to_str()).unwrap_or("") == "sen"
+            {
                 self.perform_save(path);
             } else {
                 self.save_file_as();
@@ -319,22 +324,31 @@ impl EditorApp {
                 if path.extension().is_none() || path.extension().unwrap() == "sen" {
                     filename.to_string()
                 } else {
-                    path.file_name().unwrap_or_default().to_string_lossy().to_string()
+                    path.file_name()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .to_string()
                 }
             } else {
                 if path.extension().and_then(|e| e.to_str()).unwrap_or("") == "sen" {
-                    path.file_name().unwrap_or_default().to_string_lossy().into_owned()
+                    path.file_name()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .into_owned()
                 } else {
                     let file_stem = path.file_stem().unwrap_or_default().to_string_lossy();
                     format!("{}.sen", file_stem)
                 }
             }
         } else {
-            if self.settings.stealth_mode { "document".to_string() } else { "document.sen".to_string() }
+            if self.settings.stealth_mode {
+                "document".to_string()
+            } else {
+                "document.sen".to_string()
+            }
         };
 
-        let mut dialog = rfd::FileDialog::new()
-            .set_file_name(&default_name);
+        let mut dialog = rfd::FileDialog::new().set_file_name(&default_name);
 
         if !self.settings.stealth_mode {
             dialog = dialog.add_filter(t!("actions.filter_sen"), &["sen"]);

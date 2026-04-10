@@ -1,0 +1,84 @@
+[package]
+name = "sen-desktop"
+version = "0.7.0"
+edition = "2021"
+default-run = "sen"
+authors = ["Dawid Wasowski"]
+description = "Secure Encrypted Notepad with keyfile-only auth"
+license = "MIT"
+
+[[bin]]
+name = "sen"
+path = "src/main.rs"
+
+[[bin]]
+name = "generate_ico"
+path = "src/bin/generate_ico.rs"
+
+[dependencies]
+# Core library
+sen-core = { path = "../sen-core" }
+
+# GUI Framework
+eframe = { workspace = true }
+egui = { workspace = true }
+egui_extras = { workspace = true }
+
+# SVG support
+resvg = { workspace = true }
+usvg = { workspace = true }
+tiny-skia = { workspace = true }
+
+# Cryptography (re-used directly in some UI code)
+orion = { workspace = true }
+
+# File dialogs
+rfd = { workspace = true }
+
+# Random number generation
+rand = { workspace = true }
+
+# Secure memory zeroing
+zeroize = { workspace = true }
+
+# Internationalization
+rust-i18n = { workspace = true }
+sys-locale = { workspace = true }
+
+# Serialization (used in UI serialization)
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+
+# Config/data directories
+dirs = { workspace = true }
+
+# Timestamps
+chrono = { workspace = true }
+
+# Base64 encoding
+base64 = { workspace = true }
+
+# Font detection
+font-kit = { workspace = true }
+
+# OS keyring
+keyring = { workspace = true }
+
+# Hex encoding
+hex = { workspace = true }
+
+# File watching
+notify = { workspace = true }
+
+# Windows API
+windows-sys = { workspace = true }
+
+# SHA-256 (used in app_actions for keyfile hashing)
+sha2 = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.55"
+
+[build-dependencies]
+winresource = "0.1"

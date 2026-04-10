@@ -1,3 +1,4 @@
+use crate::theme::ThemeColorsExt;
 use crate::EditorApp;
 use eframe::egui;
 
@@ -122,7 +123,13 @@ impl EditorApp {
             // Close button on the far right
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.add_space(8.0);
-                if crate::app_helpers::square_icon_btn(ui, &self.icons.close, &rust_i18n::t!("app.close_panel"), self.current_theme.colors.icon_color()).clicked()
+                if crate::app_helpers::square_icon_btn(
+                    ui,
+                    &self.icons.close,
+                    &rust_i18n::t!("app.close_panel"),
+                    self.current_theme.colors.icon_color(),
+                )
+                .clicked()
                 {
                     self.show_search_panel = false;
                     self.search_query.clear();

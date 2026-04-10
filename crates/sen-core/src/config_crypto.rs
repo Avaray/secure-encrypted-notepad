@@ -73,7 +73,7 @@ fn get_machine_id() -> Result<String, Box<dyn std::error::Error>> {
 // provides no machine binding (equivalent to old behavior).
 #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
 fn get_machine_id() -> Result<String, Box<dyn std::error::Error>> {
-    crate::sen_debug!("config_crypto: WARNING — no machine-ID source for this platform");
+    sen_debug!("config_crypto: WARNING — no machine-ID source for this platform");
     Ok("unknown-platform".to_string())
 }
 
@@ -212,7 +212,7 @@ pub fn get_or_create_config_key() -> Result<[u8; 32], Box<dyn std::error::Error>
 
         // ── LEGACY FORMAT: raw 32-byte key (no wrapping) ──
         if contents.len() == 32 {
-            crate::sen_debug!("config_crypto: detected LEGACY raw key format, migrating...");
+            sen_debug!("config_crypto: detected LEGACY raw key format, migrating...");
             let mut key = [0u8; 32];
             key.copy_from_slice(&contents);
 
@@ -220,14 +220,14 @@ pub fn get_or_create_config_key() -> Result<[u8; 32], Box<dyn std::error::Error>
             match wrap_config_key(&key, &entropy) {
                 Ok(wrapped) => {
                     std::fs::write(&key_path, &wrapped)?;
-                    crate::sen_debug!(
+                    sen_debug!(
                         "config_crypto: migrated to wrapped format ({} bytes, fingerprint: {:02x}{:02x}{:02x}{:02x})",
                         wrapped.len(),
                         key[0], key[1], key[2], key[3]
                     );
                 }
                 Err(e) => {
-                    crate::sen_debug!(
+                    sen_debug!(
                         "config_crypto: WARNING — migration failed ({}), keeping legacy format",
                         e
                     );
@@ -239,7 +239,7 @@ pub fn get_or_create_config_key() -> Result<[u8; 32], Box<dyn std::error::Error>
         // ── NEW FORMAT: version + salt + nonce + wrapped key ──
         match unwrap_config_key(&contents, &entropy) {
             Ok(key) => {
-                crate::sen_debug!(
+                sen_debug!(
                     "config_crypto: LOADED wrapped key (fingerprint: {:02x}{:02x}{:02x}{:02x})",
                     key[0],
                     key[1],
@@ -249,7 +249,7 @@ pub fn get_or_create_config_key() -> Result<[u8; 32], Box<dyn std::error::Error>
                 return Ok(key);
             }
             Err(e) => {
-                crate::sen_debug!("config_crypto: failed to unwrap key ({}), regenerating", e);
+                sen_debug!("config_crypto: failed to unwrap key ({}), regenerating", e);
                 // Fall through to generate a new key
             }
         }
@@ -264,7 +264,7 @@ pub fn get_or_create_config_key() -> Result<[u8; 32], Box<dyn std::error::Error>
     let wrapped = wrap_config_key(&key, &entropy)?;
     std::fs::write(&key_path, &wrapped)?;
 
-    crate::sen_debug!(
+    sen_debug!(
         "config_crypto: GENERATED NEW wrapped key ({} bytes, fingerprint: {:02x}{:02x}{:02x}{:02x})",
         wrapped.len(),
         key[0], key[1], key[2], key[3]
