@@ -33,6 +33,4 @@ For detailed information, check out the following guides in the `/docs` director
 
 ## ⚠️ Important Disclaimer
 
-- **Losing your keyfile means permanently losing access to your data.** 
-- Always back up your keyfiles securely.
-- Use at your own risk.
+**Losing or modifying your keyfile means permanently losing access to your encrypted files.** So always back up your keyfiles securely and use app at your own risk.
