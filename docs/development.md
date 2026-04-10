@@ -14,6 +14,11 @@ To develop SEN, you need the following installed on your system:
     - **Linux**: Requires development headers for `libsecret` and GUI libraries.
         - *Ubuntu/Debian:* `sudo apt install libsecret-1-dev libssl-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev`
     - **macOS**: No extra dependencies (uses internal Keychain and AppKit).
+17: 4.  **Android Development** (Optional):
+18:     - **Android Studio**: Installed with SDK and NDK (version 26+).
+19:     - **cargo-ndk**: Install via `cargo install cargo-ndk`.
+20:     - **Rust Targets**: Add Android targets for your emulator/device:
+21:         - `rustup target add aarch64-linux-android x86_64-linux-android`
 
 ## 🚀 Getting Started
 
@@ -40,6 +45,18 @@ There are two ways to build a release binary:
   ```bash
   cargo build --profile release-final
   ```
+
+### 4. Run on Android
+The Android version is a wrapper around the core Rust library using `GameActivity`.
+
+1.  Open **Android Studio**.
+2.  Select **"Open Project"** and point to the `crates/sen-android/android` directory.
+3.  Wait for **Gradle Sync** to finish (it will automatically invoke `cargo-ndk` to build the Rust library).
+4.  Select your emulator or target device.
+5.  Click the green **Run** (▶) button or press `Shift + F10`.
+
+> [!TIP]
+> The Android build pipeline is integrated via a custom Gradle task (`cargoBuild`) that runs before the APK is assembled. You don't need to manualy run `cargo build` for Android if you use Android Studio.
 
 ## 🔧 Development Workflow
 
@@ -92,6 +109,10 @@ SEN is organized as a Cargo Workspace to support code sharing across multiple pl
     - `src/single_instance.rs`: Windows-specific single instance enforcement.
     - `src/ui_*.rs`: Modular GUI components (`ui_editor`, `ui_panels`, `ui_toolbar`, `ui_batch`, etc.).
     - `assets/`: UI icons and branding resources.
+- `crates/sen-android/`: The Android port of SEN.
+    - `src/lib.rs`: Entry point for the Android library (`android_main`).
+    - `android/`: The native Android Studio / Gradle project.
+    - `android/app/src/main/java/com/sen/android/MainActivity.kt`: The Kotlin wrapper.
 - `docs/`: Technical documentation and design notes.
 
 ## ⚙️ Configuration Location
