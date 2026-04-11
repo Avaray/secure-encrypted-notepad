@@ -28,7 +28,6 @@ For detailed information, check out the following guides in the `/docs` director
 
 > **Portable:** Desktop SEN is a single self-contained binary — no installation required. Just download and run.  
 > **Linux:** Requires a running secret service daemon (e.g. `gnome-keyring` or `kwallet`).  
-> **Mobile:** The Android version integrates with the System File Picker (SAF) and supports biometric unlock.  
 
 ---
 
