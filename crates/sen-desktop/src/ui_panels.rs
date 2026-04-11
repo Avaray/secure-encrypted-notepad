@@ -1926,7 +1926,7 @@ if ui
                                                 &mut 0.0,
                                                 |ui| {
                                                     let mut current = field.unwrap_or(default);
-                                                    ui.spacing_mut().item_spacing.x = 4.0;
+                                                    ui.spacing_mut().item_spacing.x = 8.0;
                                                     if custom_color_picker_button(
                                                         ui,
                                                         &mut current,
@@ -1964,7 +1964,7 @@ if ui
                                                 &mut 0.0,
                                                 |ui| {
                                                     let mut current = field.unwrap_or(default);
-                                                    ui.spacing_mut().item_spacing.x = 4.0;
+                                                    ui.spacing_mut().item_spacing.x = 8.0;
                                                     if ui
                                                         .add(
                                                             egui::DragValue::new(&mut current)
