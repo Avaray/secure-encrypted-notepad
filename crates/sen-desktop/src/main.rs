@@ -47,7 +47,6 @@ mod fonts;
 mod icons;
 mod single_instance;
 mod theme;
-mod theme_ext;
 mod desktop_fs;
 
 // Module declarations for app
@@ -62,11 +61,13 @@ mod ui_panels;
 mod ui_search;
 mod ui_toolbar;
 
-use app::EditorApp;
+use crate::app::EditorApp;
+use crate::settings::Settings;
 
 fn main() -> Result<(), eframe::Error> {
     let start_time = std::time::Instant::now();
-    let settings = sen_core::settings::Settings::load();
+    // Load settings from encrypted config file
+    let settings = Settings::load(None);
 
     // Set the UI language from saved settings
     sen_i18n::set_locale(&settings.language);

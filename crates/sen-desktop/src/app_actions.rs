@@ -270,7 +270,7 @@ impl EditorApp {
 
             self.show_file_tree = true;
             self.settings.show_file_tree = true;
-            let _ = self.settings.save();
+            let _ = self.settings.save(None);
             self.refresh_file_tree();
             self.setup_watcher();
         }
@@ -284,7 +284,7 @@ impl EditorApp {
         ));
         self.file_tree_dir = Some(path.clone());
 
-        let _ = self.settings.save();
+        let _ = self.settings.save(None);
         self.refresh_file_tree();
         self.setup_watcher();
     }

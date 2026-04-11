@@ -50,6 +50,8 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation "androidx.games:games-activity:2.0.2"
+    implementation 'androidx.documentfile:documentfile:1.0.1'
+    implementation 'androidx.biometric:biometric:1.2.0-alpha05'
 }
 
 // Simple logic to drive cargo-ndk since it's already installed globally

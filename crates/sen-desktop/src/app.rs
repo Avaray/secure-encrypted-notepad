@@ -3,10 +3,12 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Instant;
 
-use crate::app_state::{BatchMode, FileTreeEntry, KeyStatus, LogEntry, LogLevel, PendingAction};
+use crate::app_state::{BatchMode, KeyStatus, LogEntry, LogLevel, PendingAction};
 use crate::history::DocumentWithHistory;
 use crate::settings::Settings;
-use crate::theme::{load_themes, Theme, ThemeColorsExt, ThemeExt};
+use crate::theme::{load_themes, Theme};
+use sen_core::models::FileTreeEntry;
+use sen_core::theme_egui::{ThemeColorsExt, ThemeExt};
 
 #[derive(Debug, Clone, Default)]
 pub struct LayoutState {
@@ -247,7 +249,7 @@ impl EditorApp {
                 if settings.ui_font_family != font || settings.editor_font_family != font {
                     settings.ui_font_family = font.clone();
                     settings.editor_font_family = font;
-                    let _ = settings.save();
+                    let _ = settings.save(None);
                 }
             }
         }
@@ -565,7 +567,7 @@ impl EditorApp {
 
 impl Default for EditorApp {
     fn default() -> Self {
-        Self::from_settings(Settings::load(), Instant::now())
+        Self::from_settings(Settings::load(None), Instant::now())
     }
 }
 
@@ -972,7 +974,7 @@ impl eframe::App for EditorApp {
             }
 
             if changed {
-                let _ = self.settings.save();
+                let _ = self.settings.save(None);
             }
         }
 
@@ -991,7 +993,7 @@ impl eframe::App for EditorApp {
         // Handle close request
         if ctx.input(|i| i.viewport().close_requested()) {
             // Always save final panel state on close
-            let _ = self.settings.save();
+            let _ = self.settings.save(None);
 
             let is_empty = self.document.current_content.is_empty();
             if self.is_modified && !is_empty {
@@ -1314,7 +1316,7 @@ impl eframe::App for EditorApp {
                 let actual_width = panel_res.response.rect.width();
                 if (actual_width - self.settings.file_tree_width).abs() > 1.0 {
                     self.settings.file_tree_width = actual_width;
-                    let _ = self.settings.save();
+                    let _ = self.settings.save(None);
                 }
             }
 
@@ -1332,7 +1334,7 @@ impl eframe::App for EditorApp {
                 let actual_width = panel_res.response.rect.width();
                 if (actual_width - self.settings.theme_editor_width).abs() > 1.0 {
                     self.settings.theme_editor_width = actual_width.min(max_panel_width);
-                    let _ = self.settings.save();
+                    let _ = self.settings.save(None);
                 }
             }
 
@@ -1350,7 +1352,7 @@ impl eframe::App for EditorApp {
                 let actual_width = panel_res.response.rect.width();
                 if (actual_width - self.settings.settings_panel_width).abs() > 1.0 {
                     self.settings.settings_panel_width = actual_width.min(max_panel_width);
-                    let _ = self.settings.save();
+                    let _ = self.settings.save(None);
                 }
             }
 
@@ -1373,7 +1375,7 @@ impl eframe::App for EditorApp {
                 let actual_width = panel_res.response.rect.width();
                 if (actual_width - self.settings.history_panel_width).abs() > 1.0 {
                     self.settings.history_panel_width = actual_width.min(max_panel_width);
-                    let _ = self.settings.save();
+                    let _ = self.settings.save(None);
                 }
             }
 
@@ -1391,7 +1393,7 @@ impl eframe::App for EditorApp {
                 let actual_width = panel_res.response.rect.width();
                 if (actual_width - self.settings.debug_panel_width).abs() > 1.0 {
                     self.settings.debug_panel_width = actual_width.min(max_panel_width);
-                    let _ = self.settings.save();
+                    let _ = self.settings.save(None);
                 }
             }
 

@@ -250,6 +250,10 @@ pub struct Settings {
     #[serde(default = "default_true")]
     pub show_status_bar: bool,
 
+    /// Biometric unlock for mobile
+    #[serde(default)]
+    pub biometric_unlock: bool,
+
     /// Volatile flag to indicate if this is the first run (no config file existed)
     #[serde(skip)]
     pub is_first_run: bool,
@@ -411,6 +415,7 @@ impl Default for Settings {
             scroll_speed_multiplier: default_scroll_speed(),
             language: default_language(),
             show_status_bar: true,
+            biometric_unlock: false,
             is_first_run: false,
         }
     }
@@ -422,68 +427,58 @@ fn default_true() -> bool {
 
 impl Settings {
     /// Load settings from file
-    pub fn load() -> Self {
-        if let Some(config_dir) = dirs::config_dir() {
-            let config_path = config_dir.join("sen").join("config.toml");
+    pub fn load(config_dir_override: Option<PathBuf>) -> Self {
+        let config_dir = config_dir_override.or_else(|| dirs::config_dir());
+        
+        if let Some(mut dir) = config_dir {
+            if !dir.ends_with("sen") {
+                dir = dir.join("sen");
+            }
+            let config_path = dir.join("config.toml");
             if config_path.exists() {
                 match fs::read(&config_path) {
                     Ok(content_bytes) => {
-                        // Check for encryption magic header
                         if content_bytes.len() > 4 && &content_bytes[0..4] == CONFIG_MAGIC {
-                            // Encrypted content
                             match Self::get_or_create_config_key() {
                                 Ok(key_bytes) => match aead::SecretKey::from_slice(&key_bytes) {
                                     Ok(secret_key) => {
                                         let encrypted_data = &content_bytes[4..];
                                         match aead::open(&secret_key, encrypted_data) {
-                                                Ok(plaintext) => {
-                                                    match toml::from_str::<Settings>(&String::from_utf8_lossy(&plaintext)) {
-                                                        Ok(mut settings) => {
-                                                            Self::decrypt_keyfile_path_field(&mut settings);
-                                                            Self::decrypt_file_tree_dir_field(&mut settings);
-                                                            Self::decrypt_auto_backup_dir_field(&mut settings);
-                                                            Self::migrate_legacy_fonts(&mut settings);
-                                                            sen_debug!("Settings loaded OK: use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
-                                                                settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
-                                                            return settings;
-                                                        }
-                                                        Err(e) => sen_debug!("Config TOML parse error: {}", e),
+                                            Ok(plaintext) => {
+                                                match toml::from_str::<Settings>(&String::from_utf8_lossy(&plaintext)) {
+                                                    Ok(mut settings) => {
+                                                        Self::decrypt_keyfile_path_field(&mut settings);
+                                                        Self::decrypt_file_tree_dir_field(&mut settings);
+                                                        Self::decrypt_auto_backup_dir_field(&mut settings);
+                                                        Self::migrate_legacy_fonts(&mut settings);
+                                                        return settings;
                                                     }
+                                                    Err(_) => {}
                                                 }
-                                                Err(e) => sen_debug!("Config decryption failed (key may have changed): {}", e),
                                             }
+                                            Err(_) => {}
+                                        }
                                     }
-                                    Err(e) => sen_debug!("Invalid config key format: {}", e),
+                                    Err(_) => {}
                                 },
-                                Err(e) => {
-                                    sen_debug!("Failed to get config key from keyring: {}", e)
-                                }
+                                Err(_) => {}
                             }
                         } else {
-                            // Plaintext fallback (legacy)
                             if let Ok(content_str) = String::from_utf8(content_bytes) {
-                                match toml::from_str::<Settings>(&content_str) {
-                                    Ok(mut settings) => {
-                                        Self::decrypt_keyfile_path_field(&mut settings);
-                                        Self::decrypt_file_tree_dir_field(&mut settings);
-                                        Self::decrypt_auto_backup_dir_field(&mut settings);
-                                        Self::migrate_legacy_fonts(&mut settings);
-                                        sen_debug!("Settings loaded OK (plaintext): use_global_keyfile={}, global_keyfile={:?}, start_maximized={}, theme={}",
-                                            settings.use_global_keyfile, settings.global_keyfile_path, settings.start_maximized, settings.theme_name);
-                                        return settings;
-                                    }
-                                    Err(e) => {
-                                        sen_debug!("Config TOML parse error (plaintext): {}", e)
-                                    }
+                                if let Ok(mut settings) = toml::from_str::<Settings>(&content_str) {
+                                    Self::decrypt_keyfile_path_field(&mut settings);
+                                    Self::decrypt_file_tree_dir_field(&mut settings);
+                                    Self::decrypt_auto_backup_dir_field(&mut settings);
+                                    Self::migrate_legacy_fonts(&mut settings);
+                                    return settings;
                                 }
                             }
                         }
                     }
-                    Err(e) => sen_debug!("Failed to read config file: {}", e),
+                    Err(_) => {}
                 }
             }
         }
-        sen_debug!("Using default settings (possible first run)");
         let mut settings = Self::default();
         settings.is_first_run = true;
         settings
@@ -499,18 +494,17 @@ impl Settings {
         }
     }
 
-    /// Save settings to file (plaintext TOML).
-    ///
-    /// The global keyfile path is encrypted before serialization.
-    /// The `#[serde(skip)]` on `global_keyfile_path` ensures only the
-    /// encrypted form (`keyfile_path_encrypted`) hits disk.
-    pub fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
-        if let Some(config_dir) = dirs::config_dir() {
-            let config_dir = config_dir.join("sen");
-            fs::create_dir_all(&config_dir)?;
-            let config_path = config_dir.join("config.toml");
+    /// Save settings to file (plaintext TOML for now, will re-encrypt later)
+    pub fn save(&self, config_dir_override: Option<PathBuf>) -> Result<(), Box<dyn std::error::Error>> {
+        let config_dir = config_dir_override.or_else(|| dirs::config_dir());
+        
+        if let Some(mut dir) = config_dir {
+            if !dir.ends_with("sen") {
+                dir = dir.join("sen");
+            }
+            fs::create_dir_all(&dir)?;
+            let config_path = dir.join("config.toml");
 
-            // Clone to mutate the encrypted field before serialization
             let mut to_save = self.clone();
             to_save.encrypt_keyfile_path_field();
             to_save.encrypt_file_tree_dir_field();
@@ -518,8 +512,6 @@ impl Settings {
 
             let toml_string = toml::to_string_pretty(&to_save)?;
             fs::write(&config_path, toml_string)?;
-            sen_debug!("Settings saved OK: use_global_keyfile={}, keyfile_encrypted={}, start_maximized={}, theme={}",
-                self.use_global_keyfile, to_save.keyfile_path_encrypted.is_some(), self.start_maximized, self.theme_name);
         }
         Ok(())
     }

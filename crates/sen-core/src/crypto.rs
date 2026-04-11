@@ -395,7 +395,159 @@ pub fn decrypt_bytes(
 
     Ok(plaintext[KEYFILE_HASH_SIZE..].to_vec())
 }
-// Removed decrypt_file wrapper
+
+// ──────────────────────────────────────────────
+// Platform-agnostic byte-level API (for Android / WASM)
+// These functions don't touch the filesystem directly.
+// ──────────────────────────────────────────────
+
+/// Hash raw keyfile content (not from a path).
+pub fn hash_keyfile_bytes(keyfile_content: &[u8]) -> Result<[u8; 32], CryptoError> {
+    if keyfile_content.is_empty() {
+        return Err(CryptoError::KeyfileError("Keyfile is empty".to_string()));
+    }
+    let mut hasher = Sha256::new();
+    hasher.update(keyfile_content);
+    let result = hasher.finalize();
+    let mut hash = [0u8; 32];
+    hash.copy_from_slice(&result);
+    Ok(hash)
+}
+
+/// Encrypt content using raw keyfile bytes. Returns the complete SEN file bytes
+/// (MAGIC + SALT + CIPHERTEXT) without touching the filesystem.
+pub fn encrypt_content_bytes(
+    content: &[u8],
+    keyfile_bytes: &[u8],
+) -> Result<Vec<u8>, CryptoError> {
+    // 1. Generate Salt
+    let mut salt = [0u8; SALT_SIZE];
+    rand::rng().fill_bytes(&mut salt);
+
+    // 2. Hash keyfile & derive key
+    let hash_arr = hash_keyfile_bytes(keyfile_bytes)?;
+    let keyfile_hash = KeyfileHash::from_slice(&hash_arr);
+    let secret_key = derive_key_from_keyfile(&keyfile_hash, &salt)?;
+
+    // 3. Build plaintext: [keyfile_hash 32B] + [content]
+    let mut payload = Zeroizing::new(Vec::with_capacity(KEYFILE_HASH_SIZE + content.len()));
+    payload.extend_from_slice(keyfile_hash.as_bytes());
+    payload.extend_from_slice(content);
+
+    // 4. Encrypt
+    let ciphertext = aead::seal(&secret_key, &payload)?;
+
+    // 5. Assemble: [MAGIC] [SALT] [ENCRYPTED DATA]
+    let mut file_data = Vec::with_capacity(MAGIC_SIZE + SALT_SIZE + ciphertext.len());
+    file_data.extend_from_slice(MAGIC_NUMBER);
+    file_data.extend_from_slice(&salt);
+    file_data.extend_from_slice(&ciphertext);
+
+    Ok(file_data)
+}
+
+/// Encrypt in stealth mode: [SALT(32B)][CIPHERTEXT] — no magic header.
+/// Returns the raw bytes for mobile/memory-only use.
+pub fn encrypt_stealth_bytes(
+    content: &[u8],
+    keyfile_bytes: &[u8],
+) -> Result<Vec<u8>, CryptoError> {
+    let mut salt = [0u8; SALT_SIZE];
+    rand::rng().fill_bytes(&mut salt);
+
+    let hash_arr = hash_keyfile_bytes(keyfile_bytes)?;
+    let keyfile_hash = KeyfileHash::from_slice(&hash_arr);
+    let secret_key = derive_key_from_keyfile(&keyfile_hash, &salt)?;
+
+    let mut payload = Zeroizing::new(Vec::with_capacity(KEYFILE_HASH_SIZE + content.len()));
+    payload.extend_from_slice(keyfile_hash.as_bytes());
+    payload.extend_from_slice(content);
+
+    let ciphertext = aead::seal(&secret_key, &payload)?;
+
+    let mut file_data = Vec::with_capacity(SALT_SIZE + ciphertext.len());
+    file_data.extend_from_slice(&salt);
+    file_data.extend_from_slice(&ciphertext);
+
+    Ok(file_data)
+}
+
+/// Decrypt a stealth file from raw bytes. Returns the plaintext content.
+pub fn decrypt_stealth_bytes(
+    encrypted_data_raw: &[u8],
+    keyfile_bytes: &[u8],
+) -> Result<Vec<u8>, CryptoError> {
+    if encrypted_data_raw.len() < SALT_SIZE + 1 {
+        return Err(CryptoError::InvalidFormat);
+    }
+
+    let salt = &encrypted_data_raw[..SALT_SIZE];
+    let encrypted_data = &encrypted_data_raw[SALT_SIZE..];
+
+    let hash_arr = hash_keyfile_bytes(keyfile_bytes)?;
+    let keyfile_hash = KeyfileHash::from_slice(&hash_arr);
+    let secret_key = derive_key_from_keyfile(&keyfile_hash, salt)?;
+
+    let plaintext_bytes =
+        aead::open(&secret_key, encrypted_data).map_err(|_| CryptoError::DecryptionFailed)?;
+    let plaintext = Zeroizing::new(plaintext_bytes);
+
+    if plaintext.len() < KEYFILE_HASH_SIZE {
+        return Err(CryptoError::InvalidFormat);
+    }
+
+    let stored_hash = &plaintext[..KEYFILE_HASH_SIZE];
+    if keyfile_hash.as_bytes() != stored_hash {
+        return Err(CryptoError::KeyfileError("Keyfile mismatch".to_string()));
+    }
+
+    Ok(plaintext[KEYFILE_HASH_SIZE..].to_vec())
+}
+
+/// Decrypt SEN file bytes using raw keyfile bytes. Returns the plaintext content.
+pub fn decrypt_content_bytes(
+    sen_file_bytes: &[u8],
+    keyfile_bytes: &[u8],
+) -> Result<Vec<u8>, CryptoError> {
+    // Basic size check
+    if sen_file_bytes.len() < MAGIC_SIZE + SALT_SIZE + 1 {
+        return Err(CryptoError::InvalidFormat);
+    }
+
+    // 1. Validate Magic
+    if &sen_file_bytes[0..MAGIC_SIZE] != MAGIC_NUMBER {
+        return Err(CryptoError::InvalidMagicNumber);
+    }
+
+    // 2. Split components
+    let salt_end = MAGIC_SIZE + SALT_SIZE;
+    let salt = &sen_file_bytes[MAGIC_SIZE..salt_end];
+    let encrypted_data = &sen_file_bytes[salt_end..];
+
+    // 3. Hash keyfile & derive key
+    let hash_arr = hash_keyfile_bytes(keyfile_bytes)?;
+    let keyfile_hash = KeyfileHash::from_slice(&hash_arr);
+    let secret_key = derive_key_from_keyfile(&keyfile_hash, salt)?;
+
+    // 4. Decrypt
+    let plaintext_bytes =
+        aead::open(&secret_key, encrypted_data).map_err(|_| CryptoError::DecryptionFailed)?;
+    let plaintext = Zeroizing::new(plaintext_bytes);
+
+    // 5. Verify keyfile hash
+    if plaintext.len() < KEYFILE_HASH_SIZE {
+        return Err(CryptoError::InvalidFormat);
+    }
+
+    let stored_hash = &plaintext[..KEYFILE_HASH_SIZE];
+    if keyfile_hash.as_bytes() != stored_hash {
+        return Err(CryptoError::KeyfileError(
+            "Keyfile mismatch - wrong keyfile for this file".to_string(),
+        ));
+    }
+
+    Ok(plaintext[KEYFILE_HASH_SIZE..].to_vec())
+}
 
 #[cfg(test)]
 mod tests {

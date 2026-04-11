@@ -60,7 +60,7 @@ self.settings.global_keyfile_path = Some(path.clone());
 if self.settings.use_global_keyfile {
 self.keyfile_path = Some(path);
 }
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 self.refresh_file_tree(); // Refresh after setting
 self.log_info("Global keyfile set");
 }
@@ -82,7 +82,7 @@ self.log_info("Global keyfile set");
                 if ui.button(t!("settings.yes")).clicked() {
                     self.settings.global_keyfile_path = None;
                     self.settings.keyfile_path_encrypted = None;
-                    let _ = self.settings.save();
+                    let _ = self.settings.save(None);
                     self.refresh_file_tree();
                     self.show_clear_keyfile_confirmation = false;
                     self.log_info("Global keyfile cleared");
@@ -112,17 +112,17 @@ t!("settings.use_global_keyfile"),
 )
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 if ui.checkbox(&mut self.settings.show_keyfile_paths, t!("settings.show_keyfile_paths"))
 .on_hover_text(t!("settings.show_keyfile_paths_tooltip"))
 .changed() {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 if ui.checkbox(&mut self.settings.show_directory_paths, t!("settings.show_directory_paths"))
 .on_hover_text(t!("settings.show_directory_paths_tooltip"))
 .changed() {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 
 ui.add_space(8.0);
@@ -130,13 +130,13 @@ ui.add(egui::Label::new(egui::RichText::new(t!("settings.auto_backup")).strong()
 if ui.checkbox(&mut self.settings.auto_backup_enabled, t!("settings.auto_backup_enable"))
     .on_hover_text(t!("settings.auto_backup_enable_tooltip"))
     .changed() {
-    let _ = self.settings.save();
+    let _ = self.settings.save(None);
 }
 crate::app_helpers::center_row(ui, |ui| {
     if ui.button(t!("settings.set_backup_dir")).clicked() {
         if let Some(dir) = rfd::FileDialog::new().pick_folder() {
             self.settings.auto_backup_dir = Some(dir.clone());
-            let _ = self.settings.save();
+            let _ = self.settings.save(None);
             self.log_info("Auto-backup directory set");
         }
     }
@@ -151,7 +151,7 @@ crate::app_helpers::center_row(ui, |ui| {
             if ui.button(t!("settings.yes")).clicked() {
                 self.settings.auto_backup_dir = None;
                 self.settings.auto_backup_dir_encrypted = None;
-                let _ = self.settings.save();
+                let _ = self.settings.save(None);
                 self.show_clear_backup_dir_confirmation = false;
                 self.log_info("Auto-backup directory cleared");
             }
@@ -180,7 +180,7 @@ crate::app_helpers::stateful_center_row(ui, ls.get_height("bkp_cur_path"), |ui| 
     if ui.checkbox(&mut self.settings.screen_capture_protection, t!("settings.screen_capture"))
         .on_hover_text(t!("settings.screen_capture_tooltip"))
         .changed() {
-        let _ = self.settings.save();
+        let _ = self.settings.save(None);
         self.apply_screen_capture_protection();
     }
 }
@@ -214,7 +214,7 @@ if ui.button(t!("settings.set_starting_dir")).clicked() {
 if let Some(dir) = rfd::FileDialog::new().pick_folder() {
 self.settings.file_tree_starting_dir = Some(dir.clone());
 self.file_tree_dir = Some(dir);
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 self.refresh_file_tree();
 self.log_info(t!("settings.log_starting_dir_set"));
 }
@@ -222,7 +222,7 @@ self.log_info(t!("settings.log_starting_dir_set"));
 if let Some(current_dir) = &self.file_tree_dir {
 if ui.button(t!("settings.use_current_dir")).clicked() {
 self.settings.file_tree_starting_dir = Some(current_dir.clone());
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 self.log_info(t!("settings.log_starting_dir_set_current"));
 }
 }
@@ -236,7 +236,7 @@ self.log_info(t!("settings.log_starting_dir_set_current"));
                     if ui.button(t!("settings.yes")).clicked() {
                         self.settings.file_tree_starting_dir = None;
                         self.settings.file_tree_dir_encrypted = None;
-                        let _ = self.settings.save();
+                        let _ = self.settings.save(None);
                         self.log_info("Starting directory cleared");
                         self.show_clear_workspace_confirmation = false;
                     }
@@ -250,21 +250,21 @@ if ui
 .checkbox(&mut self.settings.show_subfolders, t!("settings.show_subfolders"))
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 self.refresh_file_tree();
 }
 if ui
 .checkbox(&mut self.settings.hide_sen_extension, t!("settings.hide_sen_ext"))
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 if ui
 .checkbox(&mut self.settings.hide_undecryptable_files, t!("settings.hide_undecryptable"))
 .on_hover_text(t!("settings.hide_undecryptable_tooltip"))
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 self.refresh_file_tree();
 }
 
@@ -275,7 +275,7 @@ if ui
 .on_hover_text(t!("settings.stealth_mode_tooltip"))
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 
 if ui
@@ -283,7 +283,7 @@ if ui
 .on_hover_text(t!("settings.stealth_scan_tooltip"))
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 self.refresh_file_tree();
 }
 ui.add_space(8.0);
@@ -294,21 +294,21 @@ if ui
 .on_hover_text(t!("settings.hide_filename_title_tooltip"))
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 if ui
 .checkbox(&mut self.settings.capitalize_tree_names, t!("settings.capitalize_names"))
 .on_hover_text(t!("settings.capitalize_names_tooltip"))
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 if ui
 .checkbox(&mut self.settings.hide_hidden_files, t!("settings.hide_hidden"))
 .on_hover_text(t!("settings.hide_hidden_tooltip"))
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 self.refresh_file_tree();
 }
 if ui
@@ -316,7 +316,7 @@ if ui
 .on_hover_text(t!("settings.tree_view_tooltip"))
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 self.refresh_file_tree();
 self.setup_watcher();
 }
@@ -331,14 +331,14 @@ if ui
 .checkbox(&mut self.settings.show_line_numbers, t!("settings.show_line_numbers"))
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 if ui
 .checkbox(&mut self.settings.show_whitespace, t!("settings.show_whitespace"))
 .on_hover_text(t!("settings.show_whitespace_tooltip"))
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 // Cursor settings
 let h = ls.get_height("set_cursor_shape");
@@ -347,25 +347,25 @@ crate::app_helpers::render_settings_row(ui, &t!("settings.cursor_shape"), h, |ui
         .selected_text(format!("{:?}", self.settings.cursor_shape))
         .show_ui(ui, |ui| {
             if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Bar, "Bar").changed() {
-                let _ = self.settings.save();
+                let _ = self.settings.save(None);
                 self.style_dirty = true;
             }
             if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Block, "Block").changed() {
-                let _ = self.settings.save();
+                let _ = self.settings.save(None);
                 self.style_dirty = true;
             }
             if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Underscore, "Underscore").changed() {
-                let _ = self.settings.save();
+                let _ = self.settings.save(None);
                 self.style_dirty = true;
             }
         });
 });
 if ui.checkbox(&mut self.settings.cursor_blink, t!("settings.cursor_blink")).changed() {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 self.style_dirty = true;
 }
 if ui.checkbox(&mut self.settings.word_wrap, t!("settings.word_wrap")).changed() {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 let h = ls.get_height("set_tab_sz");
 crate::app_helpers::render_settings_row(ui, &t!("settings.tab_size"), h, |ui| {
@@ -377,14 +377,14 @@ crate::app_helpers::render_settings_row(ui, &t!("settings.tab_size"), h, |ui| {
                     )
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 });
 if ui
 .checkbox(&mut self.settings.use_spaces_for_tabs, t!("settings.spaces_for_tabs"))
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 
 let h = ls.get_height("set_comment_prefix");
@@ -433,7 +433,7 @@ crate::app_helpers::render_settings_row(ui, &t!("settings.comment_prefix"), h, |
     }
 
     if changed {
-        let _ = self.settings.save();
+        let _ = self.settings.save(None);
         self.style_dirty = true;
     }
 });
@@ -451,7 +451,7 @@ crate::app_helpers::render_settings_row(ui, &t!("settings.max_lines"), h, |ui| {
 
     if response.changed() {
         self.settings.max_lines = limit_val;
-        let _ = self.settings.save();
+        let _ = self.settings.save(None);
     }
     if self.settings.max_lines == 0 {
         ui.add(egui::Label::new(egui::RichText::new(t!("settings.no_limit")).italics().weak()).selectable(false));
@@ -469,7 +469,7 @@ if ui
 )
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 });
 ui.add_space(8.0);
@@ -489,14 +489,14 @@ if ui
 .on_hover_text(t!("settings.auto_save_focus_tooltip"))
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
                 if ui
                     .checkbox(&mut self.settings.auto_save_enabled, t!("settings.auto_save_debounce"))
                     .on_hover_text(t!("settings.auto_save_debounce_tooltip"))
                     .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
                 let h = ls.get_height("set_inactivity_secs");
                 crate::app_helpers::render_settings_row(ui, &t!("settings.inactivity_secs"), h, |ui| {
@@ -509,7 +509,7 @@ let _ = self.settings.save();
                         )
                         .changed()
                     {
-                        let _ = self.settings.save();
+                        let _ = self.settings.save(None);
                     }
                 });
 });
@@ -539,7 +539,7 @@ self.current_theme = theme.clone();
 self.settings.theme_name = theme.name.clone();
 self.editing_theme = Some(theme.clone()); // Sync theme editor
 self.apply_theme(ui.ctx());
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 }
 });
@@ -597,7 +597,7 @@ ui.close_kind(egui::UiKind::Menu);
     if changed {
 self.settings.ui_font_family =
 self.available_fonts[self.ui_font_index].clone();
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 self.style_dirty = true;
 self.fonts_dirty = true;
 self.log_info(format!(
@@ -619,7 +619,7 @@ self.settings.validate_font_sizes();
 self.style_dirty = true;
 }
 if response.drag_stopped() || (response.changed() && response.lost_focus()) {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 });
 ui.separator();
@@ -670,7 +670,7 @@ ui.close_kind(egui::UiKind::Menu);
 if changed {
 self.settings.editor_font_family =
 self.available_fonts[self.editor_font_index].clone();
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 self.style_dirty = true;
 self.fonts_dirty = true;
 self.log_info(format!(
@@ -692,7 +692,7 @@ self.settings.validate_font_sizes();
 self.style_dirty = true;
 }
 if response.drag_stopped() || (response.changed() && response.lost_focus()) {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 });
                     let h = ls.get_height("set_line_h");
@@ -705,7 +705,7 @@ let _ = self.settings.save();
             );
 
             if response.drag_stopped() || (response.changed() && response.lost_focus()) {
-                let _ = self.settings.save();
+                let _ = self.settings.save(None);
             }
 });
 // Global Scroll Speed
@@ -730,7 +730,7 @@ let _ = self.settings.save();
                             self.is_adjusting_scroll_speed = true;
                         }
                         if response.drag_stopped() || (response.changed() && response.lost_focus()) {
-                            let _ = self.settings.save();
+                            let _ = self.settings.save(None);
                         }
                     });
 // Toolbar icon size
@@ -744,7 +744,7 @@ let _ = self.settings.save();
                         );
 
                         if response.drag_stopped() || (response.changed() && response.lost_focus()) {
-                            let _ = self.settings.save();
+                            let _ = self.settings.save(None);
                         }
                     });
 
@@ -755,7 +755,7 @@ let _ = self.settings.save();
                         changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Left, t!("settings.toolbar_left")).changed();
                         changed |= ui.radio_value(&mut self.settings.toolbar_position, crate::settings::ToolbarPosition::Top, t!("settings.toolbar_top")).changed();
                         if changed {
-                            let _ = self.settings.save();
+                            let _ = self.settings.save(None);
                         }
                     });
 // Language Selector
@@ -823,34 +823,34 @@ let _ = self.settings.save();
             });
 if changed {
 sen_i18n::set_locale(&self.settings.language);
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 if ui
 .checkbox(&mut self.settings.preserve_all_panels, t!("settings.preserve_panels"))
 .on_hover_text(t!("settings.preserve_panels_tooltip"))
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 if ui
 .checkbox(&mut self.settings.start_maximized, t!("settings.start_maximized"))
 .changed()
 {
-let _ = self.settings.save();
+let _ = self.settings.save(None);
 }
 if ui
 .checkbox(&mut self.settings.remember_zen_mode, t!("settings.remember_zen"))
 .on_hover_text(t!("settings.remember_zen_tooltip"))
 .changed()
 {
-                            let _ = self.settings.save();
+                            let _ = self.settings.save(None);
                         }
                         if ui
                             .checkbox(&mut self.settings.show_status_bar, t!("settings.show_status_bar"))
                             .on_hover_text(t!("settings.show_status_bar_tooltip"))
                             .changed()
                         {
-                            let _ = self.settings.save();
+                            let _ = self.settings.save(None);
                         }
 
                         ui.add_space(8.0);
@@ -886,7 +886,7 @@ if ui
                             .on_hover_text(t!("settings.single_instance_tooltip"))
                             .changed()
                         {
-                            let _ = self.settings.save();
+                            let _ = self.settings.save(None);
                         }
 
                             ui.add_space(4.0);
@@ -1266,7 +1266,7 @@ if ui
                                     .changed();
 
                                 if changed {
-                                    let _ = self.settings.save();
+                                    let _ = self.settings.save(None);
                                 }
                             },
                         );
@@ -1390,9 +1390,10 @@ if ui
                                 let mut dir_stack: Vec<(PathBuf, usize)> = Vec::new();
 
                                 for (_i, entry) in entries.iter().enumerate() {
+                                    let entry_path = PathBuf::from(&entry.uri);
                                     // Detect end of directories before processing the next entry
                                     while let Some((dir_path, _depth)) = dir_stack.last() {
-                                        if !entry.path.starts_with(dir_path) {
+                                        if !entry_path.starts_with(dir_path) {
                                             let (finished_dir, finished_depth) =
                                                 dir_stack.pop().unwrap();
                                             self.render_scanning_spinner_if_needed(
@@ -1408,16 +1409,15 @@ if ui
                                     }
 
                                     if entry.is_dir {
-                                        dir_stack.push((entry.path.clone(), entry.depth));
+                                        dir_stack.push((entry_path.clone(), entry.depth));
                                     }
 
-                                    let path = &entry.path;
-                                    let raw_filename =
-                                        path.file_name().unwrap_or_default().to_string_lossy();
+                                    let path = &entry_path;
+                                    let raw_filename = &entry.name;
                                     let filename = if self.settings.capitalize_tree_names {
                                         raw_filename.to_uppercase()
                                     } else {
-                                        raw_filename.to_string()
+                                        raw_filename.clone()
                                     };
 
                                     // Hide undecryptable files check
@@ -1807,7 +1807,7 @@ if ui
                                 self.settings.theme_name = theme.name.clone();
                                 self.show_delete_theme_confirmation = false; // Reset confirmation on theme change
                                 self.apply_theme(ui.ctx());
-                                let _ = self.settings.save();
+                                let _ = self.settings.save(None);
                             }
                         }
                     });
@@ -2577,7 +2577,7 @@ if ui
                     self.current_theme = theme.clone();
                     self.original_editing_theme = Some(theme.clone());
                     self.settings.theme_name = theme.name.clone();
-                    let _ = self.settings.save();
+                    let _ = self.settings.save(None);
                     self.themes = crate::theme::load_themes();
                     self.status_message =
                         t!("theme.saved_msg", name = theme.name).to_string();

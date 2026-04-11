@@ -1,11 +1,11 @@
-//! Desktop-specific egui extensions for the core Theme system.
+//! Shared egui extensions for the core Theme system.
 //!
 //! Provides `ThemeColorsExt` and `ThemeExt` traits that add
 //! `egui::Color32` conversion methods and `Theme::apply()` to the
-//! UI-agnostic data models defined in `sen_core::theme`.
+//! UI-agnostic data models.
 
-use eframe::egui;
-use sen_core::theme::{ColorScheme, Theme, ThemeColors};
+use egui;
+use crate::theme::{ColorScheme, Theme, ThemeColors};
 
 // ─── ThemeColors egui helpers ───────────────────────────────────────────────
 
@@ -29,6 +29,8 @@ pub trait ThemeColorsExt {
     fn warning_color(&self) -> egui::Color32;
     fn error_color(&self) -> egui::Color32;
     fn heading_color(&self) -> egui::Color32;
+    fn background_color(&self) -> egui::Color32;
+    fn primary_color(&self) -> egui::Color32;
     fn tree_line_color(&self, ui_visuals: &egui::Visuals) -> egui::Color32;
 }
 
@@ -70,12 +72,11 @@ impl ThemeColorsExt for ThemeColors {
         if let Some(c) = self.icon_color {
             return egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3]);
         }
-        // Intelligent default if not defined
         let bg = self.background.unwrap_or([18, 18, 18, 255]);
         let c = if bg[0] > 128 {
-            [80, 80, 80, 255] // light theme
+            [80, 80, 80, 255]
         } else {
-            [200, 200, 200, 255] // dark theme
+            [200, 200, 200, 255]
         };
         egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
     }
@@ -92,7 +93,7 @@ impl ThemeColorsExt for ThemeColors {
         if let Some(c) = self.hyperlink {
             egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
         } else {
-            egui::Color32::from_rgba_unmultiplied(90, 170, 255, 255) // Default fallback generic blue
+            egui::Color32::from_rgba_unmultiplied(90, 170, 255, 255)
         }
     }
 
@@ -133,6 +134,15 @@ impl ThemeColorsExt for ThemeColors {
         }
     }
 
+    fn background_color(&self) -> egui::Color32 {
+        self.to_color32_opt(self.background, [18, 18, 18, 255])
+    }
+
+    fn primary_color(&self) -> egui::Color32 {
+        // Use icon hover color as a proxy for "primary" if not defined, otherwise info color
+        self.to_color32_opt(self.icon_hover, [100, 150, 255, 255])
+    }
+
     fn tree_line_color(&self, ui_visuals: &egui::Visuals) -> egui::Color32 {
         if let Some(c) = self.tree_line {
             egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
@@ -144,7 +154,6 @@ impl ThemeColorsExt for ThemeColors {
 
 // ─── Theme egui application ─────────────────────────────────────────────────
 
-/// Extension trait for applying a `Theme` to an egui `Context`.
 pub trait ThemeExt {
     fn apply(&self, ctx: &egui::Context);
 }
@@ -157,24 +166,20 @@ impl ThemeExt for Theme {
             egui::Visuals::dark()
         };
 
-        // Create a resolved copy of colors for application
         let mut colors = self.colors.clone();
         colors.resolve(self.color_scheme);
 
-        // --- Apply Global Background ---
         let bg_color = colors.to_egui_color32(colors.background.unwrap_or([18, 18, 18, 255]));
         visuals.window_fill = bg_color;
         visuals.panel_fill = bg_color;
         visuals.extreme_bg_color = bg_color;
 
-        // Custom text edit background if defined
         if let Some(c) = colors.text_edit_bg {
             visuals.extreme_bg_color = colors.to_egui_color32(c);
         }
 
         visuals.selection.bg_fill = colors.selection_color();
 
-        // Custom selection text color
         if let Some(c) = colors.selection_text {
             visuals.selection.stroke.color = colors.to_egui_color32(c);
         } else {
@@ -183,21 +188,18 @@ impl ThemeExt for Theme {
 
         visuals.text_cursor.stroke.color = colors.cursor_color();
 
-        // Apply foreground (text) color
         let foreground = colors.to_egui_color32(colors.foreground.unwrap_or([255, 255, 255, 255]));
         visuals.widgets.noninteractive.fg_stroke.color = foreground;
         visuals.widgets.inactive.fg_stroke.color = foreground;
         visuals.widgets.hovered.fg_stroke.color = foreground;
         visuals.widgets.active.fg_stroke.color = foreground;
 
-        // Remove override_text_color to allow selective coloring
         visuals.override_text_color = None;
 
         if let Some(c) = colors.hyperlink {
             visuals.hyperlink_color = colors.to_egui_color32(c);
         }
 
-        // Apply Button Colors
         if let Some(bg) = colors.button_bg {
             let bg_color = colors.to_egui_color32(bg);
             visuals.widgets.inactive.weak_bg_fill = bg_color;
@@ -217,9 +219,7 @@ impl ThemeExt for Theme {
         }
         if let Some(fg) = colors.button_fg {
             let fg_color = colors.to_egui_color32(fg);
-            // Only set inactive; hover/active have their own explicit fields
             visuals.widgets.inactive.fg_stroke.color = fg_color;
-            // Also set hover/active as fallback, but specific overrides below will take priority
             if colors.button_hover_fg.is_none() {
                 visuals.widgets.hovered.fg_stroke.color = fg_color;
             }
@@ -228,18 +228,15 @@ impl ThemeExt for Theme {
             }
         }
 
-        // Apply Separator Color
         if let Some(sep) = colors.separator {
             let sep_color = colors.to_egui_color32(sep);
-            visuals.widgets.noninteractive.bg_stroke.color = sep_color; // Used for separators
+            visuals.widgets.noninteractive.bg_stroke.color = sep_color;
         }
 
-        // Apply Focus/Selection Border (unified)
         if let Some(c) = colors.widget_focus_border {
             visuals.selection.stroke = egui::Stroke::new(1.0, colors.to_egui_color32(c));
         }
 
-        // Apply Shadow Color
         if let Some(c) = colors.shadow_color {
             visuals.window_shadow.color = colors.to_egui_color32(c);
             visuals.popup_shadow.color = colors.to_egui_color32(c);
@@ -255,7 +252,6 @@ impl ThemeExt for Theme {
             visuals.popup_shadow.spread = s as u8;
         }
 
-        // When both spread and blur are zero, force shadow to be invisible
         {
             let spread = colors.shadow_spread.unwrap_or(0.0);
             let blur = colors.shadow_blur.unwrap_or(0.0);
@@ -265,14 +261,11 @@ impl ThemeExt for Theme {
             }
         }
 
-        // Always apply shadow offset (default to 0 when not set,
-        // otherwise egui's built-in non-zero defaults take over)
         let offset_x = colors.shadow_offset_x.unwrap_or(0.0) as i8;
         let offset_y = colors.shadow_offset_y.unwrap_or(0.0) as i8;
         visuals.window_shadow.offset = [offset_x, offset_y];
         visuals.popup_shadow.offset = [offset_x, offset_y];
 
-        // --- Apply Button States (Foreground & Border) ---
         if let Some(fg) = colors.button_hover_fg {
             visuals.widgets.hovered.fg_stroke.color = colors.to_egui_color32(fg);
         }
@@ -288,7 +281,6 @@ impl ThemeExt for Theme {
 
         ctx.set_visuals(visuals);
 
-        // --- Apply Global Style Additions ---
         let mut style = (*ctx.style()).clone();
         let default_style = egui::Style::default();
 
@@ -301,7 +293,6 @@ impl ThemeExt for Theme {
             style.visuals.menu_corner_radius = default_style.visuals.menu_corner_radius;
         }
 
-        // Unified widget rounding (applies to buttons, inputs, checkboxes, etc.)
         if let Some(r) = colors.widget_rounding {
             let radius = egui::CornerRadius::same(r as u8);
             style.visuals.widgets.noninteractive.corner_radius = radius;
@@ -322,7 +313,6 @@ impl ThemeExt for Theme {
                 default_style.visuals.widgets.open.corner_radius;
         }
 
-        // Unified widget border width
         if let Some(w) = colors.widget_border_width {
             style.visuals.widgets.inactive.bg_stroke.width = w;
             style.visuals.widgets.hovered.bg_stroke.width = w;
@@ -336,7 +326,6 @@ impl ThemeExt for Theme {
                 default_style.visuals.widgets.active.bg_stroke.width;
         }
 
-        // Unified widget border color (idle state)
         if let Some(c) = colors.widget_border_color {
             let stroke_color = colors.to_egui_color32(c);
             style.visuals.widgets.inactive.bg_stroke.color = stroke_color;
@@ -350,7 +339,6 @@ impl ThemeExt for Theme {
                 visuals_def.widgets.inactive.bg_stroke.color;
         }
 
-        // Unified widget padding
         if let Some(x) = colors.widget_padding_x {
             style.spacing.button_padding.x = x;
         } else {
@@ -358,16 +346,12 @@ impl ThemeExt for Theme {
         }
         if let Some(y) = colors.widget_padding_y {
             style.spacing.button_padding.y = y;
-            // ComboBox and other widgets use interact_size.y as their default height.
-            // Setting it to 0.0 forces them to use (text_height + 2 * padding.y),
-            // making them consistent with buttons.
             style.spacing.interact_size.y = 0.0;
         } else {
             style.spacing.button_padding.y = default_style.spacing.button_padding.y;
             style.spacing.interact_size.y = default_style.spacing.interact_size.y;
         }
 
-        // Separator width — only affects noninteractive bg_stroke width
         if let Some(w) = colors.separator_width {
             style.visuals.widgets.noninteractive.bg_stroke.width = w;
         } else {
@@ -375,7 +359,6 @@ impl ThemeExt for Theme {
                 default_style.visuals.widgets.noninteractive.bg_stroke.width;
         }
 
-        // Increase checkbox (icon) size - adjusted to stay consistent with widget height
         style.spacing.icon_width = if colors.widget_padding_y.is_some() {
             20.0
         } else {
@@ -387,7 +370,6 @@ impl ThemeExt for Theme {
             10.0
         };
 
-        // Thicker checkmark (tick) icon
         style.visuals.widgets.inactive.fg_stroke.width = 2.0;
         style.visuals.widgets.hovered.fg_stroke.width = 2.2;
         style.visuals.widgets.active.fg_stroke.width = 2.5;

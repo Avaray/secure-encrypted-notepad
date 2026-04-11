@@ -17,7 +17,7 @@ path = "src/bin/generate_ico.rs"
 
 [dependencies]
 # Core library
-sen-core = { path = "../sen-core" }
+sen-core = { path = "../sen-core", features = ["egui"] }
 
 # GUI Framework
 eframe = { workspace = true }

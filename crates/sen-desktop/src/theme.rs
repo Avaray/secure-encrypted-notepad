@@ -6,5 +6,5 @@
 // Re-export everything from sen-core's theme module
 pub use sen_core::theme::*;
 
-// Re-export egui extension traits so callers get them automatically
-pub use crate::theme_ext::{ThemeColorsExt, ThemeExt};
+// Re-export shared egui extension traits from sen-core
+pub use sen_core::theme_egui::{ThemeColorsExt, ThemeExt};

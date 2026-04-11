@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- SEN Android theme: dark status bar that blends with the app background -->
+    <style name="SenTheme" parent="Theme.AppCompat.NoActionBar">
+        <!-- Status bar: Solid background to match the app header -->
+        <item name="android:statusBarColor">#FF10101C</item>
+        <!-- Navigation bar: match the app background -->
+        <item name="android:navigationBarColor">#FF1A1A2E</item>
+        <!-- Draw behind the status bar so input coordinates match the surface -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
+</resources>

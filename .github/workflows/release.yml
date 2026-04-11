@@ -136,13 +136,59 @@ jobs:
         with:
           name: binaries-${{ matrix.target }}
           path: |
-            target/${{ matrix.target }}/release-final/${{ matrix.artifact }}
             target/${{ matrix.target }}/release-final/${{ matrix.artifact }}.sha256
+          retention-days: 1
+
+  build-android:
+    name: Build (Android)
+    needs: check-version
+    if: needs.check-version.outputs.created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android, x86_64-linux-android
+
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Build APK (Release)
+        run: |
+          cd crates/sen-android/android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      - name: Rename APK
+        run: |
+          APK_PATH=$(find crates/sen-android/android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          if [ -n "$APK_PATH" ]; then
+            cp "$APK_PATH" "sen-v${{ needs.check-version.outputs.version }}-android-unsigned.apk"
+          else
+            echo "No APK found!"
+            exit 1
+          fi
+        shell: bash
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: sen-v${{ needs.check-version.outputs.version }}-android-unsigned.apk
           retention-days: 1
 
   create-release:
     name: Create GitHub Release
-    needs: [check-version, build]
+    needs: [check-version, build, build-android]
     if: needs.check-version.outputs.created == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -152,7 +198,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: release_files
-          pattern: binaries-*
+          pattern: '*' # Combined with merge-multiple: true, this grabs both 'binaries-*' and 'android-apk'
           merge-multiple: true
 
       - name: Create GitHub Release

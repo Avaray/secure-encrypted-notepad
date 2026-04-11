@@ -189,7 +189,7 @@ impl EditorApp {
                                     self.fonts_dirty = true;
                                     self.style_dirty = true;
 
-                                    let _ = self.settings.save();
+                                    let _ = self.settings.save(None);
 
                                     // Apply theme immediately
                                     let new_theme = self

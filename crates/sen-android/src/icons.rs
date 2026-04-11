@@ -2,6 +2,7 @@ use egui::{ColorImage, Context, TextureHandle};
 
 #[allow(dead_code)]
 pub struct Icons {
+    pub hamburger: TextureHandle,
     pub new_doc: TextureHandle,
     pub open: TextureHandle,
     pub open_folder: TextureHandle,
@@ -47,11 +48,17 @@ pub struct Icons {
     pub locked_file: TextureHandle,
     pub asterisk_file: TextureHandle,
     pub close: TextureHandle,
+    pub search: TextureHandle,
 }
 
 impl Icons {
     pub fn load(ctx: &Context) -> Self {
         Self {
+            hamburger: Self::load_svg(
+                ctx,
+                include_bytes!("../../sen-desktop/assets/ui/MaterialSymbolsMenu.svg"),
+                "icon_hamburger",
+            ),
             new_doc: Self::load_svg(
                 ctx,
                 include_bytes!("../../sen-desktop/assets/ui/MaterialSymbolsAddDiamondRounded.svg"),
@@ -267,6 +274,11 @@ impl Icons {
                 ctx,
                 include_bytes!("../../sen-desktop/assets/ui/CarbonResetAlt.svg"),
                 "icon_reset",
+            ),
+            search: Self::load_svg(
+                ctx,
+                include_bytes!("../../sen-desktop/assets/ui/Dot.svg"),
+                "icon_search",
             ),
         }
     }

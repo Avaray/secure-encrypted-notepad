@@ -42,5 +42,11 @@ keyring = { workspace = true }
 # Locale detection
 sys-locale = { workspace = true }
 
+# GUI support (optional, shared between targets)
+egui = { workspace = true, optional = true }
+
+[features]
+egui = ["dep:egui"]
+
 [target.'cfg(windows)'.dependencies]
 winreg = "0.55"

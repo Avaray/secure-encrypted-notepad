@@ -3,6 +3,14 @@ app.close_panel: "Close Panel"
 app.unsaved_document: "Unsaved document"
 app.no_keyfile: "No keyfile"
 app.status_stealth: "Stealth"
+app.locked_title: "Secure Notepad Locked"
+app.locked_msg: "Authenticate to access your sensitive notes"
+app.unlock_btn: "Unlock App"
+app.editor_hint: "Tap here to type..."
+app.workspace_updated: "Workspace updated"
+app.untitled: "Untitled"
+app.select_keyfile: "Select Keyfile"
+app.keyfile_loaded: "Keyfile loaded"
 
 # ═══════════════════════════════════════
 # TOOLBAR
@@ -61,6 +69,7 @@ settings.set_backup_dir: "Set Backup Directory"
 # Screen Capture
 settings.screen_capture: "Prevent screen capture"
 settings.screen_capture_tooltip: "Prevents screenshots and screen recordings from capturing this window's content. Requires Windows 10 2004 or later."
+settings.biometric_unlock: "Biometric Unlock"
 
 # Stealth Mode
 settings.stealth_mode: "Stealth Mode Settings"
@@ -176,6 +185,8 @@ history.delete_entry: "Mark for deletion"
 history.revert_entry: "Revert to this version"
 history.revert_changes: "Revert Changes"
 history.no_history: "No history entries found"
+history.help: "Save your document to create history snapshots"
+history.size: "Size: %{size}"
 history.log_reverted: "History reverted to last saved state"
 
 # ═══════════════════════════════════════

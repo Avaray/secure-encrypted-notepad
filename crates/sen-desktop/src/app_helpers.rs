@@ -1,4 +1,5 @@
-use crate::app_state::{FileTreeEntry, KeyStatus, LogEntry, LogLevel};
+use crate::app_state::{KeyStatus, LogEntry, LogLevel};
+use sen_core::models::FileTreeEntry;
 use crate::theme::{ThemeColorsExt, ThemeExt};
 use crate::EditorApp;
 
@@ -330,7 +331,8 @@ impl EditorApp {
                 // Add parent directory ".." button at the top
                 if has_parent {
                     entries.push(FileTreeEntry {
-                        path: dir.parent().unwrap().to_path_buf(),
+                        uri: dir.parent().unwrap().to_string_lossy().to_string(),
+                        name: "..".to_string(),
                         is_dir: true,
                         is_expanded: false,
                         depth: 0,
@@ -363,7 +365,8 @@ impl EditorApp {
 
                                 if path.is_dir() && self.settings.show_subfolders {
                                     folders.push(FileTreeEntry {
-                                        path: path.clone(),
+                                        uri: path.to_string_lossy().to_string(),
+                                        name: path.file_name().unwrap_or_default().to_string_lossy().to_string(),
                                         is_dir: true,
                                         is_expanded: false,
                                         depth: 0,
@@ -377,7 +380,8 @@ impl EditorApp {
                                     }
                                     if is_sen || self.settings.stealth_scan {
                                         files.push(FileTreeEntry {
-                                            path: path.clone(),
+                                            uri: path.to_string_lossy().to_string(),
+                                            name: path.file_name().unwrap_or_default().to_string_lossy().to_string(),
                                             is_dir: false,
                                             is_expanded: false,
                                             depth: 0,
@@ -388,21 +392,16 @@ impl EditorApp {
                         }
 
                         folders.sort_by(|a, b| {
-                            a.path
-                                .file_name()
-                                .unwrap_or_default()
-                                .cmp(b.path.file_name().unwrap_or_default())
+                            a.name.cmp(&b.name)
                         });
                         files.sort_by(|a, b| {
-                            a.path
-                                .file_name()
-                                .unwrap_or_default()
-                                .cmp(b.path.file_name().unwrap_or_default())
+                            a.name.cmp(&b.name)
                         });
 
                         if dir.parent().is_some() && self.settings.show_subfolders {
                             self.file_tree_entries.push(FileTreeEntry {
-                                path: dir.parent().unwrap().to_path_buf(),
+                                uri: dir.parent().unwrap().to_string_lossy().to_string(),
+                                name: "..".to_string(),
                                 is_dir: true,
                                 is_expanded: false,
                                 depth: 0,
@@ -490,7 +489,8 @@ impl EditorApp {
             let is_expanded = self.expanded_directories.contains(&path);
 
             out_entries.push(FileTreeEntry {
-                path: path.clone(),
+                uri: path.to_string_lossy().to_string(),
+                name: path.file_name().unwrap_or_default().to_string_lossy().to_string(),
                 is_dir: true,
                 is_expanded,
                 depth,
@@ -503,7 +503,8 @@ impl EditorApp {
 
         for path in child_files {
             out_entries.push(FileTreeEntry {
-                path,
+                uri: path.to_string_lossy().to_string(),
+                name: path.file_name().unwrap_or_default().to_string_lossy().to_string(),
                 is_dir: false,
                 is_expanded: false,
                 depth,
@@ -538,26 +539,27 @@ impl EditorApp {
         };
 
         // 2. Identify files that need checking
-        let mut paths_to_check = Vec::new();
+        let mut paths_to_check: Vec<(std::path::PathBuf, bool)> = Vec::new();
         for entry in &self.file_tree_entries {
             if !entry.is_dir {
-                let is_sen = entry.path.extension().and_then(|s| s.to_str()) == Some("sen");
+                let path = std::path::PathBuf::from(&entry.uri);
+                let is_sen = path.extension().and_then(|s| s.to_str()) == Some("sen");
 
-                if !self.file_access_cache.contains_key(&entry.path)
-                    && !self.pending_access_checks.contains(&entry.path)
+                if !self.file_access_cache.contains_key(&path)
+                    && !self.pending_access_checks.contains(&path)
                 {
                     if is_sen {
-                        paths_to_check.push((entry.path.clone(), true));
-                        self.pending_access_checks.insert(entry.path.clone());
+                        paths_to_check.push((path.clone(), true));
+                        self.pending_access_checks.insert(path.clone());
                     } else if self.settings.stealth_scan {
                         // Skip large files for stealth checking
-                        if let Ok(metadata) = std::fs::metadata(&entry.path) {
+                        if let Ok(metadata) = std::fs::metadata(&path) {
                             if metadata.len() < 50 * 1024 * 1024 {
-                                paths_to_check.push((entry.path.clone(), false));
-                                self.pending_access_checks.insert(entry.path.clone());
+                                paths_to_check.push((path.clone(), false));
+                                self.pending_access_checks.insert(path.clone());
                             } else {
                                 self.file_access_cache
-                                    .insert(entry.path.clone(), KeyStatus::NotSen);
+                                    .insert(path.clone(), KeyStatus::NotSen);
                             }
                         }
                     }

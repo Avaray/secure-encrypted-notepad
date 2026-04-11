@@ -14,11 +14,14 @@ To develop SEN, you need the following installed on your system:
     - **Linux**: Requires development headers for `libsecret` and GUI libraries.
         - *Ubuntu/Debian:* `sudo apt install libsecret-1-dev libssl-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev`
     - **macOS**: No extra dependencies (uses internal Keychain and AppKit).
-17: 4.  **Android Development** (Optional):
-18:     - **Android Studio**: Installed with SDK and NDK (version 26+).
-19:     - **cargo-ndk**: Install via `cargo install cargo-ndk`.
-20:     - **Rust Targets**: Add Android targets for your emulator/device:
-21:         - `rustup target add aarch64-linux-android x86_64-linux-android`
+4.  **Android Development** (Optional):
+    - **Android Studio**: Jellyfish or newer recommended.
+    - **Android SDK & NDK**: Installed via Android Studio (NDK version 26.x recommended).
+    - **cargo-ndk**: Install via `cargo install cargo-ndk`.
+    - **Rust Targets**: Add Android targets for your emulator/device:
+        ```bash
+        rustup target add aarch64-linux-android x86_64-linux-android
+        ```
 
 ## 🚀 Getting Started
 
@@ -28,8 +31,8 @@ git clone https://github.com/Avaray/sen.git
 cd sen
 ```
 
-### 2. Run the Application (Debug Mode)
-This uses the `dev` profile with incremental compilation and light optimizations for a balanced experience.
+### 2. Run the Desktop Application (Debug Mode)
+This uses the `dev` profile with incremental compilation for a better experience.
 ```bash
 cargo run
 ```
@@ -37,26 +40,29 @@ cargo run
 ### 3. Build for Production
 There are two ways to build a release binary:
 
-- **Standard Release**: Fast build with Thin LTO and optimizations.
+- **Standard Release**: Balanced build with Thin LTO.
   ```bash
   cargo build --release
   ```
-- **Final Release (Optimized & Small)**: Slow build with full LTO and size optimizations (used for public releases).
+- **Final Release (Optimized)**: Full LTO and size optimizations (used for public releases).
   ```bash
   cargo build --profile release-final
   ```
 
-### 4. Run on Android
+### 4. Build and Run on Android
+
 The Android version is a wrapper around the core Rust library using `GameActivity`.
 
-1.  Open **Android Studio**.
-2.  Select **"Open Project"** and point to the `crates/sen-android/android` directory.
-3.  Wait for **Gradle Sync** to finish (it will automatically invoke `cargo-ndk` to build the Rust library).
-4.  Select your emulator or target device.
-5.  Click the green **Run** (▶) button or press `Shift + F10`.
+1.  **Open Android Studio** and points to the `crates/sen-android/android` directory.
+2.  **Wait for Gradle Sync** to finish.
+3.  **Build/Run**: Click **Run** (▶) or run from CLI:
+    ```bash
+    cd crates/sen-android/android
+    ./gradlew assembleDebug
+    ```
 
 > [!TIP]
-> The Android build pipeline is integrated via a custom Gradle task (`cargoBuild`) that runs before the APK is assembled. You don't need to manualy run `cargo build` for Android if you use Android Studio.
+> The Android project is configured to automatically run `cargo-ndk` during the `preBuild` phase. If you encounter errors, ensure `cargo-ndk` is in your PATH and your `ANDROID_NDK_HOME` environment variable is set to your NDK location.
 
 ## 🔧 Development Workflow
 

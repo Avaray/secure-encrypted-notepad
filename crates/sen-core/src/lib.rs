@@ -32,3 +32,7 @@ pub mod history;
 pub mod settings;
 pub mod theme;
 pub mod fs;
+pub mod models;
+
+#[cfg(feature = "egui")]
+pub mod theme_egui;

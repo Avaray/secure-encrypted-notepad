@@ -3406,6 +3406,9 @@ dependencies = [
  "jni",
  "resvg",
  "sen-core",
+ "sen-i18n",
+ "serde",
+ "serde_json",
  "tiny-skia",
  "usvg",
 ]
@@ -3418,6 +3421,7 @@ dependencies = [
  "base64",
  "chrono",
  "dirs 5.0.1",
+ "egui",
  "hex",
  "hkdf",
  "keyring",
