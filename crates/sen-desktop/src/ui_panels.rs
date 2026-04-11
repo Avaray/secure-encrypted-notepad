@@ -767,6 +767,7 @@ let _ = self.settings.save(None);
                 "sk" => ("Slovenčina", &self.icons.flag_sk),
                 "ru" => ("Русский", &self.icons.flag_ru),
                 "it" => ("Italiano", &self.icons.flag_it),
+                "ar" => ("العربية (Arabic)", &self.icons.flag_ar),
                 _ => ("English", &self.icons.flag_en),
             };
 
