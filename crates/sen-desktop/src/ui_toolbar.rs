@@ -53,7 +53,7 @@ impl EditorApp {
             .id_salt("tb_scroll")
             .show(ui, |ui| {
                 ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                    ui.add_enabled_ui(!self.show_batch_converter, |ui| {
+                    ui.add_enabled_ui(!self.show_batch_converter && !self.zen_mode, |ui| {
                         self.render_toolbar_file_group(ui);
                         ui.separator();
                         self.render_toolbar_batch_group(ui);
@@ -75,7 +75,7 @@ impl EditorApp {
             egui::Layout::left_to_right(egui::Align::Center),
             |ui| {
                 // Group 1-3: Handled with global disable
-                ui.add_enabled_ui(!self.show_batch_converter, |ui| {
+                ui.add_enabled_ui(!self.show_batch_converter && !self.zen_mode, |ui| {
                     // Group 1: Files
                     self.render_toolbar_file_group(ui);
                     ui.separator();
@@ -346,9 +346,10 @@ impl EditorApp {
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
-        let enabled = !self.show_batch_converter;
+        let global_enabled = !self.show_batch_converter && !self.zen_mode;
+        let zen_toggle_enabled = !self.show_batch_converter;
 
-        ui.add_enabled_ui(enabled, |ui| {
+        ui.add_enabled_ui(global_enabled, |ui| {
             if Self::icon_btn(
                 ui,
                 &self.icons.history,
@@ -379,6 +380,9 @@ impl EditorApp {
                 self.show_file_tree = !self.show_file_tree;
                 self.settings.show_file_tree = self.show_file_tree;
             }
+        });
+
+        ui.add_enabled_ui(zen_toggle_enabled, |ui| {
             if Self::icon_btn(
                 ui,
                 &self.icons.zen,
@@ -393,6 +397,9 @@ impl EditorApp {
             {
                 self.toggle_zen_mode(ui.ctx());
             }
+        });
+
+        ui.add_enabled_ui(global_enabled, |ui| {
             if Self::icon_btn(
                 ui,
                 &self.icons.theme,
@@ -429,23 +436,25 @@ impl EditorApp {
             }
         });
 
-        // Batch converter (always clickable to exit)
-        if Self::icon_btn(
-            ui,
-            &self.icons.batch_convert,
-            &*t!("toolbar.toggle_batch"),
-            self.show_batch_converter,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
-            self.show_batch_converter = !self.show_batch_converter;
-        }
+        // Batch converter (always clickable to exit, but disabled in zen mode)
+        ui.add_enabled_ui(!self.zen_mode, |ui| {
+            if Self::icon_btn(
+                ui,
+                &self.icons.batch_convert,
+                &*t!("toolbar.toggle_batch"),
+                self.show_batch_converter,
+                bs,
+                is,
+                ht,
+                dt,
+            )
+            .clicked()
+            {
+                self.show_batch_converter = !self.show_batch_converter;
+            }
+        });
 
-        ui.add_enabled_ui(enabled, |ui| {
+        ui.add_enabled_ui(global_enabled, |ui| {
             if Self::icon_btn(
                 ui,
                 &self.icons.debug,
@@ -480,25 +489,28 @@ impl EditorApp {
         let ht = self.current_theme.colors.icon_hover_color();
         let dt = self.current_theme.colors.icon_color();
 
-        let enabled = !self.show_batch_converter;
+        let global_enabled = !self.show_batch_converter && !self.zen_mode;
+        let zen_toggle_enabled = !self.show_batch_converter;
 
-        // 7. Batch Converter (always clickable)
-        if Self::icon_btn(
-            ui,
-            &self.icons.batch_convert,
-            &*t!("toolbar.toggle_batch"),
-            self.show_batch_converter,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
-            self.show_batch_converter = !self.show_batch_converter;
-        }
+        // 7. Batch Converter (always clickable, but disabled in zen mode)
+        ui.add_enabled_ui(!self.zen_mode, |ui| {
+            if Self::icon_btn(
+                ui,
+                &self.icons.batch_convert,
+                &*t!("toolbar.toggle_batch"),
+                self.show_batch_converter,
+                bs,
+                is,
+                ht,
+                dt,
+            )
+            .clicked()
+            {
+                self.show_batch_converter = !self.show_batch_converter;
+            }
+        });
 
-        ui.add_enabled_ui(enabled, |ui| {
+        ui.add_enabled_ui(global_enabled, |ui| {
             // 6. Debug
             if Self::icon_btn(
                 ui,
@@ -551,7 +563,10 @@ impl EditorApp {
                     self.editing_theme = Some(self.current_theme.clone());
                 }
             }
-            // 3. Zen Mode
+        });
+
+        // 3. Zen Mode (toggle enabled even in zen)
+        ui.add_enabled_ui(zen_toggle_enabled, |ui| {
             if Self::icon_btn(
                 ui,
                 &self.icons.zen,
@@ -566,6 +581,9 @@ impl EditorApp {
             {
                 self.toggle_zen_mode(ui.ctx());
             }
+        });
+
+        ui.add_enabled_ui(global_enabled, |ui| {
             // 2. File Tree
             if Self::icon_btn(
                 ui,
