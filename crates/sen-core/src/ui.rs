@@ -66,33 +66,31 @@ impl<'a> Select<'a> {
         }
 
         // ROOT CAUSE OF THE WIDTH BUG:
-        // egui's default layout is top_down, which stretches every widget to
-        // the full available width. `min_size` only sets a lower bound — it does
-        // not prevent the button from expanding further to fill the parent Ui.
-        //
-        // Fix: add the button inside `ui.horizontal`. A horizontal layout only
-        // gives each widget as much space as it needs (its natural/min size),
-        // so the button stays at the width we actually want.
-        let mut response_opt = None;
-        ui.horizontal(|ui| {
-            response_opt = Some(ui.add(button));
-        });
-        let response = response_opt.unwrap();
+        // We check the direction of the main layout. If the parent already lays out items 
+        // horizontally (like right_to_left in the settings panel), we skip creating a new 
+        // nested horizontal layout. This prevents the panel from stretching to 100% width.
+        let response = if ui.layout().main_dir().is_horizontal() {
+            ui.add(button)
+        } else {
+            // If we are in a vertical layout (top_down), we use horizontal 
+            // to prevent unnatural stretching of the button.
+            ui.horizontal(|ui| ui.add(button)).inner
+        };
 
         let button_width = response.rect.width();
         let mut inner_res = None;
 
         egui::Popup::from_toggle_button_response(&response)
             .show(|ui| {
-                // Jeśli chcesz, aby rozwinięta lista mogła być węższa niż przycisk
-                // (idealnie dopasowana do tekstu wewnątrz), ZAKOMENTUJ poniższą linijkę.
-                // Zostaw ją, jeśli chcesz zachować standardowy wygląd (lista min. tak szeroka jak przycisk).
+                // If you want the dropdown list to be able to be narrower than the button
+                // (perfectly fitted to the text inside), COMMENT OUT the line below.
+                // Leave it if you want to keep the standard look (list at least as wide as the button).
                 ui.set_min_width(button_width); 
 
                 egui::ScrollArea::vertical()
                     .max_height(260.0)
-                    // KLUCZOWA ZMIANA: [true, true] pozwala egui na dopasowanie
-                    // szerokości (oraz wysokości) idealnie do zawartości (najdłuższego tekstu).
+                    // KEY CHANGE: [true, true] allows egui to perfectly fit 
+                    // the width (and height) to the content (the longest text).
                     .auto_shrink([true, true])
                     .show(ui, |ui| {
                         inner_res = Some(add_contents(ui));
