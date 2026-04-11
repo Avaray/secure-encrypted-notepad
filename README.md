@@ -27,7 +27,7 @@ For detailed information, check out the following guides in the `/docs` director
 | Android | ARM64 / x86 | `aarch64` / `x86_64`-linux-android | Android Keystore & Biometrics |
 
 > **Portable:** Desktop SEN is a single self-contained binary — no installation required. Just download and run.  
-> **Mobile:** The Android version integrates with the System File Picker (SAF) and supports biometric unlock.
+> **Mobile:** The Android version integrates with the System File Picker (SAF) and supports biometric unlock.  
 > **Linux note:** Requires a running secret service daemon (e.g. `gnome-keyring` or `kwallet`).
 
 ---
