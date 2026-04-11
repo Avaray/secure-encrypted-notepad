@@ -4,7 +4,7 @@
 
 ![SEN Screenshot](crates/sen-desktop/assets/screenshot.jpg)
 
-🚧 Please note that **SEN** is still in development. While the core functionality for Desktop is in place, you may encounter bugs or missing features.
+🚧 Please note that **SEN** is still in development. While the core functionality for Desktop is in place, the Android version is in an early stage of development and most features do not work yet.
 
 ---
 
