@@ -1197,9 +1197,9 @@ impl SenAndroidApp {
                     ("ru", "Русский"),
                     ("it", "Italiano"),
                 ];
-
-                egui::ComboBox::from_id_salt("lang_selector")
-                    .selected_text(languages.iter().find(|(c, _)| *c == self.settings.language).map(|(_, n)| *n).unwrap_or("English"))
+                let current_lang_name = languages.iter().find(|(c, _)| *c == self.settings.language).map(|(_, n)| *n).unwrap_or("English");
+                sen_core::ui::Select::new(current_lang_name)
+                    .with_width_hint(ui, "Nederlands")
                     .show_ui(ui, |ui| {
                         for (code, name) in languages {
                             if ui.selectable_value(&mut self.settings.language, code.to_string(), name).clicked() {

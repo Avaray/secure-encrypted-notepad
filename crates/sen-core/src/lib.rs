@@ -36,3 +36,6 @@ pub mod models;
 
 #[cfg(feature = "egui")]
 pub mod theme_egui;
+
+#[cfg(feature = "egui")]
+pub mod ui;

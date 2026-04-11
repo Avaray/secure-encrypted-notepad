@@ -1,0 +1,104 @@
+//! Shared UI components for Secure Encrypted Notepad.
+
+use egui;
+
+pub struct Select<'a> {
+    selected_text: String,
+    min_width: f32,
+    button_builder: Option<Box<dyn FnOnce(egui::Button) -> egui::Button + 'a>>,
+}
+
+impl<'a> Select<'a> {
+    pub fn new(selected_text: impl Into<String>) -> Self {
+        Self {
+            selected_text: selected_text.into(),
+            min_width: 0.0,
+            button_builder: None,
+        }
+    }
+
+    pub fn min_width(mut self, width: f32) -> Self {
+        self.min_width = width;
+        self
+    }
+
+    /// Calculates min_width from the longest option text so the button never
+    /// shrinks below that size, but also never stretches beyond it.
+    pub fn with_width_hint(mut self, ui: &egui::Ui, longest_text: impl Into<String>) -> Self {
+        let text_with_icon = format!("{} ⏷", longest_text.into());
+        let font_id = egui::TextStyle::Button.resolve(ui.style());
+        let galley = ui.painter().layout(
+            text_with_icon,
+            font_id,
+            egui::Color32::WHITE,
+            f32::INFINITY,
+        );
+        // Store only the text width. The button will add its own padding on top.
+        self.min_width = galley.rect.width().ceil();
+        self
+    }
+
+    pub fn button_builder(
+        mut self,
+        builder: impl FnOnce(egui::Button) -> egui::Button + 'a,
+    ) -> Self {
+        self.button_builder = Some(Box::new(builder));
+        self
+    }
+
+    pub fn show_ui<R>(
+        self,
+        ui: &mut egui::Ui,
+        add_contents: impl FnOnce(&mut egui::Ui) -> R,
+    ) -> egui::InnerResponse<Option<R>> {
+        let Self { selected_text, min_width, button_builder } = self;
+
+        let button_text = format!("{} ⏷", selected_text);
+        let mut button = egui::Button::new(button_text)
+            .wrap_mode(egui::TextWrapMode::Truncate);
+
+        if min_width > 0.0 {
+            button = button.min_size(egui::vec2(min_width, 0.0));
+        }
+
+        if let Some(builder) = button_builder {
+            button = builder(button);
+        }
+
+        // ROOT CAUSE OF THE WIDTH BUG:
+        // egui's default layout is top_down, which stretches every widget to
+        // the full available width. `min_size` only sets a lower bound — it does
+        // not prevent the button from expanding further to fill the parent Ui.
+        //
+        // Fix: add the button inside `ui.horizontal`. A horizontal layout only
+        // gives each widget as much space as it needs (its natural/min size),
+        // so the button stays at the width we actually want.
+        let mut response_opt = None;
+        ui.horizontal(|ui| {
+            response_opt = Some(ui.add(button));
+        });
+        let response = response_opt.unwrap();
+
+        let button_width = response.rect.width();
+        let mut inner_res = None;
+
+        egui::Popup::from_toggle_button_response(&response)
+            .show(|ui| {
+                // Jeśli chcesz, aby rozwinięta lista mogła być węższa niż przycisk
+                // (idealnie dopasowana do tekstu wewnątrz), ZAKOMENTUJ poniższą linijkę.
+                // Zostaw ją, jeśli chcesz zachować standardowy wygląd (lista min. tak szeroka jak przycisk).
+                ui.set_min_width(button_width); 
+
+                egui::ScrollArea::vertical()
+                    .max_height(260.0)
+                    // KLUCZOWA ZMIANA: [true, true] pozwala egui na dopasowanie
+                    // szerokości (oraz wysokości) idealnie do zawartości (najdłuższego tekstu).
+                    .auto_shrink([true, true])
+                    .show(ui, |ui| {
+                        inner_res = Some(add_contents(ui));
+                    });
+            });
+
+        egui::InnerResponse { inner: inner_res, response }
+    }
+}

@@ -343,10 +343,10 @@ let _ = self.settings.save(None);
 // Cursor settings
 let h = ls.get_height("set_cursor_shape");
 crate::app_helpers::render_settings_row(ui, &t!("settings.cursor_shape"), h, |ui| {
-    egui::ComboBox::from_id_salt("cursor_shape_combo")
-        .selected_text(format!("{:?}", self.settings.cursor_shape))
-        .show_ui(ui, |ui| {
-            if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Bar, "Bar").changed() {
+                    sen_core::ui::Select::new(format!("{:?}", self.settings.cursor_shape))
+                        .with_width_hint(ui, "Underscore")
+                        .show_ui(ui, |ui| {
+                            if ui.selectable_value(&mut self.settings.cursor_shape, crate::settings::CursorShape::Bar, "Bar").changed() {
                 let _ = self.settings.save(None);
                 self.style_dirty = true;
             }
@@ -524,38 +524,31 @@ self.render_heading(ui, t!("settings.appearance"));
 // Theme selection
                     let h = ls.get_height("set_theme");
                     crate::app_helpers::render_settings_row(ui, &t!("settings.theme"), h, |ui| {
-egui::ComboBox::from_id_salt("theme_selector")
-.selected_text(&self.current_theme.name)
-.show_ui(ui, |ui| {
-for theme in &self.themes.clone() {
-if ui
-.selectable_label(
-theme.name == self.current_theme.name,
-&theme.name,
-)
-.clicked()
-{
-self.current_theme = theme.clone();
-self.settings.theme_name = theme.name.clone();
-self.editing_theme = Some(theme.clone()); // Sync theme editor
-self.apply_theme(ui.ctx());
-let _ = self.settings.save(None);
-}
-}
-});
-if ui.button(t!("settings.refresh")).clicked() {
-self.themes = crate::theme::load_themes();
-self.log_info("Themes refreshed");
-}
-});
+                    sen_core::ui::Select::new(&self.current_theme.name)
+                        .with_width_hint(ui, "Dark - Copy")
+                        .show_ui(ui, |ui| {
+                            for theme in &self.themes.clone() {
+                                if ui.selectable_label(theme.name == self.current_theme.name, &theme.name).clicked() {
+                                    self.current_theme = theme.clone();
+                                    self.settings.theme_name = theme.name.clone();
+                                    self.editing_theme = Some(theme.clone()); // Sync theme editor
+                                    self.apply_theme(ui.ctx());
+                                    let _ = self.settings.save(None);
+                                }
+                            }
+                        });
+                    if ui.button(t!("settings.refresh")).clicked() {
+                        self.themes = crate::theme::load_themes();
+                        self.log_info("Themes refreshed");
+                    }
+                });
 ui.separator();
 // UI font family with keyboard navigation
                     let h = ls.get_height("set_ui_font");
                     crate::app_helpers::render_settings_row(ui, &t!("settings.ui_font"), h, |ui| {
-let _response = egui::ComboBox::from_id_salt("ui_font_selector")
-.selected_text(&self.available_fonts[self.ui_font_index])
-.show_ui(ui, |ui| {
-let mut changed = false;
+                    sen_core::ui::Select::new(&self.available_fonts[self.ui_font_index])
+                        .show_ui(ui, |ui| {
+                            let mut changed = false;
 if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)) {
 if self.ui_font_index > 0 {
 self.ui_font_index -= 1;
@@ -625,10 +618,9 @@ let _ = self.settings.save(None);
 ui.separator();
                     let h = ls.get_height("set_ed_font");
                     crate::app_helpers::render_settings_row(ui, &t!("settings.editor_font"), h, |ui| {
-let _response = egui::ComboBox::from_id_salt("editor_font_selector")
-.selected_text(&self.available_fonts[self.editor_font_index])
-.show_ui(ui, |ui| {
-let mut changed = false;
+                    sen_core::ui::Select::new(&self.available_fonts[self.editor_font_index])
+                        .show_ui(ui, |ui| {
+                            let mut changed = false;
 if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)) {
 if self.editor_font_index > 0 {
 self.editor_font_index -= 1;
@@ -775,22 +767,19 @@ let _ = self.settings.save(None);
                 "sk" => ("Slovenčina", &self.icons.flag_sk),
                 "ru" => ("Русский", &self.icons.flag_ru),
                 "it" => ("Italiano", &self.icons.flag_it),
-                "ar" => ("العربية (Arabic)", &self.icons.flag_ar),
                 _ => ("English", &self.icons.flag_en),
             };
 
             let text_height = ui.text_style_height(&egui::TextStyle::Body);
-
             let h = ls.get_height("set_lang");
             crate::app_helpers::render_settings_row(ui, &t!("settings.language"), h, |ui| {
-                egui::ComboBox::from_id_salt("language_selector")
-                    .selected_text(current_label)
+                sen_core::ui::Select::new(current_label)
+                    .with_width_hint(ui, "العربية (Arabic)")
                     .show_ui(ui, |ui| {
                         let mut lang_row = |ui: &mut egui::Ui, code: &str, label: &str, icon: &egui::TextureHandle| {
                             let is_selected = self.settings.language == code;
                             let mut clicked = false;
                             crate::app_helpers::flex_row(ui, |ui| {
-                                // We also use text_height here
                                 ui.add(egui::Image::new(icon).max_height(text_height).maintain_aspect_ratio(true));
                                 if ui.selectable_label(is_selected, label).clicked() {
                                     self.settings.language = code.to_string();
@@ -817,8 +806,6 @@ let _ = self.settings.save(None);
                         if lang_row(ui, "ar", "العربية (Arabic)", &self.icons.flag_ar) { changed = true; }
                     });
 
-                // Since we are in a Right-To-Left layout (from render_settings_row),
-                // adding the image second moves it to the left of the combo box.
                 ui.add(egui::Image::new(current_icon).max_height(text_height).maintain_aspect_ratio(true));
             });
 if changed {
@@ -1793,8 +1780,8 @@ if ui
                     .as_ref()
                     .map(|t| t.name.clone())
                     .unwrap_or_default();
-                egui::ComboBox::from_id_salt("theme_editor_selector")
-                    .selected_text(&current_name)
+                sen_core::ui::Select::new(&current_name)
+                    .with_width_hint(ui, "Dark - Copy")
                     .show_ui(ui, |ui| {
                         for theme in &self.themes {
                             if ui
@@ -1873,33 +1860,14 @@ if ui
                     &t!("theme.base_scheme"),
                     &mut 0.0,
                     |ui| {
-                        egui::ComboBox::from_id_salt("color_scheme_selector")
-                            .width(100.0)
-                            .selected_text(format!("{:?}", theme.color_scheme))
+                        sen_core::ui::Select::new(format!("{:?}", theme.color_scheme))
+                            .with_width_hint(ui, "Light")
                             .show_ui(ui, |ui| {
-                                if ui
-                                    .selectable_label(
-                                        matches!(
-                                            theme.color_scheme,
-                                            crate::theme::ColorScheme::Dark
-                                        ),
-                                        t!("theme.dark"),
-                                    )
-                                    .clicked()
-                                {
+                                if ui.selectable_label(matches!(theme.color_scheme, crate::theme::ColorScheme::Dark), t!("theme.dark")).clicked() {
                                     theme.color_scheme = crate::theme::ColorScheme::Dark;
                                     theme_changed = true;
                                 }
-                                if ui
-                                    .selectable_label(
-                                        matches!(
-                                            theme.color_scheme,
-                                            crate::theme::ColorScheme::Light
-                                        ),
-                                        t!("theme.light"),
-                                    )
-                                    .clicked()
-                                {
+                                if ui.selectable_label(matches!(theme.color_scheme, crate::theme::ColorScheme::Light), t!("theme.light")).clicked() {
                                     theme.color_scheme = crate::theme::ColorScheme::Light;
                                     theme_changed = true;
                                 }
