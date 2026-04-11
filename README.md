@@ -1,10 +1,10 @@
 # 🔐 SEN - Secure Encrypted Notepad
 
-**SEN** is a local-first application built in **Rust** for Desktop and Android, designed for security. It uses **keyfile-only authentication** instead of passwords, ensuring that your documents cannot be decrypted without physical access to your unique keyfile.
+**SEN** is a local-first desktop application built in **Rust**, focused on security. It uses **keyfile-only authentication** instead of passwords, ensuring that your documents cannot be decrypted without physical access to your unique keyfile.
 
 ![SEN Screenshot](crates/sen-desktop/assets/screenshot.jpg)
 
-🚧 Please note that **SEN** is still in development. While the core functionality for both Desktop and Mobile is in place, you may encounter bugs or missing features.
+🚧 Please note that **SEN** is still in development. While the core functionality for Desktop is in place, you may encounter bugs or missing features.
 
 ---
 
@@ -12,7 +12,7 @@
 
 For detailed information, check out the following guides in the `/docs` directory:
 - [Encryption Architecture](docs/encryption_architecture.md) – Technical details on how your data is protected.
-- [Development Guide](docs/development.md) – Instructions on how to set up the environment and build the project for Desktop and Android.
+- [Development Guide](docs/development.md) – Instructions on how to set up the environment and build the project.
 - [Project TODO](docs/todo.md) – A list of planned features and known issues.
 
 ---
