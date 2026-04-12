@@ -10,3 +10,8 @@ tmp*
 .idea/
 *.swp
 *.bak
+
+# Bun, Node
+node_modules/
+bun.*
+.env*
