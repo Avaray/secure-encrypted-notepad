@@ -25,3 +25,4 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 ## 🐛 Bug Fixes (To Fix)
 
 - [ ] **Vertical Alignment Refinement**: Fix UI layouts for better vertical centering of heterogeneous single-line elements. Comboboxes still do not respect proper vertical alignment.
+- [ ] **Enforce .sen Extension on Save**: When a user opens a regular text file (non-SEN) and attempts to save it, the application currently defaults to the original filename and extension. This leads to the file being encrypted while retaining its old extension (e.g. `.txt`). Upon reopening, the application treats it as plain text but displays encrypted content. The save dialog should default to the `.sen` extension for these cases.
