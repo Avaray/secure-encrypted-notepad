@@ -22,6 +22,7 @@ To develop SEN, you need the following installed on your system:
         ```bash
         rustup target add aarch64-linux-android x86_64-linux-android
         ```
+5.  **Bun**: Required for running utility scripts (i18n synchronization and cleanup). Install via [bun.sh](https://bun.sh/).
 
 ## 🚀 Getting Started
 
@@ -95,6 +96,42 @@ SEN uses a custom **zero-latency i18n parser** for multi-language support (extra
     5. Update `crates/sen-desktop/src/settings.rs` (`default_language` detection).
     6. Update `crates/sen-desktop/src/ui_panels.rs` (Language Selector UI).
 
+## 📜 Utility Scripts
+
+The project includes several helper scripts in the `/scripts` directory to automate common development tasks. These scripts are written in TypeScript and run using [Bun](https://bun.com).
+
+### 1. Locales Synchronization (`locales-sync.ts`)
+
+This script ensures that all translation files stay in sync with English (the source language).
+
+- **Purpose**: Automatically identifies missing keys in non-English `.yml` files and translates them using the Gemini AI API.
+- **Requirement**: Requires a `GEMINI_API_KEY` set in your environment variables (or provided in a `.env` file in the `scripts/` directory).
+- **Usage**:
+  ```bash
+  # Sync all languages
+  bun scripts/locales-sync.ts
+  
+  # Sync a specific language (e.g., Polish)
+  bun scripts/locales-sync.ts pl
+  
+  # Dry run (check for missing keys without translating/writing)
+  bun scripts/locales-sync.ts --dry-run
+  ```
+
+### 2. Locales Cleanup (`locales-cleanup.ts`)
+
+This script helps maintain a clean `en.yml` file by removing keys that are no longer referenced in the Rust codebase.
+
+- **Purpose**: Scans all `.rs` files in the `crates/` directory to check for usage of translation keys.
+- **Usage**:
+  ```bash
+  # Perform cleanup
+  bun scripts/locales-cleanup.ts
+  
+  # Dry run
+  bun scripts/locales-cleanup.ts --dry-run
+  ```
+
 ## 📁 Project Structure
 
 SEN is organized as a Cargo Workspace to support code sharing across multiple platforms (e.g., Desktop, Android).
@@ -103,7 +140,8 @@ SEN is organized as a Cargo Workspace to support code sharing across multiple pl
     - `crypto.rs`: XChaCha20-Poly1305 encryption logic for `.sen` files.
     - `config_crypto.rs`: AES-256 encryption for protecting sensitive paths in `settings.toml`.
     - `history.rs`: Management of document snapshots and metadata.
-- `crates/sen-i18n/`: Custom internationalization engine and YAML locale files.
+- `crates/sen-i18n/`: Custom internationalization engine and localization resources.
+    - `locales/`: YAML translation files for all supported languages.
 - `crates/sen-desktop/`: The main GUI application (Windows, Linux, macOS).
     - `src/main.rs`: Application entry point.
     - `src/app.rs`: Main application logic, event loop, and state management.
@@ -120,6 +158,9 @@ SEN is organized as a Cargo Workspace to support code sharing across multiple pl
     - `android/`: The native Android Studio / Gradle project.
     - `android/app/src/main/java/com/sen/android/MainActivity.kt`: The Kotlin wrapper.
 - `docs/`: Technical documentation and design notes.
+- `scripts/`: Bun utility scripts for i18n synchronization and automated maintenance.
+- `.github/`: CI/CD automation workflows for testing and automated releases.
+
 
 ## ⚙️ Configuration Location
 
