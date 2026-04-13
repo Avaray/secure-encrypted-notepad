@@ -54,7 +54,8 @@ ${JSON.stringify(texts, null, 2)}
     throw new Error(`Gemini API error: ${response.status} ${err}`);
   }
 
-  const data = await response.json();
+  // FIX: Rzutowanie na 'any', ponieważ domyślnie w nowym TS 'json()' może zwracać 'unknown'
+  const data = (await response.json()) as any;
   const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
   if (!textResponse) {
@@ -64,7 +65,8 @@ ${JSON.stringify(texts, null, 2)}
   return JSON.parse(textResponse);
 }
 
-async function syncLocale(targetFile: string, dryRun: boolean, apiKey: string) {
+// FIX: Zmiana apiKey na 'string | undefined', ponieważ w trybie dryRun może być undefined
+async function syncLocale(targetFile: string, dryRun: boolean, apiKey: string | undefined) {
   const langCode = path.basename(targetFile, ".yml");
   const langName = LANGUAGE_MAP[langCode] || langCode;
 
@@ -92,7 +94,8 @@ async function syncLocale(targetFile: string, dryRun: boolean, apiKey: string) {
 
   for (const line of sourceLines) {
     const match = line.match(keyRegex);
-    if (match) {
+    // FIX: Upewnienie się, że match[1] jest zdefiniowany (nie jest undefined)
+    if (match && match[1]) {
       const key = match[1];
       const sourceValue = match[2] || match[3] || match[4] || "";
 
@@ -111,7 +114,8 @@ async function syncLocale(targetFile: string, dryRun: boolean, apiKey: string) {
     }
 
     try {
-      translations = await translate(missingKeys, langName, apiKey);
+      // FIX: W tym miejscu wiemy już, że apiKey na pewno jest stringiem, bo inaczej rzuciłoby wyjątek wyżej
+      translations = await translate(missingKeys, langName, apiKey as string);
 
       // Check if the AI model returned translations for all required keys
       const requestedKeys = Object.keys(missingKeys);
@@ -133,7 +137,8 @@ async function syncLocale(targetFile: string, dryRun: boolean, apiKey: string) {
   const resultLines: string[] = [];
   for (const line of sourceLines) {
     const match = line.match(keyRegex);
-    if (match) {
+    // FIX: Ponowne upewnienie się, że match[1] nie jest undefined
+    if (match && match[1]) {
       const key = match[1];
       const value = targetData[key] ?? translations[key] ?? match[2] ?? match[3] ?? match[4] ?? "";
 
