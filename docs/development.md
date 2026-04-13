@@ -28,8 +28,8 @@ To develop SEN, you need the following installed on your system:
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/Avaray/sen.git
-cd sen
+git clone https://github.com/Avaray/secure-encrypted-notepad.git
+cd secure-encrypted-notepad
 ```
 
 ### 2. Run the Desktop Application (Debug Mode)
