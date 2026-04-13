@@ -129,7 +129,7 @@ mod tests {
             for msg in &missing_keys {
                 eprintln!("{}", msg);
             }
-            panic!("Missing translations found in {} locations. Run 'bun scripts/i18n-sync.ts' to fix.", missing_keys.len());
+            panic!("Missing translations found in {} locations. Run 'bun scripts/locales-sync.ts' to fix.", missing_keys.len());
         }
     }
 }

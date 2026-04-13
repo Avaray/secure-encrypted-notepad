@@ -45,7 +45,7 @@ jobs:
           bun-version: latest
 
       - name: Check I18n Translations
-        run: bun scripts/i18n-sync.ts --dry-run
+        run: bun scripts/locales-sync.ts --dry-run
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable

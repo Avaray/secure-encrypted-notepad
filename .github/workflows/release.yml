@@ -33,7 +33,7 @@ jobs:
           bun-version: latest
 
       - name: Sync I18n Translations
-        run: bun scripts/i18n-sync.ts
+        run: bun scripts/locales-sync.ts
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
