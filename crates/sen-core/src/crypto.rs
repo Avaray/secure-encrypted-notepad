@@ -562,7 +562,7 @@ mod tests {
     /// Helper: create a random 256-byte keyfile
     fn create_random_keyfile(name: &str) -> PathBuf {
         let mut data = vec![0u8; 256];
-        rand::thread_rng().fill_bytes(&mut data);
+        rand::rng().fill_bytes(&mut data);
         create_temp_keyfile(name, &data)
     }
 
