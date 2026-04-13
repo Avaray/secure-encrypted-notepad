@@ -100,50 +100,64 @@ impl EditorApp {
             }
         }
 
+        let buffer = match std::fs::read(&path) {
+            Ok(b) => b,
+            Err(e) => {
+                let msg = format!("Failed to read file: {}", e);
+                self.status_message = msg.clone();
+                self.log_error(msg);
+                if exit_on_cancel {
+                    std::process::exit(0);
+                }
+                return;
+            }
+        };
+
         let mut is_stealth = false;
-        if !crate::crypto::is_sen_file(&path) {
-            // Check for stealth compatibility first
+        let mut is_sen = crate::crypto::is_sen_buffer(&buffer);
+
+        // If not a standard SEN file, check if it's stealth-compatible or just binary
+        if !is_sen {
+            // Check for stealth compatibility first if keyfile is already loaded
             if let Some(keyfile) = &self.keyfile_path {
                 if let Ok(key_hash) = crate::crypto::get_keyfile_hash(keyfile) {
+                    // We need a buffer-based stealth check or just use the existing logic 
+                    // since we already have the buffer.
+                    // For simplicity, we'll check if it "looks" binary first if no key matches.
                     if let Ok(true) = crate::crypto::check_stealth_compatibility(&key_hash, &path) {
                         is_stealth = true;
                     }
                 }
             }
 
+            // If still not identified, use heuristics
             if !is_stealth {
-                match std::fs::read(&path) {
-                    Ok(buffer) => {
-                        let content_str = String::from_utf8_lossy(&buffer).to_string();
-                        self.document =
-                            DocumentWithHistory::new_with_limit(self.settings.max_history_length);
-                        self.document.current_content = content_str;
-                        self.current_file_path = Some(path.clone());
-                        self.is_modified = false;
+                if crate::crypto::is_buffer_text(&buffer) {
+                    // It looks like a normal text file — open as plaintext
+                    let content_str = String::from_utf8_lossy(&buffer).to_string();
+                    self.document =
+                        DocumentWithHistory::new_with_limit(self.settings.max_history_length);
+                    self.document.current_content = content_str;
+                    self.current_file_path = Some(path.clone());
+                    self.is_modified = false;
 
-                        if self.show_search_panel {
-                            self.perform_search();
-                        }
-                        self.replace_undo_stack.clear();
-                        self.loaded_history_index = None;
-                        self.show_autosave_restore = false;
-
-                        let masked_path = self.mask_directory_path(&path);
-                        self.status_message = t!("actions.status_opened_plaintext").to_string();
-                        self.log_info(t!("actions.log_opened_plaintext", file = masked_path));
-
-                        self.commit_history_state();
-                        return;
+                    if self.show_search_panel {
+                        self.perform_search();
                     }
-                    Err(e) => {
-                        let msg = format!("Failed to read file: {}", e);
-                        self.status_message = msg.clone();
-                        self.log_error(msg);
-                        if exit_on_cancel {
-                            std::process::exit(0);
-                        }
-                        return;
-                    }
+                    self.replace_undo_stack.clear();
+                    self.loaded_history_index = None;
+                    self.show_autosave_restore = false;
+
+                    let masked_path = self.mask_directory_path(&path);
+                    self.status_message = t!("actions.status_opened_plaintext").to_string();
+                    self.log_info(t!("actions.log_opened_plaintext", file = masked_path));
+
+                    self.commit_history_state();
+                    return;
+                } else {
+                    // It looks binary but we don't have a key or it's not stealth.
+                    // We treat it as a SEN file (missing key) to trigger the key selection loop.
+                    is_sen = true;
                 }
             }
         }
@@ -181,13 +195,11 @@ impl EditorApp {
 
         let mut current_keyfile = keyfile;
         loop {
-            let decrypt_result = if is_stealth
-                || (!crate::crypto::is_sen_file(&path) && self.settings.stealth_mode)
-            {
+            let decrypt_result = if is_stealth || (!is_sen && self.settings.stealth_mode) {
                 // If it was detected as stealth, or if it failed standard headers and stealth mode is aggressively on
-                crate::crypto::decrypt_stealth(&current_keyfile, &path)
+                crate::crypto::decrypt_stealth_buffer(&current_keyfile, &buffer)
             } else {
-                crate::crypto::decrypt_bytes(&current_keyfile, &path)
+                crate::crypto::decrypt_bytes_buffer(&current_keyfile, &buffer)
             };
 
             match decrypt_result {

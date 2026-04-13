@@ -224,7 +224,7 @@ pub fn check_stealth_compatibility(
 
     // Skip files that start with known magic numbers (SEN1, PNG, ZIP, etc.)
     // to avoid wasting time on obviously non-stealth files
-    if is_known_format(&file_data[..4]) {
+    if is_known_format_buffer(&file_data[..4]) {
         return Ok(false);
     }
 
@@ -245,8 +245,13 @@ pub fn check_stealth_compatibility(
     }
 }
 
+/// Quick check if a buffer starts with the SEN magic number.
+pub fn is_sen_buffer(buffer: &[u8]) -> bool {
+    buffer.len() >= MAGIC_SIZE && &buffer[0..MAGIC_SIZE] == MAGIC_NUMBER
+}
+
 /// Quick reject: skip files that start with known magic numbers
-fn is_known_format(header: &[u8]) -> bool {
+pub fn is_known_format_buffer(header: &[u8]) -> bool {
     if header.len() < 4 {
         return false;
     }
@@ -391,6 +396,81 @@ pub fn decrypt_bytes(
         return Err(CryptoError::KeyfileError(
             "Keyfile mismatch - wrong keyfile for this file".to_string(),
         ));
+    }
+
+    Ok(plaintext[KEYFILE_HASH_SIZE..].to_vec())
+}
+
+/// FILE DECRYPTION (Buffer)
+pub fn decrypt_bytes_buffer(
+    keyfile_path: &Path,
+    file_data: &[u8],
+) -> Result<Vec<u8>, CryptoError> {
+    // Basic size check
+    if file_data.len() < MAGIC_SIZE + SALT_SIZE + 1 {
+        return Err(CryptoError::InvalidFormat);
+    }
+
+    // 1. Validate Magic
+    if &file_data[0..MAGIC_SIZE] != MAGIC_NUMBER {
+        return Err(CryptoError::InvalidMagicNumber);
+    }
+
+    // 2. Split components
+    let salt_end = MAGIC_SIZE + SALT_SIZE;
+    let salt = &file_data[MAGIC_SIZE..salt_end];
+    let encrypted_data = &file_data[salt_end..];
+
+    // 3. Hash keyfile & derive key
+    let keyfile_hash = hash_keyfile(keyfile_path)?;
+    let secret_key = derive_key_from_keyfile(&keyfile_hash, salt)?;
+
+    // 4. Decrypt
+    let plaintext_bytes =
+        aead::open(&secret_key, encrypted_data).map_err(|_| CryptoError::DecryptionFailed)?;
+    let plaintext = Zeroizing::new(plaintext_bytes);
+
+    // 5. Verify keyfile hash
+    if plaintext.len() < KEYFILE_HASH_SIZE {
+        return Err(CryptoError::InvalidFormat);
+    }
+
+    let stored_hash = &plaintext[..KEYFILE_HASH_SIZE];
+    if keyfile_hash.as_bytes() != stored_hash {
+        return Err(CryptoError::KeyfileError(
+            "Keyfile mismatch - wrong keyfile for this file".to_string(),
+        ));
+    }
+
+    Ok(plaintext[KEYFILE_HASH_SIZE..].to_vec())
+}
+
+/// Decrypt a stealth buffer: [SALT(32B)][CIPHERTEXT] — no magic header.
+pub fn decrypt_stealth_buffer(
+    keyfile_path: &Path,
+    file_data: &[u8],
+) -> Result<Vec<u8>, CryptoError> {
+    if file_data.len() < SALT_SIZE + 1 {
+        return Err(CryptoError::InvalidFormat);
+    }
+
+    let salt = &file_data[..SALT_SIZE];
+    let encrypted_data = &file_data[SALT_SIZE..];
+
+    let keyfile_hash = hash_keyfile(keyfile_path)?;
+    let secret_key = derive_key_from_keyfile(&keyfile_hash, salt)?;
+
+    let plaintext_bytes =
+        aead::open(&secret_key, encrypted_data).map_err(|_| CryptoError::DecryptionFailed)?;
+    let plaintext = Zeroizing::new(plaintext_bytes);
+
+    if plaintext.len() < KEYFILE_HASH_SIZE {
+        return Err(CryptoError::InvalidFormat);
+    }
+
+    let stored_hash = &plaintext[..KEYFILE_HASH_SIZE];
+    if keyfile_hash.as_bytes() != stored_hash {
+        return Err(CryptoError::KeyfileError("Keyfile mismatch".to_string()));
     }
 
     Ok(plaintext[KEYFILE_HASH_SIZE..].to_vec())
