@@ -52,10 +52,7 @@ impl EditorApp {
             }
 
             if ui
-                .checkbox(
-                    &mut self.search_case_sensitive,
-                    t!("search.case_sensitive"),
-                )
+                .checkbox(&mut self.search_case_sensitive, t!("search.case_sensitive"))
                 .changed()
             {
                 self.perform_search();
@@ -77,10 +74,7 @@ impl EditorApp {
                         total = self.search_matches.len()
                     ));
                 } else {
-                    ui.label(t!(
-                        "search.matches",
-                        count = self.search_matches.len()
-                    ));
+                    ui.label(t!("search.matches", count = self.search_matches.len()));
                 }
             } else if !self.search_query.is_empty() {
                 ui.label(t!("search.no_matches"));

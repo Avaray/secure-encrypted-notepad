@@ -1,7 +1,7 @@
 use crate::app_state::{KeyStatus, LogEntry, LogLevel};
-use sen_core::models::FileTreeEntry;
 use crate::theme::{ThemeColorsExt, ThemeExt};
 use crate::EditorApp;
+use sen_core::models::FileTreeEntry;
 
 use std::path::PathBuf;
 
@@ -366,7 +366,11 @@ impl EditorApp {
                                 if path.is_dir() && self.settings.show_subfolders {
                                     folders.push(FileTreeEntry {
                                         uri: path.to_string_lossy().to_string(),
-                                        name: path.file_name().unwrap_or_default().to_string_lossy().to_string(),
+                                        name: path
+                                            .file_name()
+                                            .unwrap_or_default()
+                                            .to_string_lossy()
+                                            .to_string(),
                                         is_dir: true,
                                         is_expanded: false,
                                         depth: 0,
@@ -381,7 +385,11 @@ impl EditorApp {
                                     if is_sen || self.settings.stealth_scan {
                                         files.push(FileTreeEntry {
                                             uri: path.to_string_lossy().to_string(),
-                                            name: path.file_name().unwrap_or_default().to_string_lossy().to_string(),
+                                            name: path
+                                                .file_name()
+                                                .unwrap_or_default()
+                                                .to_string_lossy()
+                                                .to_string(),
                                             is_dir: false,
                                             is_expanded: false,
                                             depth: 0,
@@ -391,12 +399,8 @@ impl EditorApp {
                             }
                         }
 
-                        folders.sort_by(|a, b| {
-                            a.name.cmp(&b.name)
-                        });
-                        files.sort_by(|a, b| {
-                            a.name.cmp(&b.name)
-                        });
+                        folders.sort_by(|a, b| a.name.cmp(&b.name));
+                        files.sort_by(|a, b| a.name.cmp(&b.name));
 
                         if dir.parent().is_some() && self.settings.show_subfolders {
                             self.file_tree_entries.push(FileTreeEntry {
@@ -490,7 +494,11 @@ impl EditorApp {
 
             out_entries.push(FileTreeEntry {
                 uri: path.to_string_lossy().to_string(),
-                name: path.file_name().unwrap_or_default().to_string_lossy().to_string(),
+                name: path
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string(),
                 is_dir: true,
                 is_expanded,
                 depth,
@@ -504,7 +512,11 @@ impl EditorApp {
         for path in child_files {
             out_entries.push(FileTreeEntry {
                 uri: path.to_string_lossy().to_string(),
-                name: path.file_name().unwrap_or_default().to_string_lossy().to_string(),
+                name: path
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string(),
                 is_dir: false,
                 is_expanded: false,
                 depth,

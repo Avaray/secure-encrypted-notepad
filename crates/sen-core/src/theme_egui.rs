@@ -4,8 +4,8 @@
 //! `egui::Color32` conversion methods and `Theme::apply()` to the
 //! UI-agnostic data models.
 
-use egui;
 use crate::theme::{ColorScheme, Theme, ThemeColors};
+use egui;
 
 // ─── ThemeColors egui helpers ───────────────────────────────────────────────
 

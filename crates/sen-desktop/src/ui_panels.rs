@@ -2548,13 +2548,11 @@ if ui
                     self.settings.theme_name = theme.name.clone();
                     let _ = self.settings.save(None);
                     self.themes = crate::theme::load_themes();
-                    self.status_message =
-                        t!("theme.saved_msg", name = theme.name).to_string();
+                    self.status_message = t!("theme.saved_msg", name = theme.name).to_string();
                     self.log_info(t!("theme.saved_msg", name = theme.name));
                 }
                 Err(e) => {
-                    self.status_message =
-                        t!("theme.save_error", error = e.to_string()).to_string();
+                    self.status_message = t!("theme.save_error", error = e.to_string()).to_string();
                     self.log_error(t!("theme.save_error", error = e.to_string()));
                 }
             }

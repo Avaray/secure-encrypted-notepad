@@ -1,6 +1,6 @@
+use sen_core::fs::FileSystem;
 use std::io::Result;
 use std::path::Path;
-use sen_core::fs::FileSystem;
 
 #[allow(dead_code)]
 pub struct DesktopFs;

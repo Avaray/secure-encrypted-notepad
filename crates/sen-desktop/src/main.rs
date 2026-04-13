@@ -1,7 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-
-
 /// Custom debug logging macro that only prints to console in debug builds.
 /// This prevents sensitive data leakage in release versions.
 #[allow(unused_macros)]
@@ -43,11 +41,11 @@ pub(crate) use sen_core::crypto;
 pub(crate) use sen_core::history;
 pub(crate) use sen_core::settings;
 
+mod desktop_fs;
 mod fonts;
 mod icons;
 mod single_instance;
 mod theme;
-mod desktop_fs;
 
 // Module declarations for app
 mod app;

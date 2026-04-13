@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// File tree entry type - shared between desktop and mobile.
-/// 
+///
 /// Uses `String` for `uri` to support both absolute paths (Desktop)
 /// and Content URIs (Android Storage Access Framework).
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

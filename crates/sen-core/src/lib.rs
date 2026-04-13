@@ -28,11 +28,11 @@ macro_rules! sen_debug {
 
 pub mod config_crypto;
 pub mod crypto;
+pub mod fs;
 pub mod history;
+pub mod models;
 pub mod settings;
 pub mod theme;
-pub mod fs;
-pub mod models;
 
 #[cfg(feature = "egui")]
 pub mod theme_egui;

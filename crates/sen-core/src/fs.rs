@@ -13,6 +13,6 @@ pub trait FileSystem {
 
     /// Check if a file exists.
     fn exists(&self, path: &Path) -> bool;
-    
+
     // Future additions may include opening file choosers, handling stream readers for huge files, etc.
 }

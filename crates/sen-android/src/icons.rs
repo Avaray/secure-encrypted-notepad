@@ -71,7 +71,9 @@ impl Icons {
             ),
             open_folder: Self::load_svg(
                 ctx,
-                include_bytes!("../../sen-desktop/assets/ui/MaterialSymbolsLightFolderCopyRounded.svg"),
+                include_bytes!(
+                    "../../sen-desktop/assets/ui/MaterialSymbolsLightFolderCopyRounded.svg"
+                ),
                 "icon_folder",
             ),
             save: Self::load_svg(
@@ -129,7 +131,11 @@ impl Icons {
                 include_bytes!("../../sen-desktop/assets/ui/MynauiQuestionHexagonSolid.svg"),
                 "icon_unknown",
             ),
-            status_dot: Self::load_svg(ctx, include_bytes!("../../sen-desktop/assets/ui/Dot.svg"), "icon_dot"),
+            status_dot: Self::load_svg(
+                ctx,
+                include_bytes!("../../sen-desktop/assets/ui/Dot.svg"),
+                "icon_dot",
+            ),
             locked_file: Self::load_svg(
                 ctx,
                 include_bytes!("../../sen-desktop/assets/ui/MynauiLockHexagonSolid.svg"),

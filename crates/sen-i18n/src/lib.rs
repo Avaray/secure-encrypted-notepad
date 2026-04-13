@@ -5,33 +5,34 @@ use std::sync::Mutex;
 
 static CURRENT_LOCALE: Lazy<Mutex<String>> = Lazy::new(|| Mutex::new("en".to_string()));
 
-static TRANSLATIONS: Lazy<HashMap<&'static str, HashMap<&'static str, &'static str>>> = Lazy::new(|| {
-    let mut map = HashMap::new();
+static TRANSLATIONS: Lazy<HashMap<&'static str, HashMap<&'static str, &'static str>>> =
+    Lazy::new(|| {
+        let mut map = HashMap::new();
 
-    macro_rules! load_lang {
-        ($code:expr, $file:expr) => {
-            map.insert($code, parse_yaml(include_str!($file)));
-        };
-    }
+        macro_rules! load_lang {
+            ($code:expr, $file:expr) => {
+                map.insert($code, parse_yaml(include_str!($file)));
+            };
+        }
 
-    load_lang!("ar", "../locales/ar.yml");
-    load_lang!("cz", "../locales/cz.yml");
-    load_lang!("de", "../locales/de.yml");
-    load_lang!("en", "../locales/en.yml");
-    load_lang!("es", "../locales/es.yml");
-    load_lang!("fr", "../locales/fr.yml");
-    load_lang!("it", "../locales/it.yml");
-    load_lang!("ja", "../locales/ja.yml");
-    load_lang!("nl", "../locales/nl.yml");
-    load_lang!("pl", "../locales/pl.yml");
-    load_lang!("pt-BR", "../locales/pt-BR.yml");
-    load_lang!("ru", "../locales/ru.yml");
-    load_lang!("sk", "../locales/sk.yml");
-    load_lang!("uk", "../locales/uk.yml");
-    load_lang!("zh-CN", "../locales/zh-CN.yml");
+        load_lang!("ar", "../locales/ar.yml");
+        load_lang!("cz", "../locales/cz.yml");
+        load_lang!("de", "../locales/de.yml");
+        load_lang!("en", "../locales/en.yml");
+        load_lang!("es", "../locales/es.yml");
+        load_lang!("fr", "../locales/fr.yml");
+        load_lang!("it", "../locales/it.yml");
+        load_lang!("ja", "../locales/ja.yml");
+        load_lang!("nl", "../locales/nl.yml");
+        load_lang!("pl", "../locales/pl.yml");
+        load_lang!("pt-BR", "../locales/pt-BR.yml");
+        load_lang!("ru", "../locales/ru.yml");
+        load_lang!("sk", "../locales/sk.yml");
+        load_lang!("uk", "../locales/uk.yml");
+        load_lang!("zh-CN", "../locales/zh-CN.yml");
 
-    map
-});
+        map
+    });
 
 fn parse_yaml(content: &'static str) -> HashMap<&'static str, &'static str> {
     let mut map = HashMap::new();
@@ -69,14 +70,14 @@ pub fn set_locale(loc: &str) {
 
 pub fn _rust_i18n_translate<'r>(locale: &str, key: &'r str) -> Cow<'r, str> {
     let t = &*TRANSLATIONS;
-    
+
     // Try current locale
     if let Some(target_map) = t.get(locale) {
         if let Some(&val) = target_map.get(key) {
             return Cow::Borrowed(val);
         }
     }
-    
+
     // Try base locale (e.g. "pt" if "pt-BR" is requested)
     if let Some(base) = locale.split('-').next() {
         if base != locale {
@@ -96,7 +97,7 @@ pub fn _rust_i18n_translate<'r>(locale: &str, key: &'r str) -> Cow<'r, str> {
             }
         }
     }
-    
+
     // If not found, return key
     Cow::Borrowed(key)
 }
@@ -111,7 +112,7 @@ mod tests {
         let t = &*TRANSLATIONS;
         let en_map = t.get("en").expect("Missing English translations");
         let en_keys: HashSet<_> = en_map.keys().cloned().collect();
-        
+
         let mut missing_keys = Vec::new();
 
         for (lang, map) in t.iter() {
@@ -129,7 +130,10 @@ mod tests {
             for msg in &missing_keys {
                 eprintln!("{}", msg);
             }
-            panic!("Missing translations found in {} locations. Run 'bun scripts/locales-sync.ts' to fix.", missing_keys.len());
+            panic!(
+                "Missing translations found in {} locations. Run 'bun scripts/locales-sync.ts' to fix.",
+                missing_keys.len()
+            );
         }
     }
 }

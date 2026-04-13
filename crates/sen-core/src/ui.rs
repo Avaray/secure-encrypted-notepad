@@ -27,12 +27,9 @@ impl<'a> Select<'a> {
     pub fn with_width_hint(mut self, ui: &egui::Ui, longest_text: impl Into<String>) -> Self {
         let text_with_icon = format!("{} ⏷", longest_text.into());
         let font_id = egui::TextStyle::Button.resolve(ui.style());
-        let galley = ui.painter().layout(
-            text_with_icon,
-            font_id,
-            egui::Color32::WHITE,
-            f32::INFINITY,
-        );
+        let galley =
+            ui.painter()
+                .layout(text_with_icon, font_id, egui::Color32::WHITE, f32::INFINITY);
         // Store only the text width. The button will add its own padding on top.
         self.min_width = galley.rect.width().ceil();
         self
@@ -51,11 +48,14 @@ impl<'a> Select<'a> {
         ui: &mut egui::Ui,
         add_contents: impl FnOnce(&mut egui::Ui) -> R,
     ) -> egui::InnerResponse<Option<R>> {
-        let Self { selected_text, min_width, button_builder } = self;
+        let Self {
+            selected_text,
+            min_width,
+            button_builder,
+        } = self;
 
         let button_text = format!("{} ⏷", selected_text);
-        let mut button = egui::Button::new(button_text)
-            .wrap_mode(egui::TextWrapMode::Truncate);
+        let mut button = egui::Button::new(button_text).wrap_mode(egui::TextWrapMode::Truncate);
 
         if min_width > 0.0 {
             button = button.min_size(egui::vec2(min_width, 0.0));
@@ -66,13 +66,13 @@ impl<'a> Select<'a> {
         }
 
         // ROOT CAUSE OF THE WIDTH BUG:
-        // We check the direction of the main layout. If the parent already lays out items 
-        // horizontally (like right_to_left in the settings panel), we skip creating a new 
+        // We check the direction of the main layout. If the parent already lays out items
+        // horizontally (like right_to_left in the settings panel), we skip creating a new
         // nested horizontal layout. This prevents the panel from stretching to 100% width.
         let response = if ui.layout().main_dir().is_horizontal() {
             ui.add(button)
         } else {
-            // If we are in a vertical layout (top_down), we use horizontal 
+            // If we are in a vertical layout (top_down), we use horizontal
             // to prevent unnatural stretching of the button.
             ui.horizontal(|ui| ui.add(button)).inner
         };
@@ -80,23 +80,25 @@ impl<'a> Select<'a> {
         let button_width = response.rect.width();
         let mut inner_res = None;
 
-        egui::Popup::from_toggle_button_response(&response)
-            .show(|ui| {
-                // If you want the dropdown list to be able to be narrower than the button
-                // (perfectly fitted to the text inside), COMMENT OUT the line below.
-                // Leave it if you want to keep the standard look (list at least as wide as the button).
-                ui.set_min_width(button_width); 
+        egui::Popup::from_toggle_button_response(&response).show(|ui| {
+            // If you want the dropdown list to be able to be narrower than the button
+            // (perfectly fitted to the text inside), COMMENT OUT the line below.
+            // Leave it if you want to keep the standard look (list at least as wide as the button).
+            ui.set_min_width(button_width);
 
-                egui::ScrollArea::vertical()
-                    .max_height(260.0)
-                    // KEY CHANGE: [true, true] allows egui to perfectly fit 
-                    // the width (and height) to the content (the longest text).
-                    .auto_shrink([true, true])
-                    .show(ui, |ui| {
-                        inner_res = Some(add_contents(ui));
-                    });
-            });
+            egui::ScrollArea::vertical()
+                .max_height(260.0)
+                // KEY CHANGE: [true, true] allows egui to perfectly fit
+                // the width (and height) to the content (the longest text).
+                .auto_shrink([true, true])
+                .show(ui, |ui| {
+                    inner_res = Some(add_contents(ui));
+                });
+        });
 
-        egui::InnerResponse { inner: inner_res, response }
+        egui::InnerResponse {
+            inner: inner_res,
+            response,
+        }
     }
 }

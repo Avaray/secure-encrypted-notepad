@@ -429,7 +429,7 @@ impl Settings {
     /// Load settings from file
     pub fn load(config_dir_override: Option<PathBuf>) -> Self {
         let config_dir = config_dir_override.or_else(|| dirs::config_dir());
-        
+
         if let Some(mut dir) = config_dir {
             if !dir.ends_with("sen") {
                 dir = dir.join("sen");
@@ -445,11 +445,19 @@ impl Settings {
                                         let encrypted_data = &content_bytes[4..];
                                         match aead::open(&secret_key, encrypted_data) {
                                             Ok(plaintext) => {
-                                                match toml::from_str::<Settings>(&String::from_utf8_lossy(&plaintext)) {
+                                                match toml::from_str::<Settings>(
+                                                    &String::from_utf8_lossy(&plaintext),
+                                                ) {
                                                     Ok(mut settings) => {
-                                                        Self::decrypt_keyfile_path_field(&mut settings);
-                                                        Self::decrypt_file_tree_dir_field(&mut settings);
-                                                        Self::decrypt_auto_backup_dir_field(&mut settings);
+                                                        Self::decrypt_keyfile_path_field(
+                                                            &mut settings,
+                                                        );
+                                                        Self::decrypt_file_tree_dir_field(
+                                                            &mut settings,
+                                                        );
+                                                        Self::decrypt_auto_backup_dir_field(
+                                                            &mut settings,
+                                                        );
                                                         Self::migrate_legacy_fonts(&mut settings);
                                                         return settings;
                                                     }
@@ -495,9 +503,12 @@ impl Settings {
     }
 
     /// Save settings to file (plaintext TOML for now, will re-encrypt later)
-    pub fn save(&self, config_dir_override: Option<PathBuf>) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn save(
+        &self,
+        config_dir_override: Option<PathBuf>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let config_dir = config_dir_override.or_else(|| dirs::config_dir());
-        
+
         if let Some(mut dir) = config_dir {
             if !dir.ends_with("sen") {
                 dir = dir.join("sen");

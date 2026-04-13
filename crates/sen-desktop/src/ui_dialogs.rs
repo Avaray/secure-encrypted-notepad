@@ -3,7 +3,6 @@ use crate::theme::{ThemeColorsExt, ThemeExt};
 use crate::EditorApp;
 use eframe::egui;
 
-
 impl EditorApp {
     /// Render confirmation dialog for unsaved changes
     pub(crate) fn render_confirmation_dialog(&mut self, ctx: &egui::Context) {

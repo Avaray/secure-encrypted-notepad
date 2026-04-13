@@ -680,7 +680,8 @@ impl EditorApp {
 
                     if self.settings.stealth_mode {
                         ui.label(
-                            egui::RichText::new(t!("app.status_stealth")).color(self.current_theme.colors.success_color())
+                            egui::RichText::new(t!("app.status_stealth"))
+                                .color(self.current_theme.colors.success_color()),
                         );
                         ui.separator();
                     }
@@ -693,10 +694,7 @@ impl EditorApp {
                             .color(fg_color),
                         );
                     } else {
-                        ui.label(
-                            egui::RichText::new(t!("app.unsaved_document"))
-                                .color(fg_color),
-                        );
+                        ui.label(egui::RichText::new(t!("app.unsaved_document")).color(fg_color));
                     }
 
                     if self.is_modified {

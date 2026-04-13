@@ -416,10 +416,7 @@ pub fn hash_keyfile_bytes(keyfile_content: &[u8]) -> Result<[u8; 32], CryptoErro
 
 /// Encrypt content using raw keyfile bytes. Returns the complete SEN file bytes
 /// (MAGIC + SALT + CIPHERTEXT) without touching the filesystem.
-pub fn encrypt_content_bytes(
-    content: &[u8],
-    keyfile_bytes: &[u8],
-) -> Result<Vec<u8>, CryptoError> {
+pub fn encrypt_content_bytes(content: &[u8], keyfile_bytes: &[u8]) -> Result<Vec<u8>, CryptoError> {
     // 1. Generate Salt
     let mut salt = [0u8; SALT_SIZE];
     rand::rng().fill_bytes(&mut salt);
@@ -448,10 +445,7 @@ pub fn encrypt_content_bytes(
 
 /// Encrypt in stealth mode: [SALT(32B)][CIPHERTEXT] — no magic header.
 /// Returns the raw bytes for mobile/memory-only use.
-pub fn encrypt_stealth_bytes(
-    content: &[u8],
-    keyfile_bytes: &[u8],
-) -> Result<Vec<u8>, CryptoError> {
+pub fn encrypt_stealth_bytes(content: &[u8], keyfile_bytes: &[u8]) -> Result<Vec<u8>, CryptoError> {
     let mut salt = [0u8; SALT_SIZE];
     rand::rng().fill_bytes(&mut salt);
 
