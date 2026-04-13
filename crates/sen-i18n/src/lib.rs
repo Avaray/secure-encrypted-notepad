@@ -100,3 +100,36 @@ pub fn _rust_i18n_translate<'r>(locale: &str, key: &'r str) -> Cow<'r, str> {
     // If not found, return key
     Cow::Borrowed(key)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+
+    #[test]
+    fn test_all_languages_have_all_keys() {
+        let t = &*TRANSLATIONS;
+        let en_map = t.get("en").expect("Missing English translations");
+        let en_keys: HashSet<_> = en_map.keys().cloned().collect();
+        
+        let mut missing_keys = Vec::new();
+
+        for (lang, map) in t.iter() {
+            if *lang == "en" {
+                continue;
+            }
+            for key in en_keys.iter() {
+                if !map.contains_key(key) {
+                    missing_keys.push(format!("Language '{}' is missing key '{}'", lang, key));
+                }
+            }
+        }
+
+        if !missing_keys.is_empty() {
+            for msg in &missing_keys {
+                eprintln!("{}", msg);
+            }
+            panic!("Missing translations found in {} locations. Run 'bun scripts/i18n-sync.ts' to fix.", missing_keys.len());
+        }
+    }
+}

@@ -27,6 +27,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Sync I18n Translations
+        run: bun scripts/i18n-sync.ts
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
       - name: Install Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
 

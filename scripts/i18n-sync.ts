@@ -1,18 +1,6 @@
 import path from "node:path";
 import { Glob } from "bun";
 
-// Terminal colors using ANSI escape sequences
-const colors = {
-  reset: "\x1b[0m",
-  bold: "\x1b[1m",
-  cyan: "\x1b[36m",
-  blue: "\x1b[34m",
-  green: "\x1b[32m",
-  yellow: "\x1b[33m",
-  red: "\x1b[31m",
-  gray: "\x1b[90m",
-};
-
 const LOCALES_DIR = path.resolve(import.meta.dir, "../crates/sen-i18n/locales");
 const SOURCE_FILE = path.join(LOCALES_DIR, "en.yml");
 
@@ -36,7 +24,7 @@ const LANGUAGE_MAP: Record<string, string> = {
 async function translate(texts: Record<string, string>, targetLang: string, apiKey: string): Promise<Record<string, string>> {
   if (Object.keys(texts).length === 0) return {};
 
-  console.log(`${colors.cyan}Translating ${Object.keys(texts).length} keys to ${targetLang}...${colors.reset}`);
+  console.log(`Translating ${Object.keys(texts).length} keys to ${targetLang}...`);
 
   const prompt = `
 You are a professional translator for a software application called "SEN (Secure Encrypted Notepad)".
@@ -80,7 +68,7 @@ async function syncLocale(targetFile: string, dryRun: boolean, apiKey: string) {
   const langCode = path.basename(targetFile, ".yml");
   const langName = LANGUAGE_MAP[langCode] || langCode;
 
-  console.log(`\n${colors.blue}Processing ${colors.bold}${langName}${colors.reset}${colors.blue} (${langCode}.yml)...${colors.reset}`);
+  console.log(`\nProcessing ${langName} (${langCode}.yml)...`);
 
   // Load source as text to preserve structure and comments
   const sourceRaw = await Bun.file(SOURCE_FILE).text();
@@ -92,7 +80,7 @@ async function syncLocale(targetFile: string, dryRun: boolean, apiKey: string) {
 
   if (await targetBunFile.exists()) {
     const targetRaw = await targetBunFile.text();
-    // UŻYCIE WBUDOWANEGO PARSERA YAML Z BUNA:
+    // USING BUN'S BUILT-IN YAML PARSER:
     targetData = (Bun.YAML.parse(targetRaw) as Record<string, string>) || {};
   }
 
@@ -116,23 +104,29 @@ async function syncLocale(targetFile: string, dryRun: boolean, apiKey: string) {
 
   let translations: Record<string, string> = {};
   if (Object.keys(missingKeys).length > 0) {
+    if (dryRun && !apiKey) {
+      console.error(`  [X] Missing ${Object.keys(missingKeys).length} keys in ${langCode}.yml: ${Object.keys(missingKeys).join(", ")}`);
+      // In dry run without API key, we just mark it as an error but continue to next files
+      throw new Error(`Missing translations in ${langCode}.yml`);
+    }
+
     try {
       translations = await translate(missingKeys, langName, apiKey);
 
-      // Sprawdzenie czy model AI zwrócił tłumaczenia dla wszystkich wymaganych kluczy
+      // Check if the AI model returned translations for all required keys
       const requestedKeys = Object.keys(missingKeys);
       const returnedKeys = Object.keys(translations);
       const reallyMissingKeys = requestedKeys.filter(k => !returnedKeys.includes(k));
 
       if (reallyMissingKeys.length > 0) {
-        throw new Error(`Model AI pominął niektóre klucze! Brakuje: ${reallyMissingKeys.join(", ")}`);
+        throw new Error(`The AI model skipped some keys! Missing: ${reallyMissingKeys.join(", ")}`);
       }
     } catch (error: any) {
-      console.error(`${colors.red}  [X] AI Translation failed: ${error.message}${colors.reset}`);
-      throw error; // Rzucamy błąd wyżej, aby zablokować zapis niepełnego pliku
+      console.error(`  [X] AI Translation failed: ${error.message}`);
+      throw error; // Throw the error upwards to prevent saving an incomplete file
     }
   } else {
-    console.log(`${colors.gray}  All keys up to date.${colors.reset}`);
+    console.log(`  All keys up to date.`);
   }
 
   // Second pass: construct results by mirroring en.yml structure
@@ -144,7 +138,7 @@ async function syncLocale(targetFile: string, dryRun: boolean, apiKey: string) {
       const value = targetData[key] ?? translations[key] ?? match[2] ?? match[3] ?? match[4] ?? "";
 
       if (translations[key]) {
-        console.log(`${colors.green}  [+] ${key}${colors.reset}`);
+        console.log(`  [+] ${key}`);
       }
 
       // Safely wrap value in quotes if it's not already
@@ -157,26 +151,26 @@ async function syncLocale(targetFile: string, dryRun: boolean, apiKey: string) {
 
   if (!dryRun) {
     await Bun.write(targetFile, resultLines.join("\n"));
-    console.log(`${colors.green}  Successfully updated ${langCode}.yml${colors.reset}`);
+    console.log(`  Successfully updated ${langCode}.yml`);
   } else if (Object.keys(translations).length > 0) {
-    console.log(`${colors.yellow}  [Dry Run] Would have updated ${langCode}.yml${colors.reset}`);
+    console.log(`  [Dry Run] Would have updated ${langCode}.yml`);
   }
 }
 
 async function main() {
   const GEMINI_API_KEY = Bun.env.GEMINI_API_KEY;
 
-  if (!GEMINI_API_KEY) {
-    console.error(`${colors.red}Error: GEMINI_API_KEY is not set in environment variables (or .env file)${colors.reset}`);
-    process.exit(1);
-  }
-
   const args = Bun.argv.slice(2);
   const specificFile = args.find(arg => !arg.startsWith("-"));
   const dryRun = args.includes("--dry-run");
 
+  if (!GEMINI_API_KEY && !dryRun) {
+    console.error(`Error: GEMINI_API_KEY is not set in environment variables`);
+    process.exit(1);
+  }
+
   if (dryRun) {
-    console.log(`${colors.yellow}DRY RUN: No files will be changed.${colors.reset}`);
+    console.log(`DRY RUN: No files will be changed.`);
   }
 
   const files: string[] = [];
@@ -193,25 +187,25 @@ async function main() {
     }
   }
 
-  let hasErrors = false; // Śledzenie błędów dla całego procesu
+  let hasErrors = false; // Track errors for the entire process
 
   for (const file of files) {
     try {
       await syncLocale(file, dryRun, GEMINI_API_KEY);
     } catch (e: any) {
-      console.error(`${colors.red}Failed to sync ${file}: ${e.message}${colors.reset}`);
-      hasErrors = true; // Flaga błędu ustawiona na true
+      console.error(`Failed to sync ${file}: ${e.message}`);
+      hasErrors = true; // Error flag set to true
     }
   }
 
-  // Wymuszamy zatrzymanie procesu z kodem błędu, jeśli cokolwiek poszło nie tak
+  // Force process exit with an error code if anything went wrong
   if (hasErrors) {
-    console.error(`\n${colors.red}Skrypt zakończony z błędem. Nie wszystkie pliki zostały w pełni przetłumaczone.${colors.reset}`);
+    console.error(`\nScript finished with errors. Not all files were fully translated.`);
     process.exit(1);
   }
 }
 
 main().catch((error) => {
-  console.error(`${colors.red}Zakończono krytycznym błędem: ${error.message}${colors.reset}`);
+  console.error(`Finished with a critical error: ${error.message}`);
   process.exit(1);
 });
