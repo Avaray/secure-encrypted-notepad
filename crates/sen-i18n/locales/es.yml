@@ -2,6 +2,15 @@ _version: 1
 app.close_panel: "Cerrar panel"
 app.unsaved_document: "Documento no guardado"
 app.no_keyfile: "Sin archivo de clave"
+app.status_stealth: "Sigiloso"
+app.locked_title: "Bloc de Notas Seguro Bloqueado"
+app.locked_msg: "Autentíquese para acceder a sus notas confidenciales"
+app.unlock_btn: "Desbloquear Aplicación"
+app.editor_hint: "Toque aquí para escribir..."
+app.workspace_updated: "Espacio de trabajo actualizado"
+app.untitled: "Sin título"
+app.select_keyfile: "Seleccionar archivo de clave"
+app.keyfile_loaded: "Archivo de clave cargado"
 
 # ═══════════════════════════════════════
 # TOOLBAR
@@ -60,11 +69,22 @@ settings.set_backup_dir: "Establecer directorio de copia de seguridad"
 # Screen Capture
 settings.screen_capture: "Prevenir captura de pantalla"
 settings.screen_capture_tooltip: "Evita que las capturas y grabaciones de pantalla capturen el contenido de esta ventana. Requiere Windows 10 2004 o posterior."
+settings.biometric_unlock: "Desbloqueo biométrico"
+
+# Stealth Mode
+settings.stealth_mode: "Configuración del Modo Sigiloso"
+settings.stealth_mode_enable: "Activar Modo Sigiloso (Guardar sin encabezado)"
+settings.stealth_mode_tooltip: "Cuando está activado, los archivos se guardan sin la extensión .sen y el encabezado mágico de SEN, haciéndolos indistinguibles de ruido binario aleatorio."
+settings.stealth_scan_enable: "Activar Escaneo de Archivos en Modo Sigiloso"
+settings.stealth_scan_tooltip: "Cuando está activado, el árbol de archivos y el convertidor por lotes intentarán descifrar archivos desconocidos de prueba para identificar documentos en modo sigiloso."
 
 # Workspace / File Tree
 settings.starting_dir: "Directorio de inicio:"
 settings.not_set: "No establecido"
 settings.set_starting_dir: "Establecer directorio de inicio"
+settings.use_current_dir: "Usar Directorio Actual"
+settings.log_starting_dir_set: "Directorio de inicio establecido"
+settings.log_starting_dir_set_current: "Directorio de inicio establecido desde la carpeta actual"
 settings.show_subfolders: "Mostrar subcarpetas"
 settings.hide_sen_ext: "Ocultar extensiones .sen"
 settings.hide_undecryptable: "Ocultar archivos no descifrables"
@@ -165,6 +185,8 @@ history.delete_entry: "Marcar para eliminar"
 history.revert_entry: "Revertir a esta versión"
 history.revert_changes: "Revertir cambios"
 history.no_history: "No se encontraron entradas en el historial"
+history.help: "Guarde su documento para crear instantáneas de historial"
+history.size: "Tamaño: %{size}"
 history.log_reverted: "Historial revertido al último estado guardado"
 
 # ═══════════════════════════════════════
@@ -376,6 +398,7 @@ theme.reset_tooltip: "Restablecer"
 theme.copy_color: "Copiar color"
 theme.paste_color: "Pegar color"
 
+
 # ═══════════════════════════════════════
 # APP CORE & STATUS
 # ═══════════════════════════════════════
@@ -406,8 +429,10 @@ actions.log_opening: "Abriendo archivo: %{file}"
 actions.log_using_key: "Usando archivo de clave: %{file}"
 actions.status_opened_history: "Archivo abierto con %{count} entradas de historial"
 actions.status_opened_file_history: "Abierto: %{file} (%{count} entradas de historial)"
+actions.status_opened_plaintext: "Abierto como texto sin formato (sin cifrar)"
 actions.log_opened_history: "Archivo abierto con éxito con %{count} entradas de historial"
 actions.log_opened_file_history: "Archivo abierto con éxito: %{file} (%{count} entradas de historial)"
+actions.log_opened_plaintext: "Archivo de texto sin formato abierto correctamente: %{file}"
 actions.status_wrong_key: "Archivo de clave incorrecto para %{file}"
 actions.log_dec_failed: "El descifrado falló: %{e} — solicitando un archivo de clave diferente"
 actions.log_retry_key: "Reintentando con el archivo de clave: %{file}"
@@ -491,6 +516,8 @@ helpers.title_untitled: "Sin título - SEN"
 helpers.title_untitled_mod: "* %{file} - SEN"
 helpers.title_sen: "SEN"
 helpers.title_sen_mod: "SEN *"
+helpers.title_file: "%{file} - SEN"
+helpers.title_file_mod: "* %{file} - SEN"
 helpers.log_zen_on: "Modo Zen habilitado"
 helpers.log_zen_off: "Modo Zen deshabilitado"
 helpers.line_limit: "⚠️ ¡Se alcanzó el límite de líneas de %{limit}!"
