@@ -122,13 +122,11 @@ pub extern "system" fn Java_com_sen_android_MainActivity_nativeDeliverBiometricR
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_sen_android_MainActivity_nativeDeliverTextInput(
-    mut env: jni::JNIEnv,
+pub extern "system" fn Java_com_sen_android_MainActivity_nativeAppPaused(
+    _env: jni::JNIEnv,
     _class: JObject,
-    text: JString,
 ) {
-    let text_str: String = env.get_string(&text).map(|s| s.into()).unwrap_or_default();
-    android_fs::jni_deliver_text_input(text_str);
+    android_fs::jni_app_paused();
 }
 
 fn find_urls(text: &str) -> Vec<std::ops::Range<usize>> {
@@ -212,9 +210,6 @@ struct SenAndroidApp {
     notification: Option<(String, f64)>, // (message, expire_time)
     last_autosave_time: f64,
 
-    /// Tracks if a text field was focused in the previous frame to avoid JNI spam
-    keyboard_focused: bool,
-
     #[allow(dead_code)]
     android_app: AndroidApp,
 }
@@ -235,6 +230,17 @@ impl SenAndroidApp {
             .find(|t| t.name == settings.theme_name)
             .cloned()
             .unwrap_or_else(|| Theme::dark());
+
+        let density = {
+            let vm = unsafe { jni::JavaVM::from_raw(android_app.vm_as_ptr() as *mut _) }.unwrap();
+            let mut env = vm.attach_current_thread().unwrap();
+            let activity = unsafe { jni::objects::JObject::from_raw(android_app.activity_as_ptr() as *mut _) };
+            match env.call_method(&activity, "getScreenDensity", "()F", &[]) {
+                Ok(val) => val.f().unwrap_or(1.0),
+                Err(_) => 1.0,
+            }
+        };
+        cc.egui_ctx.set_pixels_per_point(density);
 
         // Apply theme immediately
         current_theme.apply(&cc.egui_ctx);
@@ -271,7 +277,6 @@ impl SenAndroidApp {
 
             notification: None,
             last_autosave_time: 0.0,
-            keyboard_focused: false,
             android_app,
         };
 
@@ -430,18 +435,6 @@ impl SenAndroidApp {
         let _ = env.call_method(&activity, "showBiometricPrompt", "()V", &[]);
     }
 
-    fn call_java_toggle_keyboard(&self, show: bool) {
-        let vm = unsafe { JavaVM::from_raw(self.android_app.vm_as_ptr() as *mut _) }.unwrap();
-        let mut env = vm.attach_current_thread().unwrap();
-        let activity = unsafe { JObject::from_raw(self.android_app.activity_as_ptr() as *mut _) };
-
-        let _ = env.call_method(
-            &activity,
-            "toggleKeyboard",
-            "(Z)V",
-            &[JValue::Bool(if show { 1 } else { 0 })],
-        );
-    }
 
     fn action_new_file(&mut self) {
         self.document = sen_core::history::DocumentWithHistory::default();
@@ -613,6 +606,7 @@ impl eframe::App for SenAndroidApp {
         let mut style = (*ctx.style()).clone();
         style.spacing.button_padding = egui::vec2(12.0, 12.0);
         style.spacing.item_spacing = egui::vec2(8.0, 8.0);
+        style.spacing.interact_size = egui::vec2(44.0, 44.0);
         ctx.set_style(style);
 
         // UI Code continues below...
@@ -693,31 +687,16 @@ impl SenAndroidApp {
                 self.notify(ctx, t!("app.workspace_updated"));
             }
 
-            // Handle Text Input Bridge (inject characters/backspace into egui)
-            for text in channel.pending_text_input.drain(..) {
-                if text == "\u{0008}" {
-                    // Inject Backspace sequence
-                    ctx.input_mut(|i| {
-                        i.events.push(egui::Event::Key {
-                            key: egui::Key::Backspace,
-                            physical_key: None,
-                            pressed: true,
-                            repeat: false,
-                            modifiers: egui::Modifiers::default(),
-                        })
-                    });
-                    ctx.input_mut(|i| {
-                        i.events.push(egui::Event::Key {
-                            key: egui::Key::Backspace,
-                            physical_key: None,
-                            pressed: false,
-                            repeat: false,
-                            modifiers: egui::Modifiers::default(),
-                        })
-                    });
-                } else {
-                    // Inject standard text
-                    ctx.input_mut(|i| i.events.push(egui::Event::Text(text)));
+            // Handle App Paused (Background)
+            if channel.pending_pause {
+                channel.pending_pause = false;
+                if self.biometric_enabled {
+                    self.is_locked = true;
+                    // Reset menu states when locking
+                    self.show_menu = false;
+                    self.show_settings = false;
+                    self.show_file_tree = false;
+                    self.show_history = false;
                 }
             }
         }
@@ -878,18 +857,11 @@ impl SenAndroidApp {
                         .id_source("search_input")
                         .hint_text(t!("search.hint"))
                         .desired_width(f32::INFINITY);
-                    let res = ui.add(text_edit);
-
-                    if res.has_focus() && !self.keyboard_focused {
-                        self.call_java_toggle_keyboard(true);
-                        self.keyboard_focused = true;
-                    }
+                    ui.add(text_edit);
 
                     if ui.button(t!("dialog.btn_close")).clicked() {
                         self.show_search = false;
                         self.search_query.clear();
-                        self.call_java_toggle_keyboard(false);
-                        self.keyboard_focused = false;
                     }
                 });
                 ui.add_space(8.0);
@@ -909,50 +881,21 @@ impl SenAndroidApp {
             self.action_close_file();
         }
 
-        // --- Side Panels ---
-        if self.show_file_tree {
-            egui::SidePanel::left("file_tree_panel")
-                .resizable(true)
-                .default_width(220.0)
-                .show(ctx, |ui| {
+        // --- Full-Screen Panels Logic ---
+        let overlay_active = self.show_menu || self.show_settings || self.show_file_tree || self.show_history;
+
+        if overlay_active {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                if self.show_menu {
+                    self.render_hamburger_menu(ctx, ui);
+                } else if self.show_settings {
+                    self.ui_settings(ctx, ui);
+                } else if self.show_file_tree {
                     self.render_file_tree(ui);
-                });
-        }
-
-        if self.show_history {
-            self.render_history_panel(ctx);
-        }
-
-        // --- Background Dimming and Menu logic ---
-        if self.show_menu {
-            let screen_rect = ctx.input(|i| i.viewport_rect());
-            // Use a higher layer for dimming so it correctly covers the main content
-            ctx.layer_painter(egui::LayerId::new(
-                egui::Order::Foreground,
-                egui::Id::new("dim_layer"),
-            ))
-            .rect_filled(screen_rect, 0.0, egui::Color32::from_black_alpha(150));
-
-            self.render_hamburger_menu(ctx);
-
-            // Close menu if clicking outside
-            if ctx.input(|i| i.pointer.any_pressed()) {
-                let menu_width = 280.0;
-                let menu_rect = egui::Rect::from_min_size(
-                    egui::Pos2::ZERO,
-                    egui::vec2(menu_width, screen_rect.height()),
-                );
-                if let Some(pos) = ctx.input(|i| i.pointer.press_origin()) {
-                    if !menu_rect.contains(pos) {
-                        self.show_menu = false;
-                    }
+                } else if self.show_history {
+                    self.render_history_panel(ctx, ui);
                 }
-            }
-        }
-
-        // --- Settings Overlay ---
-        if self.show_settings {
-            self.ui_settings(ctx);
+            });
         } else {
             egui::CentralPanel::default().show(ctx, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
@@ -1178,23 +1121,11 @@ impl SenAndroidApp {
 
                     let response = ui.add(text_edit);
 
-                    // Native Keyboard Bridge: Detect focus change
-                    if response.has_focus() && !self.keyboard_focused {
-                        self.call_java_toggle_keyboard(true);
-                        self.keyboard_focused = true;
-                    }
-
                     if response.changed() {
                         self.is_modified = true;
                     }
                 });
             });
-        }
-
-        // Final safety check to hide keyboard if menus/settings are opened
-        if (self.show_menu || self.show_settings) && self.keyboard_focused {
-            self.call_java_toggle_keyboard(false);
-            self.keyboard_focused = false;
         }
 
         // --- Notification Overlay ---
@@ -1216,7 +1147,7 @@ impl SenAndroidApp {
         }
     }
 
-    fn render_hamburger_menu(&mut self, ctx: &egui::Context) {
+    fn render_hamburger_menu(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         #[derive(Default)]
         struct MenuAction {
             new_file: bool,
@@ -1231,15 +1162,10 @@ impl SenAndroidApp {
         }
         let mut action = MenuAction::default();
 
-        egui::SidePanel::left("hamburger_menu")
-            .resizable(false)
-            .default_width(280.0)
-            .show(ctx, |ui| {
-                ui.add_space(8.0);
-                ui.vertical_centered(|ui| {
-                    ui.heading("SEN Mobile");
-                });
-                ui.separator();
+        ui.add_space(8.0);
+        if Self::render_panel_header(self.icons.as_ref(), ui, "SEN Mobile") {
+            self.show_menu = false;
+        }
 
                 if let Some(ref icons) = self.icons {
                     ui.add_space(10.0);
@@ -1435,8 +1361,6 @@ impl SenAndroidApp {
                         ui.label(egui::RichText::new("SEN Mobile v0.1.0").small().weak());
                     });
                 }
-            });
-
         if action.new_file {
             self.action_new_file();
         }
@@ -1466,16 +1390,13 @@ impl SenAndroidApp {
         }
     }
 
-    fn ui_settings(&mut self, ctx: &egui::Context) {
+    fn ui_settings(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         let mut save_required = false;
-        egui::SidePanel::left("settings_panel")
-            .resizable(true)
-            .default_width(320.0)
-            .show(ctx, |ui| {
-                ui.add_space(8.0);
-                if Self::render_panel_header(self.icons.as_ref(), ui, &t!("settings.title")) {
-                    self.show_settings = false;
-                }
+
+        ui.add_space(8.0);
+        if Self::render_panel_header(self.icons.as_ref(), ui, &t!("settings.title")) {
+            self.show_settings = false;
+        }
 
                 ui.add_space(10.0);
 
@@ -1512,37 +1433,43 @@ impl SenAndroidApp {
                     {
                         save_required = true;
                     }
-                    ui.add_space(10.0);
-                    if ui
-                        .checkbox(
-                            &mut self.settings.show_line_numbers,
-                            t!("settings.show_line_numbers"),
-                        )
-                        .changed()
-                    {
-                        save_required = true;
-                    }
                 });
-                if ui
-                    .checkbox(
-                        &mut self.settings.show_whitespace,
-                        t!("settings.show_whitespace"),
-                    )
-                    .changed()
-                {
-                    save_required = true;
-                }
-
                 ui.add_space(10.0);
                 ui.separator();
                 ui.add_space(10.0);
 
-                // --- General Section ---
+                // --- Appearance Section ---
                 ui.label(
                     egui::RichText::new(t!("settings.appearance"))
                         .strong()
                         .size(18.0),
                 );
+                ui.add_space(5.0);
+                
+                ui.horizontal(|ui| {
+                    ui.label("Theme:");
+                    let current_theme_name = self.settings.theme_name.clone();
+                    sen_core::ui::Select::new(&current_theme_name)
+                        .with_width_hint(ui, "Avaray Dark Mode")
+                        .show_ui(ui, |ui| {
+                            for theme in self.available_themes.clone() {
+                                if ui
+                                    .selectable_value(
+                                        &mut self.settings.theme_name,
+                                        theme.name.clone(),
+                                        &theme.name,
+                                    )
+                                    .clicked()
+                                {
+                                    self.current_theme = theme.clone();
+                                    self.current_theme.apply(ctx);
+                                    save_required = true;
+                                    self.notify(ctx, format!("{} -> {}", t!("settings.appearance"), theme.name));
+                                }
+                            }
+                        });
+                });
+                
                 ui.add_space(5.0);
                 if ui
                     .checkbox(
@@ -1665,22 +1592,17 @@ impl SenAndroidApp {
                 if ui.button(t!("dialog.btn_close")).clicked() {
                     self.show_settings = false;
                 }
-            });
 
         if save_required {
             let _ = self.settings.save(self.android_app.internal_data_path());
         }
     }
 
-    fn render_history_panel(&mut self, ctx: &egui::Context) {
-        egui::SidePanel::left("history_panel")
-            .resizable(true)
-            .default_width(280.0)
-            .show(ctx, |ui| {
-                ui.add_space(8.0);
-                if Self::render_panel_header(self.icons.as_ref(), ui, &t!("history.title")) {
-                    self.show_history = false;
-                }
+    fn render_history_panel(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+        ui.add_space(8.0);
+        if Self::render_panel_header(self.icons.as_ref(), ui, &t!("history.title")) {
+            self.show_history = false;
+        }
 
                 // To avoid borrow checker issues (borrowing self as mutable in notify while document is borrowed),
                 // we collect the indices and data we need first.
@@ -1749,7 +1671,6 @@ impl SenAndroidApp {
                         }
                     });
                 }
-            });
     }
 
     fn render_file_tree(&mut self, ui: &mut egui::Ui) {
@@ -1773,14 +1694,16 @@ impl SenAndroidApp {
                         self.call_java_open_directory();
                     }
                 });
-            } else {
+            } else if let Some(ref icons) = self.icons {
+                let folder_icon = icons.folder_filled.clone();
+                let file_icon = icons.unknown_file.clone();
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     let entries = self.file_tree_entries.clone();
                     for entry in entries {
                         let icon = if entry.is_dir {
-                            self.icons.as_ref().unwrap().folder_filled.clone()
+                            folder_icon.clone()
                         } else {
-                            self.icons.as_ref().unwrap().unknown_file.clone()
+                            file_icon.clone()
                         };
 
                         let tint = self.current_theme.colors.icon_color();

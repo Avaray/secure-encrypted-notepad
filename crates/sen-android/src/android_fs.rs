@@ -22,8 +22,8 @@ pub struct FileChannel {
     pub pending_save_result: Option<bool>,
     /// Incoming biometric authentication result
     pub pending_biometric_result: Option<bool>,
-    /// Incoming text input from the hidden EditText bridge
-    pub pending_text_input: Vec<String>,
+    /// Incoming notification that the app was sent to the background
+    pub pending_pause: bool,
 }
 
 /// Global file channel instance shared between JNI callbacks and the Egui loop.
@@ -78,10 +78,9 @@ pub fn jni_deliver_biometric_result(success: bool) {
         channel.pending_biometric_result = Some(success);
     }
 }
-
-/// Called from JNI when text is entered in the hidden EditText bridge.
-pub fn jni_deliver_text_input(text: String) {
+/// Called from JNI when the app is paused (sent to background).
+pub fn jni_app_paused() {
     if let Ok(mut channel) = get_file_channel().lock() {
-        channel.pending_text_input.push(text);
+        channel.pending_pause = true;
     }
 }

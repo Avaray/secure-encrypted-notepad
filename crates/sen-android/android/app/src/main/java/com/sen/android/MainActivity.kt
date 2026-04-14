@@ -3,19 +3,11 @@ package com.sen.android
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import android.util.Log
-import android.text.Editable
-import android.text.InputType
-import android.text.TextWatcher
-import android.view.ViewGroup
 import android.view.WindowManager
-import android.view.inputmethod.EditorInfo
-import android.view.KeyEvent
-import android.view.inputmethod.InputMethodManager
-import android.widget.EditText
-import android.widget.FrameLayout
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.Keep
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.documentfile.provider.DocumentFile
@@ -24,78 +16,59 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.InputStream
 import java.io.OutputStream
-import java.util.concurrent.Executor
 
 class MainActivity : GameActivity() {
 
-    private lateinit var hiddenInput: EditText
+    // --- SAF Activity Result Launchers ---
+    
+    private val openFileLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result.data?.data?.let { handleOpenFile(it) }
+        }
+    }
+
+    private val saveFileLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result.data?.data?.let { handleSaveFile(it) }
+        }
+    }
+
+    private val keyfileLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result.data?.data?.let { handleKeyfile(it) }
+        }
+    }
+
+    private val directoryLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result.data?.data?.let { handleDirectory(it) }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setupHiddenInput()
         Log.i("SEN", "MainActivity onCreate")
     }
 
-    private fun setupHiddenInput() {
-        runOnUiThread {
-            hiddenInput = EditText(this).apply {
-                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
-                imeOptions = EditorInfo.IME_ACTION_NONE
-                
-                // Set listener for the Return key (Enter)
-                setOnEditorActionListener { _, actionId, event ->
-                    if (actionId == EditorInfo.IME_ACTION_DONE || 
-                        actionId == EditorInfo.IME_ACTION_UNSPECIFIED ||
-                        (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)) {
-                        nativeDeliverTextInput("\n")
-                        true
-                    } else {
-                        false
-                    }
-                }
-
-                layoutParams = ViewGroup.LayoutParams(1, 1)
-                alpha = 0f
-                setBackgroundColor(0)
-                setText(" ")
-                setSelection(1)
-
-                addTextChangedListener(object : TextWatcher {
-                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                        val currentText = s?.toString() ?: ""
-                        if (currentText.isEmpty()) {
-                            nativeDeliverTextInput("\u0008") // Backspace
-                            setText(" ")
-                            setSelection(1)
-                        } else if (currentText.length > 1) {
-                            val newText = currentText.substring(1)
-                            nativeDeliverTextInput(newText)
-                            setText(" ")
-                            setSelection(1)
-                        }
-                    }
-                    override fun afterTextChanged(s: Editable?) {}
-                })
-            }
-
-            val frame = FrameLayout(this)
-            frame.addView(hiddenInput)
-            addContentView(frame, ViewGroup.LayoutParams(1, 1))
-        }
+    override fun onPause() {
+        super.onPause()
+        Log.i("SEN", "MainActivity onPause")
+        nativeAppPaused()
     }
 
     // --- SAF Trigger Methods (Called from Rust) ---
 
+    @Keep
     fun openFilePicker() {
         Log.i("SEN", "Opening File Picker")
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
         }
-        startActivityForResult(intent, 1001)
+        openFileLauncher.launch(intent)
     }
 
+    @Keep
     fun saveFilePicker(suggestedName: String) {
         Log.i("SEN", "Opening Save Picker with suggested name: $suggestedName")
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
@@ -103,41 +76,29 @@ class MainActivity : GameActivity() {
             type = "*/*"
             putExtra(Intent.EXTRA_TITLE, suggestedName)
         }
-        startActivityForResult(intent, 1002)
+        saveFileLauncher.launch(intent)
     }
 
+    @Keep
     fun selectKeyfile() {
         Log.i("SEN", "Opening Keyfile Picker")
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
         }
-        startActivityForResult(intent, 1003)
+        keyfileLauncher.launch(intent)
     }
 
+    @Keep
     fun openDirectoryPicker() {
         Log.i("SEN", "Opening Directory Picker")
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
         }
-        startActivityForResult(intent, 1004)
+        directoryLauncher.launch(intent)
     }
 
-    // --- Activity Result Handling ---
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == RESULT_OK && data != null) {
-            val uri = data.data ?: return
-            
-            when (requestCode) {
-                1001 -> handleOpenFile(uri)
-                1002 -> handleSaveFile(uri)
-                1003 -> handleKeyfile(uri)
-                1004 -> handleDirectory(uri)
-            }
-        }
-    }
+    // --- Activity Result Handlers ---
 
     private fun handleOpenFile(uri: Uri) {
         try {
@@ -200,6 +161,7 @@ class MainActivity : GameActivity() {
 
     // --- Helper for Rust (Called from Rust via JNI) ---
 
+    @Keep
     fun writeToFileUri(uriString: String, data: ByteArray): Boolean {
         return try {
             val uri = Uri.parse(uriString)
@@ -213,6 +175,7 @@ class MainActivity : GameActivity() {
         }
     }
 
+    @Keep
     fun setScreenCaptureProtection(enabled: Boolean) {
         runOnUiThread {
             if (enabled) {
@@ -225,20 +188,7 @@ class MainActivity : GameActivity() {
         }
     }
 
-    fun toggleKeyboard(show: Boolean) {
-        runOnUiThread {
-            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-            if (show) {
-                hiddenInput.requestFocus()
-                imm.showSoftInput(hiddenInput, InputMethodManager.SHOW_IMPLICIT)
-                Log.i("SEN", "Keyboard requested: SHOW (via HiddenInput)")
-            } else {
-                imm.hideSoftInputFromWindow(hiddenInput.windowToken, 0)
-                Log.i("SEN", "Keyboard requested: HIDE")
-            }
-        }
-    }
-
+    @Keep
     fun showBiometricPrompt() {
         runOnUiThread {
             val executor = ContextCompat.getMainExecutor(this)
@@ -259,7 +209,6 @@ class MainActivity : GameActivity() {
                     override fun onAuthenticationFailed() {
                         super.onAuthenticationFailed()
                         Log.w("SEN", "Authentication failed")
-                        // We don't necessarily call Rust here, as user can try again
                     }
                 })
 
@@ -273,6 +222,7 @@ class MainActivity : GameActivity() {
         }
     }
 
+    @Keep
     fun listDirectory(uriString: String): String {
         return try {
             val treeUri = Uri.parse(uriString)
@@ -290,6 +240,8 @@ class MainActivity : GameActivity() {
                     obj.put("uri", file.uri.toString())
                     obj.put("name", file.name ?: "unknown")
                     obj.put("is_dir", file.isDirectory)
+                    obj.put("is_expanded", false)
+                    obj.put("depth", 0)
                     jsonArray.put(obj)
                 }
             } else {
@@ -302,6 +254,7 @@ class MainActivity : GameActivity() {
         }
     }
 
+    @Keep
     fun readBytesFromUri(uriString: String): ByteArray? {
         return try {
             val uri = Uri.parse(uriString)
@@ -312,6 +265,7 @@ class MainActivity : GameActivity() {
         }
     }
 
+    @Keep
     fun getUriMetadata(uriString: String): String {
         return try {
             val uri = Uri.parse(uriString)
@@ -330,12 +284,17 @@ class MainActivity : GameActivity() {
         }
     }
 
+    @Keep
+    fun getScreenDensity(): Float {
+        return resources.displayMetrics.density
+    }
+
     // --- Native Methods (Implemented in Rust) ---
 
     private external fun nativeDeliverOpenFile(data: ByteArray, name: String)
     private external fun nativeDeliverSaveUri(uriString: String)
     private external fun nativeDeliverKeyfile(uri: String, data: ByteArray)
     private external fun nativeDeliverDirectoryUri(uri: String)
-    private external fun nativeDeliverTextInput(text: String)
     private external fun nativeDeliverBiometricResult(success: Boolean)
+    private external fun nativeAppPaused()
 }
