@@ -57,7 +57,7 @@ The Android port aims to be a fully functional companion to the desktop app, all
 
 ### Phase 3: Desktop Parity
 - [ ] **History Port**: Port the Undo/Redo (Snapshots) UI to a mobile-friendly drawer.
-- [ ] **Theme parity**: Ensure the desktop themes (`Dark`, `Light`, `Avaray`) are correctly loaded from assets.
+- [ ] **Theme parity**: Ensure the desktop themes (`Dark`, `Light`) are correctly loaded from assets.
 - [ ] **Stealth Mode**: Toggle to hide file headers/extensions, matching desktop behavior.
 
 ---
