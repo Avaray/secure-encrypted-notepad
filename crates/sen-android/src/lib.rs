@@ -207,10 +207,14 @@ struct SenAndroidApp {
     biometric_enabled: bool,
     is_locked: bool,
 
+    /// Tracks whether the soft keyboard is currently shown
+    soft_keyboard_shown: bool,
+    /// Tracks whether we launched a SAF picker (to suppress biometric re-lock)
+    picker_active: bool,
+
     notification: Option<(String, f64)>, // (message, expire_time)
     last_autosave_time: f64,
 
-    #[allow(dead_code)]
     android_app: AndroidApp,
 }
 
@@ -273,7 +277,10 @@ impl SenAndroidApp {
             show_search: false,
 
             biometric_enabled: settings.biometric_unlock,
-            is_locked: true, // Always start locked if biometric is intended
+            is_locked: settings.biometric_unlock, // Only start locked if biometric is enabled
+
+            soft_keyboard_shown: false,
+            picker_active: false,
 
             notification: None,
             last_autosave_time: 0.0,
@@ -445,6 +452,7 @@ impl SenAndroidApp {
     }
 
     fn action_open_file(&mut self) {
+        self.picker_active = true;
         self.call_java_void("openFilePicker");
     }
 
@@ -456,11 +464,13 @@ impl SenAndroidApp {
                 .current_file_name
                 .clone()
                 .unwrap_or_else(|| "note.sen".to_string());
+            self.picker_active = true;
             self.call_java_save_picker(&suggested);
         }
     }
 
     fn action_select_keyfile(&mut self) {
+        self.picker_active = true;
         self.call_java_void("selectKeyfile");
     }
 
@@ -668,7 +678,7 @@ impl SenAndroidApp {
             if let Some(success) = channel.pending_biometric_result.take() {
                 if success {
                     self.is_locked = false;
-                    self.notify(ctx, t!("dialog.goto_success", line = "✓")); // Mock success for now or use a dedicated key
+                    self.notify(ctx, t!("actions.status_unlocked"));
                 } else {
                     self.notify(ctx, t!("actions.log_dec_failed"));
                 }
@@ -688,9 +698,13 @@ impl SenAndroidApp {
             }
 
             // Handle App Paused (Background)
+            // Only lock if we didn't just launch a SAF picker ourselves
             if channel.pending_pause {
                 channel.pending_pause = false;
-                if self.biometric_enabled {
+                if self.picker_active {
+                    // A picker we launched caused onPause — don't lock
+                    self.picker_active = false;
+                } else if self.biometric_enabled {
                     self.is_locked = true;
                     // Reset menu states when locking
                     self.show_menu = false;
@@ -857,7 +871,12 @@ impl SenAndroidApp {
                         .id_source("search_input")
                         .hint_text(t!("search.hint"))
                         .desired_width(f32::INFINITY);
-                    ui.add(text_edit);
+                    let res = ui.add(text_edit);
+
+                    if res.has_focus() && !self.soft_keyboard_shown {
+                        self.android_app.show_soft_input(true);
+                        self.soft_keyboard_shown = true;
+                    }
 
                     if ui.button(t!("dialog.btn_close")).clicked() {
                         self.show_search = false;
@@ -1120,6 +1139,17 @@ impl SenAndroidApp {
                         .layouter(&mut layouter);
 
                     let response = ui.add(text_edit);
+
+                    if response.has_focus() && !self.soft_keyboard_shown {
+                        self.android_app.show_soft_input(true);
+                        self.soft_keyboard_shown = true;
+                    } else if !response.has_focus() && self.soft_keyboard_shown {
+                        // Keep keyboard if other overlays are shown, otherwise hide
+                        if !overlay_active {
+                            self.android_app.hide_soft_input(false);
+                            self.soft_keyboard_shown = false;
+                        }
+                    }
 
                     if response.changed() {
                         self.is_modified = true;
@@ -1691,6 +1721,7 @@ impl SenAndroidApp {
                 ui.vertical_centered(|ui| {
                     ui.label(t!("settings.no_dir_opened"));
                     if ui.button(t!("settings.open_dir")).clicked() {
+                        self.picker_active = true;
                         self.call_java_open_directory();
                     }
                 });
