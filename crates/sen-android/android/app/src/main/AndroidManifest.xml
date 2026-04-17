@@ -11,7 +11,8 @@
         <!-- Native Activity wrapping our compiled Rust `.so` library -->
         <activity
             android:name=".MainActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:configChanges="orientation|keyboard|keyboardHidden|screenSize"
+            android:windowSoftInputMode="adjustResize|stateHidden"
             android:exported="true">
             
             <!-- Tells Android which library to load upon running -->

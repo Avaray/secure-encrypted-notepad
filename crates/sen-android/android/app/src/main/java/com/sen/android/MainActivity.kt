@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.util.Log
+import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.Keep
@@ -54,6 +55,36 @@ class MainActivity : GameActivity() {
         super.onPause()
         Log.i("SEN", "MainActivity onPause")
         nativeAppPaused()
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        try {
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                when (event.keyCode) {
+                    KeyEvent.KEYCODE_DEL,
+                    KeyEvent.KEYCODE_FORWARD_DEL,
+                    KeyEvent.KEYCODE_ENTER,
+                    KeyEvent.KEYCODE_NUMPAD_ENTER -> {
+                        nativeDeliverSpecialKey(event.keyCode)
+                    }
+                }
+            }
+
+            if (event.action == KeyEvent.ACTION_MULTIPLE && event.keyCode == KeyEvent.KEYCODE_UNKNOWN) {
+                val chars = event.characters
+                if (!chars.isNullOrEmpty()) {
+                    nativeDeliverTypedText(chars)
+                }
+            } else if (event.action == KeyEvent.ACTION_DOWN) {
+                val unicode = event.unicodeChar
+                if (unicode > 0 && !event.isCtrlPressed && !event.isAltPressed && !event.isMetaPressed) {
+                    nativeDeliverTypedText(String(Character.toChars(unicode)))
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("SEN", "dispatchKeyEvent text bridge error: ${e.message}")
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     // --- SAF Trigger Methods (Called from Rust) ---
@@ -297,4 +328,6 @@ class MainActivity : GameActivity() {
     private external fun nativeDeliverDirectoryUri(uri: String)
     private external fun nativeDeliverBiometricResult(success: Boolean)
     private external fun nativeAppPaused()
+    private external fun nativeDeliverTypedText(text: String)
+    private external fun nativeDeliverSpecialKey(keyCode: Int)
 }

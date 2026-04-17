@@ -35,15 +35,29 @@ macro_rules! t {
 // pub(crate) use sen_debug;
 use eframe::egui;
 use jni::objects::{JByteArray, JObject, JString, JValue};
+use jni::sys::jint;
 use jni::JavaVM;
 use sen_core::models::FileTreeEntry;
 use sen_core::settings::Settings;
 use sen_core::theme::{load_themes, Theme};
 use sen_core::theme_egui::{ThemeColorsExt, ThemeExt};
+use std::sync::{Mutex, OnceLock};
 // use serde::{Deserialize, Serialize};
 
 pub mod android_fs;
 pub mod icons;
+
+#[derive(Clone)]
+enum InjectedInputEvent {
+    Text(String),
+    Key(egui::Key),
+}
+
+static INJECTED_INPUT_QUEUE: OnceLock<Mutex<Vec<InjectedInputEvent>>> = OnceLock::new();
+
+fn injected_input_queue() -> &'static Mutex<Vec<InjectedInputEvent>> {
+    INJECTED_INPUT_QUEUE.get_or_init(|| Mutex::new(Vec::new()))
+}
 
 #[cfg(target_os = "android")]
 #[no_mangle]
@@ -129,6 +143,46 @@ pub extern "system" fn Java_com_sen_android_MainActivity_nativeAppPaused(
     android_fs::jni_app_paused();
 }
 
+#[no_mangle]
+pub extern "system" fn Java_com_sen_android_MainActivity_nativeDeliverTypedText(
+    mut env: jni::JNIEnv,
+    _class: JObject,
+    text: JString,
+) {
+    let text_str: String = env.get_string(&text).map(|s| s.into()).unwrap_or_default();
+    if text_str.is_empty() {
+        return;
+    }
+    if let Ok(mut queue) = injected_input_queue().lock() {
+        queue.push(InjectedInputEvent::Text(text_str));
+    }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_sen_android_MainActivity_nativeDeliverSpecialKey(
+    _env: jni::JNIEnv,
+    _class: JObject,
+    key_code: jint,
+) {
+    const KEYCODE_ENTER: jint = 66;
+    const KEYCODE_DEL: jint = 67;
+    const KEYCODE_FORWARD_DEL: jint = 112;
+    const KEYCODE_NUMPAD_ENTER: jint = 160;
+
+    let mapped_key = match key_code {
+        KEYCODE_ENTER | KEYCODE_NUMPAD_ENTER => Some(egui::Key::Enter),
+        KEYCODE_DEL => Some(egui::Key::Backspace),
+        KEYCODE_FORWARD_DEL => Some(egui::Key::Delete),
+        _ => None,
+    };
+
+    if let Some(key) = mapped_key {
+        if let Ok(mut queue) = injected_input_queue().lock() {
+            queue.push(InjectedInputEvent::Key(key));
+        }
+    }
+}
+
 fn find_urls(text: &str) -> Vec<std::ops::Range<usize>> {
     let mut urls = Vec::new();
     let mut start = 0;
@@ -207,8 +261,6 @@ struct SenAndroidApp {
     biometric_enabled: bool,
     is_locked: bool,
 
-    /// Tracks whether the soft keyboard is currently shown
-    soft_keyboard_shown: bool,
     /// Tracks whether we launched a SAF picker (to suppress biometric re-lock)
     picker_active: bool,
 
@@ -279,7 +331,6 @@ impl SenAndroidApp {
             biometric_enabled: settings.biometric_unlock,
             is_locked: settings.biometric_unlock, // Only start locked if biometric is enabled
 
-            soft_keyboard_shown: false,
             picker_active: false,
 
             notification: None,
@@ -574,6 +625,8 @@ impl SenAndroidApp {
 
 impl eframe::App for SenAndroidApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.apply_injected_text_events(ctx);
+
         // Handle background events
         self.handle_background_events(ctx);
 
@@ -625,6 +678,43 @@ impl eframe::App for SenAndroidApp {
 }
 
 impl SenAndroidApp {
+    fn apply_injected_text_events(&self, ctx: &egui::Context) {
+        let queued = {
+            if let Ok(mut queue) = injected_input_queue().lock() {
+                if queue.is_empty() {
+                    return;
+                }
+                std::mem::take(&mut *queue)
+            } else {
+                return;
+            }
+        };
+
+        ctx.input_mut(|input| {
+            for event in queued {
+                match event {
+                    InjectedInputEvent::Text(text) => input.events.push(egui::Event::Text(text)),
+                    InjectedInputEvent::Key(key) => {
+                        input.events.push(egui::Event::Key {
+                            key,
+                            physical_key: None,
+                            pressed: true,
+                            repeat: false,
+                            modifiers: egui::Modifiers::NONE,
+                        });
+                        input.events.push(egui::Event::Key {
+                            key,
+                            physical_key: None,
+                            pressed: false,
+                            repeat: false,
+                            modifiers: egui::Modifiers::NONE,
+                        });
+                    }
+                }
+            }
+        });
+    }
+
     fn handle_background_events(&mut self, ctx: &egui::Context) {
         if let Ok(mut channel) = android_fs::get_file_channel().lock() {
             // Handle Keyfile selection
@@ -872,11 +962,6 @@ impl SenAndroidApp {
                         .hint_text(t!("search.hint"))
                         .desired_width(f32::INFINITY);
                     let res = ui.add(text_edit);
-
-                    if res.has_focus() && !self.soft_keyboard_shown {
-                        self.android_app.show_soft_input(true);
-                        self.soft_keyboard_shown = true;
-                    }
 
                     if ui.button(t!("dialog.btn_close")).clicked() {
                         self.show_search = false;
@@ -1139,17 +1224,6 @@ impl SenAndroidApp {
                         .layouter(&mut layouter);
 
                     let response = ui.add(text_edit);
-
-                    if response.has_focus() && !self.soft_keyboard_shown {
-                        self.android_app.show_soft_input(true);
-                        self.soft_keyboard_shown = true;
-                    } else if !response.has_focus() && self.soft_keyboard_shown {
-                        // Keep keyboard if other overlays are shown, otherwise hide
-                        if !overlay_active {
-                            self.android_app.hide_soft_input(false);
-                            self.soft_keyboard_shown = false;
-                        }
-                    }
 
                     if response.changed() {
                         self.is_modified = true;
