@@ -80,5 +80,8 @@ sha2 = { workspace = true }
 [target.'cfg(windows)'.dependencies]
 winreg = "0.55"
 
+[target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
+libc = "0.2"
+
 [build-dependencies]
 winresource = "0.1"

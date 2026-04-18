@@ -864,7 +864,7 @@ if ui
                         #[cfg(target_os = "macos")]
                         {
                             ui.add_space(4.0);
-                            ui.add(egui::Label::new(t!("settings.assoc_macos")).weak());
+                            ui.add(egui::Label::new(egui::RichText::new(t!("settings.assoc_macos")).weak()));
                         }
 
                         ui.add_space(8.0);

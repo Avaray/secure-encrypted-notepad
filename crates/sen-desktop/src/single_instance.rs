@@ -186,7 +186,7 @@ mod platform {
 // ============================================================================
 // Linux implementation
 // ============================================================================
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 mod platform {
     use super::*;
     use std::io::{BufRead, BufReader, Write};
