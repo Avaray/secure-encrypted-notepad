@@ -1,7 +1,7 @@
 # SEN Encryption Architecture
 
 ## 1. Document Encryption (.sen files)
-The primary purpose of SEN is to keep your documents secure using keyfile-only authentication.
+The primary purpose of SEN is to keep your notes secure using keyfile-only authentication.
 
 ### Methods & Algorithms
 - **Encryption Algorithm**: `XChaCha20-Poly1305` (via `orion` crate). This is a modern, fast, and extremely secure "Authenticated Encryption with Associated Data" (AEAD) algorithm.
@@ -9,10 +9,18 @@ The primary purpose of SEN is to keep your documents secure using keyfile-only a
   - **Input**: The `SHA-256` hash of your chosen keyfile + a random 32-byte salt generated per file.
   - **Parameters**: 3 iterations, 19,456 KB (19MB) of memory.
 - **Verification**: The `SHA-256` hash of the keyfile is prepended to the plaintext **inside** the encrypted payload. During decryption, after the AEAD tag natively verifies data integrity, the app explicitly checks this internal 32-byte hash against the provided keyfile to guarantee a match before displaying content.
+- **Fast Search Heuristics**: To optimize directory scanning (especially for Stealth files which possess no predictable header), the app preemptively drops files starting with common magic bytes (e.g., PNG, ZIP, PDF) and partially decrypts remaining files just enough to validate the internal 32-byte hash, saving substantial RAM footprint and CPU cycles.
 
-### File Structure
+### File Structure (Standard Mode)
 ```text
 [4-byte Magic: "SEN1"]
+[32-byte Random Salt]
+[Encrypted Payload (Nonce + Ciphertext + MAC Tag)]
+```
+
+### File Structure (Stealth Mode)
+Intended to disguise the file entirely, Stealth mode removes the recognizable magic marker to evade format-specific scanners and hex editors.
+```text
 [32-byte Random Salt]
 [Encrypted Payload (Nonce + Ciphertext + MAC Tag)]
 ```
@@ -28,7 +36,7 @@ The Document String is a UTF-8 string combining the visible text with internal m
 \n<>\n
 [JSON Serialized HistoryData]
 ```
-The JSON `HistoryData` object contains the document's history state, including structural history (snapshot array), the `max_history_length` configuration, and an optional hidden `autosave` slot.
+The JSON `HistoryData` object contains the document's history state, including structural history (snapshot array), the `max_history_length` configuration, and an optional hidden `autosave` slot. *(Note: For backward compatibility, the deserializer also transparently parses legacy documents where this blob contains only a raw JSON array of history entries)*.
 
 ---
 
@@ -43,6 +51,7 @@ SEN remembers your global keyfile path and starting directory without exposing t
   - A wrapping key is dynamically derived via `HKDF-SHA256` using **machine-specific hardware entropy** (e.g., Windows `MachineGuid`, Linux `/etc/machine-id`, macOS `IOPlatformUUID`), the OS username, and a 16-byte random salt.
   - The master key is encrypted with this wrapping key using `AES-256-GCM` and saved to a discrete file: `<config_dir>/sen/.keyfile_key`.
 - **Key File Format**: The contents of `.keyfile_key` on disk are formatted as: `[Version Byte (1)][Salt (16)][Nonce (12)][Wrapped Key + Tag (48)]`.
+- **Legacy Key Migration**: In the event a raw 32-byte legacy key (originating from an earlier version of SEN) is found inside `.keyfile_key`, the backend intercepts it at runtime, derives the new machine's HKDF entropy, and automatically re-wraps it into the modern 77-byte layout, guaranteeing forward compatibility without data loss.
 - **Per-Value Encryption**: Every time a path is updated in `config.toml`, a fresh random 12-byte nonce is generated. The path is then encrypted with the unwrapped master key and stored as `base64_nonce:base64_ciphertext`.
 
 ### Encrypted Fields
