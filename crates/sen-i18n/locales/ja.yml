@@ -415,6 +415,7 @@ app.log_capture_err_hwnd: "画面キャプチャ保護を適用できません: 
 app.log_first_run_light: "初回起動: システムがライトモードを検出しました。テーマをライトに設定します"
 app.log_first_run_dark: "初回起動: システムがダークモードを検出しました (デフォルトテーマ)"
 
+actions.status_unlocked: "🔓 ロック解除"
 actions.status_new: "新しいドキュメントを作成しました"
 actions.log_new: "新しいドキュメントを作成しました"
 actions.status_closed: "ファイルを閉じました"

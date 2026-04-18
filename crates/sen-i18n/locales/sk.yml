@@ -415,6 +415,7 @@ app.log_capture_err_hwnd: "Nemožno aplikovať ochranu proti snímaniu obrazovky
 app.log_first_run_light: "Prvé spustenie: Systém rozpoznal Svetlý režim, nastavenie témy na Svetlú"
 app.log_first_run_dark: "Prvé spustenie: Systém rozpoznal Tmavý režim (predvolená téma)"
 
+actions.status_unlocked: "🔓 Odomknuté"
 actions.status_new: "Nový dokument vytvorený"
 actions.log_new: "Nový dokument vytvorený"
 actions.status_closed: "Súbor zatvorený"

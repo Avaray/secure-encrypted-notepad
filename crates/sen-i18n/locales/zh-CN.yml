@@ -415,6 +415,7 @@ app.log_capture_err_hwnd: "无法应用防屏幕截图保护：未找到 HWND"
 app.log_first_run_light: "首次运行：系统检测到浅色模式，将主题设置为浅色"
 app.log_first_run_dark: "首次运行：系统检测到深色模式（默认主题）"
 
+actions.status_unlocked: "🔓 已解锁"
 actions.status_new: "已创建新文档"
 actions.log_new: "已创建新文档"
 actions.status_closed: "文件已关闭"

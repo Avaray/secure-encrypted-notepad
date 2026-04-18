@@ -415,6 +415,7 @@ app.log_capture_err_hwnd: "No se puede aplicar la protección contra captura de 
 app.log_first_run_light: "Primera ejecución: El sistema detectó el modo Claro, configurando el tema a Claro"
 app.log_first_run_dark: "Primera ejecución: El sistema detectó el modo Oscuro (tema predeterminado)"
 
+actions.status_unlocked: "🔓 Desbloqueado"
 actions.status_new: "Nuevo documento creado"
 actions.log_new: "Nuevo documento creado"
 actions.status_closed: "Archivo cerrado"

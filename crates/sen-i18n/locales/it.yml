@@ -415,6 +415,7 @@ app.log_capture_err_hwnd: "Impossibile applicare la protezione acquisizione sche
 app.log_first_run_light: "Primo avvio: Il sistema ha rilevato la modalità Chiara, impostazione del tema su Chiaro"
 app.log_first_run_dark: "Primo avvio: Il sistema ha rilevato la modalità Scura (tema predefinito)"
 
+actions.status_unlocked: "🔓 Sbloccato"
 actions.status_new: "Nuovo documento creato"
 actions.log_new: "Nuovo documento creato"
 actions.status_closed: "File chiuso"

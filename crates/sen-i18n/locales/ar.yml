@@ -415,6 +415,7 @@ app.log_capture_err_hwnd: "لا يمكن تطبيق حماية التقاط ال
 app.log_first_run_light: "التشغيل الأول: اكتشف النظام الوضع الفاتح، سيتم تعيين السمة إلى فاتح"
 app.log_first_run_dark: "التشغيل الأول: اكتشف النظام الوضع الداكن (السمة الافتراضية)"
 
+actions.status_unlocked: "🔓 تم إلغاء القفل"
 actions.status_new: "تم إنشاء مستند جديد"
 actions.log_new: "تم إنشاء مستند جديد"
 actions.status_closed: "تم إغلاق الملف"

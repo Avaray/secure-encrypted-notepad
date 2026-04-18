@@ -415,6 +415,7 @@ app.log_capture_err_hwnd: "Nie można zastosować ochrony przed przechwytywaniem
 app.log_first_run_light: "Pierwsze uruchomienie: System wykrył tryb Jasny, ustawianie motywu na Jasny"
 app.log_first_run_dark: "Pierwsze uruchomienie: System wykrył tryb Ciemny (motyw domyślny)"
 
+actions.status_unlocked: "🔓 Odblokowano"
 actions.status_new: "Utworzono nowy dokument"
 actions.log_new: "Utworzono nowy dokument"
 actions.status_closed: "Plik zamknięty"

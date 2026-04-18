@@ -415,6 +415,7 @@ app.log_capture_err_hwnd: "Kan schermopnamebeveiliging niet toepassen: HWND niet
 app.log_first_run_light: "Eerste start: Systeem heeft lichte modus gedetecteerd, thema wordt op Licht ingesteld"
 app.log_first_run_dark: "Eerste start: Systeem heeft donkere modus gedetecteerd (standaardthema)"
 
+actions.status_unlocked: "🔓 Ontgrendeld"
 actions.status_new: "Nieuw document aangemaakt"
 actions.log_new: "Nieuw document aangemaakt"
 actions.status_closed: "Bestand gesloten"
