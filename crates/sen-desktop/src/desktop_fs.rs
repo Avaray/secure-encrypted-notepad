@@ -11,7 +11,7 @@ impl FileSystem for DesktopFs {
     }
 
     fn write(&self, path: &Path, content: &[u8]) -> Result<()> {
-        std::fs::write(path, content)
+        sen_core::fs::atomic_write(path, content)
     }
 
     fn exists(&self, path: &Path) -> bool {

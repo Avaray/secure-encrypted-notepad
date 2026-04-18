@@ -108,7 +108,7 @@ pub fn generate_keyfile(output_path: &Path) -> Result<(), CryptoError> {
     let mut keyfile_data = Zeroizing::new(vec![0u8; 256]);
     rand::rng().fill_bytes(&mut keyfile_data);
 
-    fs::write(output_path, &*keyfile_data)
+    crate::fs::atomic_write(output_path, &*keyfile_data)
         .map_err(|e| CryptoError::KeyfileError(format!("Cannot write keyfile: {}", e)))?;
 
     Ok(())
@@ -142,7 +142,7 @@ pub fn encrypt_bytes(
     file_data.extend_from_slice(&salt);
     file_data.extend_from_slice(&ciphertext);
 
-    fs::write(output_path, file_data)?;
+    crate::fs::atomic_write(output_path, file_data)?;
     Ok(())
 }
 
@@ -170,7 +170,7 @@ pub fn encrypt_stealth(
     file_data.extend_from_slice(&salt);
     file_data.extend_from_slice(&ciphertext);
 
-    fs::write(output_path, file_data)?;
+    crate::fs::atomic_write(output_path, file_data)?;
     Ok(())
 }
 

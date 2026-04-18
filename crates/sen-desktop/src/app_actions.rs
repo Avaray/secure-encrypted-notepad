@@ -646,7 +646,7 @@ impl EditorApp {
             .set_file_name(&suggested_name)
             .save_file()
         {
-            match std::fs::write(&path, &content) {
+            match sen_core::fs::atomic_write(&path, &content) {
                 Ok(_) => {
                     let masked = self.mask_directory_path(&path);
                     self.status_message = t!("actions.status_exported", file = masked).to_string();
@@ -739,7 +739,7 @@ impl EditorApp {
     <glob pattern="*.sen"/>
   </mime-type>
 </mime-info>"#;
-            fs::write(mime_dir.join("sen.xml"), mime_content)?;
+            sen_core::fs::atomic_write(mime_dir.join("sen.xml"), mime_content)?;
 
             // 2. Desktop Entry
             let app_dir = home.join(".local/share/applications");
@@ -755,7 +755,7 @@ Categories=Utility;TextEditor;
 Terminal=false"#,
                 exe_path.display()
             );
-            fs::write(app_dir.join("sen.desktop"), desktop_content)?;
+            sen_core::fs::atomic_write(app_dir.join("sen.desktop"), desktop_content)?;
 
             // 3. Update databases
             let _ = std::process::Command::new("update-mime-database")

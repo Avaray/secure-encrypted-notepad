@@ -219,7 +219,7 @@ pub fn get_or_create_config_key() -> Result<[u8; 32], Box<dyn std::error::Error>
             // Re-save in new wrapped format
             match wrap_config_key(&key, &entropy) {
                 Ok(wrapped) => {
-                    std::fs::write(&key_path, &wrapped)?;
+                    crate::fs::atomic_write(&key_path, &wrapped)?;
                     sen_debug!(
                         "config_crypto: migrated to wrapped format ({} bytes, fingerprint: {:02x}{:02x}{:02x}{:02x})",
                         wrapped.len(),
@@ -262,7 +262,7 @@ pub fn get_or_create_config_key() -> Result<[u8; 32], Box<dyn std::error::Error>
 
     // Write in wrapped format
     let wrapped = wrap_config_key(&key, &entropy)?;
-    std::fs::write(&key_path, &wrapped)?;
+    crate::fs::atomic_write(&key_path, &wrapped)?;
 
     sen_debug!(
         "config_crypto: GENERATED NEW wrapped key ({} bytes, fingerprint: {:02x}{:02x}{:02x}{:02x})",

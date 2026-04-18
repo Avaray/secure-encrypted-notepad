@@ -718,7 +718,7 @@ impl EditorApp {
                             crate::history::DocumentWithHistory::from_file_content(&content_str);
                         let final_content = doc.current_content;
 
-                        match std::fs::write(&output_path, final_content) {
+                        match sen_core::fs::atomic_write(&output_path, final_content) {
                             Ok(_) => {
                                 success += 1;
                                 let _ = tx.send(crate::app_state::BatchProgressUpdate::Log(

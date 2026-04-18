@@ -450,7 +450,7 @@ pub fn save_theme(theme: &Theme) -> Result<(), Box<dyn std::error::Error>> {
     let filename = format!("{}.toml", theme.name.to_lowercase().replace(' ', "_"));
     let path = themes_dir.join(filename);
     let toml_string = toml::to_string_pretty(theme)?;
-    fs::write(path, toml_string)?;
+    crate::fs::atomic_write(path, toml_string)?;
     Ok(())
 }
 

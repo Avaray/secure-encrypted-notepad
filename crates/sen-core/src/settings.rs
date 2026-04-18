@@ -522,7 +522,10 @@ impl Settings {
             to_save.encrypt_auto_backup_dir_field();
 
             let toml_string = toml::to_string_pretty(&to_save)?;
-            fs::write(&config_path, toml_string)?;
+            let val = std::fs::read_to_string(&config_path).unwrap_or_default();
+            if toml_string != val {
+                crate::fs::atomic_write(&config_path, toml_string)?;
+            }
         }
         Ok(())
     }
