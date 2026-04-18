@@ -749,14 +749,8 @@ impl EditorApp {
                         self.batch_is_running = false;
                         finished = true;
 
-                        let mode_key = match self.batch_mode {
-                            crate::app_state::BatchMode::Encrypt => t!("batch.mode_encrypt"),
-                            crate::app_state::BatchMode::Decrypt => t!("batch.mode_decrypt"),
-                            crate::app_state::BatchMode::Rotate => t!("batch.mode_rotate"),
-                        };
                         self.status_message = t!(
-                            "helpers.status_batch_finished",
-                            mode = mode_key,
+                            "status.batch_completed",
                             success = success,
                             failed = failed
                         )
@@ -936,6 +930,7 @@ impl EditorApp {
             // Enter Fullscreen
             ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(true));
             self.log_info(t!("helpers.log_zen_on"));
+            self.status_message = t!("status.zen_enabled").to_string();
         } else {
             // Exit Fullscreen
             ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(false));
@@ -944,6 +939,7 @@ impl EditorApp {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Maximized(true));
             }
             self.log_info(t!("helpers.log_zen_off"));
+            self.status_message = t!("status.zen_disabled").to_string();
         }
     }
     /// Truncate text to fit width, eating any trailing dots before the ellipsis

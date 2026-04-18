@@ -332,6 +332,7 @@ if ui
 .changed()
 {
 let _ = self.settings.save(None);
+self.status_message = if self.settings.show_line_numbers { t!("status.lines_shown").to_string() } else { t!("status.lines_hidden").to_string() };
 }
 if ui
 .checkbox(&mut self.settings.show_whitespace, t!("settings.show_whitespace"))
@@ -366,6 +367,7 @@ self.style_dirty = true;
 }
 if ui.checkbox(&mut self.settings.word_wrap, t!("settings.word_wrap")).changed() {
 let _ = self.settings.save(None);
+self.status_message = if self.settings.word_wrap { t!("status.wrap_enabled").to_string() } else { t!("status.wrap_disabled").to_string() };
 }
 let h = ls.get_height("set_tab_sz");
 crate::app_helpers::render_settings_row(ui, &t!("settings.tab_size"), h, |ui| {
@@ -534,6 +536,7 @@ self.render_heading(ui, t!("settings.appearance"));
                                     self.editing_theme = Some(theme.clone()); // Sync theme editor
                                     self.apply_theme(ui.ctx());
                                     let _ = self.settings.save(None);
+                                    self.status_message = t!("status.theme_changed", theme = theme.name).to_string();
                                 }
                             }
                         });
@@ -593,6 +596,7 @@ self.available_fonts[self.ui_font_index].clone();
 let _ = self.settings.save(None);
 self.style_dirty = true;
 self.fonts_dirty = true;
+self.status_message = t!("status.font_updated", font_type = "UI").to_string();
 self.log_info(format!(
 "UI font changed to: {}",
 self.settings.ui_font_family
@@ -665,6 +669,7 @@ self.available_fonts[self.editor_font_index].clone();
 let _ = self.settings.save(None);
 self.style_dirty = true;
 self.fonts_dirty = true;
+self.status_message = t!("status.font_updated", font_type = "Editor").to_string();
 self.log_info(format!(
 "Editor font changed to: {}",
 self.settings.editor_font_family
@@ -832,6 +837,7 @@ if ui
 .changed()
 {
                             let _ = self.settings.save(None);
+                            self.status_message = if self.settings.remember_zen_mode { t!("status.zen_enabled").to_string() } else { t!("status.zen_disabled").to_string() };
                         }
                         if ui
                             .checkbox(&mut self.settings.show_status_bar, t!("settings.show_status_bar"))
@@ -1161,6 +1167,16 @@ if ui
                         // Clear button on the left
                         if ui.button(t!("debug.clear")).clicked() {
                             self.debug_log.clear();
+                        }
+
+                        if ui.button("Copy Logs").clicked() {
+                            let mut logs = String::new();
+                            for entry in &self.debug_log {
+                                // Basic formatting for clipboard
+                                logs.push_str(&format!("{:?} - {}\n", entry.level, entry.message));
+                            }
+                            ui.ctx().copy_text(logs);
+                            self.status_message = t!("status.logs_copied").to_string();
                         }
 
                         // Toggles on the right

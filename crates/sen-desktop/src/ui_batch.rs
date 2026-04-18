@@ -344,6 +344,7 @@ impl EditorApp {
                         };
 
                         if button_response.clicked() && !is_running {
+                            self.status_message = t!("status.batch_started").to_string();
                             self.execute_batch_action();
                         }
                     });
@@ -373,10 +374,15 @@ impl EditorApp {
                             }
                             if ui.button(t!("batch.btn_add")).clicked() {
                                 if let Some(files) = rfd::FileDialog::new().pick_files() {
+                                    let mut added = 0;
                                     for file in files {
                                         if !self.batch_files.contains(&file) {
                                             self.batch_files.push(file);
+                                            added += 1;
                                         }
+                                    }
+                                    if added > 0 {
+                                        self.status_message = t!("status.batch_files_added", count = added).to_string();
                                     }
                                 }
                             }
@@ -387,10 +393,15 @@ impl EditorApp {
                     crate::app_helpers::center_row(ui, |ui| {
                         if ui.button(t!("batch.btn_add")).clicked() {
                             if let Some(files) = rfd::FileDialog::new().pick_files() {
+                                let mut added = 0;
                                 for file in files {
                                     if !self.batch_files.contains(&file) {
                                         self.batch_files.push(file);
+                                        added += 1;
                                     }
+                                }
+                                if added > 0 {
+                                    self.status_message = t!("status.batch_files_added", count = added).to_string();
                                 }
                             }
                         }
