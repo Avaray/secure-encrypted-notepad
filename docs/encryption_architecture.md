@@ -9,7 +9,6 @@ The primary purpose of SEN is to keep your notes secure using keyfile-only authe
   - **Input**: The `SHA-256` hash of your chosen keyfile + a random 32-byte salt generated per file.
   - **Parameters**: 3 iterations, 19,456 KB (19MB) of memory.
 - **Verification**: The `SHA-256` hash of the keyfile is prepended to the plaintext **inside** the encrypted payload. During decryption, after the AEAD tag natively verifies data integrity, the app explicitly checks this internal 32-byte hash against the provided keyfile to guarantee a match before displaying content.
-- **Fast Search Heuristics**: To optimize directory scanning (especially for Stealth files which possess no predictable header), the app preemptively drops files starting with common magic bytes (e.g., PNG, ZIP, PDF) and partially decrypts remaining files just enough to validate the internal 32-byte hash, saving substantial RAM footprint and CPU cycles.
 
 ### File Structure (Standard Mode)
 ```text
@@ -36,7 +35,7 @@ The Document String is a UTF-8 string combining the visible text with internal m
 \n<>\n
 [JSON Serialized HistoryData]
 ```
-The JSON `HistoryData` object contains the document's history state, including structural history (snapshot array), the `max_history_length` configuration, and an optional hidden `autosave` slot. *(Note: For backward compatibility, the deserializer also transparently parses legacy documents where this blob contains only a raw JSON array of history entries)*.
+The JSON `HistoryData` object contains the document's history state, including structural history (snapshot array), the `max_history_length` configuration, and an optional hidden `autosave` slot.
 
 ---
 
