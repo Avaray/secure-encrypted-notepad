@@ -3397,7 +3397,7 @@ checksum = "d767eb0aabc880b29956c35734170f26ed551a859dbd361d140cdbeca61ab1e2"
 
 [[package]]
 name = "sen-android"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "android-activity",
  "eframe",
@@ -3415,7 +3415,7 @@ dependencies = [
 
 [[package]]
 name = "sen-core"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "aes-gcm",
  "base64",
@@ -3438,7 +3438,7 @@ dependencies = [
 
 [[package]]
 name = "sen-desktop"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "base64",
  "chrono",
@@ -3471,7 +3471,7 @@ dependencies = [
 
 [[package]]
 name = "sen-i18n"
-version = "0.1.0"
+version = "0.7.1"
 dependencies = [
  "once_cell",
 ]
