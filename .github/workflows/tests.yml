@@ -26,13 +26,13 @@ jobs:
             os-name: Windows
             target: x86_64-pc-windows-msvc
 
-#           - os: ubuntu-latest
-#             os-name: Linux
-#             target: x86_64-unknown-linux-gnu
-# 
-#           - os: macos-latest
-#             os-name: macOS
-#             target: aarch64-apple-darwin
+          - os: ubuntu-latest
+            os-name: Linux
+            target: x86_64-unknown-linux-gnu
+
+          - os: macos-latest
+            os-name: macOS
+            target: aarch64-apple-darwin
 
     runs-on: ${{ matrix.os }}
 

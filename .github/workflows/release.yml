@@ -9,6 +9,11 @@ on:
         description: 'Release version'
         required: true
         type: string
+      build_android:
+        description: 'Build Android APK'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: release-${{ github.ref }}
@@ -77,23 +82,23 @@ jobs:
             binary: sen.exe
             artifact: sen-v${{ needs.check-version.outputs.version }}-windows.exe
 
-#           - os: ubuntu-latest
-#             os-name: Linux
-#             target: x86_64-unknown-linux-gnu
-#             binary: sen
-#             artifact: sen-v${{ needs.check-version.outputs.version }}-linux
-# 
-#           - os: macos-latest
-#             os-name: macOS
-#             target: x86_64-apple-darwin
-#             binary: sen
-#             artifact: sen-v${{ needs.check-version.outputs.version }}-macos
-# 
-#           - os: macos-latest
-#             os-name: macOS ARM64
-#             target: aarch64-apple-darwin
-#             binary: sen
-#             artifact: sen-v${{ needs.check-version.outputs.version }}-macos-arm64
+          - os: ubuntu-latest
+            os-name: Linux
+            target: x86_64-unknown-linux-gnu
+            binary: sen
+            artifact: sen-v${{ needs.check-version.outputs.version }}-linux
+
+          - os: macos-latest
+            os-name: macOS
+            target: x86_64-apple-darwin
+            binary: sen
+            artifact: sen-v${{ needs.check-version.outputs.version }}-macos
+
+          - os: macos-latest
+            os-name: macOS ARM64
+            target: aarch64-apple-darwin
+            binary: sen
+            artifact: sen-v${{ needs.check-version.outputs.version }}-macos-arm64
 
     steps:
       - uses: actions/checkout@v6
@@ -152,7 +157,7 @@ jobs:
   build-android:
     name: Build (Android)
     needs: check-version
-    if: needs.check-version.outputs.created == 'true'
+    if: needs.check-version.outputs.created == 'true' && github.event.inputs.build_android == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -198,7 +203,7 @@ jobs:
 
   create-release:
     name: Create GitHub Release
-    needs: [check-version, build, build-android]
+    needs: [check-version, build]
     if: needs.check-version.outputs.created == 'true'
     runs-on: ubuntu-latest
     permissions:
