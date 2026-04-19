@@ -805,10 +805,14 @@ let _ = self.settings.save(None);
                             let aspect = tex_size[0] as f32 / tex_size[1] as f32;
                             let icon_width = icon_height * aspect;
 
-                            let desired_width = ui.available_width();
+                            // Calculate required row width based on content
+                            let row_width = padding.x * 2.0 + icon_width + spacing + text_galley.rect.width();
+
                             let desired_height = (text_height).max(icon_height) + padding.y * 2.0;
-                            let (rect, response) = ui.allocate_exact_size(
-                                egui::vec2(desired_width, desired_height),
+
+                            // allocate_at_least allows the popup to shrink to fit the widest row
+                            let (rect, response) = ui.allocate_at_least(
+                                egui::vec2(row_width, desired_height),
                                 egui::Sense::click(),
                             );
 
