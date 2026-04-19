@@ -243,7 +243,7 @@ impl EditorApp {
         }
         .id_salt("main_editor")
         .auto_shrink(false)
-        .scroll_offset(scroll_state.offset.into())
+        .scroll_offset(scroll_state.offset)
         .show(&mut text_ui, |ui| {
             let text_ptr = &mut self.document.current_content;
             let scroll_area_rect = ui.clip_rect();
@@ -307,11 +307,7 @@ impl EditorApp {
                             {
                                 continue;
                             }
-                            let local_start = if link_range.start > line_start_byte {
-                                link_range.start - line_start_byte
-                            } else {
-                                0
-                            };
+                            let local_start = link_range.start.saturating_sub(line_start_byte);
                             let local_end = if link_range.end < line_end_byte {
                                 link_range.end - line_start_byte
                             } else {
@@ -360,17 +356,10 @@ impl EditorApp {
                                         continue;
                                     }
 
-                                    let local_s_start = s_pos.max(if m_start > line_start_byte {
-                                        m_start - line_start_byte
-                                    } else {
-                                        0
-                                    });
+                                    let local_s_start =
+                                        s_pos.max(m_start.saturating_sub(line_start_byte));
                                     let local_s_end =
-                                        seg_range.end.min(if m_end > line_start_byte {
-                                            m_end - line_start_byte
-                                        } else {
-                                            0
-                                        });
+                                        seg_range.end.min(m_end.saturating_sub(line_start_byte));
 
                                     // Segment BEFORE the highlight
                                     if local_s_start > s_pos {
@@ -700,8 +689,7 @@ impl EditorApp {
                     let cursor_char_pos = cursor_range.primary.index;
                     let cursor_byte_pos = char_to_byte_idx(text, cursor_char_pos);
 
-                    let line_num = text[..cursor_byte_pos]
-                        .as_bytes()
+                    let line_num = text.as_bytes()[..cursor_byte_pos]
                         .iter()
                         .filter(|&&b| b == b'\n')
                         .count()
@@ -718,10 +706,10 @@ impl EditorApp {
                         .unwrap_or(text.len());
                     let current_line_text = &text[line_start..line_end];
 
-                    if self.previous_cursor_byte_pos != Some(cursor_byte_pos) {
-                        if current_line_text.trim().is_empty() {
-                            self.reset_scroll_x_pending = true;
-                        }
+                    if self.previous_cursor_byte_pos != Some(cursor_byte_pos)
+                        && current_line_text.trim().is_empty()
+                    {
+                        self.reset_scroll_x_pending = true;
                     }
                     self.previous_cursor_byte_pos = Some(cursor_byte_pos);
 
@@ -770,22 +758,21 @@ impl EditorApp {
                 // Only draw if visible in the viewport
                 if line_y >= full_clip_rect.top() - editor_font_size
                     && line_y <= full_clip_rect.bottom() + editor_font_size
+                    && !is_continuation
                 {
-                    if !is_continuation {
-                        let text_color = if Some(current_line) == highlight_line {
-                            foreground_color
-                        } else {
-                            line_number_color
-                        };
+                    let text_color = if Some(current_line) == highlight_line {
+                        foreground_color
+                    } else {
+                        line_number_color
+                    };
 
-                        painter.text(
-                            egui::pos2(line_numbers_x, line_y),
-                            egui::Align2::RIGHT_TOP,
-                            format!("{}", current_line),
-                            font_id.clone(),
-                            text_color,
-                        );
-                    }
+                    painter.text(
+                        egui::pos2(line_numbers_x, line_y),
+                        egui::Align2::RIGHT_TOP,
+                        format!("{}", current_line),
+                        font_id.clone(),
+                        text_color,
+                    );
                 }
 
                 if row.ends_with_newline {
@@ -896,8 +883,9 @@ impl EditorApp {
             let byte_start = char_to_byte_idx(text, start_char_idx);
             let byte_end = char_to_byte_idx(text, end_char_idx);
 
-            let mut current_char_idx = start_char_idx;
-            for (_byte_offset, chr) in text[byte_start..byte_end].char_indices() {
+            for (current_char_idx, (_byte_offset, chr)) in
+                (start_char_idx..).zip(text[byte_start..byte_end].char_indices())
+            {
                 if chr == ' ' || chr == '\t' || chr == '\n' {
                     let cursor_rect1 =
                         galley_data.pos_from_cursor(egui::text::CCursor::new(current_char_idx));
@@ -963,7 +951,6 @@ impl EditorApp {
                         }
                     }
                 }
-                current_char_idx += 1;
             }
         }
         // Restore animation time

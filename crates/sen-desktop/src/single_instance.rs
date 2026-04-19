@@ -116,25 +116,22 @@ mod platform {
             }
 
             // Read the path from the pipe
-            let file = unsafe { std::fs::File::from_raw_handle(handle as *mut std::ffi::c_void) };
+            let file = unsafe { std::fs::File::from_raw_handle(handle) };
             let reader = BufReader::new(&file);
-            for line in reader.lines() {
-                if let Ok(path_str) = line {
-                    let path_str = path_str.trim().to_string();
-                    if !path_str.is_empty() {
-                        crate::sen_debug!("IPC: Received path: {}", path_str);
-                        if let Ok(mut q) = queue.lock() {
-                            q.push(PathBuf::from(path_str));
-                        }
+            if let Some(path_str) = reader.lines().map_while(Result::ok).next() {
+                let path_str = path_str.trim().to_string();
+                if !path_str.is_empty() {
+                    crate::sen_debug!("IPC: Received path: {}", path_str);
+                    if let Ok(mut q) = queue.lock() {
+                        q.push(PathBuf::from(path_str));
                     }
-                    break;
                 }
             }
             // File handle is dropped here, closing the pipe end
         }
     }
 
-    fn send_path(path: &PathBuf) -> std::io::Result<()> {
+    fn send_path(path: &std::path::Path) -> std::io::Result<()> {
         use std::fs::OpenOptions;
         use std::io::Write;
 

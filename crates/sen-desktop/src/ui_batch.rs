@@ -212,10 +212,10 @@ impl EditorApp {
                                 .color(label_color),
                         );
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            if self.batch_output_dir.is_some() {
-                                if ui.button(t!("batch.btn_clear_out_dir")).clicked() {
-                                    self.batch_output_dir = None;
-                                }
+                            if self.batch_output_dir.is_some()
+                                && ui.button(t!("batch.btn_clear_out_dir")).clicked()
+                            {
+                                self.batch_output_dir = None;
                             }
                             if ui.button(t!("batch.btn_select_out_dir")).clicked() {
                                 if let Some(path) = rfd::FileDialog::new().pick_folder() {
@@ -284,9 +284,7 @@ impl EditorApp {
                         };
 
                     let (label, icon) = if is_running {
-                        let mode_icon = match self.batch_mode {
-                            _ => "",
-                        };
+                        let mode_icon = "";
                         let verb = match self.batch_mode {
                             BatchMode::Encrypt => t!("batch.running_encrypt"),
                             BatchMode::Decrypt => t!("batch.running_decrypt"),
@@ -549,7 +547,7 @@ impl EditorApp {
                 let output_name = if stealth_mode {
                     file_name.to_string_lossy().to_string()
                 } else {
-                    format!("{}.sen", file_name.to_string_lossy().to_string())
+                    format!("{}.sen", file_name.to_string_lossy())
                 };
 
                 let output_path = output_dir.join(output_name);

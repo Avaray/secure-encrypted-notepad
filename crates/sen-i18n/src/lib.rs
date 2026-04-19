@@ -72,30 +72,27 @@ pub fn _rust_i18n_translate<'r>(locale: &str, key: &'r str) -> Cow<'r, str> {
     let t = &*TRANSLATIONS;
 
     // Try current locale
-    if let Some(target_map) = t.get(locale) {
-        if let Some(&val) = target_map.get(key) {
-            return Cow::Borrowed(val);
-        }
+    if let Some(target_map) = t.get(locale)
+        && let Some(&val) = target_map.get(key)
+    {
+        return Cow::Borrowed(val);
     }
 
     // Try base locale (e.g. "pt" if "pt-BR" is requested)
-    if let Some(base) = locale.split('-').next() {
-        if base != locale {
-            if let Some(base_map) = t.get(base) {
-                if let Some(&val) = base_map.get(key) {
-                    return Cow::Borrowed(val);
-                }
-            }
-        }
+    if let Some(base) = locale.split('-').next()
+        && base != locale
+        && let Some(base_map) = t.get(base)
+        && let Some(&val) = base_map.get(key)
+    {
+        return Cow::Borrowed(val);
     }
 
     // Fallback to "en"
-    if locale != "en" {
-        if let Some(en_map) = t.get("en") {
-            if let Some(&val) = en_map.get(key) {
-                return Cow::Borrowed(val);
-            }
-        }
+    if locale != "en"
+        && let Some(en_map) = t.get("en")
+        && let Some(&val) = en_map.get(key)
+    {
+        return Cow::Borrowed(val);
     }
 
     // If not found, return key

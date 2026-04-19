@@ -2,6 +2,7 @@
 
 use egui;
 
+#[allow(clippy::type_complexity)]
 pub struct Select<'a> {
     selected_text: String,
     min_width: f32,

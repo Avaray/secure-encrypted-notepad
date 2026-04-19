@@ -3,16 +3,11 @@ use std::fs;
 use std::path::PathBuf;
 
 /// Color scheme type
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
 pub enum ColorScheme {
+    #[default]
     Dark,
     Light,
-}
-
-impl Default for ColorScheme {
-    fn default() -> Self {
-        Self::Dark
-    }
 }
 
 pub mod opt_alpha_color {

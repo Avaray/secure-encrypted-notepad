@@ -1,4 +1,3 @@
-use chrono;
 use std::path::PathBuf;
 
 /// Debug log entry
@@ -58,34 +57,25 @@ pub enum PendingAction {
 }
 
 /// Status of file access relative to currently loaded key
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum KeyStatus {
-    Unknown,      // Not checked yet
+    #[default]
+    Unknown, // Not checked yet
     Decryptable,  // Matches current keyfile (Green)
     StealthMatch, // Stealth file, matches current keyfile (Cyan)
     WrongKey,     // Keyfile doesn't match (Red)
     NotSen,       // Not a SEN file (Default)
 }
 
-impl Default for KeyStatus {
-    fn default() -> Self {
-        Self::Unknown
-    }
-}
-
 /// Batch converter operation mode
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum BatchMode {
+    #[default]
     Encrypt,
     Decrypt,
     Rotate,
 }
 
-impl Default for BatchMode {
-    fn default() -> Self {
-        Self::Encrypt
-    }
-}
 #[derive(Debug, Clone)]
 pub enum BatchProgressUpdate {
     Log(LogLevel, String),

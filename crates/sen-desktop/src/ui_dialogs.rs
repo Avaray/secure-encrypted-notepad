@@ -197,7 +197,7 @@ impl EditorApp {
                                         .iter()
                                         .find(|t| t.name == self.settings.theme_name)
                                         .cloned()
-                                        .unwrap_or_else(|| crate::theme::Theme::dark());
+                                        .unwrap_or_else(crate::theme::Theme::dark);
                                     new_theme.apply(ctx);
                                     self.current_theme = new_theme.clone();
                                     self.editing_theme = Some(new_theme.clone());

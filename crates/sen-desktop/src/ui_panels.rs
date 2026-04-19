@@ -553,17 +553,15 @@ ui.app_separator();
                     sen_core::ui::Select::new(&self.available_fonts[self.ui_font_index])
                         .show_ui(ui, |ui| {
                             let mut changed = false;
-if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)) {
-if self.ui_font_index > 0 {
+if ui.input(|i| i.key_pressed(egui::Key::ArrowUp))
+&& self.ui_font_index > 0 {
 self.ui_font_index -= 1;
 changed = true;
 }
-}
-if ui.input(|i| i.key_pressed(egui::Key::ArrowDown)) {
-if self.ui_font_index < self.available_fonts.len() - 1 {
+if ui.input(|i| i.key_pressed(egui::Key::ArrowDown))
+&& self.ui_font_index < self.available_fonts.len() - 1 {
 self.ui_font_index += 1;
 changed = true;
-}
 }
 egui::ScrollArea::vertical()
 .max_height(300.0)
@@ -626,17 +624,15 @@ ui.app_separator();
                     sen_core::ui::Select::new(&self.available_fonts[self.editor_font_index])
                         .show_ui(ui, |ui| {
                             let mut changed = false;
-if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)) {
-if self.editor_font_index > 0 {
+if ui.input(|i| i.key_pressed(egui::Key::ArrowUp))
+&& self.editor_font_index > 0 {
 self.editor_font_index -= 1;
 changed = true;
 }
-}
-if ui.input(|i| i.key_pressed(egui::Key::ArrowDown)) {
-if self.editor_font_index < self.available_fonts.len() - 1 {
+if ui.input(|i| i.key_pressed(egui::Key::ArrowDown))
+&& self.editor_font_index < self.available_fonts.len() - 1 {
 self.editor_font_index += 1;
 changed = true;
-}
 }
 egui::ScrollArea::vertical()
 .max_height(300.0)
@@ -1057,14 +1053,13 @@ if ui
                                 || self.document.history.len() != self.initial_history_len
                                 || self.document.max_history_length != self.initial_max_history_length;
 
-                            if history_changed {
-                                if ui.button(t!("history.revert_changes"))
+                            if history_changed
+                                && ui.button(t!("history.revert_changes"))
                                     .on_hover_text(t!("history.log_reverted"))
                                     .clicked()
                                 {
                                     self.revert_history_changes();
                                 }
-                            }
                         });
                     }
                 });
@@ -1119,11 +1114,7 @@ if ui
                                     if history_len == 0 {
                                 ui.add(egui::Label::new(t!("history.no_history")).selectable(false));
                             } else {
-                                let to_delete_count = if history_len > doc_max_limit {
-                                    history_len - doc_max_limit
-                                } else {
-                                    0
-                                };
+                                let to_delete_count = history_len.saturating_sub(doc_max_limit);
 
                                 for (v_idx, (original_index, entry)) in visible_history.iter().enumerate().rev() {
                                     let is_loaded = self.loaded_history_index == Some(*original_index);
@@ -1426,7 +1417,7 @@ if ui
                                 let mut row_infos = Vec::new();
                                 let mut dir_stack: Vec<(PathBuf, usize)> = Vec::new();
 
-                                for (_i, entry) in entries.iter().enumerate() {
+                                for entry in entries.iter() {
                                     let entry_path = PathBuf::from(&entry.uri);
                                     // Detect end of directories before processing the next entry
                                     while let Some((dir_path, _depth)) = dir_stack.last() {
@@ -1465,12 +1456,11 @@ if ui
                                             .cloned()
                                             .unwrap_or(KeyStatus::Unknown);
 
-                                        if self.settings.hide_undecryptable_files {
-                                            if status != KeyStatus::Decryptable
-                                                && status != KeyStatus::StealthMatch
-                                            {
-                                                continue;
-                                            }
+                                        if self.settings.hide_undecryptable_files
+                                            && status != KeyStatus::Decryptable
+                                            && status != KeyStatus::StealthMatch
+                                        {
+                                            continue;
                                         }
                                     }
 
@@ -1591,12 +1581,11 @@ if ui
                                                 };
 
                                                 let pulse_alpha = if self.keyfile_path.is_none() {
-                                                    (0.1 + 0.9
+                                                    0.1 + 0.9
                                                         * (self.start_time.elapsed().as_secs_f32()
                                                             * 3.0)
                                                             .cos()
-                                                            .abs())
-                                                        as f32
+                                                            .abs()
                                                 } else {
                                                     1.0
                                                 };
@@ -1743,12 +1732,12 @@ if ui
                                         if row.is_dir {
                                             // Find the last direct child (depth == row.depth + 1)
                                             let mut last_child_mid_y = None;
-                                            for j in (i + 1)..row_infos.len() {
-                                                if row_infos[j].depth <= row.depth {
+                                            for subsequent in row_infos.iter().skip(i + 1) {
+                                                if subsequent.depth <= row.depth {
                                                     break;
                                                 }
-                                                if row_infos[j].depth == row.depth + 1 {
-                                                    last_child_mid_y = Some(row_infos[j].mid_y);
+                                                if subsequent.depth == row.depth + 1 {
+                                                    last_child_mid_y = Some(subsequent.mid_y);
                                                 }
                                             }
                                             if let Some(end_y) = last_child_mid_y {
@@ -1984,13 +1973,12 @@ if ui
                                                         *field = Some(current);
                                                         changed = true;
                                                     }
-                                                    if *field != ref_field {
-                                                        if crate::app_helpers::square_icon_btn(ui, &self.icons.reset, &t!("theme.reset_tooltip"), self.current_theme.colors.icon_color()).clicked()
+                                                    if *field != ref_field
+                                                        && crate::app_helpers::square_icon_btn(ui, &self.icons.reset, &t!("theme.reset_tooltip"), self.current_theme.colors.icon_color()).clicked()
                                                         {
                                                             *field = ref_field;
                                                             changed = true;
                                                         }
-                                                    }
                                                 },
                                             );
                                             changed
@@ -2025,13 +2013,12 @@ if ui
                                                         *field = Some(current);
                                                         changed = true;
                                                     }
-                                                    if *field != ref_field {
-                                                        if crate::app_helpers::square_icon_btn(ui, &self.icons.reset, &t!("theme.reset_tooltip"), self.current_theme.colors.icon_color()).clicked()
+                                                    if *field != ref_field
+                                                        && crate::app_helpers::square_icon_btn(ui, &self.icons.reset, &t!("theme.reset_tooltip"), self.current_theme.colors.icon_color()).clicked()
                                                         {
                                                             *field = ref_field;
                                                             changed = true;
                                                         }
-                                                    }
                                                 },
                                             );
                                             changed

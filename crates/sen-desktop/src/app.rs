@@ -276,7 +276,7 @@ impl EditorApp {
             .iter()
             .find(|t| t.name == settings.theme_name)
             .cloned()
-            .unwrap_or_else(|| Theme::dark());
+            .unwrap_or_else(Theme::dark);
 
         let keyfile_path = if settings.use_global_keyfile {
             settings.global_keyfile_path.clone()
@@ -657,8 +657,7 @@ impl EditorApp {
                 } else {
                     let icon_tint = self.current_theme.colors.warning_color();
                     let pulse_alpha = if self.keyfile_path.is_none() {
-                        (0.1 + 0.9 * (self.start_time.elapsed().as_secs_f32() * 3.0).cos().abs())
-                            as f32
+                        0.1 + 0.9 * (self.start_time.elapsed().as_secs_f32() * 3.0).cos().abs()
                     } else {
                         1.0
                     };
@@ -1199,16 +1198,16 @@ impl eframe::App for EditorApp {
         content_frame.stroke = egui::Stroke::NONE;
         content_frame.inner_margin = egui::Margin::same(12);
 
-        let mut left_panel_frame = content_frame.clone();
+        let mut left_panel_frame = content_frame;
         left_panel_frame.inner_margin.left = 8;
         left_panel_frame.inner_margin.right = 4;
 
-        let mut right_panel_frame = content_frame.clone();
+        let mut right_panel_frame = content_frame;
         if self.settings.toolbar_position != crate::settings::ToolbarPosition::Right {
             right_panel_frame.inner_margin.right = 4;
         }
 
-        let mut central_panel_frame = content_frame.clone();
+        let mut central_panel_frame = content_frame;
         if let Some(bg) = self.current_theme.colors.editor_background {
             central_panel_frame.fill = self.current_theme.colors.to_egui_color32(bg);
         }
@@ -1228,7 +1227,7 @@ impl eframe::App for EditorApp {
         match self.settings.toolbar_position {
             crate::settings::ToolbarPosition::Top => {
                 egui::TopBottomPanel::top("toolbar")
-                    .frame(bar_frame.clone())
+                    .frame(bar_frame)
                     .min_height(0.0)
                     .resizable(false)
                     .show(ctx, |ui| {
@@ -1237,7 +1236,7 @@ impl eframe::App for EditorApp {
             }
             crate::settings::ToolbarPosition::Left => {
                 egui::SidePanel::left("toolbar")
-                    .frame(vertical_toolbar_frame.clone())
+                    .frame(vertical_toolbar_frame)
                     .exact_width(toolbar_v_size)
                     .resizable(false)
                     .show(ctx, |ui| {
@@ -1246,7 +1245,7 @@ impl eframe::App for EditorApp {
             }
             crate::settings::ToolbarPosition::Right => {
                 egui::SidePanel::right("toolbar")
-                    .frame(vertical_toolbar_frame.clone())
+                    .frame(vertical_toolbar_frame)
                     .exact_width(toolbar_v_size)
                     .resizable(false)
                     .show(ctx, |ui| {
@@ -1259,7 +1258,7 @@ impl eframe::App for EditorApp {
         if self.show_batch_converter {
             // Render global panels FIRST so they reserve space
             if !self.zen_mode && self.settings.show_status_bar {
-                let mut status_bar_frame = bar_frame.clone();
+                let mut status_bar_frame = bar_frame;
                 status_bar_frame.inner_margin.left = 12;
                 status_bar_frame.inner_margin.right = 12;
 
@@ -1277,7 +1276,7 @@ impl eframe::App for EditorApp {
             // Standard Editor Mode
             // Search panel (below toolbar)
             if self.show_search_panel && !self.zen_mode {
-                let mut search_bar_frame = bar_frame.clone();
+                let mut search_bar_frame = bar_frame;
                 search_bar_frame.inner_margin.left = 12;
                 search_bar_frame.inner_margin.right = 12;
 
@@ -1291,7 +1290,7 @@ impl eframe::App for EditorApp {
 
             // Status bar
             if !self.zen_mode && self.settings.show_status_bar {
-                let mut status_bar_frame = bar_frame.clone();
+                let mut status_bar_frame = bar_frame;
                 status_bar_frame.inner_margin.left = 12;
                 status_bar_frame.inner_margin.right = 12;
 
@@ -1333,7 +1332,7 @@ impl eframe::App for EditorApp {
             // Theme Editor panel (right)
             if self.show_theme_editor && !self.zen_mode {
                 let panel_res = egui::SidePanel::right("theme_editor")
-                    .frame(right_panel_frame.clone())
+                    .frame(right_panel_frame)
                     .resizable(true)
                     .default_width(self.settings.theme_editor_width)
                     .max_width(max_panel_width)
@@ -1351,7 +1350,7 @@ impl eframe::App for EditorApp {
             // Settings panel (right)
             if self.show_settings_panel && !self.zen_mode {
                 let panel_res = egui::SidePanel::right("settings_panel")
-                    .frame(right_panel_frame.clone())
+                    .frame(right_panel_frame)
                     .resizable(true)
                     .default_width(self.settings.settings_panel_width)
                     .max_width(max_panel_width)
@@ -1368,7 +1367,7 @@ impl eframe::App for EditorApp {
 
             // History panel (right)
             if self.show_history_panel && !self.zen_mode {
-                let mut history_panel_frame = right_panel_frame.clone();
+                let mut history_panel_frame = right_panel_frame;
                 // Restore right margin for symmetry, as history has its own internal border & scrollbar
                 // and should not be flush with the screen edge.
                 history_panel_frame.inner_margin.right = history_panel_frame.inner_margin.left;

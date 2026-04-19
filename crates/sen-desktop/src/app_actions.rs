@@ -80,7 +80,6 @@ impl EditorApp {
             .pick_file()
         {
             self.perform_open_file(path, false);
-        } else {
         }
     }
 
@@ -373,7 +372,6 @@ impl EditorApp {
 
         if let Some(path) = dialog.save_file() {
             self.perform_save(path);
-        } else {
         }
     }
 
@@ -646,7 +644,7 @@ impl EditorApp {
             .set_file_name(&suggested_name)
             .save_file()
         {
-            match sen_core::fs::atomic_write(&path, &content) {
+            match sen_core::fs::atomic_write(&path, content) {
                 Ok(_) => {
                     let masked = self.mask_directory_path(&path);
                     self.status_message = t!("actions.status_exported", file = masked).to_string();

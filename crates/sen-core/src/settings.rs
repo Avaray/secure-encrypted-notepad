@@ -11,30 +11,20 @@ const CONFIG_MAGIC: &[u8; 4] = b"SENC";
 const SERVICE_NAME: &str = "sen-notepad";
 const USER_NAME: &str = "config-key";
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub enum ToolbarPosition {
+    #[default]
     Top,
     Left,
     Right,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
 pub enum CursorShape {
+    #[default]
     Bar,
     Block,
     Underscore,
-}
-
-impl Default for CursorShape {
-    fn default() -> Self {
-        Self::Bar
-    }
-}
-
-impl Default for ToolbarPosition {
-    fn default() -> Self {
-        Self::Top
-    }
 }
 
 fn default_comment_prefix() -> String {
@@ -428,7 +418,7 @@ fn default_true() -> bool {
 impl Settings {
     /// Load settings from file
     pub fn load(config_dir_override: Option<PathBuf>) -> Self {
-        let config_dir = config_dir_override.or_else(|| dirs::config_dir());
+        let config_dir = config_dir_override.or_else(dirs::config_dir);
 
         if let Some(mut dir) = config_dir {
             if !dir.ends_with("sen") {
@@ -436,60 +426,40 @@ impl Settings {
             }
             let config_path = dir.join("config.toml");
             if config_path.exists() {
-                match fs::read(&config_path) {
-                    Ok(content_bytes) => {
-                        if content_bytes.len() > 4 && &content_bytes[0..4] == CONFIG_MAGIC {
-                            match Self::get_or_create_config_key() {
-                                Ok(key_bytes) => match aead::SecretKey::from_slice(&key_bytes) {
-                                    Ok(secret_key) => {
-                                        let encrypted_data = &content_bytes[4..];
-                                        match aead::open(&secret_key, encrypted_data) {
-                                            Ok(plaintext) => {
-                                                match toml::from_str::<Settings>(
-                                                    &String::from_utf8_lossy(&plaintext),
-                                                ) {
-                                                    Ok(mut settings) => {
-                                                        Self::decrypt_keyfile_path_field(
-                                                            &mut settings,
-                                                        );
-                                                        Self::decrypt_file_tree_dir_field(
-                                                            &mut settings,
-                                                        );
-                                                        Self::decrypt_auto_backup_dir_field(
-                                                            &mut settings,
-                                                        );
-                                                        Self::migrate_legacy_fonts(&mut settings);
-                                                        return settings;
-                                                    }
-                                                    Err(_) => {}
-                                                }
-                                            }
-                                            Err(_) => {}
-                                        }
+                if let Ok(content_bytes) = fs::read(&config_path) {
+                    if content_bytes.len() > 4 && &content_bytes[0..4] == CONFIG_MAGIC {
+                        if let Ok(key_bytes) = Self::get_or_create_config_key() {
+                            if let Ok(secret_key) = aead::SecretKey::from_slice(&key_bytes) {
+                                let encrypted_data = &content_bytes[4..];
+                                if let Ok(plaintext) = aead::open(&secret_key, encrypted_data) {
+                                    if let Ok(mut settings) = toml::from_str::<Settings>(
+                                        &String::from_utf8_lossy(&plaintext),
+                                    ) {
+                                        Self::decrypt_keyfile_path_field(&mut settings);
+                                        Self::decrypt_file_tree_dir_field(&mut settings);
+                                        Self::decrypt_auto_backup_dir_field(&mut settings);
+                                        Self::migrate_legacy_fonts(&mut settings);
+                                        return settings;
                                     }
-                                    Err(_) => {}
-                                },
-                                Err(_) => {}
-                            }
-                        } else {
-                            if let Ok(content_str) = String::from_utf8(content_bytes) {
-                                if let Ok(mut settings) = toml::from_str::<Settings>(&content_str) {
-                                    Self::decrypt_keyfile_path_field(&mut settings);
-                                    Self::decrypt_file_tree_dir_field(&mut settings);
-                                    Self::decrypt_auto_backup_dir_field(&mut settings);
-                                    Self::migrate_legacy_fonts(&mut settings);
-                                    return settings;
                                 }
                             }
                         }
+                    } else if let Ok(content_str) = String::from_utf8(content_bytes) {
+                        if let Ok(mut settings) = toml::from_str::<Settings>(&content_str) {
+                            Self::decrypt_keyfile_path_field(&mut settings);
+                            Self::decrypt_file_tree_dir_field(&mut settings);
+                            Self::decrypt_auto_backup_dir_field(&mut settings);
+                            Self::migrate_legacy_fonts(&mut settings);
+                            return settings;
+                        }
                     }
-                    Err(_) => {}
                 }
             }
         }
-        let mut settings = Self::default();
-        settings.is_first_run = true;
-        settings
+        Settings {
+            is_first_run: true,
+            ..Self::default()
+        }
     }
 
     /// Migrates legacy font names without the "(Default)" suffix.
@@ -507,7 +477,7 @@ impl Settings {
         &self,
         config_dir_override: Option<PathBuf>,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let config_dir = config_dir_override.or_else(|| dirs::config_dir());
+        let config_dir = config_dir_override.or_else(dirs::config_dir);
 
         if let Some(mut dir) = config_dir {
             if !dir.ends_with("sen") {

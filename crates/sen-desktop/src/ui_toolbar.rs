@@ -105,6 +105,7 @@ impl EditorApp {
     /// Being an associated function (no `self`) allows callers to hold an
     /// immutable borrow on e.g. `self.icons.foo` for the call duration, then
     /// immediately follow with a `&mut self` method call on the result.
+    #[allow(clippy::too_many_arguments)]
     fn icon_btn(
         ui: &mut egui::Ui,
         icon: &egui::TextureHandle,
@@ -260,7 +261,7 @@ impl EditorApp {
         if Self::icon_btn(
             ui,
             &self.icons.export,
-            &*t!("toolbar.export"),
+            &t!("toolbar.export"),
             false,
             bs,
             is,
@@ -284,7 +285,7 @@ impl EditorApp {
         let mut load_key_tint = dt;
         if self.keyfile_path.is_none() {
             let pulse_alpha =
-                (0.1 + 0.9 * (self.start_time.elapsed().as_secs_f32() * 3.0).cos().abs()) as f32;
+                0.1 + 0.9 * (self.start_time.elapsed().as_secs_f32() * 3.0).cos().abs();
             load_key_tint = self
                 .current_theme
                 .colors
@@ -296,7 +297,7 @@ impl EditorApp {
         if Self::icon_btn(
             ui,
             &self.icons.key,
-            &*t!("toolbar.load_keyfile"),
+            &t!("toolbar.load_keyfile"),
             false,
             bs,
             is,
@@ -310,7 +311,7 @@ impl EditorApp {
         if Self::icon_btn(
             ui,
             &self.icons.rotate,
-            &*t!("toolbar.rotate_keyfile"),
+            &t!("toolbar.rotate_keyfile"),
             false,
             bs,
             is,
@@ -324,7 +325,7 @@ impl EditorApp {
         if Self::icon_btn(
             ui,
             &self.icons.generate,
-            &*t!("toolbar.generate_keyfile"),
+            &t!("toolbar.generate_keyfile"),
             false,
             bs,
             is,
@@ -354,7 +355,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.history,
-                &*t!("toolbar.toggle_history"),
+                &t!("toolbar.toggle_history"),
                 self.show_history_panel,
                 bs,
                 is,
@@ -369,7 +370,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.file_tree,
-                &*t!("toolbar.toggle_file_tree"),
+                &t!("toolbar.toggle_file_tree"),
                 self.show_file_tree,
                 bs,
                 is,
@@ -387,7 +388,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.zen,
-                &*t!("toolbar.toggle_zen"),
+                &t!("toolbar.toggle_zen"),
                 self.zen_mode,
                 bs,
                 is,
@@ -404,7 +405,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.theme,
-                &*t!("toolbar.toggle_theme"),
+                &t!("toolbar.toggle_theme"),
                 self.show_theme_editor,
                 bs,
                 is,
@@ -423,7 +424,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.settings,
-                &*t!("toolbar.toggle_settings"),
+                &t!("toolbar.toggle_settings"),
                 self.show_settings_panel,
                 bs,
                 is,
@@ -442,7 +443,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.batch_convert,
-                &*t!("toolbar.toggle_batch"),
+                &t!("toolbar.toggle_batch"),
                 self.show_batch_converter,
                 bs,
                 is,
@@ -459,7 +460,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.debug,
-                &*t!("toolbar.toggle_debug"),
+                &t!("toolbar.toggle_debug"),
                 self.show_debug_panel,
                 bs,
                 is,
@@ -498,7 +499,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.batch_convert,
-                &*t!("toolbar.toggle_batch"),
+                &t!("toolbar.toggle_batch"),
                 self.show_batch_converter,
                 bs,
                 is,
@@ -516,7 +517,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.debug,
-                &*t!("toolbar.toggle_debug"),
+                &t!("toolbar.toggle_debug"),
                 self.show_debug_panel,
                 bs,
                 is,
@@ -532,7 +533,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.settings,
-                &*t!("toolbar.toggle_settings"),
+                &t!("toolbar.toggle_settings"),
                 self.show_settings_panel,
                 bs,
                 is,
@@ -548,7 +549,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.theme,
-                &*t!("toolbar.toggle_theme"),
+                &t!("toolbar.toggle_theme"),
                 self.show_theme_editor,
                 bs,
                 is,
@@ -571,7 +572,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.zen,
-                &*t!("toolbar.toggle_zen"),
+                &t!("toolbar.toggle_zen"),
                 self.zen_mode,
                 bs,
                 is,
@@ -589,7 +590,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.file_tree,
-                &*t!("toolbar.toggle_file_tree"),
+                &t!("toolbar.toggle_file_tree"),
                 self.show_file_tree,
                 bs,
                 is,
@@ -605,7 +606,7 @@ impl EditorApp {
             if Self::icon_btn(
                 ui,
                 &self.icons.history,
-                &*t!("toolbar.toggle_history"),
+                &t!("toolbar.toggle_history"),
                 self.show_history_panel,
                 bs,
                 is,

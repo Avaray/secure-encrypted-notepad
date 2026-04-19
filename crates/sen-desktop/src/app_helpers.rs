@@ -351,51 +351,49 @@ impl EditorApp {
                         let mut folders = Vec::new();
                         let mut files = Vec::new();
 
-                        for entry_res in read_dir {
-                            if let Ok(entry) = entry_res {
-                                let path = entry.path();
+                        for entry in read_dir.flatten() {
+                            let path = entry.path();
 
-                                // Hidden files filter
-                                if self.settings.hide_hidden_files {
-                                    if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
-                                        if name.starts_with('.') {
-                                            continue;
-                                        }
+                            // Hidden files filter
+                            if self.settings.hide_hidden_files {
+                                if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
+                                    if name.starts_with('.') {
+                                        continue;
                                     }
                                 }
+                            }
 
-                                if path.is_dir() && self.settings.show_subfolders {
-                                    folders.push(FileTreeEntry {
+                            if path.is_dir() && self.settings.show_subfolders {
+                                folders.push(FileTreeEntry {
+                                    uri: path.to_string_lossy().to_string(),
+                                    name: path
+                                        .file_name()
+                                        .unwrap_or_default()
+                                        .to_string_lossy()
+                                        .to_string(),
+                                    is_dir: true,
+                                    is_expanded: false,
+                                    depth: 0,
+                                });
+                            } else if path.is_file() {
+                                let mut is_sen = false;
+                                if let Some(ext) = path.extension() {
+                                    if ext == "sen" {
+                                        is_sen = true;
+                                    }
+                                }
+                                if is_sen || self.settings.stealth_scan {
+                                    files.push(FileTreeEntry {
                                         uri: path.to_string_lossy().to_string(),
                                         name: path
                                             .file_name()
                                             .unwrap_or_default()
                                             .to_string_lossy()
                                             .to_string(),
-                                        is_dir: true,
+                                        is_dir: false,
                                         is_expanded: false,
                                         depth: 0,
                                     });
-                                } else if path.is_file() {
-                                    let mut is_sen = false;
-                                    if let Some(ext) = path.extension() {
-                                        if ext == "sen" {
-                                            is_sen = true;
-                                        }
-                                    }
-                                    if is_sen || self.settings.stealth_scan {
-                                        files.push(FileTreeEntry {
-                                            uri: path.to_string_lossy().to_string(),
-                                            name: path
-                                                .file_name()
-                                                .unwrap_or_default()
-                                                .to_string_lossy()
-                                                .to_string(),
-                                            is_dir: false,
-                                            is_expanded: false,
-                                            depth: 0,
-                                        });
-                                    }
                                 }
                             }
                         }
@@ -450,31 +448,29 @@ impl EditorApp {
         let mut child_folders = Vec::new();
         let mut child_files = Vec::new();
 
-        for entry_res in read_dir {
-            if let Ok(entry) = entry_res {
-                let path = entry.path();
+        for entry in read_dir.flatten() {
+            let path = entry.path();
 
-                // Hidden files filter
-                if self.settings.hide_hidden_files {
-                    if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
-                        if name.starts_with('.') {
-                            continue;
-                        }
+            // Hidden files filter
+            if self.settings.hide_hidden_files {
+                if let Some(name) = path.file_name().and_then(|s| s.to_str()) {
+                    if name.starts_with('.') {
+                        continue;
                     }
                 }
+            }
 
-                if path.is_dir() {
-                    child_folders.push(path);
-                } else if path.is_file() {
-                    let mut is_sen = false;
-                    if let Some(ext) = path.extension() {
-                        if ext == "sen" {
-                            is_sen = true;
-                        }
+            if path.is_dir() {
+                child_folders.push(path);
+            } else if path.is_file() {
+                let mut is_sen = false;
+                if let Some(ext) = path.extension() {
+                    if ext == "sen" {
+                        is_sen = true;
                     }
-                    if is_sen || self.settings.stealth_scan {
-                        child_files.push(path);
-                    }
+                }
+                if is_sen || self.settings.stealth_scan {
+                    child_files.push(path);
                 }
             }
         }
@@ -886,11 +882,7 @@ impl EditorApp {
                     let row_end_idx = current_char_idx + row_char_count;
 
                     if row_end_idx > min_idx && current_char_idx < max_idx {
-                        let local_min = if min_idx > current_char_idx {
-                            min_idx - current_char_idx
-                        } else {
-                            0
-                        };
+                        let local_min = min_idx.saturating_sub(current_char_idx);
                         let local_max = if max_idx < row_end_idx {
                             max_idx - current_char_idx
                         } else {
@@ -1045,7 +1037,7 @@ impl EditorApp {
         );
 
         if add_separator {
-            let space = (self.settings.ui_font_size * 0.25).max(2.0).min(6.0);
+            let space = (self.settings.ui_font_size * 0.25).clamp(2.0, 6.0);
             ui.add_space(space);
             ui.app_separator();
             ui.add_space(space);
