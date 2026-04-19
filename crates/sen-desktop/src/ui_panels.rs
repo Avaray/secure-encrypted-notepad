@@ -759,6 +759,7 @@ let _ = self.settings.save(None);
 // Language Selector
             let current_lang = self.settings.language.clone();
             let mut changed = false;
+            let mut selected_label = None;
             let (current_label, current_icon) = match current_lang.as_str() {
                 "pl" => ("Polski", &self.icons.flag_pl),
                 "de" => ("Deutsch", &self.icons.flag_de),
@@ -778,12 +779,12 @@ let _ = self.settings.save(None);
             };
 
             let target_height = ui.spacing().interact_size.y.max(ui.text_style_height(&egui::TextStyle::Button) + ui.spacing().button_padding.y * 2.0);
-            let h = ls.get_height("set_lang");
             crate::app_helpers::render_settings_row(ui, &t!("settings.language"), h, |ui| {
                 let btn_text_height = ui.text_style_height(&egui::TextStyle::Button);
                 let flag_image = egui::Image::new(current_icon)
                     .fit_to_exact_size(egui::vec2(f32::INFINITY, btn_text_height))
                     .maintain_aspect_ratio(true);
+
 
                 sen_core::ui::Select::new(current_label)
                     .with_icon(flag_image)
@@ -851,27 +852,33 @@ let _ = self.settings.save(None);
                             response.clicked()
                         };
 
-                        if lang_row(ui, "en", "English", &self.icons.flag_en) { changed = true; }
-                        if lang_row(ui, "pl", "Polski", &self.icons.flag_pl) { changed = true; }
-                        if lang_row(ui, "de", "Deutsch", &self.icons.flag_de) { changed = true; }
-                        if lang_row(ui, "cz", "Čeština", &self.icons.flag_cz) { changed = true; }
-                        if lang_row(ui, "es", "Español", &self.icons.flag_es) { changed = true; }
-                        if lang_row(ui, "fr", "Français", &self.icons.flag_fr) { changed = true; }
-                        if lang_row(ui, "uk", "Українська", &self.icons.flag_ua) { changed = true; }
-                        if lang_row(ui, "nl", "Nederlands", &self.icons.flag_nl) { changed = true; }
-                        if lang_row(ui, "zh-CN", "简体中文 (Chinese)", &self.icons.flag_cn) { changed = true; }
-                        if lang_row(ui, "ja", "日本語 (Japanese)", &self.icons.flag_jp) { changed = true; }
-                        if lang_row(ui, "pt-BR", "Português (Brasil)", &self.icons.flag_br) { changed = true; }
-                        if lang_row(ui, "sk", "Slovenčina", &self.icons.flag_sk) { changed = true; }
-                        if lang_row(ui, "ru", "Русский", &self.icons.flag_ru) { changed = true; }
-                        if lang_row(ui, "it", "Italiano", &self.icons.flag_it) { changed = true; }
-                        if lang_row(ui, "ar", "العربية (Arabic)", &self.icons.flag_ar) { changed = true; }
+
+                        if lang_row(ui, "en", "English", &self.icons.flag_en) { changed = true; selected_label = Some("English"); }
+                        if lang_row(ui, "pl", "Polski", &self.icons.flag_pl) { changed = true; selected_label = Some("Polski"); }
+                        if lang_row(ui, "de", "Deutsch", &self.icons.flag_de) { changed = true; selected_label = Some("Deutsch"); }
+                        if lang_row(ui, "cz", "Čeština", &self.icons.flag_cz) { changed = true; selected_label = Some("Čeština"); }
+                        if lang_row(ui, "es", "Español", &self.icons.flag_es) { changed = true; selected_label = Some("Español"); }
+                        if lang_row(ui, "fr", "Français", &self.icons.flag_fr) { changed = true; selected_label = Some("Français"); }
+                        if lang_row(ui, "uk", "Українська", &self.icons.flag_ua) { changed = true; selected_label = Some("Українська"); }
+                        if lang_row(ui, "nl", "Nederlands", &self.icons.flag_nl) { changed = true; selected_label = Some("Nederlands"); }
+                        if lang_row(ui, "zh-CN", "简体中文 (Chinese)", &self.icons.flag_cn) { changed = true; selected_label = Some("简体中文 (Chinese)"); }
+                        if lang_row(ui, "ja", "日本語 (Japanese)", &self.icons.flag_jp) { changed = true; selected_label = Some("日本語 (Japanese)"); }
+                        if lang_row(ui, "pt-BR", "Português (Brasil)", &self.icons.flag_br) { changed = true; selected_label = Some("Português (Brasil)"); }
+                        if lang_row(ui, "sk", "Slovenčina", &self.icons.flag_sk) { changed = true; selected_label = Some("Slovenčina"); }
+                        if lang_row(ui, "ru", "Русский", &self.icons.flag_ru) { changed = true; selected_label = Some("Русский"); }
+                        if lang_row(ui, "it", "Italiano", &self.icons.flag_it) { changed = true; selected_label = Some("Italiano"); }
+                        if lang_row(ui, "ar", "العربية (Arabic)", &self.icons.flag_ar) { changed = true; selected_label = Some("العربية (Arabic)"); }
                     });
             });
-if changed {
-sen_i18n::set_locale(&self.settings.language);
-let _ = self.settings.save(None);
-}
+        if changed {
+            sen_i18n::set_locale(&self.settings.language);
+            let _ = self.settings.save(None);
+            if let Some(label) = selected_label {
+                let msg = t!("status.lang_updated", lang = label).to_string();
+                self.log_info(&msg);
+                self.status_message = msg;
+            }
+        }
 if ui
 .checkbox(&mut self.settings.preserve_all_panels, t!("settings.preserve_panels"))
 .on_hover_text(t!("settings.preserve_panels_tooltip"))
