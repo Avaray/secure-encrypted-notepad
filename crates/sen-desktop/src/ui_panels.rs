@@ -776,17 +776,21 @@ let _ = self.settings.save(None);
                 _ => ("English", &self.icons.flag_en),
             };
 
-            let text_height = ui.text_style_height(&egui::TextStyle::Body);
+            let target_height = ui.spacing().interact_size.y.max(ui.text_style_height(&egui::TextStyle::Button) + ui.spacing().button_padding.y * 2.0);
             let h = ls.get_height("set_lang");
             crate::app_helpers::render_settings_row(ui, &t!("settings.language"), h, |ui| {
+                let flag_image = egui::Image::new(current_icon)
+                    .fit_to_exact_size(egui::vec2(f32::INFINITY, target_height))
+                    .maintain_aspect_ratio(true);
+
                 sen_core::ui::Select::new(current_label)
-                    .with_width_hint(ui, "العربية (Arabic)")
+                    .with_icon(flag_image)
                     .show_ui(ui, |ui| {
                         let mut lang_row = |ui: &mut egui::Ui, code: &str, label: &str, icon: &egui::TextureHandle| {
                             let is_selected = self.settings.language == code;
                             let mut clicked = false;
                             crate::app_helpers::flex_row(ui, |ui| {
-                                ui.add(egui::Image::new(icon).max_height(text_height).maintain_aspect_ratio(true));
+                                ui.add(egui::Image::new(icon).fit_to_exact_size(egui::vec2(f32::INFINITY, target_height)).maintain_aspect_ratio(true));
                                 if ui.selectable_label(is_selected, label).clicked() {
                                     self.settings.language = code.to_string();
                                     clicked = true;
@@ -811,8 +815,6 @@ let _ = self.settings.save(None);
                         if lang_row(ui, "it", "Italiano", &self.icons.flag_it) { changed = true; }
                         if lang_row(ui, "ar", "العربية (Arabic)", &self.icons.flag_ar) { changed = true; }
                     });
-
-                ui.add(egui::Image::new(current_icon).max_height(text_height).maintain_aspect_ratio(true));
             });
 if changed {
 sen_i18n::set_locale(&self.settings.language);

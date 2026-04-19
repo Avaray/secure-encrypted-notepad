@@ -5,6 +5,7 @@ use egui;
 pub struct Select<'a> {
     selected_text: String,
     min_width: f32,
+    icon: Option<egui::Image<'a>>,
     button_builder: Option<Box<dyn FnOnce(egui::Button) -> egui::Button + 'a>>,
 }
 
@@ -13,12 +14,19 @@ impl<'a> Select<'a> {
         Self {
             selected_text: selected_text.into(),
             min_width: 0.0,
+            icon: None,
             button_builder: None,
         }
     }
 
     pub fn min_width(mut self, width: f32) -> Self {
         self.min_width = width;
+        self
+    }
+
+    /// Sets an icon (e.g. a flag) to display inside the button, to the left of the text.
+    pub fn with_icon(mut self, image: egui::Image<'a>) -> Self {
+        self.icon = Some(image);
         self
     }
 
@@ -31,7 +39,9 @@ impl<'a> Select<'a> {
             ui.painter()
                 .layout(text_with_icon, font_id, egui::Color32::WHITE, f32::INFINITY);
         // Store only the text width. The button will add its own padding on top.
-        self.min_width = galley.rect.width().ceil();
+        // Add extra space for the icon if one is set.
+        let icon_extra = if self.icon.is_some() { 24.0 } else { 0.0 };
+        self.min_width = galley.rect.width().ceil() + icon_extra;
         self
     }
 
@@ -51,11 +61,16 @@ impl<'a> Select<'a> {
         let Self {
             selected_text,
             min_width,
+            icon,
             button_builder,
         } = self;
 
         let button_text = format!("{} ⏷", selected_text);
-        let mut button = egui::Button::new(button_text).wrap_mode(egui::TextWrapMode::Truncate);
+        let mut button = if let Some(image) = icon {
+            egui::Button::image_and_text(image, button_text).wrap_mode(egui::TextWrapMode::Truncate)
+        } else {
+            egui::Button::new(button_text).wrap_mode(egui::TextWrapMode::Truncate)
+        };
 
         if min_width > 0.0 {
             button = button.min_size(egui::vec2(min_width, 0.0));
@@ -102,3 +117,4 @@ impl<'a> Select<'a> {
         }
     }
 }
+
