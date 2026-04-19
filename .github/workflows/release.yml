@@ -151,6 +151,7 @@ jobs:
         with:
           name: binaries-${{ matrix.target }}
           path: |
+            target/${{ matrix.target }}/release-final/${{ matrix.artifact }}
             target/${{ matrix.target }}/release-final/${{ matrix.artifact }}.sha256
           retention-days: 1
 
