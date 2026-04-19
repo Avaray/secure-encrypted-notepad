@@ -1,13 +1,15 @@
-name: Release
+name: CI/CD Pipeline
 
 on:
   push:
     branches: ["main"]
+  pull_request:
+    branches: ["main"]
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version'
-        required: true
+        description: 'Release version (leave empty to use Cargo.toml version)'
+        required: false
         type: string
       build_android:
         description: 'Build Android APK'
@@ -16,15 +18,93 @@ on:
         type: boolean
 
 concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # --------------------------------------------------------------------------
+  # 1. TEST JOB - Runs on all pushes and PRs
+  # --------------------------------------------------------------------------
+  test:
+    name: Test (${{ matrix.os-name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            os-name: Windows
+            target: x86_64-pc-windows-msvc
+
+          - os: ubuntu-latest
+            os-name: Linux
+            target: x86_64-unknown-linux-gnu
+
+          - os: macos-latest
+            os-name: macOS
+            target: aarch64-apple-darwin
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Check I18n Translations
+        run: bun scripts/locales-sync.ts --dry-run
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+          components: clippy
+
+      - name: Setup Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "."
+          key: ${{ matrix.target }}
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libfontconfig1-dev \
+            libfreetype6-dev \
+            libx11-dev \
+            libxext-dev \
+            libxrender-dev \
+            libxcb1-dev \
+            libxcb-render0-dev \
+            libxcb-shape0-dev \
+            libxcb-xfixes0-dev \
+            libwayland-dev \
+            libxkbcommon-dev \
+            pkg-config
+
+      - name: Check (cargo check)
+        run: cargo check --target ${{ matrix.target }}
+
+      - name: Clippy
+        run: cargo clippy --target ${{ matrix.target }}
+
+      - name: Run Tests
+        run: cargo test --target ${{ matrix.target }} --verbose
+
+  # --------------------------------------------------------------------------
+  # 2. CHECK VERSION JOB - Determine if we should release
+  # --------------------------------------------------------------------------
   check-version:
     name: Check Version & Tag
+    needs: test
+    # Only run on pushes to main or workflow_dispatch, NOT on Pull Requests
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.get_version.outputs.version }}
@@ -48,7 +128,7 @@ jobs:
       - name: Get version from Cargo.toml
         id: get_version
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.version }}" ]; then
             VERSION="${{ github.event.inputs.version }}"
             echo "Using manually provided version: $VERSION"
           else
@@ -68,7 +148,10 @@ jobs:
             echo "created=true" >> $GITHUB_OUTPUT
           fi
 
-  build:
+  # --------------------------------------------------------------------------
+  # 3. BUILD DESKTOP JOB - Build release binaries
+  # --------------------------------------------------------------------------
+  build-desktop:
     name: Build (${{ matrix.os-name }})
     needs: check-version
     if: needs.check-version.outputs.created == 'true'
@@ -89,7 +172,7 @@ jobs:
             artifact: sen-v${{ needs.check-version.outputs.version }}-linux
 
           - os: macos-latest
-            os-name: macOS
+            os-name: macOS Intel
             target: x86_64-apple-darwin
             binary: sen
             artifact: sen-v${{ needs.check-version.outputs.version }}-macos
@@ -155,6 +238,9 @@ jobs:
             target/${{ matrix.target }}/release-final/${{ matrix.artifact }}.sha256
           retention-days: 1
 
+  # --------------------------------------------------------------------------
+  # 4. BUILD ANDROID JOB
+  # --------------------------------------------------------------------------
   build-android:
     name: Build (Android)
     needs: check-version
@@ -202,10 +288,16 @@ jobs:
           path: sen-v${{ needs.check-version.outputs.version }}-android-unsigned.apk
           retention-days: 1
 
+  # --------------------------------------------------------------------------
+  # 5. CREATE RELEASE JOB
+  # --------------------------------------------------------------------------
   create-release:
     name: Create GitHub Release
-    needs: [check-version, build]
-    if: needs.check-version.outputs.created == 'true'
+    needs: [check-version, build-desktop, build-android]
+    # This job should run if build-desktop succeeded (if it was triggered)
+    # Since build-android is optional, we use always() with criteria or just rely on needs.
+    # Actually, build-android if skipped is fine if other needs passed.
+    if: always() && needs.check-version.outputs.created == 'true' && (needs.build-desktop.result == 'success')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -214,7 +306,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: release_files
-          pattern: '*' # Combined with merge-multiple: true, this grabs both 'binaries-*' and 'android-apk'
+          pattern: '*' 
           merge-multiple: true
 
       - name: Create GitHub Release
