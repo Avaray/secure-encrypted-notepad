@@ -3415,7 +3415,7 @@ dependencies = [
 
 [[package]]
 name = "sen-core"
-version = "0.7.1"
+version = "0.7.2"
 dependencies = [
  "aes-gcm",
  "base64",
@@ -3438,7 +3438,7 @@ dependencies = [
 
 [[package]]
 name = "sen-desktop"
-version = "0.7.1"
+version = "0.7.2"
 dependencies = [
  "base64",
  "chrono",
@@ -3472,7 +3472,7 @@ dependencies = [
 
 [[package]]
 name = "sen-i18n"
-version = "0.7.1"
+version = "0.7.2"
 dependencies = [
  "once_cell",
 ]

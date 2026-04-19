@@ -1,6 +1,6 @@
 [package]
 name = "sen-core"
-version = "0.7.1"
+version = "0.7.2"
 edition = "2021"
 authors = ["Dawid Wasowski"]
 description = "Core logic for Secure Encrypted Notepad — cryptography, settings, history"
