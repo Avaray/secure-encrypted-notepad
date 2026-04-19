@@ -31,6 +31,7 @@ jobs:
   test:
     name: Test (${{ matrix.os-name }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -89,13 +90,13 @@ jobs:
             pkg-config
 
       - name: Check (cargo check)
-        run: cargo check --target ${{ matrix.target }}
+        run: cargo check --locked --target ${{ matrix.target }}
 
       - name: Clippy
-        run: cargo clippy --target ${{ matrix.target }}
+        run: cargo clippy --locked --target ${{ matrix.target }}
 
       - name: Run Tests
-        run: cargo test --target ${{ matrix.target }} --verbose
+        run: cargo test --locked --target ${{ matrix.target }} --verbose
 
   # --------------------------------------------------------------------------
   # 2. CHECK VERSION JOB - Determine if we should release
@@ -106,6 +107,7 @@ jobs:
     # Only run on pushes to main or workflow_dispatch, NOT on Pull Requests
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       version: ${{ steps.get_version.outputs.version }}
       created: ${{ steps.check_tag.outputs.created }}
@@ -132,7 +134,7 @@ jobs:
             VERSION="${{ github.event.inputs.version }}"
             echo "Using manually provided version: $VERSION"
           else
-            VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+            VERSION=$(cargo metadata --locked --no-deps --format-version 1 | jq -r '.packages[0].version')
             echo "Detected version from Cargo.toml: $VERSION"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -156,6 +158,7 @@ jobs:
     needs: check-version
     if: needs.check-version.outputs.created == 'true'
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       matrix:
         include:
@@ -217,7 +220,7 @@ jobs:
             pkg-config
 
       - name: Build Release Binary
-        run: cargo build --profile release-final --target ${{ matrix.target }}
+        run: cargo build --locked --profile release-final --target ${{ matrix.target }}
 
       - name: Rename Binary
         run: mv target/${{ matrix.target }}/release-final/${{ matrix.binary }} target/${{ matrix.target }}/release-final/${{ matrix.artifact }}
@@ -236,7 +239,7 @@ jobs:
           path: |
             target/${{ matrix.target }}/release-final/${{ matrix.artifact }}
             target/${{ matrix.target }}/release-final/${{ matrix.artifact }}.sha256
-          retention-days: 1
+          retention-days: 7
 
   # --------------------------------------------------------------------------
   # 4. BUILD ANDROID JOB
@@ -246,6 +249,7 @@ jobs:
     needs: check-version
     if: needs.check-version.outputs.created == 'true' && github.event.inputs.build_android == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v6
 
@@ -286,7 +290,7 @@ jobs:
         with:
           name: android-apk
           path: sen-v${{ needs.check-version.outputs.version }}-android-unsigned.apk
-          retention-days: 1
+          retention-days: 7
 
   # --------------------------------------------------------------------------
   # 5. CREATE RELEASE JOB
@@ -299,6 +303,7 @@ jobs:
     # Actually, build-android if skipped is fine if other needs passed.
     if: always() && needs.check-version.outputs.created == 'true' && (needs.build-desktop.result == 'success')
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
@@ -319,3 +324,4 @@ jobs:
           draft: false
           prerelease: false
           token: ${{ secrets.RELEASE_PAT }}
+          
