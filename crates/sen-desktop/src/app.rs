@@ -733,7 +733,7 @@ impl eframe::App for EditorApp {
             self.log_info(t!(
                 "app.log_started_timed",
                 version = env!("CARGO_PKG_VERSION"),
-                duration = format!("{:.2?}", duration)
+                duration = format!("{}ms", duration.as_millis())
             ));
         }
 
