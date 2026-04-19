@@ -1,5 +1,5 @@
-use sen_core::theme_egui::UiSeparatorExt;
 use eframe::egui;
+use sen_core::theme_egui::UiSeparatorExt;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Instant;

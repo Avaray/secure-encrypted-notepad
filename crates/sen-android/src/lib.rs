@@ -290,7 +290,8 @@ impl SenAndroidApp {
         let density = {
             let vm = unsafe { jni::JavaVM::from_raw(android_app.vm_as_ptr() as *mut _) }.unwrap();
             let mut env = vm.attach_current_thread().unwrap();
-            let activity = unsafe { jni::objects::JObject::from_raw(android_app.activity_as_ptr() as *mut _) };
+            let activity =
+                unsafe { jni::objects::JObject::from_raw(android_app.activity_as_ptr() as *mut _) };
             match env.call_method(&activity, "getScreenDensity", "()F", &[]) {
                 Ok(val) => val.f().unwrap_or(1.0),
                 Err(_) => 1.0,
@@ -492,7 +493,6 @@ impl SenAndroidApp {
 
         let _ = env.call_method(&activity, "showBiometricPrompt", "()V", &[]);
     }
-
 
     fn action_new_file(&mut self) {
         self.document = sen_core::history::DocumentWithHistory::default();
@@ -986,7 +986,8 @@ impl SenAndroidApp {
         }
 
         // --- Full-Screen Panels Logic ---
-        let overlay_active = self.show_menu || self.show_settings || self.show_file_tree || self.show_history;
+        let overlay_active =
+            self.show_menu || self.show_settings || self.show_file_tree || self.show_history;
 
         if overlay_active {
             egui::CentralPanel::default().show(ctx, |ui| {
@@ -1271,200 +1272,196 @@ impl SenAndroidApp {
             self.show_menu = false;
         }
 
-                if let Some(ref icons) = self.icons {
-                    ui.add_space(10.0);
-                    ui.label(
-                        egui::RichText::new(t!("toolbar.file"))
-                            .strong()
-                            .color(self.current_theme.colors.icon_color()),
-                    );
-                    let btn_height = 44.0;
-                    let icon_size = egui::vec2(24.0, 24.0);
+        if let Some(ref icons) = self.icons {
+            ui.add_space(10.0);
+            ui.label(
+                egui::RichText::new(t!("toolbar.file"))
+                    .strong()
+                    .color(self.current_theme.colors.icon_color()),
+            );
+            let btn_height = 44.0;
+            let icon_size = egui::vec2(24.0, 24.0);
 
-                    if ui
-                        .add_sized(
-                            [ui.available_width(), btn_height],
-                            egui::Button::image_and_text(
-                                egui::Image::new(&icons.new_doc).fit_to_exact_size(icon_size),
-                                t!("actions.log_new"),
-                            )
-                            .frame(false),
-                        )
-                        .clicked()
-                    {
-                        action.new_file = true;
-                        action.close_menu = true;
-                    }
-                    if ui
-                        .add_sized(
-                            [ui.available_width(), btn_height],
-                            egui::Button::image_and_text(
-                                egui::Image::new(&icons.open).fit_to_exact_size(icon_size),
-                                t!("toolbar.open"),
-                            )
-                            .frame(false),
-                        )
-                        .clicked()
-                    {
-                        action.open_file = true;
-                        action.close_menu = true;
-                    }
-                    if ui
-                        .add_sized(
-                            [ui.available_width(), btn_height],
-                            egui::Button::image_and_text(
-                                egui::Image::new(&icons.save).fit_to_exact_size(icon_size),
-                                t!("toolbar.save"),
-                            )
-                            .frame(false),
-                        )
-                        .clicked()
-                    {
-                        action.save_file = true;
-                        action.close_menu = true;
-                    }
-                    if ui
-                        .add_sized(
-                            [ui.available_width(), btn_height],
-                            egui::Button::image_and_text(
-                                egui::Image::new(&icons.close).fit_to_exact_size(icon_size),
-                                t!("toolbar.close"),
-                            )
-                            .frame(false),
-                        )
-                        .clicked()
-                    {
-                        action.close_file = true;
-                        action.close_menu = true;
-                    }
-                    ui.separator();
+            if ui
+                .add_sized(
+                    [ui.available_width(), btn_height],
+                    egui::Button::image_and_text(
+                        egui::Image::new(&icons.new_doc).fit_to_exact_size(icon_size),
+                        t!("actions.log_new"),
+                    )
+                    .frame(false),
+                )
+                .clicked()
+            {
+                action.new_file = true;
+                action.close_menu = true;
+            }
+            if ui
+                .add_sized(
+                    [ui.available_width(), btn_height],
+                    egui::Button::image_and_text(
+                        egui::Image::new(&icons.open).fit_to_exact_size(icon_size),
+                        t!("toolbar.open"),
+                    )
+                    .frame(false),
+                )
+                .clicked()
+            {
+                action.open_file = true;
+                action.close_menu = true;
+            }
+            if ui
+                .add_sized(
+                    [ui.available_width(), btn_height],
+                    egui::Button::image_and_text(
+                        egui::Image::new(&icons.save).fit_to_exact_size(icon_size),
+                        t!("toolbar.save"),
+                    )
+                    .frame(false),
+                )
+                .clicked()
+            {
+                action.save_file = true;
+                action.close_menu = true;
+            }
+            if ui
+                .add_sized(
+                    [ui.available_width(), btn_height],
+                    egui::Button::image_and_text(
+                        egui::Image::new(&icons.close).fit_to_exact_size(icon_size),
+                        t!("toolbar.close"),
+                    )
+                    .frame(false),
+                )
+                .clicked()
+            {
+                action.close_file = true;
+                action.close_menu = true;
+            }
+            ui.separator();
 
-                    ui.add_space(10.0);
-                    ui.label(
-                        egui::RichText::new(t!("settings.security"))
-                            .strong()
-                            .color(self.current_theme.colors.icon_color()),
-                    );
-                    if ui
-                        .add_sized(
-                            [ui.available_width(), btn_height],
-                            egui::Button::image_and_text(
-                                egui::Image::new(&icons.key).fit_to_exact_size(icon_size),
-                                t!("app.select_keyfile"),
-                            )
-                            .frame(false),
-                        )
-                        .clicked()
-                    {
-                        action.select_keyfile = true;
-                        action.close_menu = true;
-                    }
-                    if ui
-                        .add_sized(
-                            [ui.available_width(), btn_height],
-                            egui::Button::image_and_text(
-                                egui::Image::new(&icons.folder_filled).fit_to_exact_size(icon_size),
-                                t!("settings.open_dir"),
-                            )
-                            .frame(false),
-                        )
-                        .clicked()
-                    {
-                        self.call_java_open_directory();
-                        action.close_menu = true;
-                    }
+            ui.add_space(10.0);
+            ui.label(
+                egui::RichText::new(t!("settings.security"))
+                    .strong()
+                    .color(self.current_theme.colors.icon_color()),
+            );
+            if ui
+                .add_sized(
+                    [ui.available_width(), btn_height],
+                    egui::Button::image_and_text(
+                        egui::Image::new(&icons.key).fit_to_exact_size(icon_size),
+                        t!("app.select_keyfile"),
+                    )
+                    .frame(false),
+                )
+                .clicked()
+            {
+                action.select_keyfile = true;
+                action.close_menu = true;
+            }
+            if ui
+                .add_sized(
+                    [ui.available_width(), btn_height],
+                    egui::Button::image_and_text(
+                        egui::Image::new(&icons.folder_filled).fit_to_exact_size(icon_size),
+                        t!("settings.open_dir"),
+                    )
+                    .frame(false),
+                )
+                .clicked()
+            {
+                self.call_java_open_directory();
+                action.close_menu = true;
+            }
 
-                    if let Some(uri) = &self.keyfile_uri {
-                        let short_uri = if uri.len() > 20 {
-                            format!("...{}", &uri[uri.len() - 20..])
-                        } else {
-                            uri.clone()
-                        };
-                        ui.label(
-                            egui::RichText::new(format!(
-                                "{}: {}",
-                                t!("settings.current"),
-                                short_uri
-                            ))
-                            .small()
-                            .weak(),
-                        );
-                    }
+            if let Some(uri) = &self.keyfile_uri {
+                let short_uri = if uri.len() > 20 {
+                    format!("...{}", &uri[uri.len() - 20..])
+                } else {
+                    uri.clone()
+                };
+                ui.label(
+                    egui::RichText::new(format!("{}: {}", t!("settings.current"), short_uri))
+                        .small()
+                        .weak(),
+                );
+            }
 
-                    ui.separator();
-                    ui.add_space(10.0);
+            ui.separator();
+            ui.add_space(10.0);
 
-                    if ui
-                        .add_sized(
-                            [ui.available_width(), btn_height],
-                            egui::Button::image_and_text(
-                                egui::Image::new(&icons.settings).fit_to_exact_size(icon_size),
-                                t!("settings.title"),
-                            )
-                            .frame(false),
-                        )
-                        .clicked()
-                    {
-                        action.toggle_settings = true;
-                        action.close_menu = true;
-                    }
-                    if ui
-                        .add_sized(
-                            [ui.available_width(), btn_height],
-                            egui::Button::image_and_text(
-                                egui::Image::new(&icons.history).fit_to_exact_size(icon_size),
-                                t!("history.title"),
-                            )
-                            .frame(false),
-                        )
-                        .clicked()
-                    {
-                        action.toggle_history = true;
-                        action.close_menu = true;
-                    }
-                    if ui
-                        .add_sized(
-                            [ui.available_width(), btn_height],
-                            egui::Button::image_and_text(
-                                egui::Image::new(&icons.file_tree).fit_to_exact_size(icon_size),
-                                t!("settings.workspace"),
-                            )
-                            .frame(false),
-                        )
-                        .clicked()
-                    {
-                        action.toggle_search = false; // dummy or just handle manually
-                        self.show_file_tree = !self.show_file_tree;
-                        action.close_menu = true;
-                    }
-                    if ui
-                        .add_sized(
-                            [ui.available_width(), btn_height],
-                            egui::Button::image_and_text(
-                                egui::Image::new(&icons.search).fit_to_exact_size(icon_size),
-                                t!("search.find"),
-                            )
-                            .frame(false),
-                        )
-                        .clicked()
-                    {
-                        action.toggle_search = true;
-                        action.close_menu = true;
-                    }
+            if ui
+                .add_sized(
+                    [ui.available_width(), btn_height],
+                    egui::Button::image_and_text(
+                        egui::Image::new(&icons.settings).fit_to_exact_size(icon_size),
+                        t!("settings.title"),
+                    )
+                    .frame(false),
+                )
+                .clicked()
+            {
+                action.toggle_settings = true;
+                action.close_menu = true;
+            }
+            if ui
+                .add_sized(
+                    [ui.available_width(), btn_height],
+                    egui::Button::image_and_text(
+                        egui::Image::new(&icons.history).fit_to_exact_size(icon_size),
+                        t!("history.title"),
+                    )
+                    .frame(false),
+                )
+                .clicked()
+            {
+                action.toggle_history = true;
+                action.close_menu = true;
+            }
+            if ui
+                .add_sized(
+                    [ui.available_width(), btn_height],
+                    egui::Button::image_and_text(
+                        egui::Image::new(&icons.file_tree).fit_to_exact_size(icon_size),
+                        t!("settings.workspace"),
+                    )
+                    .frame(false),
+                )
+                .clicked()
+            {
+                action.toggle_search = false; // dummy or just handle manually
+                self.show_file_tree = !self.show_file_tree;
+                action.close_menu = true;
+            }
+            if ui
+                .add_sized(
+                    [ui.available_width(), btn_height],
+                    egui::Button::image_and_text(
+                        egui::Image::new(&icons.search).fit_to_exact_size(icon_size),
+                        t!("search.find"),
+                    )
+                    .frame(false),
+                )
+                .clicked()
+            {
+                action.toggle_search = true;
+                action.close_menu = true;
+            }
 
-                    ui.add_space(10.0);
-                    ui.horizontal(|ui| {
-                        ui.label(t!("settings.stealth_mode"));
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            ui.checkbox(&mut self.stealth_mode, "");
-                        });
-                    });
+            ui.add_space(10.0);
+            ui.horizontal(|ui| {
+                ui.label(t!("settings.stealth_mode"));
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.checkbox(&mut self.stealth_mode, "");
+                });
+            });
 
-                    ui.add_space(20.0);
-                    ui.vertical_centered(|ui| {
-                        ui.label(egui::RichText::new("SEN Mobile v0.1.0").small().weak());
-                    });
-                }
+            ui.add_space(20.0);
+            ui.vertical_centered(|ui| {
+                ui.label(egui::RichText::new("SEN Mobile v0.1.0").small().weak());
+            });
+        }
         if action.new_file {
             self.action_new_file();
         }
@@ -1502,200 +1499,196 @@ impl SenAndroidApp {
             self.show_settings = false;
         }
 
-                ui.add_space(10.0);
+        ui.add_space(10.0);
 
-                // --- Editor Section ---
-                ui.label(
-                    egui::RichText::new(t!("settings.editor"))
-                        .strong()
-                        .size(18.0),
-                );
-                ui.add_space(5.0);
+        // --- Editor Section ---
+        ui.label(
+            egui::RichText::new(t!("settings.editor"))
+                .strong()
+                .size(18.0),
+        );
+        ui.add_space(5.0);
 
-                ui.horizontal(|ui| {
-                    ui.label(format!(
-                        "{}: {}px",
-                        t!("settings.editor_font_size"),
-                        self.settings.editor_font_size as i32
-                    ));
-                    ui.add_space(10.0);
-                    if ui.button("+").clicked() {
-                        self.settings.editor_font_size += 1.0;
-                        save_required = true;
-                    }
-                    if ui.button("-").clicked() && self.settings.editor_font_size > 8.0 {
-                        self.settings.editor_font_size -= 1.0;
-                        save_required = true;
-                    }
-                });
+        ui.horizontal(|ui| {
+            ui.label(format!(
+                "{}: {}px",
+                t!("settings.editor_font_size"),
+                self.settings.editor_font_size as i32
+            ));
+            ui.add_space(10.0);
+            if ui.button("+").clicked() {
+                self.settings.editor_font_size += 1.0;
+                save_required = true;
+            }
+            if ui.button("-").clicked() && self.settings.editor_font_size > 8.0 {
+                self.settings.editor_font_size -= 1.0;
+                save_required = true;
+            }
+        });
 
-                ui.add_space(5.0);
-                ui.horizontal(|ui| {
-                    if ui
-                        .checkbox(&mut self.settings.word_wrap, t!("settings.word_wrap"))
-                        .changed()
-                    {
-                        save_required = true;
-                    }
-                });
-                ui.add_space(10.0);
-                ui.separator();
-                ui.add_space(10.0);
+        ui.add_space(5.0);
+        ui.horizontal(|ui| {
+            if ui
+                .checkbox(&mut self.settings.word_wrap, t!("settings.word_wrap"))
+                .changed()
+            {
+                save_required = true;
+            }
+        });
+        ui.add_space(10.0);
+        ui.separator();
+        ui.add_space(10.0);
 
-                // --- Appearance Section ---
-                ui.label(
-                    egui::RichText::new(t!("settings.appearance"))
-                        .strong()
-                        .size(18.0),
-                );
-                ui.add_space(5.0);
-                
-                ui.horizontal(|ui| {
-                    ui.label("Theme:");
-                    let current_theme_name = self.settings.theme_name.clone();
-                    sen_core::ui::Select::new(&current_theme_name)
-                        .with_width_hint(ui, "Avaray Dark Mode")
-                        .show_ui(ui, |ui| {
-                            for theme in self.available_themes.clone() {
-                                if ui
-                                    .selectable_value(
-                                        &mut self.settings.theme_name,
-                                        theme.name.clone(),
-                                        &theme.name,
-                                    )
-                                    .clicked()
-                                {
-                                    self.current_theme = theme.clone();
-                                    self.current_theme.apply(ctx);
-                                    save_required = true;
-                                    self.notify(ctx, format!("{} -> {}", t!("settings.appearance"), theme.name));
-                                }
-                            }
-                        });
-                });
-                
-                ui.add_space(5.0);
-                if ui
-                    .checkbox(
-                        &mut self.settings.auto_save_enabled,
-                        t!("settings.auto_save"),
-                    )
-                    .changed()
-                {
-                    save_required = true;
-                }
+        // --- Appearance Section ---
+        ui.label(
+            egui::RichText::new(t!("settings.appearance"))
+                .strong()
+                .size(18.0),
+        );
+        ui.add_space(5.0);
 
-                ui.add_space(10.0);
-                ui.separator();
-                ui.add_space(10.0);
-
-                // --- Security Section ---
-                ui.label(
-                    egui::RichText::new(t!("settings.security"))
-                        .strong()
-                        .size(18.0),
-                );
-                ui.add_space(5.0);
-                if ui
-                    .checkbox(
-                        &mut self.settings.screen_capture_protection,
-                        t!("settings.screen_capture"),
-                    )
-                    .changed()
-                {
-                    save_required = true;
-                    self.call_java_set_screen_protection(self.settings.screen_capture_protection);
-                }
-
-                if ui
-                    .checkbox(
-                        &mut self.settings.biometric_unlock,
-                        t!("settings.biometric_unlock"),
-                    )
-                    .changed()
-                {
-                    save_required = true;
-                    self.biometric_enabled = self.settings.biometric_unlock;
-                }
-
-                ui.add_space(10.0);
-                ui.separator();
-                ui.add_space(10.0);
-
-                // --- Localization Section ---
-                ui.label(
-                    egui::RichText::new(t!("settings.language"))
-                        .strong()
-                        .size(18.0),
-                );
-                ui.add_space(5.0);
-
-                let languages = [
-                    ("en", "English"),
-                    ("pl", "Polski"),
-                    ("de", "Deutsch"),
-                    ("cz", "Čeština"),
-                    ("es", "Español"),
-                    ("fr", "Français"),
-                    ("uk", "Українська"),
-                    ("zh-CN", "简体中文"),
-                    ("ja", "日本語"),
-                    ("ru", "Русский"),
-                    ("it", "Italiano"),
-                ];
-                let current_lang_name = languages
-                    .iter()
-                    .find(|(c, _)| *c == self.settings.language)
-                    .map(|(_, n)| *n)
-                    .unwrap_or("English");
-                sen_core::ui::Select::new(current_lang_name)
-                    .with_width_hint(ui, "Nederlands")
-                    .show_ui(ui, |ui| {
-                        for (code, name) in languages {
-                            if ui
-                                .selectable_value(
-                                    &mut self.settings.language,
-                                    code.to_string(),
-                                    name,
-                                )
-                                .clicked()
-                            {
-                                settings_set_language(code);
-                                save_required = true;
-                                self.notify(
-                                    ctx,
-                                    format!("{} -> {}", t!("settings.language"), name),
-                                );
-                            }
+        ui.horizontal(|ui| {
+            ui.label("Theme:");
+            let current_theme_name = self.settings.theme_name.clone();
+            sen_core::ui::Select::new(&current_theme_name)
+                .with_width_hint(ui, "Avaray Dark Mode")
+                .show_ui(ui, |ui| {
+                    for theme in self.available_themes.clone() {
+                        if ui
+                            .selectable_value(
+                                &mut self.settings.theme_name,
+                                theme.name.clone(),
+                                &theme.name,
+                            )
+                            .clicked()
+                        {
+                            self.current_theme = theme.clone();
+                            self.current_theme.apply(ctx);
+                            save_required = true;
+                            self.notify(
+                                ctx,
+                                format!("{} -> {}", t!("settings.appearance"), theme.name),
+                            );
                         }
-                    });
+                    }
+                });
+        });
 
-                ui.add_space(20.0);
-                ui.separator();
-                ui.add_space(10.0);
+        ui.add_space(5.0);
+        if ui
+            .checkbox(
+                &mut self.settings.auto_save_enabled,
+                t!("settings.auto_save"),
+            )
+            .changed()
+        {
+            save_required = true;
+        }
 
-                // --- About Section ---
-                ui.label(
-                    egui::RichText::new(t!("dialog.about_title"))
-                        .strong()
-                        .size(18.0),
-                );
-                ui.add_space(5.0);
-                ui.label("Secure Encrypted Notepad (SEN)");
-                ui.label(egui::RichText::new("Version: 0.1.0-android").small().weak());
-                ui.label(
-                    egui::RichText::new("Open source project by Avaray")
-                        .small()
-                        .italics(),
-                );
+        ui.add_space(10.0);
+        ui.separator();
+        ui.add_space(10.0);
 
-                ui.add_space(20.0);
-                ui.separator();
-                ui.add_space(10.0);
+        // --- Security Section ---
+        ui.label(
+            egui::RichText::new(t!("settings.security"))
+                .strong()
+                .size(18.0),
+        );
+        ui.add_space(5.0);
+        if ui
+            .checkbox(
+                &mut self.settings.screen_capture_protection,
+                t!("settings.screen_capture"),
+            )
+            .changed()
+        {
+            save_required = true;
+            self.call_java_set_screen_protection(self.settings.screen_capture_protection);
+        }
 
-                if ui.button(t!("dialog.btn_close")).clicked() {
-                    self.show_settings = false;
+        if ui
+            .checkbox(
+                &mut self.settings.biometric_unlock,
+                t!("settings.biometric_unlock"),
+            )
+            .changed()
+        {
+            save_required = true;
+            self.biometric_enabled = self.settings.biometric_unlock;
+        }
+
+        ui.add_space(10.0);
+        ui.separator();
+        ui.add_space(10.0);
+
+        // --- Localization Section ---
+        ui.label(
+            egui::RichText::new(t!("settings.language"))
+                .strong()
+                .size(18.0),
+        );
+        ui.add_space(5.0);
+
+        let languages = [
+            ("en", "English"),
+            ("pl", "Polski"),
+            ("de", "Deutsch"),
+            ("cz", "Čeština"),
+            ("es", "Español"),
+            ("fr", "Français"),
+            ("uk", "Українська"),
+            ("zh-CN", "简体中文"),
+            ("ja", "日本語"),
+            ("ru", "Русский"),
+            ("it", "Italiano"),
+        ];
+        let current_lang_name = languages
+            .iter()
+            .find(|(c, _)| *c == self.settings.language)
+            .map(|(_, n)| *n)
+            .unwrap_or("English");
+        sen_core::ui::Select::new(current_lang_name)
+            .with_width_hint(ui, "Nederlands")
+            .show_ui(ui, |ui| {
+                for (code, name) in languages {
+                    if ui
+                        .selectable_value(&mut self.settings.language, code.to_string(), name)
+                        .clicked()
+                    {
+                        settings_set_language(code);
+                        save_required = true;
+                        self.notify(ctx, format!("{} -> {}", t!("settings.language"), name));
+                    }
                 }
+            });
+
+        ui.add_space(20.0);
+        ui.separator();
+        ui.add_space(10.0);
+
+        // --- About Section ---
+        ui.label(
+            egui::RichText::new(t!("dialog.about_title"))
+                .strong()
+                .size(18.0),
+        );
+        ui.add_space(5.0);
+        ui.label("Secure Encrypted Notepad (SEN)");
+        ui.label(egui::RichText::new("Version: 0.1.0-android").small().weak());
+        ui.label(
+            egui::RichText::new("Open source project by Avaray")
+                .small()
+                .italics(),
+        );
+
+        ui.add_space(20.0);
+        ui.separator();
+        ui.add_space(10.0);
+
+        if ui.button(t!("dialog.btn_close")).clicked() {
+            self.show_settings = false;
+        }
 
         if save_required {
             let _ = self.settings.save(self.android_app.internal_data_path());
@@ -1708,73 +1701,71 @@ impl SenAndroidApp {
             self.show_history = false;
         }
 
-                // To avoid borrow checker issues (borrowing self as mutable in notify while document is borrowed),
-                // we collect the indices and data we need first.
-                let history_entries: Vec<(usize, String, String, Option<String>)> = self
-                    .document
-                    .get_visible_history()
-                    .iter()
-                    .rev()
-                    .map(|(idx, entry)| {
-                        (
-                            *idx,
-                            entry.display_timestamp(),
-                            entry.display_size(),
-                            entry.comment.clone(),
-                        )
-                    })
-                    .collect();
+        // To avoid borrow checker issues (borrowing self as mutable in notify while document is borrowed),
+        // we collect the indices and data we need first.
+        let history_entries: Vec<(usize, String, String, Option<String>)> = self
+            .document
+            .get_visible_history()
+            .iter()
+            .rev()
+            .map(|(idx, entry)| {
+                (
+                    *idx,
+                    entry.display_timestamp(),
+                    entry.display_size(),
+                    entry.comment.clone(),
+                )
+            })
+            .collect();
 
-                if history_entries.is_empty() {
-                    ui.add_space(20.0);
-                    ui.vertical_centered(|ui| {
-                        ui.label(t!("history.no_history"));
-                        ui.label(egui::RichText::new(t!("history.help")).small().weak());
-                    });
-                } else {
-                    egui::ScrollArea::vertical().show(ui, |ui| {
-                        let mut to_load = None;
-                        let mut to_restore = None;
+        if history_entries.is_empty() {
+            ui.add_space(20.0);
+            ui.vertical_centered(|ui| {
+                ui.label(t!("history.no_history"));
+                ui.label(egui::RichText::new(t!("history.help")).small().weak());
+            });
+        } else {
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                let mut to_load = None;
+                let mut to_restore = None;
 
-                        for (idx, timestamp, size, comment) in history_entries {
-                            ui.group(|ui| {
-                                ui.vertical(|ui| {
-                                    ui.label(egui::RichText::new(timestamp).strong());
-                                    ui.label(t!("history.size", size = size));
-                                    if let Some(comment_text) = comment {
-                                        ui.label(
-                                            egui::RichText::new(comment_text).small().italics(),
-                                        );
-                                    }
+                for (idx, timestamp, size, comment) in history_entries {
+                    ui.group(|ui| {
+                        ui.vertical(|ui| {
+                            ui.label(egui::RichText::new(timestamp).strong());
+                            ui.label(t!("history.size", size = size));
+                            if let Some(comment_text) = comment {
+                                ui.label(egui::RichText::new(comment_text).small().italics());
+                            }
 
-                                    ui.horizontal(|ui| {
-                                        if ui.button(t!("history.revert_entry")).clicked() {
-                                            to_load = Some(idx);
-                                        }
-                                        if ui.button(t!("history.revert_changes")).clicked() {
-                                            to_restore = Some(idx);
-                                        }
-                                    });
-                                });
+                            ui.horizontal(|ui| {
+                                if ui.button(t!("history.revert_entry")).clicked() {
+                                    to_load = Some(idx);
+                                }
+                                if ui.button(t!("history.revert_changes")).clicked() {
+                                    to_restore = Some(idx);
+                                }
                             });
-                            ui.add_space(4.0);
-                        }
-
-                        if let Some(idx) = to_load {
-                            self.document.load_version(idx);
-                            self.loaded_history_index = Some(idx);
-                            self.show_history = false;
-                            self.notify(ctx, t!("actions.status_ver_loaded"));
-                        }
-                        if let Some(idx) = to_restore {
-                            self.document.revert_to_version(idx);
-                            self.loaded_history_index = None;
-                            self.is_modified = true;
-                            self.show_history = false;
-                            self.notify(ctx, t!("actions.status_revert_success"));
-                        }
+                        });
                     });
+                    ui.add_space(4.0);
                 }
+
+                if let Some(idx) = to_load {
+                    self.document.load_version(idx);
+                    self.loaded_history_index = Some(idx);
+                    self.show_history = false;
+                    self.notify(ctx, t!("actions.status_ver_loaded"));
+                }
+                if let Some(idx) = to_restore {
+                    self.document.revert_to_version(idx);
+                    self.loaded_history_index = None;
+                    self.is_modified = true;
+                    self.show_history = false;
+                    self.notify(ctx, t!("actions.status_revert_success"));
+                }
+            });
+        }
     }
 
     fn render_file_tree(&mut self, ui: &mut egui::Ui) {

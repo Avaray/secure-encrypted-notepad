@@ -121,7 +121,7 @@ impl EditorApp {
             // Check for stealth compatibility first if keyfile is already loaded
             if let Some(keyfile) = &self.keyfile_path {
                 if let Ok(key_hash) = crate::crypto::get_keyfile_hash(keyfile) {
-                    // We need a buffer-based stealth check or just use the existing logic 
+                    // We need a buffer-based stealth check or just use the existing logic
                     // since we already have the buffer.
                     // For simplicity, we'll check if it "looks" binary first if no key matches.
                     if let Ok(true) = crate::crypto::check_stealth_compatibility(&key_hash, &path) {

@@ -1,7 +1,7 @@
-use sen_core::theme_egui::UiSeparatorExt;
 use crate::theme::ThemeColorsExt;
 use crate::EditorApp;
 use eframe::egui;
+use sen_core::theme_egui::UiSeparatorExt;
 
 impl EditorApp {
     pub(crate) fn render_search_panel(&mut self, ui: &mut egui::Ui) {
@@ -166,8 +166,9 @@ impl EditorApp {
             // However, we can't easily access the TextEdit state here to scroll.
             // We set text_cursor_range, and hope the editor updates.
             self.select_match(0);
-            
-            self.status_message = t!("status.search_finished", count = self.search_matches.len()).to_string();
+
+            self.status_message =
+                t!("status.search_finished", count = self.search_matches.len()).to_string();
         } else {
             self.status_message = t!("status.search_no_matches").to_string();
         }
@@ -227,7 +228,12 @@ impl EditorApp {
 
         // Update status for navigation
         if let Some(current) = self.current_match_index {
-            self.status_message = t!("status.search_navigated", current = current + 1, total = self.search_matches.len()).to_string();
+            self.status_message = t!(
+                "status.search_navigated",
+                current = current + 1,
+                total = self.search_matches.len()
+            )
+            .to_string();
         }
 
         // Note: Actual scrolling happens in ui_editor.rs or needs to be forced.
@@ -283,7 +289,9 @@ impl EditorApp {
         let matches_count = if self.search_case_sensitive {
             text.match_indices(&self.search_query).count()
         } else {
-            text.to_lowercase().match_indices(&self.search_query.to_lowercase()).count()
+            text.to_lowercase()
+                .match_indices(&self.search_query.to_lowercase())
+                .count()
         };
 
         if new_text != *text {
@@ -292,9 +300,10 @@ impl EditorApp {
             *text = new_text;
             self.is_modified = true;
             self.loaded_history_index = None;
-            
-            self.status_message = t!("status.search_replaced_all", count = matches_count).to_string();
-            
+
+            self.status_message =
+                t!("status.search_replaced_all", count = matches_count).to_string();
+
             self.perform_search();
         }
     }

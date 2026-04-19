@@ -1,9 +1,9 @@
-use sen_core::theme_egui::UiSeparatorExt;
 use crate::app_state::{BatchMode, KeyStatus};
 use crate::crypto::{decrypt_bytes, encrypt_bytes};
 use crate::theme::ThemeColorsExt;
 use crate::EditorApp;
 use eframe::egui;
+use sen_core::theme_egui::UiSeparatorExt;
 
 use std::path::Path;
 
@@ -383,7 +383,9 @@ impl EditorApp {
                                         }
                                     }
                                     if added > 0 {
-                                        self.status_message = t!("status.batch_files_added", count = added).to_string();
+                                        self.status_message =
+                                            t!("status.batch_files_added", count = added)
+                                                .to_string();
                                     }
                                 }
                             }
@@ -402,7 +404,8 @@ impl EditorApp {
                                     }
                                 }
                                 if added > 0 {
-                                    self.status_message = t!("status.batch_files_added", count = added).to_string();
+                                    self.status_message =
+                                        t!("status.batch_files_added", count = added).to_string();
                                 }
                             }
                         }

@@ -1,8 +1,8 @@
-use sen_core::theme_egui::UiSeparatorExt;
 use crate::app_state::{KeyStatus, LogEntry, LogLevel};
 use crate::theme::{ThemeColorsExt, ThemeExt};
 use crate::EditorApp;
 use sen_core::models::FileTreeEntry;
+use sen_core::theme_egui::UiSeparatorExt;
 
 use std::path::PathBuf;
 
@@ -750,12 +750,9 @@ impl EditorApp {
                         self.batch_is_running = false;
                         finished = true;
 
-                        self.status_message = t!(
-                            "status.batch_completed",
-                            success = success,
-                            failed = failed
-                        )
-                        .to_string();
+                        self.status_message =
+                            t!("status.batch_completed", success = success, failed = failed)
+                                .to_string();
                     }
                 }
             }

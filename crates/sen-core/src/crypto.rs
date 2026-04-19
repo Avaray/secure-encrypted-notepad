@@ -402,10 +402,7 @@ pub fn decrypt_bytes(
 }
 
 /// FILE DECRYPTION (Buffer)
-pub fn decrypt_bytes_buffer(
-    keyfile_path: &Path,
-    file_data: &[u8],
-) -> Result<Vec<u8>, CryptoError> {
+pub fn decrypt_bytes_buffer(keyfile_path: &Path, file_data: &[u8]) -> Result<Vec<u8>, CryptoError> {
     // Basic size check
     if file_data.len() < MAGIC_SIZE + SALT_SIZE + 1 {
         return Err(CryptoError::InvalidFormat);

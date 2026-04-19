@@ -1,9 +1,9 @@
-use sen_core::theme_egui::UiSeparatorExt;
 use crate::app_state::{KeyStatus, LogLevel};
 use crate::history::HistoryEntry;
 use crate::theme::{ThemeColorsExt, ThemeExt};
 use crate::EditorApp;
 use eframe::egui;
+use sen_core::theme_egui::UiSeparatorExt;
 use std::path::{Path, PathBuf};
 impl EditorApp {
     /// Render settings panel
@@ -1253,32 +1253,56 @@ if ui
                         let mut changed = false;
 
                         // Helper closure to build a compact colored checkbox
-                        let mut filter_toggle = |ui: &mut egui::Ui, enabled: &mut bool, label: String, active_color: egui::Color32| {
-                            let uline_color = if *enabled {
-                                active_color
-                            } else {
-                                ui.visuals().widgets.noninteractive.bg_stroke.color
+                        let mut filter_toggle =
+                            |ui: &mut egui::Ui,
+                             enabled: &mut bool,
+                             label: String,
+                             active_color: egui::Color32| {
+                                let uline_color = if *enabled {
+                                    active_color
+                                } else {
+                                    ui.visuals().widgets.noninteractive.bg_stroke.color
+                                };
+                                let mut job = egui::text::LayoutJob::default();
+                                job.append(
+                                    &label,
+                                    0.0,
+                                    egui::text::TextFormat {
+                                        font_id: small_font.clone(),
+                                        color: ui.visuals().text_color(),
+                                        underline: egui::Stroke::new(2.0, uline_color),
+                                        ..Default::default()
+                                    },
+                                );
+                                if ui.checkbox(enabled, job).changed() {
+                                    changed = true;
+                                }
                             };
-                            let mut job = egui::text::LayoutJob::default();
-                            job.append(
-                                &label,
-                                0.0,
-                                egui::text::TextFormat {
-                                    font_id: small_font.clone(),
-                                    color: ui.visuals().text_color(),
-                                    underline: egui::Stroke::new(2.0, uline_color),
-                                    ..Default::default()
-                                },
-                            );
-                            if ui.checkbox(enabled, job).changed() {
-                                changed = true;
-                            }
-                        };
 
-                        filter_toggle(ui, &mut self.settings.debug_show_info, t!("debug.filter_info").to_string(), self.current_theme.colors.info_color());
-                        filter_toggle(ui, &mut self.settings.debug_show_success, t!("debug.filter_success").to_string(), self.current_theme.colors.success_color());
-                        filter_toggle(ui, &mut self.settings.debug_show_warning, t!("debug.filter_warning").to_string(), self.current_theme.colors.warning_color());
-                        filter_toggle(ui, &mut self.settings.debug_show_error, t!("debug.filter_error").to_string(), self.current_theme.colors.error_color());
+                        filter_toggle(
+                            ui,
+                            &mut self.settings.debug_show_info,
+                            t!("debug.filter_info").to_string(),
+                            self.current_theme.colors.info_color(),
+                        );
+                        filter_toggle(
+                            ui,
+                            &mut self.settings.debug_show_success,
+                            t!("debug.filter_success").to_string(),
+                            self.current_theme.colors.success_color(),
+                        );
+                        filter_toggle(
+                            ui,
+                            &mut self.settings.debug_show_warning,
+                            t!("debug.filter_warning").to_string(),
+                            self.current_theme.colors.warning_color(),
+                        );
+                        filter_toggle(
+                            ui,
+                            &mut self.settings.debug_show_error,
+                            t!("debug.filter_error").to_string(),
+                            self.current_theme.colors.error_color(),
+                        );
 
                         if changed {
                             let _ = self.settings.save(None);

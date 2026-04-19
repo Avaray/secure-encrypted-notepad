@@ -1,8 +1,8 @@
-use sen_core::theme_egui::UiSeparatorExt;
 use crate::app_state::PendingAction;
 use crate::theme::{ThemeColorsExt, ThemeExt};
 use crate::EditorApp;
 use eframe::egui;
+use sen_core::theme_egui::UiSeparatorExt;
 
 impl EditorApp {
     /// Render confirmation dialog for unsaved changes
