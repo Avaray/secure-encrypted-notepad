@@ -1,7 +1,8 @@
 import path from "node:path";
 import { Glob } from "bun";
 
-const LOCALES_DIR = path.resolve(import.meta.dir, "../crates/sen-i18n/locales");
+const CRATES_DIR = path.resolve(import.meta.dir, "../crates");
+const LOCALES_DIR = path.join(CRATES_DIR, "sen-i18n/locales");
 const SOURCE_FILE = path.join(LOCALES_DIR, "en.yml");
 
 const LANGUAGE_MAP: Record<string, string> = {
@@ -107,17 +108,77 @@ ${JSON.stringify(langTexts, null, 2)}
   return JSON.parse(textResponse);
 }
 
+async function runCleanup(dryRun: boolean) {
+  console.log(`Scanning Rust files in ${CRATES_DIR} for unused i18n keys...`);
+
+  const glob = new Glob("**/*.rs");
+  let allRustCode = "";
+  let filesScanned = 0;
+
+  for await (const file of glob.scan({ cwd: CRATES_DIR })) {
+    const filePath = path.join(CRATES_DIR, file);
+    const content = await Bun.file(filePath).text();
+    allRustCode += content + "\n";
+    filesScanned++;
+  }
+
+  console.log(`Successfully scanned ${filesScanned} Rust files.`);
+
+  const sourceBunFile = Bun.file(SOURCE_FILE);
+  if (!(await sourceBunFile.exists())) {
+    throw new Error(`Source file not found at ${SOURCE_FILE}`);
+  }
+
+  const sourceRaw = await sourceBunFile.text();
+  const sourceLines = sourceRaw.split(/\r?\n/);
+  const keyRegex = /^([\w.]+):\s*(?:"(.*)"|'(.*)'|(.*))$/;
+
+  const resultLines: string[] = [];
+  let removedCount = 0;
+
+  for (const line of sourceLines) {
+    const match = line.match(keyRegex);
+    if (match && match[1]) {
+      const key = match[1];
+      const isUsed = allRustCode.includes(`"${key}"`);
+
+      if (isUsed) {
+        resultLines.push(line);
+      } else {
+        removedCount++;
+        console.log(`  [-] Unused key removed: ${key}`);
+      }
+    } else {
+      resultLines.push(line);
+    }
+  }
+
+  if (removedCount === 0) {
+    console.log("No unused keys found. en.yml is perfectly clean.");
+    return;
+  }
+
+  console.log(`\nFound ${removedCount} unused keys.`);
+
+  if (!dryRun) {
+    await Bun.write(SOURCE_FILE, resultLines.join("\n"));
+    console.log(`Successfully updated en.yml.`);
+  } else {
+    console.log("[Dry Run] Would have updated en.yml.");
+  }
+}
+
 interface LangTask {
   file: string;
   langCode: string;
   langName: string;
   targetData: Record<string, string>;
-  missingKeys: Record<string, string>;
+  syncKeys: Record<string, string>;
   translations: Record<string, string>;
   hasFailed: boolean;
 }
 
-async function detectMissing(targetFile: string): Promise<LangTask> {
+async function prepareTask(targetFile: string, forceKeys?: string[]): Promise<LangTask> {
   const langCode = path.basename(targetFile, ".yml");
   const langName = LANGUAGE_MAP[langCode] || langCode;
 
@@ -132,7 +193,7 @@ async function detectMissing(targetFile: string): Promise<LangTask> {
     targetData = (Bun.YAML.parse(targetRaw) as Record<string, string>) || {};
   }
 
-  const missingKeys: Record<string, string> = {};
+  const syncKeys: Record<string, string> = {};
   const keyRegex = /^([\w.]+):\s*(?:"(.*)"|'(.*)'|(.*))$/;
 
   for (const line of sourceLines) {
@@ -141,13 +202,17 @@ async function detectMissing(targetFile: string): Promise<LangTask> {
       const key = match[1];
       const sourceValue = match[2] || match[3] || match[4] || "";
 
-      if (targetData[key] === undefined) {
-        missingKeys[key] = sourceValue;
+      if (forceKeys) {
+        if (forceKeys.includes(key)) {
+          syncKeys[key] = sourceValue;
+        }
+      } else if (targetData[key] === undefined) {
+        syncKeys[key] = sourceValue;
       }
     }
   }
 
-  return { file: targetFile, langCode, langName, targetData, missingKeys, translations: {}, hasFailed: false };
+  return { file: targetFile, langCode, langName, targetData, syncKeys, translations: {}, hasFailed: false };
 }
 
 async function finalizeTask(task: LangTask, dryRun: boolean) {
@@ -160,7 +225,8 @@ async function finalizeTask(task: LangTask, dryRun: boolean) {
     const match = line.match(keyRegex);
     if (match && match[1]) {
       const key = match[1];
-      const value = task.targetData[key] ?? task.translations[key] ?? match[2] ?? match[3] ?? match[4] ?? "";
+      // Updated priority: new translations (for forced keys or newly missing) take precedence
+      const value = task.translations[key] ?? task.targetData[key] ?? match[2] ?? match[3] ?? match[4] ?? "";
 
       if (task.translations[key]) {
         console.log(`  [+] ${key}`);
@@ -184,8 +250,30 @@ async function main() {
   const GEMINI_API_KEY = Bun.env.GEMINI_API_KEY;
 
   const args = Bun.argv.slice(2);
-  const specificFile = args.find(arg => !arg.startsWith("-"));
   const dryRun = args.includes("--dry-run");
+  const cleanup = args.includes("--cleanup");
+  const rawArgs = args.filter(arg => !arg.startsWith("-"));
+
+  let targetFiles: string[] = [];
+  let userKeys: string[] = [];
+
+  for (const arg of rawArgs) {
+    if (arg.endsWith(".yml") || LANGUAGE_MAP[arg]) {
+      const fileName = arg.endsWith(".yml") ? arg : `${arg}.yml`;
+      targetFiles.push(path.join(LOCALES_DIR, fileName));
+    } else if (arg.startsWith("[") && arg.endsWith("]")) {
+      try {
+        const parsed = JSON.parse(arg);
+        if (Array.isArray(parsed)) {
+          userKeys.push(...parsed);
+        }
+      } catch (e) {
+        userKeys.push(arg);
+      }
+    } else {
+      userKeys.push(arg);
+    }
+  }
 
   if (!GEMINI_API_KEY && !dryRun) {
     console.error(`Error: GEMINI_API_KEY is not set in environment variables`);
@@ -196,11 +284,19 @@ async function main() {
     console.log(`DRY RUN: No files will be changed.`);
   }
 
-  const files: string[] = [];
+  if (cleanup) {
+    try {
+      await runCleanup(dryRun);
+    } catch (e: any) {
+      console.error(`Error during cleanup: ${e.message}`);
+      process.exit(1);
+    }
+  }
 
-  if (specificFile) {
-    const fileName = specificFile.endsWith(".yml") ? specificFile : `${specificFile}.yml`;
-    files.push(path.join(LOCALES_DIR, fileName));
+  // 1. Determine target files
+  const files: string[] = [];
+  if (targetFiles.length > 0) {
+    files.push(...targetFiles);
   } else {
     const glob = new Glob("*.yml");
     for await (const file of glob.scan({ cwd: LOCALES_DIR })) {
@@ -210,23 +306,59 @@ async function main() {
     }
   }
 
+  // 2. Expand wildcards if needed
+  let finalKeys: string[] | undefined = undefined;
+  if (userKeys.length > 0) {
+    const sourceRaw = await Bun.file(SOURCE_FILE).text();
+    const sourceLines = sourceRaw.split(/\r?\n/);
+    const keyRegex = /^([\w.]+):\s*(?:"(.*)"|'(.*)'|(.*))$/;
+    const allKeysInSource: string[] = [];
+    
+    for (const line of sourceLines) {
+      const match = line.match(keyRegex);
+      if (match && match[1]) allKeysInSource.push(match[1]);
+    }
+
+    finalKeys = [];
+    for (const uKey of userKeys) {
+      if (uKey.endsWith(".*")) {
+        const prefix = uKey.slice(0, -1); // e.g. "status."
+        const matched = allKeysInSource.filter(k => k.startsWith(prefix));
+        finalKeys.push(...matched);
+      } else {
+        if (allKeysInSource.includes(uKey)) {
+          finalKeys.push(uKey);
+        } else {
+          console.warn(`Warning: Key "${uKey}" not found in en.yml, skipping.`);
+        }
+      }
+    }
+    
+    if (finalKeys.length === 0) {
+      console.error("Error: No valid keys found to synchronize.");
+      process.exit(1);
+    }
+    
+    console.log(`Synchronizing ${finalKeys.length} specific keys...`);
+  }
+
   let hasErrors = false;
   const tasks: LangTask[] = [];
 
   for (const file of files) {
-    tasks.push(await detectMissing(file));
+    tasks.push(await prepareTask(file, finalKeys));
   }
 
-  let totalMissing = 0;
-  let maxMissingPerLang = 0;
+  let totalSync = 0;
+  let maxSyncPerLang = 0;
   for (const task of tasks) {
-    const missingCount = Object.keys(task.missingKeys).length;
-    totalMissing += missingCount;
-    if (missingCount > maxMissingPerLang) {
-      maxMissingPerLang = missingCount;
+    const count = Object.keys(task.syncKeys).length;
+    totalSync += count;
+    if (count > maxSyncPerLang) {
+      maxSyncPerLang = count;
     }
-    if (missingCount > 0 && dryRun && !GEMINI_API_KEY) {
-      console.error(`  [X] Missing ${missingCount} keys in ${task.langCode}.yml: ${Object.keys(task.missingKeys).join(", ")}`);
+    if (count > 0 && dryRun && !GEMINI_API_KEY) {
+      console.error(`  [X] Would update ${count} keys in ${task.langCode}.yml: ${Object.keys(task.syncKeys).join(", ")}`);
       hasErrors = true;
     }
   }
@@ -238,20 +370,20 @@ async function main() {
     return;
   }
 
-  if (totalMissing > 0) {
+  if (totalSync > 0) {
     let batchInput: Record<string, Record<string, string>> = {};
 
-    if (maxMissingPerLang < 20) {
+    if (maxSyncPerLang < 20) {
       for (const task of tasks) {
-        if (Object.keys(task.missingKeys).length > 0) {
-          batchInput[task.langName] = task.missingKeys;
+        if (Object.keys(task.syncKeys).length > 0) {
+          batchInput[task.langName] = task.syncKeys;
         }
       }
 
       try {
         const batchResult = await translateBatch(batchInput, GEMINI_API_KEY as string);
         for (const task of tasks) {
-          if (Object.keys(task.missingKeys).length > 0) {
+          if (Object.keys(task.syncKeys).length > 0) {
             const returnedTranslations = batchResult[task.langName];
             if (!returnedTranslations) {
               console.error(`  [X] AI Batch Translation skipped language: ${task.langName}`);
@@ -260,7 +392,7 @@ async function main() {
               continue;
             }
             
-            const requestedKeys = Object.keys(task.missingKeys);
+            const requestedKeys = Object.keys(task.syncKeys);
             const returnedKeys = Object.keys(returnedTranslations);
             const reallyMissingKeys = requestedKeys.filter(k => !returnedKeys.includes(k));
 
@@ -282,12 +414,12 @@ async function main() {
       }
     } else {
       for (const task of tasks) {
-        if (Object.keys(task.missingKeys).length > 0) {
+        if (Object.keys(task.syncKeys).length > 0) {
           try {
             console.log(`\nProcessing ${task.langName} (${task.langCode}.yml)...`);
-            const translations = await translate(task.missingKeys, task.langName, GEMINI_API_KEY as string);
+            const translations = await translate(task.syncKeys, task.langName, GEMINI_API_KEY as string);
             
-            const requestedKeys = Object.keys(task.missingKeys);
+            const requestedKeys = Object.keys(task.syncKeys);
             const returnedKeys = Object.keys(translations);
             const reallyMissingKeys = requestedKeys.filter(k => !returnedKeys.includes(k));
 
@@ -306,12 +438,12 @@ async function main() {
     }
 
     for (const task of tasks) {
-      if (Object.keys(task.missingKeys).length > 0) {
+      if (Object.keys(task.syncKeys).length > 0) {
         if (task.hasFailed) {
           console.log(`\nSkipping ${task.langName} (${task.langCode}.yml) due to translation errors.`);
           continue;
         }
-        if (!totalMissing || maxMissingPerLang < 20) {
+        if (!totalSync || maxSyncPerLang < 20) {
           console.log(`\nProcessing ${task.langName} (${task.langCode}.yml)...`);
         }
         await finalizeTask(task, dryRun);
