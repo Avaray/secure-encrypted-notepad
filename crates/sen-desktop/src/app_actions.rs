@@ -40,10 +40,10 @@ impl EditorApp {
         }
     }
 
-    /// Close file implementation
     pub(crate) fn perform_close_file(&mut self) {
         self.document = DocumentWithHistory::new_with_limit(self.settings.max_history_length);
         self.current_file_path = None;
+        self.opened_as_plaintext = false;
         self.is_modified = false;
         self.loaded_history_index = None;
         self.show_autosave_restore = false;
@@ -56,10 +56,10 @@ impl EditorApp {
         self.commit_history_state();
     }
 
-    /// New document implementation
     pub(crate) fn perform_new_document(&mut self) {
         self.document = DocumentWithHistory::new_with_limit(self.settings.max_history_length);
         self.current_file_path = None;
+        self.opened_as_plaintext = false;
         self.is_modified = false;
         self.loaded_history_index = None;
         self.show_autosave_restore = false;
@@ -138,6 +138,7 @@ impl EditorApp {
                         DocumentWithHistory::new_with_limit(self.settings.max_history_length);
                     self.document.current_content = content_str;
                     self.current_file_path = Some(path.clone());
+                    self.opened_as_plaintext = true;
                     self.is_modified = false;
 
                     if self.show_search_panel {
@@ -207,6 +208,7 @@ impl EditorApp {
                     self.keyfile_path = Some(current_keyfile);
                     self.document = DocumentWithHistory::from_file_content(&content);
                     self.current_file_path = Some(path.clone());
+                    self.opened_as_plaintext = false;
                     self.is_modified = false;
                     if self.show_search_panel {
                         self.perform_search();
@@ -300,11 +302,15 @@ impl EditorApp {
         self.setup_watcher();
     }
 
-    /// Save file
     pub(crate) fn save_file(&mut self) {
         if self.keyfile_path.is_none() {
             self.status_message = t!("actions.status_no_key").to_string();
             self.log_error(t!("actions.log_save_no_key"));
+            return;
+        }
+
+        if self.opened_as_plaintext {
+            self.save_file_as();
             return;
         }
 
@@ -331,15 +337,9 @@ impl EditorApp {
 
         let default_name = if let Some(path) = &self.current_file_path {
             if self.settings.stealth_mode {
-                let filename = path.file_stem().unwrap_or_default().to_string_lossy();
-                if path.extension().is_none() || path.extension().unwrap() == "sen" {
-                    filename.to_string()
-                } else {
-                    path.file_name()
-                        .unwrap_or_default()
-                        .to_string_lossy()
-                        .to_string()
-                }
+                // In stealth mode, always strip the extension to produce a raw binary file.
+                // Do not propose the original .txt extension to avoid accidental overwrites.
+                path.file_stem().unwrap_or_default().to_string_lossy().to_string()
             } else {
                 if path.extension().and_then(|e| e.to_str()).unwrap_or("") == "sen" {
                     path.file_name()
@@ -403,6 +403,7 @@ impl EditorApp {
         match save_result {
             Ok(_) => {
                 self.current_file_path = Some(path.clone());
+                self.opened_as_plaintext = false;
                 self.is_modified = false;
 
                 // Commit trimmed history state after successful save

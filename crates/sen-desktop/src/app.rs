@@ -45,6 +45,9 @@ pub struct EditorApp {
     /// Path to currently open file
     pub(crate) current_file_path: Option<PathBuf>,
 
+    /// Indicates if the currently open file was opened as plaintext
+    pub(crate) opened_as_plaintext: bool,
+
     /// Status message
     pub(crate) status_message: String,
 
@@ -302,6 +305,7 @@ impl EditorApp {
             access_check_receiver: None,
             pending_access_checks: std::collections::HashSet::new(),
             current_file_path: None,
+            opened_as_plaintext: false,
             status_message: status,
             settings: settings.clone(),
             start_time,
