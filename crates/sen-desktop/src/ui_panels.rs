@@ -779,8 +779,9 @@ let _ = self.settings.save(None);
             let target_height = ui.spacing().interact_size.y.max(ui.text_style_height(&egui::TextStyle::Button) + ui.spacing().button_padding.y * 2.0);
             let h = ls.get_height("set_lang");
             crate::app_helpers::render_settings_row(ui, &t!("settings.language"), h, |ui| {
+                let btn_text_height = ui.text_style_height(&egui::TextStyle::Button);
                 let flag_image = egui::Image::new(current_icon)
-                    .fit_to_exact_size(egui::vec2(f32::INFINITY, target_height))
+                    .fit_to_exact_size(egui::vec2(f32::INFINITY, btn_text_height))
                     .maintain_aspect_ratio(true);
 
                 sen_core::ui::Select::new(current_label)
@@ -788,15 +789,61 @@ let _ = self.settings.save(None);
                     .show_ui(ui, |ui| {
                         let mut lang_row = |ui: &mut egui::Ui, code: &str, label: &str, icon: &egui::TextureHandle| {
                             let is_selected = self.settings.language == code;
-                            let mut clicked = false;
-                            crate::app_helpers::flex_row(ui, |ui| {
-                                ui.add(egui::Image::new(icon).fit_to_exact_size(egui::vec2(f32::INFINITY, target_height)).maintain_aspect_ratio(true));
-                                if ui.selectable_label(is_selected, label).clicked() {
-                                    self.settings.language = code.to_string();
-                                    clicked = true;
-                                }
-                            });
-                            clicked
+                            let text_height = ui.text_style_height(&egui::TextStyle::Button);
+                            let icon_height = target_height.min(text_height);
+                            let padding = ui.spacing().button_padding;
+                            let spacing = ui.spacing().item_spacing.x;
+
+                            // Measure text width
+                            let font_id = egui::TextStyle::Button.resolve(ui.style());
+                            let text_galley = ui.painter().layout_no_wrap(
+                                label.to_string(), font_id, ui.visuals().text_color(),
+                            );
+
+                            // Flag aspect ratio from actual texture dimensions
+                            let tex_size = icon.size();
+                            let aspect = tex_size[0] as f32 / tex_size[1] as f32;
+                            let icon_width = icon_height * aspect;
+
+                            let desired_width = ui.available_width();
+                            let desired_height = (text_height).max(icon_height) + padding.y * 2.0;
+                            let (rect, response) = ui.allocate_exact_size(
+                                egui::vec2(desired_width, desired_height),
+                                egui::Sense::click(),
+                            );
+
+                            // Paint hover/selection background
+                            let visuals = ui.style().interact_selectable(&response, is_selected);
+                            if is_selected || response.hovered() {
+                                ui.painter().rect(
+                                    rect,
+                                    visuals.corner_radius,
+                                    visuals.bg_fill,
+                                    visuals.bg_stroke,
+                                    egui::StrokeKind::Middle,
+                                );
+                            }
+
+                            // Draw flag
+                            let flag_rect = egui::Rect::from_min_size(
+                                egui::pos2(rect.min.x + padding.x, rect.center().y - icon_height / 2.0),
+                                egui::vec2(icon_width, icon_height),
+                            );
+                            let flag_image = egui::Image::new(icon)
+                                .maintain_aspect_ratio(true);
+                            flag_image.paint_at(ui, flag_rect);
+
+                            // Draw text
+                            let text_pos = egui::pos2(
+                                flag_rect.max.x + spacing,
+                                rect.center().y - text_galley.rect.height() / 2.0,
+                            );
+                            ui.painter().galley(text_pos, text_galley, visuals.text_color());
+
+                            if response.clicked() {
+                                self.settings.language = code.to_string();
+                            }
+                            response.clicked()
                         };
 
                         if lang_row(ui, "en", "English", &self.icons.flag_en) { changed = true; }
