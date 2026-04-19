@@ -625,7 +625,10 @@ impl EditorApp {
 
         crate::app_helpers::center_row(ui, |ui| {
             // Status message on the left
-            ui.label(egui::RichText::new(&self.status_message).color(fg_color));
+            ui.add(
+                egui::Label::new(egui::RichText::new(&self.status_message).color(fg_color))
+                    .selectable(false),
+            );
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 // Version info
@@ -680,27 +683,41 @@ impl EditorApp {
                     );
 
                     if self.settings.stealth_mode {
-                        ui.label(
-                            egui::RichText::new(t!("app.status_stealth"))
-                                .color(self.current_theme.colors.success_color()),
+                        ui.add(
+                            egui::Label::new(
+                                egui::RichText::new(t!("app.status_stealth"))
+                                    .color(self.current_theme.colors.success_color()),
+                            )
+                            .selectable(false),
                         );
                         ui.app_separator();
                     }
 
                     if let Some(path) = &self.current_file_path {
-                        ui.label(
-                            egui::RichText::new(
-                                path.file_name().unwrap_or_default().to_string_lossy(),
+                        ui.add(
+                            egui::Label::new(
+                                egui::RichText::new(
+                                    path.file_name().unwrap_or_default().to_string_lossy(),
+                                )
+                                .color(fg_color),
                             )
-                            .color(fg_color),
+                            .selectable(false),
                         );
                     } else {
-                        ui.label(egui::RichText::new(t!("app.unsaved_document")).color(fg_color));
+                        ui.add(
+                            egui::Label::new(
+                                egui::RichText::new(t!("app.unsaved_document")).color(fg_color),
+                            )
+                            .selectable(false),
+                        );
                     }
 
                     if self.is_modified {
                         ui.add_space(4.0);
-                        ui.label(egui::RichText::new("*").color(fg_color));
+                        ui.add(
+                            egui::Label::new(egui::RichText::new("*").color(fg_color))
+                                .selectable(false),
+                        );
                     }
                 }
             });
