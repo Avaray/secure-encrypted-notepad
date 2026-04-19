@@ -1,3 +1,4 @@
+use sen_core::theme_egui::UiSeparatorExt;
 use eframe::egui;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -636,7 +637,7 @@ impl EditorApp {
                     .selectable(false),
                 );
 
-                ui.separator();
+                ui.app_separator();
 
                 // Keyfile indicator
                 if let Some(path) = &self.keyfile_path {
@@ -668,7 +669,7 @@ impl EditorApp {
                 }
 
                 if show_file_info {
-                    ui.separator();
+                    ui.app_separator();
 
                     // File indicator
                     let fg_color = self.current_theme.colors.to_egui_color32(
@@ -683,7 +684,7 @@ impl EditorApp {
                             egui::RichText::new(t!("app.status_stealth"))
                                 .color(self.current_theme.colors.success_color()),
                         );
-                        ui.separator();
+                        ui.app_separator();
                     }
 
                     if let Some(path) = &self.current_file_path {
@@ -1171,28 +1172,23 @@ impl eframe::App for EditorApp {
         // Using Frame::none() to avoid hidden window_margin from egui's default side_top_panel
         let mut vertical_toolbar_frame = egui::Frame::NONE;
         vertical_toolbar_frame.fill = ctx.style().visuals.panel_fill;
-        // 6px horizontal for more breathing room, 4px vertical for a slim profile
         vertical_toolbar_frame.inner_margin = egui::Margin::symmetric(6, 4);
 
-        // Frame for horizontal bars (top toolbar, search, status)
         let mut bar_frame = egui::Frame::NONE;
         bar_frame.fill = ctx.style().visuals.panel_fill;
         bar_frame.inner_margin = egui::Margin::symmetric(6, 4);
 
-        // Standard frame for all full-content panels (side panels, central editor)
         let mut content_frame = egui::Frame::side_top_panel(&ctx.style());
         content_frame.stroke = egui::Stroke::NONE;
         content_frame.inner_margin = egui::Margin::same(12);
 
-        // Prep variants of the content frame that allow scrollbars to adhere to window edges
         let mut left_panel_frame = content_frame.clone();
         left_panel_frame.inner_margin.left = 8;
-        // Use a 4px buffer instead of 0 to prevent oscillating hover jitter on the splitter
         left_panel_frame.inner_margin.right = 4;
 
         let mut right_panel_frame = content_frame.clone();
         if self.settings.toolbar_position != crate::settings::ToolbarPosition::Right {
-            right_panel_frame.inner_margin.right = 4; // Buffer for inter-panel splitters
+            right_panel_frame.inner_margin.right = 4;
         }
 
         let mut central_panel_frame = content_frame.clone();
@@ -1206,7 +1202,6 @@ impl eframe::App for EditorApp {
         if self.settings.toolbar_position != crate::settings::ToolbarPosition::Right
             && !any_right_panel
         {
-            // Use a 4px buffer instead of 0 to prevent oscillating hover jitter on the boundary
             central_panel_frame.inner_margin.right = 4;
         }
 

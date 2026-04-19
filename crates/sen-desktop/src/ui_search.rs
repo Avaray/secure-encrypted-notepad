@@ -1,3 +1,4 @@
+use sen_core::theme_egui::UiSeparatorExt;
 use crate::theme::ThemeColorsExt;
 use crate::EditorApp;
 use eframe::egui;
@@ -80,7 +81,7 @@ impl EditorApp {
                 ui.label(t!("search.no_matches"));
             }
 
-            ui.separator();
+            ui.app_separator();
 
             ui.label(t!("search.replace"));
             let original_cursor_color = ui.visuals().text_cursor.stroke.color;

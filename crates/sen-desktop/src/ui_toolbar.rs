@@ -1,3 +1,4 @@
+use sen_core::theme_egui::UiSeparatorExt;
 use crate::theme::ThemeColorsExt;
 use crate::EditorApp;
 use eframe::egui;
@@ -55,11 +56,11 @@ impl EditorApp {
                 ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
                     ui.add_enabled_ui(!self.show_batch_converter && !self.zen_mode, |ui| {
                         self.render_toolbar_file_group(ui);
-                        ui.separator();
+                        ui.app_separator();
                         self.render_toolbar_batch_group(ui);
-                        ui.separator();
+                        ui.app_separator();
                         self.render_toolbar_key_ops_group(ui);
-                        ui.separator();
+                        ui.app_separator();
                     });
 
                     ui.add_space(spacer);
@@ -78,15 +79,15 @@ impl EditorApp {
                 ui.add_enabled_ui(!self.show_batch_converter && !self.zen_mode, |ui| {
                     // Group 1: Files
                     self.render_toolbar_file_group(ui);
-                    ui.separator();
+                    ui.app_separator();
 
                     // Group 2: Batch/Export
                     self.render_toolbar_batch_group(ui);
-                    ui.separator();
+                    ui.app_separator();
 
                     // Group 3: Keyfile management
                     self.render_toolbar_key_ops_group(ui);
-                    ui.separator();
+                    ui.app_separator();
                 });
 
                 // ── Settings group (right-aligned) ────────────────────────────────

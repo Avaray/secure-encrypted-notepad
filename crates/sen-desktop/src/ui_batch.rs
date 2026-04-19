@@ -1,3 +1,4 @@
+use sen_core::theme_egui::UiSeparatorExt;
 use crate::app_state::{BatchMode, KeyStatus};
 use crate::crypto::{decrypt_bytes, encrypt_bytes};
 use crate::theme::ThemeColorsExt;
@@ -108,7 +109,7 @@ impl EditorApp {
                 });
 
                 ui.add_space(12.0);
-                ui.separator();
+                ui.app_separator();
                 ui.add_space(12.0);
 
                 // --- Keyfile Section ---
@@ -160,7 +161,7 @@ impl EditorApp {
                 // --- New Keyfile (Rotate mode only) ---
                 if self.batch_mode == BatchMode::Rotate {
                     ui.add_space(12.0);
-                    ui.separator();
+                    ui.app_separator();
                     ui.add_space(12.0);
 
                     ui.vertical(|ui| {
@@ -199,7 +200,7 @@ impl EditorApp {
                 }
 
                 ui.add_space(12.0);
-                ui.separator();
+                ui.app_separator();
                 ui.add_space(12.0);
 
                 // --- Output Configuration ---

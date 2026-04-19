@@ -1,3 +1,4 @@
+use sen_core::theme_egui::UiSeparatorExt;
 use crate::app_state::{KeyStatus, LogEntry, LogLevel};
 use crate::theme::{ThemeColorsExt, ThemeExt};
 use crate::EditorApp;
@@ -1049,7 +1050,7 @@ impl EditorApp {
         if add_separator {
             let space = (self.settings.ui_font_size * 0.25).max(2.0).min(6.0);
             ui.add_space(space);
-            ui.separator();
+            ui.app_separator();
             ui.add_space(space);
         }
         close_clicked

@@ -126,8 +126,7 @@ pub struct ThemeColors {
     /// Focus/selection border color for all interactive widgets
     #[serde(default, with = "opt_alpha_color")]
     pub widget_focus_border: Option<[u8; 4]>,
-    #[serde(default)]
-    pub separator_width: Option<f32>,
+
     #[serde(default, with = "opt_alpha_color")]
     pub shadow_color: Option<[u8; 4]>,
     #[serde(default)]
@@ -197,7 +196,7 @@ impl ThemeColors {
             widget_padding_x: None,
             widget_padding_y: None,
             widget_focus_border: None,
-            separator_width: None,
+
             shadow_color: None,
             shadow_blur: None,
             shadow_spread: None,
@@ -247,7 +246,7 @@ impl ThemeColors {
             widget_padding_x: None,
             widget_padding_y: None,
             widget_focus_border: None,
-            separator_width: None,
+
             shadow_color: None,
             shadow_blur: None,
             shadow_spread: None,

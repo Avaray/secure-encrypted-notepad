@@ -1,3 +1,4 @@
+use sen_core::theme_egui::UiSeparatorExt;
 use crate::app_state::{KeyStatus, LogLevel};
 use crate::history::HistoryEntry;
 use crate::theme::{ThemeColorsExt, ThemeExt};
@@ -47,7 +48,7 @@ self.reset_slider_val = 0.0;
 }
 });
 ui.add_space(8.0);
-ui.separator();
+ui.app_separator();
 ui.add_space(8.0);
 // =========================================================================
 // 1. SECURITY
@@ -186,7 +187,7 @@ crate::app_helpers::stateful_center_row(ui, ls.get_height("bkp_cur_path"), |ui| 
 }
 
 ui.add_space(8.0);
-ui.separator();
+ui.app_separator();
 ui.add_space(8.0);
 // =========================================================================
 // 2. WORKSPACE / FILE TREE
@@ -321,7 +322,7 @@ self.refresh_file_tree();
 self.setup_watcher();
 }
 ui.add_space(8.0);
-ui.separator();
+ui.app_separator();
 ui.add_space(8.0);
 // =========================================================================
 // 3. EDITOR
@@ -475,7 +476,7 @@ let _ = self.settings.save(None);
 }
 });
 ui.add_space(8.0);
-ui.separator();
+ui.app_separator();
 ui.add_space(8.0);
 // =========================================================================
 // 4. RELIABILITY
@@ -517,7 +518,7 @@ let _ = self.settings.save(None);
 });
 });
 ui.add_space(8.0);
-ui.separator();
+ui.app_separator();
 ui.add_space(8.0);
 // =========================================================================
 // 5. APPEARANCE
@@ -545,7 +546,7 @@ self.render_heading(ui, t!("settings.appearance"));
                         self.log_info("Themes refreshed");
                     }
                 });
-ui.separator();
+ui.app_separator();
 // UI font family with keyboard navigation
                     let h = ls.get_height("set_ui_font");
                     crate::app_helpers::render_settings_row(ui, &t!("settings.ui_font"), h, |ui| {
@@ -619,7 +620,7 @@ if response.drag_stopped() || (response.changed() && response.lost_focus()) {
 let _ = self.settings.save(None);
 }
 });
-ui.separator();
+ui.app_separator();
                     let h = ls.get_height("set_ed_font");
                     crate::app_helpers::render_settings_row(ui, &t!("settings.editor_font"), h, |ui| {
                     sen_core::ui::Select::new(&self.available_fonts[self.editor_font_index])
@@ -901,7 +902,7 @@ if ui
                         }
 
                         ui.add_space(8.0);
-                        ui.separator();
+                        ui.app_separator();
                         ui.add_space(8.0);
 
                         // =========================================================================
@@ -1277,7 +1278,7 @@ if ui
                         }
                     });
                 });
-            ui.separator();
+            ui.app_separator();
             egui::ScrollArea::both()
                 .auto_shrink([false, false])
                 .stick_to_bottom(true)
@@ -1370,7 +1371,7 @@ if ui
                                         ui.available_width() - 12.0,
                                     );
                                     ui.label(truncated_dir);
-                                    ui.separator();
+                                    ui.app_separator();
                                 }
                                 let available_width = ui.available_width();
                                 ui.set_max_width(available_width);
@@ -1789,7 +1790,7 @@ if ui
                 });
             }
 
-            ui.separator();
+            ui.app_separator();
 
             // Top bar: Theme selector and actions
             crate::app_helpers::center_row(ui, |ui| {
@@ -1851,7 +1852,7 @@ if ui
                     }
                 }
             });
-            ui.separator();
+            ui.app_separator();
             if let Some(ref mut theme) = self.editing_theme {
                 let mut theme_changed = false;
                 ui.data_mut(|d| {
@@ -1892,7 +1893,7 @@ if ui
                             });
                     },
                 );
-                ui.separator();
+                ui.app_separator();
                 // Compute reference colors for per-field reset
                 let is_builtin = theme.name == "Dark" || theme.name == "Light";
                 let ref_colors = if is_builtin {
@@ -2362,17 +2363,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    if edit_optional_float(
-                                        &t!("theme.separator_width"),
-                                        &mut theme.colors.separator_width,
-                                        1.0,
-                                        ref_colors.separator_width,
-                                        0.0..=10.0,
-                                        0.1,
-                                        ui,
-                                    ) {
-                                        theme_changed = true;
-                                    }
+
                                     if edit_optional_color(
                                         &t!("theme.tree_line"),
                                         &mut theme.colors.tree_line,
@@ -2731,13 +2722,49 @@ fn picker_slider_2d(
 /// keeps the same width as before – only the 2D field height changes.
 pub fn color_picker_color32_wide(
     ui: &mut egui::Ui,
-    srgba: &mut egui::Color32,
+    color_unmultiplied: &mut [u8; 4],
     alpha: egui::color_picker::Alpha,
     picker_height: f32,
 ) -> bool {
     use egui::epaint::ecolor::Hsva;
 
-    let mut hsva = Hsva::from(*srgba);
+    let id = ui.id();
+    let mut hsva = ui.data_mut(|d| {
+        let mut cached_hsva = d.get_temp::<Hsva>(id).unwrap_or_else(|| {
+            let mut h = Hsva::from(egui::Color32::from_rgba_unmultiplied(
+                color_unmultiplied[0],
+                color_unmultiplied[1],
+                color_unmultiplied[2],
+                255,
+            ));
+            h.a = color_unmultiplied[3] as f32 / 255.0;
+            h
+        });
+
+        let rgba_unmult = cached_hsva.to_rgba_unmultiplied();
+        let target_r = (rgba_unmult[0] * 255.0).round() as u8;
+        let target_g = (rgba_unmult[1] * 255.0).round() as u8;
+        let target_b = (rgba_unmult[2] * 255.0).round() as u8;
+        let target_a = (cached_hsva.a * 255.0).round() as u8;
+
+        let drifted = target_r != color_unmultiplied[0]
+            || target_g != color_unmultiplied[1]
+            || target_b != color_unmultiplied[2]
+            || target_a != color_unmultiplied[3];
+
+        if drifted {
+            cached_hsva = Hsva::from(egui::Color32::from_rgba_unmultiplied(
+                color_unmultiplied[0],
+                color_unmultiplied[1],
+                color_unmultiplied[2],
+                255,
+            ));
+            cached_hsva.a = color_unmultiplied[3] as f32 / 255.0;
+        }
+
+        cached_hsva
+    });
+
     let mut changed = false;
 
     // Remove default vertical spacing between items — we control gaps with explicit add_space()
@@ -2885,11 +2912,11 @@ pub fn color_picker_color32_wide(
 
     ui.horizontal(|ui| {
         let speed = 1.0 / 255.0;
-        let mut r = srgba.r() as f32 / 255.0;
-        let mut g = srgba.g() as f32 / 255.0;
-        let mut b = srgba.b() as f32 / 255.0;
-
-        let mut a = srgba.a() as f32 / 255.0;
+        let rgba_unmult = hsva.to_rgba_unmultiplied();
+        let mut r = rgba_unmult[0];
+        let mut g = rgba_unmult[1];
+        let mut b = rgba_unmult[2];
+        let mut a = hsva.a;
 
         let dr = ui.add(
             egui::DragValue::new(&mut r)
@@ -2925,19 +2952,28 @@ pub fn color_picker_color32_wide(
             da_changed = da.changed();
         }
 
-        if dr.changed() || dg.changed() || db.changed() || da_changed {
+        if dr.changed() || dg.changed() || db.changed() {
             hsva = Hsva::from(egui::Color32::from_rgba_unmultiplied(
                 (r * 255.0).round() as u8,
                 (g * 255.0).round() as u8,
                 (b * 255.0).round() as u8,
-                (a * 255.0).round() as u8,
+                255,
             ));
+            hsva.a = a;
+            changed = true;
+        } else if da_changed {
+            hsva.a = a;
             changed = true;
         }
     });
 
     if changed {
-        *srgba = egui::Color32::from(hsva);
+        ui.data_mut(|d| d.insert_temp(id, hsva));
+        let rgba_unmult = hsva.to_rgba_unmultiplied();
+        color_unmultiplied[0] = (rgba_unmult[0] * 255.0).round() as u8;
+        color_unmultiplied[1] = (rgba_unmult[1] * 255.0).round() as u8;
+        color_unmultiplied[2] = (rgba_unmult[2] * 255.0).round() as u8;
+        color_unmultiplied[3] = (hsva.a * 255.0).round() as u8;
     }
     changed
 }
@@ -3102,15 +3138,14 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 4], popup_id: 
                 ui.spacing_mut().slider_width = measured.unwrap_or(100.0);
                 if color_picker_color32_wide(
                     ui,
-                    &mut color32,
+                    color,
                     egui::color_picker::Alpha::BlendOrAdditive,
                     160.0, // height of the 2D field in pixels
                 ) {
                     changed = true;
-                    color[0] = color32.r();
-                    color[1] = color32.g();
-                    color[2] = color32.b();
-                    color[3] = color32.a();
+                    color32 = egui::Color32::from_rgba_unmultiplied(
+                        color[0], color[1], color[2], color[3],
+                    );
                 }
 
                 // Store measured content width for next frame (stabilizes after 2 frames)

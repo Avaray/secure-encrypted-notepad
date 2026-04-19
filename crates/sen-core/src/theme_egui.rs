@@ -352,12 +352,8 @@ impl ThemeExt for Theme {
             style.spacing.interact_size.y = default_style.spacing.interact_size.y;
         }
 
-        if let Some(w) = colors.separator_width {
-            style.visuals.widgets.noninteractive.bg_stroke.width = w;
-        } else {
-            style.visuals.widgets.noninteractive.bg_stroke.width =
-                default_style.visuals.widgets.noninteractive.bg_stroke.width;
-        }
+        style.visuals.widgets.noninteractive.bg_stroke.width =
+            default_style.visuals.widgets.noninteractive.bg_stroke.width;
 
         style.spacing.icon_width = if colors.widget_padding_y.is_some() {
             20.0
@@ -375,5 +371,15 @@ impl ThemeExt for Theme {
         style.visuals.widgets.active.fg_stroke.width = 2.5;
 
         ctx.set_style(style);
+    }
+}
+
+pub trait UiSeparatorExt {
+    fn app_separator(&mut self) -> egui::Response;
+}
+
+impl UiSeparatorExt for egui::Ui {
+    fn app_separator(&mut self) -> egui::Response {
+        self.separator()
     }
 }

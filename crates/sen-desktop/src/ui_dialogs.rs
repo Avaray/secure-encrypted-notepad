@@ -1,3 +1,4 @@
+use sen_core::theme_egui::UiSeparatorExt;
 use crate::app_state::PendingAction;
 use crate::theme::{ThemeColorsExt, ThemeExt};
 use crate::EditorApp;
@@ -328,7 +329,7 @@ impl EditorApp {
 
                 ui.label(text1);
                 ui.label(text2);
-                ui.separator();
+                ui.app_separator();
 
                 crate::app_helpers::center_row(ui, |ui| {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {

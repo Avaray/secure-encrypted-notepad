@@ -19,3 +19,5 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 ## 🐛 Bug Fixes (To Fix)
 
 - [ ] **Enforce .sen Extension on Save**: When a user opens a regular text file (non-SEN) and attempts to save it, the application currently defaults to the original filename and extension. This leads to the file being encrypted while retaining its old extension (e.g. `.txt`). Upon reopening, the application treats it as plain text but displays encrypted content. The save dialog should default to the `.sen` extension for these cases.
+- [x] **Color Picker Interaction Fix**: Fix an issue where decreasing the alpha value makes the main color selection area (hue/saturation/brightness field) difficult or impossible to interact with. The alpha value should only affect the transparency in the application, and should not interfere with the color selection UI's responsiveness or "clickable" areas.
+
