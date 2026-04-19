@@ -34,7 +34,6 @@ impl EditorApp {
                 &output,
                 self.settings.ui_font_size,
                 original_cursor_color,
-                original_selection_color,
             );
 
             if self.focus_search {
@@ -105,7 +104,6 @@ impl EditorApp {
                 &replace_output,
                 self.settings.ui_font_size,
                 original_cursor_color,
-                original_selection_color,
             );
 
             if ui.button(t!("search.btn_replace_one")).clicked() {

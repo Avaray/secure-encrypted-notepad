@@ -475,11 +475,12 @@ impl EditorApp {
 
             let min_height = (text_area_rect.height() - scrollbar_outer_margin).max(100.0);
 
-            // HACK: Hide default cursor and selection to draw our own
+            // HACK: Hide default cursor to draw our own. Use default selection background.
             let original_cursor_color = ui.visuals().text_cursor.stroke.color;
             let original_selection_color = ui.visuals().selection.bg_fill;
             ui.visuals_mut().text_cursor.stroke.color = egui::Color32::TRANSPARENT;
-            ui.visuals_mut().selection.bg_fill = egui::Color32::TRANSPARENT;
+            // Native egui handles selection backgrounds much better with proper Z indexing (behind text)
+            ui.visuals_mut().selection.bg_fill = selection_bg.linear_multiply(0.7);
 
             let output = egui::TextEdit::multiline(text_ptr)
                 .id(text_edit_id)
@@ -531,14 +532,13 @@ impl EditorApp {
             ui.visuals_mut().text_cursor.stroke.color = original_cursor_color;
             ui.visuals_mut().selection.bg_fill = original_selection_color;
 
-            // Draw Custom Cursor and Selection
+            // Draw Custom Cursor
             Self::render_custom_cursor(
                 ui,
                 &self.settings,
                 &output,
                 editor_font_size,
                 original_cursor_color,
-                original_selection_color,
             );
 
             // Keep focus when interaction happens within the editor (e.g. scrollbars)

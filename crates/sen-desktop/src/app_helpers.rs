@@ -800,7 +800,6 @@ impl EditorApp {
         output: &egui::text_edit::TextEditOutput,
         font_size: f32,
         cursor_color: egui::Color32,
-        selection_color: egui::Color32,
     ) {
         if !ui.memory(|mem| mem.has_focus(output.response.id)) {
             return;
@@ -860,54 +859,6 @@ impl EditorApp {
                 }
             }
 
-            // Draw manual selection highlights (on background layer, so text renders on top)
-            if cursor_range.primary != cursor_range.secondary {
-                let (min_idx, max_idx) =
-                    if cursor_range.primary.index < cursor_range.secondary.index {
-                        (cursor_range.primary.index, cursor_range.secondary.index)
-                    } else {
-                        (cursor_range.secondary.index, cursor_range.primary.index)
-                    };
-
-                // Use a background-layer painter so the selection renders beneath the text
-                let bg_layer = egui::LayerId::new(
-                    egui::Order::Background,
-                    output.response.id.with("selection_bg"),
-                );
-                let bg_painter = ui.ctx().layer_painter(bg_layer);
-
-                let mut current_char_idx = 0;
-                for row in &galley.rows {
-                    let row_char_count = row.char_count_including_newline();
-                    let row_end_idx = current_char_idx + row_char_count;
-
-                    if row_end_idx > min_idx && current_char_idx < max_idx {
-                        let local_min = min_idx.saturating_sub(current_char_idx);
-                        let local_max = if max_idx < row_end_idx {
-                            max_idx - current_char_idx
-                        } else {
-                            row_char_count
-                        };
-
-                        let x_min = row.x_offset(local_min);
-                        let x_max = row.x_offset(local_max);
-
-                        let rect = egui::Rect::from_min_max(
-                            egui::pos2(
-                                x_min + output.galley_pos.x,
-                                row.min_y() + output.galley_pos.y,
-                            ),
-                            egui::pos2(
-                                x_max + output.galley_pos.x,
-                                row.min_y() + output.galley_pos.y + font_size,
-                            ),
-                        );
-
-                        bg_painter.rect_filled(rect, 0.0, selection_color.linear_multiply(0.7));
-                    }
-                    current_char_idx = row_end_idx;
-                }
-            }
         }
     }
 
