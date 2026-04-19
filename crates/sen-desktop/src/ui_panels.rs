@@ -1161,10 +1161,10 @@ if ui
                     bottom: 0,
                 })
                 .show(ui, |ui| {
-                    ui.horizontal_wrapped(|ui| {
-                        ui.spacing_mut().item_spacing.x = 8.0;
+                    // Row 1: Action buttons
+                    ui.horizontal(|ui| {
+                        ui.spacing_mut().item_spacing.x = 4.0;
 
-                        // Clear button on the left
                         if ui.button(t!("debug.clear")).clicked() {
                             self.debug_log.clear();
                         }
@@ -1178,102 +1178,50 @@ if ui
                             ui.ctx().copy_text(logs);
                             self.status_message = t!("status.logs_copied").to_string();
                         }
+                    });
 
-                        // Toggles on the right
-                        ui.with_layout(
-                            egui::Layout::right_to_left(egui::Align::Center).with_main_wrap(true),
-                            |ui| {
-                                let mut changed = false;
+                    // Row 2: Log level filter toggles — compact, non-wrapping
+                    ui.horizontal(|ui| {
+                        ui.spacing_mut().item_spacing.x = 4.0;
+                        ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Truncate);
 
-                                // 4. Error
-                                let mut job = egui::text::LayoutJob::default();
-                                let error_uline = if self.settings.debug_show_error {
-                                    self.current_theme.colors.error_color()
-                                } else {
-                                    ui.visuals().widgets.noninteractive.bg_stroke.color
-                                };
-                                job.append(
-                                    &t!("debug.filter_error"),
-                                    0.0,
-                                    egui::text::TextFormat {
-                                        font_id: egui::TextStyle::Button.resolve(ui.style()),
-                                        color: ui.visuals().text_color(),
-                                        underline: egui::Stroke::new(2.0, error_uline),
-                                        ..Default::default()
-                                    },
-                                );
-                                changed |= ui
-                                    .checkbox(&mut self.settings.debug_show_error, job)
-                                    .changed();
-
-                                // 3. Warning
-                                let mut job = egui::text::LayoutJob::default();
-                                let warning_uline = if self.settings.debug_show_warning {
-                                    self.current_theme.colors.warning_color()
-                                } else {
-                                    ui.visuals().widgets.noninteractive.bg_stroke.color
-                                };
-                                job.append(
-                                    &t!("debug.filter_warning"),
-                                    0.0,
-                                    egui::text::TextFormat {
-                                        font_id: egui::TextStyle::Button.resolve(ui.style()),
-                                        color: ui.visuals().text_color(),
-                                        underline: egui::Stroke::new(2.0, warning_uline),
-                                        ..Default::default()
-                                    },
-                                );
-                                changed |= ui
-                                    .checkbox(&mut self.settings.debug_show_warning, job)
-                                    .changed();
-
-                                // 2. Success
-                                let mut job = egui::text::LayoutJob::default();
-                                let success_uline = if self.settings.debug_show_success {
-                                    self.current_theme.colors.success_color()
-                                } else {
-                                    ui.visuals().widgets.noninteractive.bg_stroke.color
-                                };
-                                job.append(
-                                    &t!("debug.filter_success"),
-                                    0.0,
-                                    egui::text::TextFormat {
-                                        font_id: egui::TextStyle::Button.resolve(ui.style()),
-                                        color: ui.visuals().text_color(),
-                                        underline: egui::Stroke::new(2.0, success_uline),
-                                        ..Default::default()
-                                    },
-                                );
-                                changed |= ui
-                                    .checkbox(&mut self.settings.debug_show_success, job)
-                                    .changed();
-
-                                // 1. Info
-                                let mut job = egui::text::LayoutJob::default();
-                                let info_uline = if self.settings.debug_show_info {
-                                    self.current_theme.colors.info_color()
-                                } else {
-                                    ui.visuals().widgets.noninteractive.bg_stroke.color
-                                };
-                                job.append(
-                                    &t!("debug.filter_info"),
-                                    0.0,
-                                    egui::text::TextFormat {
-                                        font_id: egui::TextStyle::Button.resolve(ui.style()),
-                                        color: ui.visuals().text_color(),
-                                        underline: egui::Stroke::new(2.0, info_uline),
-                                        ..Default::default()
-                                    },
-                                );
-                                changed |= ui
-                                    .checkbox(&mut self.settings.debug_show_info, job)
-                                    .changed();
-
-                                if changed {
-                                    let _ = self.settings.save(None);
-                                }
-                            },
+                        let small_font = egui::FontId::proportional(
+                            egui::TextStyle::Body.resolve(ui.style()).size * 0.85,
                         );
+
+                        let mut changed = false;
+
+                        // Helper closure to build a compact colored checkbox
+                        let mut filter_toggle = |ui: &mut egui::Ui, enabled: &mut bool, label: String, active_color: egui::Color32| {
+                            let uline_color = if *enabled {
+                                active_color
+                            } else {
+                                ui.visuals().widgets.noninteractive.bg_stroke.color
+                            };
+                            let mut job = egui::text::LayoutJob::default();
+                            job.append(
+                                &label,
+                                0.0,
+                                egui::text::TextFormat {
+                                    font_id: small_font.clone(),
+                                    color: ui.visuals().text_color(),
+                                    underline: egui::Stroke::new(2.0, uline_color),
+                                    ..Default::default()
+                                },
+                            );
+                            if ui.checkbox(enabled, job).changed() {
+                                changed = true;
+                            }
+                        };
+
+                        filter_toggle(ui, &mut self.settings.debug_show_info, t!("debug.filter_info").to_string(), self.current_theme.colors.info_color());
+                        filter_toggle(ui, &mut self.settings.debug_show_success, t!("debug.filter_success").to_string(), self.current_theme.colors.success_color());
+                        filter_toggle(ui, &mut self.settings.debug_show_warning, t!("debug.filter_warning").to_string(), self.current_theme.colors.warning_color());
+                        filter_toggle(ui, &mut self.settings.debug_show_error, t!("debug.filter_error").to_string(), self.current_theme.colors.error_color());
+
+                        if changed {
+                            let _ = self.settings.save(None);
+                        }
                     });
                 });
             ui.separator();
