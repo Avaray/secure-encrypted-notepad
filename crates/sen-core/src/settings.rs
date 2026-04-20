@@ -546,10 +546,10 @@ impl Settings {
             );
             match crate::config_crypto::get_or_create_config_key() {
                 Ok(key) => {
-                    sen_debug!("Config crypto key retrieved from keychain OK");
+                    sen_debug!("Config crypto key retrieved from keychain");
                     match crate::config_crypto::decrypt_keyfile_path(&key, encrypted) {
                         Ok(path_str) => {
-                            sen_debug!("Keyfile path decrypted OK: {:?}", path_str);
+                            sen_debug!("Keyfile path decrypted: {:?}", path_str);
                             settings.global_keyfile_path = Some(PathBuf::from(path_str));
                         }
                         Err(e) => {
@@ -613,7 +613,7 @@ impl Settings {
             match crate::config_crypto::get_or_create_config_key() {
                 Ok(key) => match crate::config_crypto::decrypt_keyfile_path(&key, encrypted) {
                     Ok(path_str) => {
-                        sen_debug!("File tree dir decrypted OK: {:?}", path_str);
+                        sen_debug!("File tree dir decrypted: {:?}", path_str);
                         settings.file_tree_starting_dir = Some(PathBuf::from(path_str));
                     }
                     Err(e) => {
@@ -658,7 +658,7 @@ impl Settings {
             match crate::config_crypto::get_or_create_config_key() {
                 Ok(key) => match crate::config_crypto::decrypt_keyfile_path(&key, encrypted) {
                     Ok(path_str) => {
-                        sen_debug!("Auto-backup dir decrypted OK: {:?}", path_str);
+                        sen_debug!("Auto-backup dir decrypted: {:?}", path_str);
                         settings.auto_backup_dir = Some(PathBuf::from(path_str));
                     }
                     Err(e) => {
