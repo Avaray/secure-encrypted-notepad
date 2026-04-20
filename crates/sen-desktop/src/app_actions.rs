@@ -670,14 +670,19 @@ impl EditorApp {
         #[cfg(not(any(target_os = "windows", target_os = "linux")))]
         {
             self.log_warning(t!("actions.log_assoc_not_supp"));
+            self.status_message = t!("actions.status_assoc_not_supp").to_string();
             return;
         }
 
         #[cfg(any(target_os = "windows", target_os = "linux"))]
         match self.perform_association() {
-            Ok(_) => self.log_success(t!("actions.log_assoc_success")),
+            Ok(_) => {
+                self.log_success(t!("actions.log_assoc_success"));
+                self.status_message = t!("actions.status_assoc_success").to_string();
+            }
             Err(e) => {
                 self.log_error(t!("actions.log_assoc_failed", e = e));
+                self.status_message = t!("actions.status_assoc_failed").to_string();
                 crate::sen_debug!("Association error: {}", e);
             }
         }
