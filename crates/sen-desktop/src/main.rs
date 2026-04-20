@@ -7,7 +7,7 @@ macro_rules! sen_debug {
     ($($arg:tt)*) => {
         {
             #[cfg(debug_assertions)]
-            eprintln!("[SEN] {}", format!($($arg)*));
+            eprintln!("[SEN-DESKTOP] {}", format!($($arg)*));
 
             #[cfg(not(debug_assertions))]
             if false {
