@@ -16,6 +16,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Action Bar Icon Ordering**: Reorder the first group of icons in the action bar to: New File, Save, Save As, Open, Open Directory, and Close.
 - [ ] **Default Theme Refinement**: Improve and refine the color palettes for the default Light and Dark themes to enhance contrast and visual appeal.
 - [ ] **Theme System Refactoring**: Expand the collection of built-in themes and refactor the theme engine to load definitions from a dedicated directory within the project. The default Light and Dark themes should also be migrated to this directory as standalone files while maintaining automatic system theme detection.
+- [ ] **Scrollbar Customization (Themes)**: Enhance the theme system to allow customization of scrollbar colors for all states, including default (idle) and active (grabbed/held), as currently only the hover state is configurable.
 
 ---
 
