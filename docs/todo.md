@@ -17,6 +17,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Default Theme Refinement**: Improve and refine the color palettes for the default Light and Dark themes to enhance contrast and visual appeal.
 - [ ] **Theme System Refactoring**: Expand the collection of built-in themes and refactor the theme engine to load definitions from a dedicated directory within the project. The default Light and Dark themes should also be migrated to this directory as standalone files while maintaining automatic system theme detection.
 - [ ] **Scrollbar Customization (Themes)**: Enhance the theme system to allow customization of scrollbar colors for all states, including default (idle) and active (grabbed/held), as currently only the hover state is configurable.
+- [ ] **Custom File Title (Alias)**: Add the ability to assign a custom title (alias) to a SEN file. When set, this title should take priority over the actual filename in all UI locations where the file name is displayed. This allows users to further disguise files on the filesystem (e.g., naming a file `system_logs.tmp` while labeling it "Employee List" in the UI) to enhance privacy. Support should be included for both standard and stealth modes.
 
 ---
 
@@ -24,4 +25,3 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 
 - [x] **Enforce .sen Extension on Save**: When a user opens a regular text file (non-SEN) and attempts to save it, the application currently defaults to the original filename and extension. This leads to the file being encrypted while retaining its old extension (e.g. `.txt`). Upon reopening, the application treats it as plain text but displays encrypted content. The save dialog should default to the `.sen` extension for these cases.
 - [ ] **Line Height Crash**: Fix application crash occurring when the user rapidly changes the "line height" value in settings.
-
