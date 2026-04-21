@@ -13,6 +13,9 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **Logo & App Icon**: Create a new professional logo for SEN and replace the current application icon.
 - [ ] **Action-Bar Icon Refresh**: Replace current temporary icons with custom-made icons.
 - [ ] **Auto-Updater**: Implement an update check system (leveraging GitHub Releases) that is disabled by default. Consider supporting full automatic updates with binary replacement to streamline the update process for users.
+- [ ] **Action Bar Icon Ordering**: Reorder the first group of icons in the action bar to: New File, Save, Save As, Open, Open Directory, and Close.
+- [ ] **Default Theme Refinement**: Improve and refine the color palettes for the default Light and Dark themes to enhance contrast and visual appeal.
+- [ ] **Theme System Refactoring**: Expand the collection of built-in themes and refactor the theme engine to load definitions from a dedicated directory within the project. The default Light and Dark themes should also be migrated to this directory as standalone files while maintaining automatic system theme detection.
 
 ---
 
