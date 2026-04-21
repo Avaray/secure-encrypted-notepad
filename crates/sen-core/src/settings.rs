@@ -529,10 +529,11 @@ impl Settings {
         Ok(key.to_vec())
     }
 
-    /// Validate font sizes
-    pub fn validate_font_sizes(&mut self) {
+    /// Validate font sizes and line height
+    pub fn validate_editor_metrics(&mut self) {
         self.ui_font_size = self.ui_font_size.clamp(8.0, 32.0);
         self.editor_font_size = self.editor_font_size.clamp(8.0, 128.0);
+        self.line_height = self.line_height.clamp(1.0, 2.5);
     }
 
     /// Decrypt `keyfile_path_encrypted` into `global_keyfile_path`.

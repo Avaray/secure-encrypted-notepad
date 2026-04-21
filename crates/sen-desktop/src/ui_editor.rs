@@ -1,3 +1,4 @@
+use crate::app_helpers::ScrollAreaExt;
 use crate::theme::ThemeColorsExt;
 use crate::EditorApp;
 use eframe::egui;
@@ -244,7 +245,7 @@ impl EditorApp {
         .id_salt("main_editor")
         .auto_shrink(false)
         .scroll_offset(scroll_state.offset)
-        .show(&mut text_ui, |ui| {
+        .show_themed(self.current_theme.colors.clone(), &mut text_ui, |ui| {
             let text_ptr = &mut self.document.current_content;
             let scroll_area_rect = ui.clip_rect();
 
@@ -687,7 +688,7 @@ impl EditorApp {
             if let Some(state) = egui::TextEdit::load_state(ui.ctx(), text_edit_id) {
                 if let Some(cursor_range) = state.cursor.char_range() {
                     let cursor_char_pos = cursor_range.primary.index;
-                    let cursor_byte_pos = char_to_byte_idx(text, cursor_char_pos);
+                    let cursor_byte_pos = char_to_byte_idx(text, cursor_char_pos).min(text.len());
 
                     let line_num = text.as_bytes()[..cursor_byte_pos]
                         .iter()
@@ -749,16 +750,25 @@ impl EditorApp {
             );
 
             // Draw line numbers aligned with galley rows
-            let mut current_line: usize = 1;
-            let mut is_continuation = false;
+            let rows = &galley_data.rows;
+            let first_visible_row_idx = rows.partition_point(|row| galley_pos_data.y + row.max_y() < full_clip_rect.top() - editor_font_size);
+            
+            let mut current_line: usize = 1 + rows[..first_visible_row_idx].iter().filter(|r| r.ends_with_newline).count();
+            let mut is_continuation = if first_visible_row_idx > 0 {
+                !rows[first_visible_row_idx - 1].ends_with_newline
+            } else {
+                false
+            };
 
-            for row in galley_data.rows.iter() {
+            for row in rows.iter().skip(first_visible_row_idx) {
                 let line_y = galley_pos_data.y + row.min_y();
 
-                // Only draw if visible in the viewport
-                if line_y >= full_clip_rect.top() - editor_font_size
-                    && line_y <= full_clip_rect.bottom() + editor_font_size
-                    && !is_continuation
+                // Stop if we went past the visible bottom
+                if line_y > full_clip_rect.bottom() + editor_font_size {
+                    break;
+                }
+
+                if !is_continuation
                 {
                     let text_color = if Some(current_line) == highlight_line {
                         foreground_color
@@ -822,6 +832,9 @@ impl EditorApp {
                             let mut byte_pos = 0usize;
                             let mut cur = 1usize;
                             while cur < line_num {
+                                if byte_pos >= text.len() {
+                                    break;
+                                }
                                 match text[byte_pos..].find('\n') {
                                     Some(idx) => {
                                         byte_pos += idx + 1;
@@ -830,11 +843,15 @@ impl EditorApp {
                                     None => break,
                                 }
                             }
-                            let start_byte = byte_pos;
-                            let end_byte = text[start_byte..]
-                                .find('\n')
-                                .map(|i| start_byte + i)
-                                .unwrap_or(text.len());
+                            let start_byte = byte_pos.min(text.len());
+                            let end_byte = if start_byte < text.len() {
+                                text[start_byte..]
+                                    .find('\n')
+                                    .map(|i| start_byte + i)
+                                    .unwrap_or(text.len())
+                            } else {
+                                text.len()
+                            };
 
                             let start_char = byte_to_char_idx(text, start_byte);
                             let end_char = byte_to_char_idx(text, end_byte);

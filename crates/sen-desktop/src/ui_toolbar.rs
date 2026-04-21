@@ -1,3 +1,4 @@
+use crate::app_helpers::ScrollAreaExt;
 use crate::theme::ThemeColorsExt;
 use crate::EditorApp;
 use eframe::egui;
@@ -52,7 +53,7 @@ impl EditorApp {
 
         egui::ScrollArea::vertical()
             .id_salt("tb_scroll")
-            .show(ui, |ui| {
+            .show_themed(self.current_theme.colors.clone(), ui, |ui| {
                 ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
                     ui.add_enabled_ui(!self.show_batch_converter && !self.zen_mode, |ui| {
                         self.render_toolbar_file_group(ui);
@@ -177,34 +178,7 @@ impl EditorApp {
         {
             self.new_document();
         }
-        if Self::icon_btn(
-            ui,
-            &self.icons.open,
-            &t!("toolbar.open"),
-            false,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
-            self.open_file_dialog();
-        }
-        if Self::icon_btn(
-            ui,
-            &self.icons.open_folder,
-            &t!("toolbar.open_dir"),
-            false,
-            bs,
-            is,
-            ht,
-            dt,
-        )
-        .clicked()
-        {
-            self.open_directory();
-        }
+
         if Self::icon_btn(
             ui,
             &self.icons.save,
@@ -219,7 +193,7 @@ impl EditorApp {
         {
             self.save_file();
         }
-        // User requested Save As to be in Group 1
+
         if Self::icon_btn(
             ui,
             &self.icons.save_as,
@@ -234,6 +208,37 @@ impl EditorApp {
         {
             self.save_file_as();
         }
+
+        if Self::icon_btn(
+            ui,
+            &self.icons.open,
+            &t!("toolbar.open"),
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
+            self.open_file_dialog();
+        }
+
+        if Self::icon_btn(
+            ui,
+            &self.icons.open_folder,
+            &t!("toolbar.open_dir"),
+            false,
+            bs,
+            is,
+            ht,
+            dt,
+        )
+        .clicked()
+        {
+            self.open_directory();
+        }
+
         if Self::icon_btn(
             ui,
             &self.icons.close,

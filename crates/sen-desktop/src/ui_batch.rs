@@ -1,3 +1,4 @@
+use crate::app_helpers::ScrollAreaExt;
 use crate::app_state::{BatchMode, KeyStatus};
 use crate::crypto::{decrypt_bytes, encrypt_bytes};
 use crate::theme::ThemeColorsExt;
@@ -417,7 +418,7 @@ impl EditorApp {
 
                 egui::ScrollArea::vertical()
                     .auto_shrink([false, false])
-                    .show(ui, |ui| {
+                    .show_themed(self.current_theme.colors.clone(), ui, |ui| {
                         if self.batch_files.is_empty() {
                             ui.label(t!("batch.files_none"));
                         } else {

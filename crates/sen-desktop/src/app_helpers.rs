@@ -1108,3 +1108,59 @@ pub(crate) fn square_icon_btn(
     })
     .inner
 }
+
+/// Run a ScrollArea with isolated theme properties specifically for scrollbars
+pub(crate) fn themed_scroll_area<R>(
+    ui: &mut egui::Ui,
+    theme_colors: &crate::theme::ThemeColors,
+    scroll_area: egui::ScrollArea,
+    add_contents: impl FnOnce(&mut egui::Ui) -> R,
+) -> egui::scroll_area::ScrollAreaOutput<R> {
+    use crate::theme::ThemeColorsExt;
+
+    let original_visuals = ui.visuals().clone();
+
+    ui.scope(|outer_ui| {
+        if let Some(c) = theme_colors.scrollbar_idle {
+            let color = theme_colors.to_egui_color32(c);
+            outer_ui.visuals_mut().widgets.inactive.bg_fill = color;
+            outer_ui.visuals_mut().widgets.inactive.fg_stroke.color = color;
+        }
+        if let Some(c) = theme_colors.scrollbar_hover {
+            let color = theme_colors.to_egui_color32(c);
+            outer_ui.visuals_mut().widgets.hovered.bg_fill = color;
+            outer_ui.visuals_mut().widgets.hovered.fg_stroke.color = color;
+        }
+        if let Some(c) = theme_colors.scrollbar_active {
+            let color = theme_colors.to_egui_color32(c);
+            outer_ui.visuals_mut().widgets.active.bg_fill = color;
+            outer_ui.visuals_mut().widgets.active.fg_stroke.color = color;
+        }
+
+        scroll_area.show(outer_ui, |inner_ui| {
+            // Restore original visuals for the inner content so elements are styled normally
+            *inner_ui.visuals_mut() = original_visuals;
+            add_contents(inner_ui)
+        })
+    }).inner
+}
+
+pub(crate) trait ScrollAreaExt {
+    fn show_themed<R>(
+        self,
+        theme_colors: crate::theme::ThemeColors,
+        ui: &mut egui::Ui,
+        add_contents: impl FnOnce(&mut egui::Ui) -> R,
+    ) -> egui::scroll_area::ScrollAreaOutput<R>;
+}
+
+impl ScrollAreaExt for egui::ScrollArea {
+    fn show_themed<R>(
+        self,
+        theme_colors: crate::theme::ThemeColors,
+        ui: &mut egui::Ui,
+        add_contents: impl FnOnce(&mut egui::Ui) -> R,
+    ) -> egui::scroll_area::ScrollAreaOutput<R> {
+        themed_scroll_area(ui, &theme_colors, self, add_contents)
+    }
+}

@@ -133,6 +133,14 @@ pub struct ThemeColors {
     #[serde(default)]
     pub shadow_offset_y: Option<f32>,
 
+    // --- Scrollbars ---
+    #[serde(default, with = "opt_alpha_color")]
+    pub scrollbar_idle: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub scrollbar_hover: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub scrollbar_active: Option<[u8; 4]>,
+
     // --- Granular Button States ---
     #[serde(default, with = "opt_alpha_color")]
     pub button_hover_fg: Option<[u8; 4]>,
@@ -202,6 +210,9 @@ impl ThemeColors {
             button_hover_border_color: None,
             button_active_border_color: None,
             tree_line: None,
+            scrollbar_idle: Some([40, 40, 40, 150]),
+            scrollbar_hover: Some([60, 60, 60, 200]),
+            scrollbar_active: Some([80, 80, 80, 255]),
         }
     }
 
@@ -252,6 +263,9 @@ impl ThemeColors {
             button_hover_border_color: None,
             button_active_border_color: None,
             tree_line: None,
+            scrollbar_idle: Some([200, 200, 200, 150]),
+            scrollbar_hover: Some([180, 180, 180, 200]),
+            scrollbar_active: Some([160, 160, 160, 255]),
         }
     }
 
@@ -262,39 +276,55 @@ impl ThemeColors {
             ColorScheme::Light => Self::light(),
         };
 
-        if self.background.is_none() {
-            self.background = defaults.background;
+        macro_rules! res {
+            ($field:ident) => {
+                if self.$field.is_none() {
+                    self.$field = defaults.$field;
+                }
+            };
         }
-        if self.foreground.is_none() {
-            self.foreground = defaults.foreground;
-        }
-        if self.selection_background.is_none() {
-            self.selection_background = defaults.selection_background;
-        }
-        if self.cursor.is_none() {
-            self.cursor = defaults.cursor;
-        }
-        if self.line_number.is_none() {
-            self.line_number = defaults.line_number;
-        }
-        if self.comment.is_none() {
-            self.comment = defaults.comment;
-        }
-        if self.icon_hover.is_none() {
-            self.icon_hover = defaults.icon_hover;
-        }
-        if self.success.is_none() {
-            self.success = defaults.success;
-        }
-        if self.info.is_none() {
-            self.info = defaults.info;
-        }
-        if self.warning.is_none() {
-            self.warning = defaults.warning;
-        }
-        if self.error.is_none() {
-            self.error = defaults.error;
-        }
+
+        res!(background);
+        res!(foreground);
+        res!(editor_foreground);
+        res!(button_bg);
+        res!(button_fg);
+        res!(separator);
+        res!(button_hover_bg);
+        res!(button_active_bg);
+        res!(selection_background);
+        res!(cursor);
+        res!(line_number);
+        res!(comment);
+        res!(icon_hover);
+        res!(icon_color);
+        res!(highlight);
+        res!(success);
+        res!(info);
+        res!(warning);
+        res!(error);
+        res!(whitespace_symbols);
+        res!(heading_text);
+        res!(hyperlink);
+        res!(checkbox_check);
+        res!(scrollbar_idle);
+        res!(scrollbar_hover);
+        res!(scrollbar_active);
+        res!(widget_rounding);
+        res!(widget_border_color);
+        res!(widget_border_width);
+        res!(widget_padding_x);
+        res!(widget_padding_y);
+        res!(widget_focus_border);
+        res!(button_hover_fg);
+        res!(button_active_fg);
+        res!(button_hover_border_color);
+        res!(button_active_border_color);
+        res!(shadow_color);
+        res!(shadow_blur);
+        res!(shadow_spread);
+        res!(shadow_offset_x);
+        res!(shadow_offset_y);
     }
 
     /// Get the resolved RGBA value for a color field with a fallback.

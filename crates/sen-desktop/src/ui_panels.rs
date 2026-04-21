@@ -1,3 +1,4 @@
+use crate::app_helpers::ScrollAreaExt;
 use crate::app_state::{KeyStatus, LogLevel};
 use crate::history::HistoryEntry;
 use crate::theme::{ThemeColorsExt, ThemeExt};
@@ -16,7 +17,7 @@ impl EditorApp {
             }
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
-                .show(ui, |ui| {
+                .show_themed(self.current_theme.colors.clone(), ui, |ui| {
                     egui::Frame::NONE
                         .inner_margin(egui::Margin {
                             left: 8,
@@ -566,7 +567,7 @@ changed = true;
 egui::ScrollArea::vertical()
 .max_height(300.0)
 .auto_shrink([false, false])
-.show(ui, |ui| {
+.show_themed(self.current_theme.colors.clone(), ui, |ui| {
 let current_time = ui.input(|i| i.time);
 let is_first_frame = ui.ctx().data_mut(|d| {
 let last_time = d.get_temp::<f64>(ui.id());
@@ -611,7 +612,7 @@ egui::DragValue::new(&mut self.settings.ui_font_size)
 .range(8.0..=128.0),
 );
 if response.changed() {
-self.settings.validate_font_sizes();
+self.settings.validate_editor_metrics();
 self.style_dirty = true;
 }
 if response.drag_stopped() || (response.changed() && response.lost_focus()) {
@@ -637,7 +638,7 @@ changed = true;
 egui::ScrollArea::vertical()
 .max_height(300.0)
 .auto_shrink([false, false])
-.show(ui, |ui| {
+.show_themed(self.current_theme.colors.clone(), ui, |ui| {
 let current_time = ui.input(|i| i.time);
 let is_first_frame = ui.ctx().data_mut(|d| {
 let last_time = d.get_temp::<f64>(ui.id());
@@ -682,7 +683,7 @@ egui::DragValue::new(&mut self.settings.editor_font_size)
 .range(8.0..=128.0),
 );
 if response.changed() {
-self.settings.validate_font_sizes();
+self.settings.validate_editor_metrics();
 self.style_dirty = true;
 }
 if response.drag_stopped() || (response.changed() && response.lost_focus()) {
@@ -699,6 +700,7 @@ let _ = self.settings.save(None);
             );
 
             if response.drag_stopped() || (response.changed() && response.lost_focus()) {
+                self.settings.validate_editor_metrics();
                 let _ = self.settings.save(None);
             }
 });
@@ -1102,7 +1104,7 @@ if ui
                     egui::ScrollArea::vertical()
                         .id_salt("history_scroll_area")
                         .auto_shrink([false, false])
-                                                .show(ui, |ui| {
+                                                .show_themed(self.current_theme.colors.clone(), ui, |ui| {
                             egui::Frame::NONE
                                 .inner_margin(egui::Margin {
                                     left: 4,
@@ -1304,7 +1306,7 @@ if ui
             egui::ScrollArea::both()
                 .auto_shrink([false, false])
                 .stick_to_bottom(true)
-                .show(ui, |ui| {
+                .show_themed(self.current_theme.colors.clone(), ui, |ui| {
                     egui::Frame::NONE
                         .inner_margin(egui::Margin {
                             left: 4,
@@ -1368,7 +1370,7 @@ if ui
             }
             egui::ScrollArea::vertical()
                 .auto_shrink([false, false])
-                .show(ui, |ui| {
+                .show_themed(self.current_theme.colors.clone(), ui, |ui| {
                     // ★ FIX: prevent ScrollArea from propagating content min_width to the panel
                     ui.set_min_width(0.0);
                     ui.set_max_width(ui.available_width());
@@ -1931,7 +1933,7 @@ if ui
                 };
                 egui::ScrollArea::both()
                     .auto_shrink([false, false])
-                    .show(ui, |ui| {
+                    .show_themed(self.current_theme.colors.clone(), ui, |ui| {
                         egui::Frame::NONE
                             .inner_margin(egui::Margin {
                                 left: 4,
@@ -2516,6 +2518,42 @@ if ui
                                         "error_pick",
                                         ui,
                                      ) {
+                                        theme_changed = true;
+                                    }
+
+                                    // --- SCROLLBARS ---
+                                    render_cat_header(ui, t!("theme.cat_scrollbars"), fg_color32);
+                                    ui.add_space(4.0);
+                                    if edit_optional_color(
+                                        &t!("theme.scrollbar_idle"),
+                                        &mut theme.colors.scrollbar_idle,
+                                        hardcoded_defaults.scrollbar_idle.unwrap(),
+                                        ref_colors.scrollbar_idle,
+                                        "sb_idle_pick",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    ui.add_space(4.0);
+                                    if edit_optional_color(
+                                        &t!("theme.scrollbar_hover"),
+                                        &mut theme.colors.scrollbar_hover,
+                                        hardcoded_defaults.scrollbar_hover.unwrap(),
+                                        ref_colors.scrollbar_hover,
+                                        "sb_hover_pick",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    ui.add_space(4.0);
+                                    if edit_optional_color(
+                                        &t!("theme.scrollbar_active"),
+                                        &mut theme.colors.scrollbar_active,
+                                        hardcoded_defaults.scrollbar_active.unwrap(),
+                                        ref_colors.scrollbar_active,
+                                        "sb_active_pick",
+                                        ui,
+                                    ) {
                                         theme_changed = true;
                                     }
                                 });
