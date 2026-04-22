@@ -3201,15 +3201,10 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 4], popup_id: 
                 let bg_color = ui.visuals().panel_fill;
                 let contrast = w3c_contrast_ratio(color32, bg_color);
                 
-                // If contrast is very low, use the explicit text color to ensure visibility
-                if contrast < 1.3 {
+                // If contrast is very low and the button is not hovered, use the text color to ensure visibility.
+                // On hover, we allow the theme's hover border color to be displayed normally.
+                if contrast < 1.3 && !response.hovered() {
                     stroke.color = ui.visuals().text_color();
-                }
-
-                if response.hovered() {
-                    stroke.width = stroke.width.max(2.0); // Clear feedback using theme's hover border color
-                } else {
-                    stroke.width = stroke.width.max(1.0);
                 }
 
                 ui.painter().rect_stroke(
