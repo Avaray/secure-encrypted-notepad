@@ -25,7 +25,7 @@ pub struct Icons {
     pub spon_patreon: TextureHandle,
     pub spon_bmc: TextureHandle,
     pub spon_kofi: TextureHandle,
-    pub spon_oc: TextureHandle, // Use CibKoFi as temporary if Open Collective is missing or intended
+    pub spon_oc: TextureHandle,
     pub flag_en: TextureHandle,
     pub flag_pl: TextureHandle,
     pub flag_de: TextureHandle,
@@ -193,7 +193,7 @@ impl Icons {
             ),
             spon_oc: Self::load_svg(
                 ctx,
-                include_bytes!("../../sen-desktop/assets/sponsor/CibKoFi.svg"), // If this is meant for something else, please correct me
+                include_bytes!("../../sen-desktop/assets/sponsor/SimpleIconsOpencollective.svg"),
                 "spon_oc",
             ),
             flag_en: Self::load_svg(
