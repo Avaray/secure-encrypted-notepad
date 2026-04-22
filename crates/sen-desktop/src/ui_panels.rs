@@ -2678,6 +2678,27 @@ fn picker_contrast(color: egui::Color32) -> egui::Color32 {
     }
 }
 
+fn relative_luminance(c: egui::Color32) -> f32 {
+    let [r, g, b, _] = c.to_array();
+    let linearize = |v: u8| -> f32 {
+        let sf = v as f32 / 255.0;
+        if sf <= 0.03928 {
+            sf / 12.92
+        } else {
+            ((sf + 0.055) / 1.055).powf(2.4)
+        }
+    };
+    0.2126 * linearize(r) + 0.7152 * linearize(g) + 0.0722 * linearize(b)
+}
+
+fn w3c_contrast_ratio(c1: egui::Color32, c2: egui::Color32) -> f32 {
+    let l1 = relative_luminance(c1);
+    let l2 = relative_luminance(c2);
+    let darkest = l1.min(l2);
+    let lightest = l1.max(l2);
+    (lightest + 0.05) / (darkest + 0.05)
+}
+
 /// Copy of egui's private `color_slider_1d` (hue / alpha bar).
 fn picker_slider_1d(
     ui: &mut egui::Ui,
@@ -3176,6 +3197,15 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 4], popup_id: 
             } else {
                 // Normal border
                 let mut stroke = visuals.bg_stroke;
+                
+                let bg_color = ui.visuals().panel_fill;
+                let contrast = w3c_contrast_ratio(color32, bg_color);
+                
+                // If contrast is very low, use the explicit text color to ensure visibility
+                if contrast < 1.3 {
+                    stroke.color = ui.visuals().text_color();
+                }
+
                 if response.hovered() {
                     stroke.width = stroke.width.max(2.0); // Clear feedback using theme's hover border color
                 } else {
