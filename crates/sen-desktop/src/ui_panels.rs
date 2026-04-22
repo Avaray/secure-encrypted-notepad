@@ -2621,6 +2621,17 @@ if ui
                 }
             }
         }
+        let copy_color_key = egui::Id::new("__theme_copied_color__");
+        
+        let btn_clicked = ui.data_mut(|d| d.remove_temp::<bool>(egui::Id::new("__theme_color_btn_clicked__")).unwrap_or(false));
+        if ui.data(|d| d.get_temp::<[u8; 4]>(copy_color_key).is_some()) {
+            if ui.input(|i| i.pointer.any_pressed()) && !btn_clicked {
+                ui.data_mut(|d| {
+                    d.remove_temp::<[u8; 4]>(copy_color_key);
+                });
+            }
+        }
+
         self.layout_state = ls;
     }
 
@@ -3055,6 +3066,10 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 4], popup_id: 
     let rect = ui.allocate_exact_size(desired_size, egui::Sense::hover()).0;
     let response = ui.interact(rect, button_id, egui::Sense::click());
 
+    if response.contains_pointer() && ui.input(|i| i.pointer.any_pressed()) {
+        ui.data_mut(|d| d.insert_temp(egui::Id::new("__theme_color_btn_clicked__"), true));
+    }
+
     let ctrl_held = ui.input(|i| i.modifiers.ctrl);
     let is_open = ui.data(|d| d.get_temp::<bool>(popup_id).unwrap_or(false));
 
@@ -3218,6 +3233,8 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 4], popup_id: 
             if let Some(pos) = ui.input(|i| i.pointer.interact_pos()) {
                 if !area_response.response.rect.contains(pos) && !response.rect.contains(pos) {
                     ui.data_mut(|d| d.insert_temp(popup_id, false));
+                } else {
+                    ui.data_mut(|d| d.insert_temp(egui::Id::new("__theme_color_btn_clicked__"), true));
                 }
             }
         }
