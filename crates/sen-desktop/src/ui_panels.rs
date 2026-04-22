@@ -3202,7 +3202,7 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 4], popup_id: 
 
                 // If contrast is very low and the button is not hovered, use the text color to ensure visibility.
                 // On hover, we allow the theme's hover border color to be displayed normally.
-                if contrast < 1.3 && !response.hovered() {
+                if contrast < 1.15 && !response.hovered() {
                     stroke.color = ui.visuals().text_color();
                 }
 
