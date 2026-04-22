@@ -1,0 +1,23 @@
+name: Install Linux dependencies
+description: Installs system libraries required to build the egui/eframe desktop target on Linux runners.
+
+runs:
+  using: composite
+  steps:
+    - name: Install Linux dependencies
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libfontconfig1-dev \
+          libfreetype6-dev \
+          libx11-dev \
+          libxext-dev \
+          libxrender-dev \
+          libxcb1-dev \
+          libxcb-render0-dev \
+          libxcb-shape0-dev \
+          libxcb-xfixes0-dev \
+          libwayland-dev \
+          libxkbcommon-dev \
+          pkg-config

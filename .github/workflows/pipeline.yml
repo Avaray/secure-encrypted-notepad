@@ -12,7 +12,7 @@ on:
         required: false
         type: string
       build_android:
-        description: 'Build Android APK'
+        description: 'Build Android AAB'
         required: false
         default: false
         type: boolean
@@ -121,23 +121,10 @@ jobs:
           workspaces: "."
           key: ${{ matrix.target }}
 
+      # Composite action defined in .github/actions/linux-deps/action.yml
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libfontconfig1-dev \
-            libfreetype6-dev \
-            libx11-dev \
-            libxext-dev \
-            libxrender-dev \
-            libxcb1-dev \
-            libxcb-render0-dev \
-            libxcb-shape0-dev \
-            libxcb-xfixes0-dev \
-            libwayland-dev \
-            libxkbcommon-dev \
-            pkg-config
+        uses: ./.github/actions/linux-deps
 
       - name: Clippy
         run: cargo clippy --locked --target ${{ matrix.target }}
@@ -147,6 +134,9 @@ jobs:
 
   # --------------------------------------------------------------------------
   # 3. BUILD DESKTOP JOB — Build release binaries
+  #    Uses the custom "release-final" Cargo profile defined in the root
+  #    Cargo.toml — it inherits from "release" with additional optimizations
+  #    (e.g. LTO, codegen-units = 1, strip = true).
   # --------------------------------------------------------------------------
   build-desktop:
     name: Build (${{ matrix.os-name }})
@@ -196,23 +186,10 @@ jobs:
           key: ${{ matrix.target }}
           cache-targets: false
 
+      # Composite action defined in .github/actions/linux-deps/action.yml
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libfontconfig1-dev \
-            libfreetype6-dev \
-            libx11-dev \
-            libxext-dev \
-            libxrender-dev \
-            libxcb1-dev \
-            libxcb-render0-dev \
-            libxcb-shape0-dev \
-            libxcb-xfixes0-dev \
-            libwayland-dev \
-            libxkbcommon-dev \
-            pkg-config
+        uses: ./.github/actions/linux-deps
 
       - name: Build Release Binary
         run: cargo build --locked --profile release-final --target ${{ matrix.target }}
@@ -238,20 +215,52 @@ jobs:
 
   # --------------------------------------------------------------------------
   # 4. BUILD ANDROID JOB
+  #    Intentionally manual-only (build_android input) — Android target is
+  #    in early development and not yet part of the automatic release flow.
+  #
+  #    Produces a signed .aab (Android App Bundle) required by Google Play.
+  #    Unsigned builds are rejected by the Play Store.
+  #
+  #    Required secrets:
+  #      KEYSTORE_BASE64      — base64-encoded .jks keystore file
+  #                             generate with: base64 -w 0 release.jks
+  #      KEYSTORE_PASSWORD    — password set when creating the keystore
+  #      KEY_ALIAS            — alias chosen when creating the key
+  #      KEY_PASSWORD         — key password (often same as KEYSTORE_PASSWORD)
+  #
+  #    How to create a keystore (one-time, keep the .jks file safe!):
+  #      keytool -genkeypair -v \
+  #        -keystore release.jks \
+  #        -alias sen-release \
+  #        -keyalg RSA -keysize 4096 \
+  #        -validity 10000
+  #
+  #    NDK cache: ~1.5 GB. GitHub gives 10 GB cache per repo — well within limit.
   # --------------------------------------------------------------------------
   build-android:
     name: Build (Android)
     needs: [check-tag, test]
     if: needs.check-tag.outputs.is_new == 'true' && github.event.inputs.build_android == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v6
+
+      # No NDK cache needed — ubuntu-latest runners ship with Android SDK and
+      # NDK pre-installed. cargo-ndk detects them via ANDROID_NDK_ROOT automatically.
+      # No Gradle cache either — this job is manual-only and runs rarely, so any
+      # cached entries would expire (7-day TTL) before the next run anyway.
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android, x86_64-linux-android
+
+      - name: Setup Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "."
+          key: android
 
       - name: Install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
@@ -266,32 +275,49 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Build APK (Release)
+      # Decode the keystore stored as a base64 secret and write it to disk.
+      # The file is used by Gradle's signingConfig in app/build.gradle.
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > crates/sen-android/android/app/release.jks
+
+      - name: Build AAB (Release, signed)
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           cd crates/sen-android/android
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file="$(pwd)/app/release.jks" \
+            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
 
-      - name: Rename APK
+      - name: Locate and rename AAB
         run: |
-          APK_PATH=$(find crates/sen-android/android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
-          if [ -n "$APK_PATH" ]; then
-            cp "$APK_PATH" "sen-v${{ needs.check-tag.outputs.version }}-android-unsigned.apk"
+          AAB_PATH=$(find crates/sen-android/android/app/build/outputs/bundle/release -name "*.aab" | head -n 1)
+          if [ -n "$AAB_PATH" ]; then
+            cp "$AAB_PATH" "sen-v${{ needs.check-tag.outputs.version }}-android.aab"
           else
-            echo "No APK found!"
+            echo "No AAB found!"
             exit 1
           fi
         shell: bash
 
-      - name: Upload APK
+      - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk
-          path: sen-v${{ needs.check-tag.outputs.version }}-android-unsigned.apk
+          name: android-aab
+          path: sen-v${{ needs.check-tag.outputs.version }}-android.aab
           retention-days: 7
 
   # --------------------------------------------------------------------------
   # 5. CREATE RELEASE JOB
+  #    Note: no checkout needed here — softprops/action-gh-release communicates
+  #    entirely via the GitHub API using the token. The release notes are also
+  #    generated server-side by GitHub, so no local repo access is required.
   # --------------------------------------------------------------------------
   create-release:
     name: Create GitHub Release
