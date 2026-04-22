@@ -168,6 +168,62 @@ async function runCleanup(dryRun: boolean) {
   }
 }
 
+// Parses en.yml source lines into a flat key→value map.
+function parseSourceToMap(sourceLines: string[]): Record<string, string> {
+  const keyRegex = /^([\w.]+):\s*(?:"(.*)"|'(.*)'|(.*))$/;
+  const map: Record<string, string> = {};
+  for (const line of sourceLines) {
+    const match = line.match(keyRegex);
+    if (match && match[1]) {
+      map[match[1]] = match[2] ?? match[3] ?? match[4] ?? "";
+    }
+  }
+  return map;
+}
+
+// Retrieves the content of en.yml as it exists in the latest git commit (HEAD).
+// Returns null if the file is not yet tracked, no commits exist, or git is unavailable.
+async function getCommittedSourceContent(): Promise<string | null> {
+  try {
+    // Resolve the repository root so we can build a path relative to it
+    const rootProc = Bun.spawn(["git", "rev-parse", "--show-toplevel"], {
+      cwd: LOCALES_DIR,
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    const repoRoot = (await new Response(rootProc.stdout).text()).trim();
+    if (await rootProc.exited !== 0) return null;
+
+    // Build the git-style relative path (always forward slashes)
+    const relPath = path.relative(repoRoot, SOURCE_FILE).replace(/\\/g, "/");
+
+    const proc = Bun.spawn(["git", "show", `HEAD:${relPath}`], {
+      cwd: repoRoot,
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+
+    if (await proc.exited !== 0) return null;
+
+    return await new Response(proc.stdout).text();
+  } catch {
+    return null;
+  }
+}
+
+// Compares the current working-tree en.yml map against the last committed version.
+// Returns keys whose English values have been modified (excludes brand-new keys,
+// which are handled by the regular missing-key sync flow in prepareTask).
+function detectChangedKeys(current: Record<string, string>, committed: Record<string, string>): string[] {
+  const changed: string[] = [];
+  for (const [key, value] of Object.entries(current)) {
+    if (key in committed && committed[key] !== value) {
+      changed.push(key);
+    }
+  }
+  return changed;
+}
+
 interface LangTask {
   file: string;
   langCode: string;
@@ -178,7 +234,9 @@ interface LangTask {
   hasFailed: boolean;
 }
 
-async function prepareTask(targetFile: string, forceKeys?: string[]): Promise<LangTask> {
+// changedKeys: keys detected as modified in en.yml versus the last commit — always re-translated
+// regardless of whether a translation already exists in the target file.
+async function prepareTask(targetFile: string, forceKeys?: string[], changedKeys?: string[]): Promise<LangTask> {
   const langCode = path.basename(targetFile, ".yml");
   const langName = LANGUAGE_MAP[langCode] || langCode;
 
@@ -203,9 +261,13 @@ async function prepareTask(targetFile: string, forceKeys?: string[]): Promise<La
       const sourceValue = match[2] || match[3] || match[4] || "";
 
       if (forceKeys) {
-        if (forceKeys.includes(key)) {
+        // When specific keys are requested by the user, also include any changed keys
+        if (forceKeys.includes(key) || changedKeys?.includes(key)) {
           syncKeys[key] = sourceValue;
         }
+      } else if (changedKeys?.includes(key)) {
+        // Key exists in target but its English source was updated — force re-translation
+        syncKeys[key] = sourceValue;
       } else if (targetData[key] === undefined) {
         syncKeys[key] = sourceValue;
       }
@@ -313,7 +375,7 @@ async function main() {
     const sourceLines = sourceRaw.split(/\r?\n/);
     const keyRegex = /^([\w.]+):\s*(?:"(.*)"|'(.*)'|(.*))$/;
     const allKeysInSource: string[] = [];
-    
+
     for (const line of sourceLines) {
       const match = line.match(keyRegex);
       if (match && match[1]) allKeysInSource.push(match[1]);
@@ -333,20 +395,43 @@ async function main() {
         }
       }
     }
-    
+
     if (finalKeys.length === 0) {
       console.error("Error: No valid keys found to synchronize.");
       process.exit(1);
     }
-    
+
     console.log(`Synchronizing ${finalKeys.length} specific keys...`);
+  }
+
+  // 3. Detect keys whose English values changed compared to the last git commit.
+  // Changed keys are scheduled for re-translation even if the target file already has a value for them.
+  const currentSourceRaw = await Bun.file(SOURCE_FILE).text();
+  const currentSourceMap = parseSourceToMap(currentSourceRaw.split(/\r?\n/));
+
+  let changedKeys: string[] = [];
+  const committedContent = await getCommittedSourceContent();
+
+  if (committedContent !== null) {
+    const committedMap = parseSourceToMap(committedContent.split(/\r?\n/));
+    changedKeys = detectChangedKeys(currentSourceMap, committedMap);
+
+    if (changedKeys.length > 0) {
+      console.log(`\nDetected ${changedKeys.length} changed key(s) in en.yml vs last commit (will be re-translated):`);
+      for (const key of changedKeys) {
+        console.log(`  [~] ${key}: "${committedMap[key]}" → "${currentSourceMap[key]}"`);
+      }
+      console.log();
+    }
+  } else {
+    console.log(`Note: Could not read committed en.yml from git — skipping change detection.`);
   }
 
   let hasErrors = false;
   const tasks: LangTask[] = [];
 
   for (const file of files) {
-    tasks.push(await prepareTask(file, finalKeys));
+    tasks.push(await prepareTask(file, finalKeys, changedKeys));
   }
 
   let totalSync = 0;
@@ -391,7 +476,7 @@ async function main() {
               hasErrors = true;
               continue;
             }
-            
+
             const requestedKeys = Object.keys(task.syncKeys);
             const returnedKeys = Object.keys(returnedTranslations);
             const reallyMissingKeys = requestedKeys.filter(k => !returnedKeys.includes(k));
@@ -418,7 +503,7 @@ async function main() {
           try {
             console.log(`\nProcessing ${task.langName} (${task.langCode}.yml)...`);
             const translations = await translate(task.syncKeys, task.langName, GEMINI_API_KEY as string);
-            
+
             const requestedKeys = Object.keys(task.syncKeys);
             const returnedKeys = Object.keys(translations);
             const reallyMissingKeys = requestedKeys.filter(k => !returnedKeys.includes(k));
@@ -426,7 +511,7 @@ async function main() {
             if (reallyMissingKeys.length > 0) {
               throw new Error(`The AI model skipped some keys! Missing: ${reallyMissingKeys.join(", ")}`);
             }
-            
+
             task.translations = translations;
           } catch (error: any) {
             console.error(`  [X] AI Translation failed for ${task.langName}: ${error.message}`);
@@ -448,15 +533,15 @@ async function main() {
         }
         await finalizeTask(task, dryRun);
       } else {
-         console.log(`\nProcessing ${task.langName} (${task.langCode}.yml)...`);
-         console.log(`  All keys up to date.`);
+        console.log(`\nProcessing ${task.langName} (${task.langCode}.yml)...`);
+        console.log(`  All keys up to date.`);
       }
     }
   } else {
-     for (const task of tasks) {
-         console.log(`\nProcessing ${task.langName} (${task.langCode}.yml)...`);
-         console.log(`  All keys up to date.`);
-     }
+    for (const task of tasks) {
+      console.log(`\nProcessing ${task.langName} (${task.langCode}.yml)...`);
+      console.log(`  All keys up to date.`);
+    }
   }
 
   if (hasErrors) {
@@ -469,4 +554,3 @@ main().catch((error) => {
   console.error(`Finished with a critical error: ${error.message}`);
   process.exit(1);
 });
-
