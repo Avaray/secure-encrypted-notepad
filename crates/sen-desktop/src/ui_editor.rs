@@ -751,9 +751,14 @@ impl EditorApp {
 
             // Draw line numbers aligned with galley rows
             let rows = &galley_data.rows;
-            let first_visible_row_idx = rows.partition_point(|row| galley_pos_data.y + row.max_y() < full_clip_rect.top() - editor_font_size);
-            
-            let mut current_line: usize = 1 + rows[..first_visible_row_idx].iter().filter(|r| r.ends_with_newline).count();
+            let first_visible_row_idx = rows.partition_point(|row| {
+                galley_pos_data.y + row.max_y() < full_clip_rect.top() - editor_font_size
+            });
+
+            let mut current_line: usize = 1 + rows[..first_visible_row_idx]
+                .iter()
+                .filter(|r| r.ends_with_newline)
+                .count();
             let mut is_continuation = if first_visible_row_idx > 0 {
                 !rows[first_visible_row_idx - 1].ends_with_newline
             } else {
@@ -768,8 +773,7 @@ impl EditorApp {
                     break;
                 }
 
-                if !is_continuation
-                {
+                if !is_continuation {
                     let text_color = if Some(current_line) == highlight_line {
                         foreground_color
                     } else {

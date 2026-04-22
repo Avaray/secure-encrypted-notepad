@@ -339,7 +339,10 @@ impl EditorApp {
             if self.settings.stealth_mode {
                 // In stealth mode, always strip the extension to produce a raw binary file.
                 // Do not propose the original .txt extension to avoid accidental overwrites.
-                path.file_stem().unwrap_or_default().to_string_lossy().to_string()
+                path.file_stem()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string()
             } else {
                 if path.extension().and_then(|e| e.to_str()).unwrap_or("") == "sen" {
                     path.file_name()

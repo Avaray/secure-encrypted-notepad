@@ -858,7 +858,6 @@ impl EditorApp {
                     }
                 }
             }
-
         }
     }
 
@@ -1142,7 +1141,8 @@ pub(crate) fn themed_scroll_area<R>(
             *inner_ui.visuals_mut() = original_visuals;
             add_contents(inner_ui)
         })
-    }).inner
+    })
+    .inner
 }
 
 pub(crate) trait ScrollAreaExt {

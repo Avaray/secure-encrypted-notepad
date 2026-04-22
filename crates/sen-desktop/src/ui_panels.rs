@@ -2623,8 +2623,11 @@ if ui
             }
         }
         let copy_color_key = egui::Id::new("__theme_copied_color__");
-        
-        let btn_clicked = ui.data_mut(|d| d.remove_temp::<bool>(egui::Id::new("__theme_color_btn_clicked__")).unwrap_or(false));
+
+        let btn_clicked = ui.data_mut(|d| {
+            d.remove_temp::<bool>(egui::Id::new("__theme_color_btn_clicked__"))
+                .unwrap_or(false)
+        });
         if ui.data(|d| d.get_temp::<[u8; 4]>(copy_color_key).is_some()) {
             if ui.input(|i| i.pointer.any_pressed()) && !btn_clicked {
                 ui.data_mut(|d| {
@@ -3198,10 +3201,10 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 4], popup_id: 
             } else {
                 // Normal border
                 let mut stroke = visuals.bg_stroke;
-                
+
                 let bg_color = ui.visuals().panel_fill;
                 let contrast = w3c_contrast_ratio(color32, bg_color);
-                
+
                 // If contrast is very low and the button is not hovered, use the text color to ensure visibility.
                 // On hover, we allow the theme's hover border color to be displayed normally.
                 if contrast < 1.3 && !response.hovered() {
@@ -3260,7 +3263,9 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 4], popup_id: 
                 if !area_response.response.rect.contains(pos) && !response.rect.contains(pos) {
                     ui.data_mut(|d| d.insert_temp(popup_id, false));
                 } else {
-                    ui.data_mut(|d| d.insert_temp(egui::Id::new("__theme_color_btn_clicked__"), true));
+                    ui.data_mut(|d| {
+                        d.insert_temp(egui::Id::new("__theme_color_btn_clicked__"), true)
+                    });
                 }
             }
         }
