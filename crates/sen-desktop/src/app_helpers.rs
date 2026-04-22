@@ -1070,7 +1070,7 @@ pub fn render_settings_row<F>(
     F: FnOnce(&mut egui::Ui),
 {
     flex_row(ui, |ui| {
-        ui.label(label);
+        ui.add(egui::Label::new(label).selectable(false));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             add_contents(ui)
         });

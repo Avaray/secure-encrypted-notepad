@@ -1780,6 +1780,7 @@ if ui
         let mut theme_to_save: Option<crate::theme::Theme> = None;
         let mut should_reset = false;
         ui.vertical(|ui| {
+            ui.style_mut().interaction.selectable_labels = false;
             let h = ls.get_height("theme_header");
             if self.render_panel_header(ui, &t!("theme.title"), None, true, h) {
                 self.show_theme_editor = false;
