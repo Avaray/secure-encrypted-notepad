@@ -1146,8 +1146,6 @@ if ui
                                             rich_text = rich_text.color(self.current_theme.colors.warning_color());
                                         }
 
-                                        // right_to_left places the buttons on the far right first, then the nested
-                                        // left_to_right layout fills all remaining space with the label (text stays left-aligned).
                                         let (label_res, delete_clicked, revert_clicked) = ui.with_layout(
                                             egui::Layout::right_to_left(egui::Align::Center),
                                             |ui| {
@@ -2028,12 +2026,12 @@ if ui
 
                                     let render_cat_header = |ui: &mut egui::Ui, text: std::borrow::Cow<'_, str>, color: egui::Color32| {
                                         ui.add_space(8.0);
-                                        ui.label(
+                                        ui.add(egui::Label::new(
                                             egui::RichText::new(text)
                                                 .color(color)
                                                 .italics()
                                                 .strong(),
-                                        );
+                                        ).selectable(false));
                                     };
 
                                      let mut hardcoded_defaults = match theme.color_scheme {
@@ -2344,57 +2342,6 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    if edit_optional_color(
-                                        &t!("theme.chk_check"),
-                                        &mut theme.colors.checkbox_check,
-                                        [200, 200, 200, 255],
-                                        ref_colors.checkbox_check,
-                                        "chk_check_copy",
-                                        ui,
-                                    ) {
-                                        theme_changed = true;
-                                    }
-                                    if edit_optional_color(
-                                        &t!("theme.text_edit_bg"),
-                                        &mut theme.colors.text_edit_bg,
-                                        [15, 15, 15, 255],
-                                        ref_colors.text_edit_bg,
-                                        "text_edit_bg_copy",
-                                        ui,
-                                    ) {
-                                        theme_changed = true;
-                                    }
-                                    if edit_optional_color(
-                                        &t!("theme.selection_text"),
-                                        &mut theme.colors.selection_text,
-                                        [255, 255, 255, 255],
-                                        ref_colors.selection_text,
-                                        "sel_text_copy",
-                                        ui,
-                                    ) {
-                                        theme_changed = true;
-                                    }
-                                    if edit_optional_color(
-                                        &t!("theme.separator"),
-                                        &mut theme.colors.separator,
-                                        [80, 80, 80, 255],
-                                        ref_colors.separator,
-                                        "sep_copy",
-                                        ui,
-                                    ) {
-                                        theme_changed = true;
-                                    }
-
-                                    if edit_optional_color(
-                                        &t!("theme.tree_line"),
-                                        &mut theme.colors.tree_line,
-                                        [100, 100, 100, 255],
-                                        ref_colors.tree_line,
-                                        "tree_line_copy",
-                                        ui,
-                                    ) {
-                                        theme_changed = true;
-                                    }
 
                                     // --- WINDOW & PANELS GEOMETRY ---
                                     render_cat_header(ui, t!("theme.cat_geometry"), fg_color32);
@@ -2466,17 +2413,6 @@ if ui
 
                                     // --- SYNTAX ALERTS ---
                                     render_cat_header(ui, t!("theme.cat_syntax"), fg_color32);
-                                    ui.add_space(4.0);
-                                    if edit_optional_color(
-                                        &t!("theme.comment"),
-                                        &mut theme.colors.comment,
-                                        hardcoded_defaults.comment.unwrap(),
-                                        ref_colors.comment,
-                                        "comment_pick",
-                                        ui,
-                                     ) {
-                                        theme_changed = true;
-                                    }
                                     ui.add_space(4.0);
                                     if edit_optional_color(
                                         &t!("theme.success_label"),
@@ -2553,6 +2489,64 @@ if ui
                                         hardcoded_defaults.scrollbar_active.unwrap(),
                                         ref_colors.scrollbar_active,
                                         "sb_active_pick",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+
+                                    // --- MISCELLANEOUS ---
+                                    render_cat_header(ui, t!("theme.cat_misc"), fg_color32);
+                                    ui.add_space(4.0);
+                                    if edit_optional_color(
+                                        &t!("theme.comment"),
+                                        &mut theme.colors.comment,
+                                        hardcoded_defaults.comment.unwrap(),
+                                        ref_colors.comment,
+                                        "comment_pick",
+                                        ui,
+                                     ) {
+                                        theme_changed = true;
+                                    }
+                                    ui.add_space(4.0);
+                                    if edit_optional_color(
+                                        &t!("theme.tree_line"),
+                                        &mut theme.colors.tree_line,
+                                        [100, 100, 100, 255],
+                                        ref_colors.tree_line,
+                                        "tree_line_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    ui.add_space(4.0);
+                                    if edit_optional_color(
+                                        &t!("theme.text_edit_bg"),
+                                        &mut theme.colors.text_edit_bg,
+                                        [15, 15, 15, 255],
+                                        ref_colors.text_edit_bg,
+                                        "text_edit_bg_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    ui.add_space(4.0);
+                                    if edit_optional_color(
+                                        &t!("theme.selection_text"),
+                                        &mut theme.colors.selection_text,
+                                        [255, 255, 255, 255],
+                                        ref_colors.selection_text,
+                                        "sel_text_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    ui.add_space(4.0);
+                                    if edit_optional_color(
+                                        &t!("theme.separator"),
+                                        &mut theme.colors.separator,
+                                        [80, 80, 80, 255],
+                                        ref_colors.separator,
+                                        "sep_copy",
                                         ui,
                                     ) {
                                         theme_changed = true;
