@@ -1,6 +1,6 @@
-use crate::theme::ThemeColorsExt;
 use crate::EditorApp;
 use eframe::egui;
+use sen_core::theme_egui::ThemeColorsExt;
 use sen_core::theme_egui::UiSeparatorExt;
 
 impl EditorApp {

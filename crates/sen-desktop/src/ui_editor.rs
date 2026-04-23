@@ -1,7 +1,7 @@
 use crate::app_helpers::ScrollAreaExt;
-use crate::theme::ThemeColorsExt;
 use crate::EditorApp;
 use eframe::egui;
+use sen_core::theme_egui::ThemeColorsExt;
 
 fn char_to_byte_idx(s: &str, char_idx: usize) -> usize {
     s.char_indices()

@@ -1,9 +1,9 @@
 use crate::app_helpers::ScrollAreaExt;
 use crate::app_state::{BatchMode, KeyStatus};
 use crate::crypto::{decrypt_bytes, encrypt_bytes};
-use crate::theme::ThemeColorsExt;
 use crate::EditorApp;
 use eframe::egui;
+use sen_core::theme_egui::ThemeColorsExt;
 use sen_core::theme_egui::UiSeparatorExt;
 
 use std::path::Path;

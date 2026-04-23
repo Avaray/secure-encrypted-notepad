@@ -7,8 +7,8 @@ use std::time::Instant;
 use crate::app_state::{BatchMode, KeyStatus, LogEntry, LogLevel, PendingAction};
 use crate::history::DocumentWithHistory;
 use crate::settings::Settings;
-use crate::theme::{load_themes, Theme};
 use sen_core::models::FileTreeEntry;
+use sen_core::theme::{load_themes, Theme};
 use sen_core::theme_egui::{ThemeColorsExt, ThemeExt};
 
 #[derive(Debug, Clone, Default)]

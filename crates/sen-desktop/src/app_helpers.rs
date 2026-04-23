@@ -1,8 +1,9 @@
 use crate::app_state::{KeyStatus, LogEntry, LogLevel};
-use crate::theme::{ThemeColorsExt, ThemeExt};
 use crate::EditorApp;
 use sen_core::models::FileTreeEntry;
+use sen_core::theme;
 use sen_core::theme_egui::UiSeparatorExt;
+use sen_core::theme_egui::{ThemeColorsExt, ThemeExt};
 
 use std::path::PathBuf;
 
@@ -1111,12 +1112,10 @@ pub(crate) fn square_icon_btn(
 /// Run a ScrollArea with isolated theme properties specifically for scrollbars
 pub(crate) fn themed_scroll_area<R>(
     ui: &mut egui::Ui,
-    theme_colors: &crate::theme::ThemeColors,
+    theme_colors: &theme::ThemeColors,
     scroll_area: egui::ScrollArea,
     add_contents: impl FnOnce(&mut egui::Ui) -> R,
 ) -> egui::scroll_area::ScrollAreaOutput<R> {
-    use crate::theme::ThemeColorsExt;
-
     let original_visuals = ui.visuals().clone();
 
     ui.scope(|outer_ui| {
@@ -1148,7 +1147,7 @@ pub(crate) fn themed_scroll_area<R>(
 pub(crate) trait ScrollAreaExt {
     fn show_themed<R>(
         self,
-        theme_colors: crate::theme::ThemeColors,
+        theme_colors: theme::ThemeColors,
         ui: &mut egui::Ui,
         add_contents: impl FnOnce(&mut egui::Ui) -> R,
     ) -> egui::scroll_area::ScrollAreaOutput<R>;
@@ -1157,7 +1156,7 @@ pub(crate) trait ScrollAreaExt {
 impl ScrollAreaExt for egui::ScrollArea {
     fn show_themed<R>(
         self,
-        theme_colors: crate::theme::ThemeColors,
+        theme_colors: theme::ThemeColors,
         ui: &mut egui::Ui,
         add_contents: impl FnOnce(&mut egui::Ui) -> R,
     ) -> egui::scroll_area::ScrollAreaOutput<R> {

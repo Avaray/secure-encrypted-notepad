@@ -193,7 +193,7 @@ impl Icons {
             ),
             spon_oc: Self::load_svg(
                 ctx,
-                include_bytes!("../../sen-desktop/assets/sponsor/SimpleIconsOpencollective.svg"),
+                include_bytes!("../../sen-desktop/assets/sponsor/BiOpencollective.svg"),
                 "spon_oc",
             ),
             flag_en: Self::load_svg(

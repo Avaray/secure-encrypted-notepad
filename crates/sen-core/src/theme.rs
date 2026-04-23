@@ -93,10 +93,6 @@ pub struct ThemeColors {
     #[serde(default, with = "opt_alpha_color")]
     pub hyperlink: Option<[u8; 4]>,
 
-    // --- Interactive Widgets ---
-    #[serde(default, with = "opt_alpha_color")]
-    pub checkbox_check: Option<[u8; 4]>,
-
     // --- Editor Additions ---
     #[serde(default, with = "opt_alpha_color")]
     pub editor_background: Option<[u8; 4]>,
@@ -188,7 +184,6 @@ impl ThemeColors {
 
             heading_text: None,
             hyperlink: None,
-            checkbox_check: None,
             editor_background: None,
             text_edit_bg: None,
             selection_text: None,
@@ -241,7 +236,6 @@ impl ThemeColors {
 
             heading_text: None,
             hyperlink: None,
-            checkbox_check: None,
             editor_background: None,
             text_edit_bg: None,
             selection_text: None,
@@ -306,7 +300,6 @@ impl ThemeColors {
         res!(whitespace_symbols);
         res!(heading_text);
         res!(hyperlink);
-        res!(checkbox_check);
         res!(scrollbar_idle);
         res!(scrollbar_hover);
         res!(scrollbar_active);

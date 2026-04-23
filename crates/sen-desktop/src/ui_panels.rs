@@ -1,10 +1,11 @@
 use crate::app_helpers::ScrollAreaExt;
 use crate::app_state::{KeyStatus, LogLevel};
 use crate::history::HistoryEntry;
-use crate::theme::{ThemeColorsExt, ThemeExt};
 use crate::EditorApp;
 use eframe::egui;
+use sen_core::theme;
 use sen_core::theme_egui::UiSeparatorExt;
+use sen_core::theme_egui::{ThemeColorsExt, ThemeExt};
 use std::path::{Path, PathBuf};
 impl EditorApp {
     /// Render settings panel
@@ -561,7 +562,7 @@ self.render_heading(ui, t!("settings.appearance"));
                             }
                         });
                     if ui.button(t!("settings.refresh")).clicked() {
-                        self.themes = crate::theme::load_themes();
+                        self.themes = theme::load_themes();
                         self.log_info("Themes refreshed");
                     }
                 });
@@ -935,7 +936,7 @@ if ui
 
                         #[cfg(any(target_os = "windows", target_os = "linux"))]
                         {
-                            
+
                             if ui.button(t!("settings.associate_sen"))
                                 .on_hover_text(t!("settings.associate_sen_tooltip"))
                                 .clicked() {
@@ -946,7 +947,7 @@ if ui
 
                         #[cfg(target_os = "macos")]
                         {
-                            
+
                             ui.add(egui::Label::new(egui::RichText::new(t!("settings.assoc_macos")).weak()));
                         }
 
@@ -960,7 +961,7 @@ if ui
                             let _ = self.settings.save(None);
                         }
 
-                            
+
                         });
                 });
         });
@@ -1795,7 +1796,7 @@ if ui
     pub(crate) fn render_theme_editor_panel(&mut self, ui: &mut egui::Ui) {
         let mut ls = std::mem::take(&mut self.layout_state);
         let mut save_clicked = false;
-        let mut theme_to_save: Option<crate::theme::Theme> = None;
+        let mut theme_to_save: Option<theme::Theme> = None;
         let mut should_reset = false;
         ui.vertical(|ui| {
             ui.style_mut().interaction.selectable_labels = false;
@@ -1878,9 +1879,9 @@ if ui
                                     .color(self.current_theme.colors.error_color()),
                             );
                             if ui.button(t!("settings.yes")).clicked() {
-                                let _ = crate::theme::delete_theme(&theme.name);
-                                self.themes = crate::theme::load_themes(); // Reload
-                                self.editing_theme = Some(crate::theme::Theme::dark());
+                                let _ = theme::delete_theme(&theme.name);
+                                self.themes = theme::load_themes(); // Reload
+                                self.editing_theme = Some(theme::Theme::dark());
                                 self.show_delete_theme_confirmation = false;
                                 // Reset to safe default
                             }
@@ -1921,12 +1922,12 @@ if ui
                         sen_core::ui::Select::new(format!("{:?}", theme.color_scheme))
                             .with_width_hint(ui, "Light")
                             .show_ui(ui, |ui| {
-                                if ui.selectable_label(matches!(theme.color_scheme, crate::theme::ColorScheme::Dark), t!("theme.dark")).clicked() {
-                                    theme.color_scheme = crate::theme::ColorScheme::Dark;
+                                if ui.selectable_label(matches!(theme.color_scheme, theme::ColorScheme::Dark), t!("theme.dark")).clicked() {
+                                    theme.color_scheme = theme::ColorScheme::Dark;
                                     theme_changed = true;
                                 }
-                                if ui.selectable_label(matches!(theme.color_scheme, crate::theme::ColorScheme::Light), t!("theme.light")).clicked() {
-                                    theme.color_scheme = crate::theme::ColorScheme::Light;
+                                if ui.selectable_label(matches!(theme.color_scheme, theme::ColorScheme::Light), t!("theme.light")).clicked() {
+                                    theme.color_scheme = theme::ColorScheme::Light;
                                     theme_changed = true;
                                 }
                             });
@@ -1937,15 +1938,15 @@ if ui
                 let is_builtin = theme.name == "Dark" || theme.name == "Light";
                 let ref_colors = if is_builtin {
                     match theme.color_scheme {
-                        crate::theme::ColorScheme::Light => crate::theme::ThemeColors::light(),
-                        crate::theme::ColorScheme::Dark => crate::theme::ThemeColors::dark(),
+                        theme::ColorScheme::Light => theme::ThemeColors::light(),
+                        theme::ColorScheme::Dark => theme::ThemeColors::dark(),
                     }
                 } else if let Some(ref orig) = self.original_editing_theme {
                     orig.colors.clone()
                 } else {
                     match theme.color_scheme {
-                        crate::theme::ColorScheme::Light => crate::theme::ThemeColors::light(),
-                        crate::theme::ColorScheme::Dark => crate::theme::ThemeColors::dark(),
+                        theme::ColorScheme::Light => theme::ThemeColors::light(),
+                        theme::ColorScheme::Dark => theme::ThemeColors::dark(),
                     }
                 };
                 egui::ScrollArea::both()
@@ -1964,7 +1965,7 @@ if ui
                                     egui::RichText::new(t!("theme.colors_heading"))
                                         .color(head_color),
                                 );
-                                
+
                                 ui.vertical(|ui| {
                                     // --- HELPER CLOSURES FOR NEW OPTIONAL FIELDS ---
                                     let edit_optional_color =
@@ -2052,15 +2053,15 @@ if ui
                                     };
 
                                      let mut hardcoded_defaults = match theme.color_scheme {
-                                         crate::theme::ColorScheme::Light => crate::theme::ThemeColors::light(),
-                                         crate::theme::ColorScheme::Dark => crate::theme::ThemeColors::dark(),
+                                         theme::ColorScheme::Light => theme::ThemeColors::light(),
+                                         theme::ColorScheme::Dark => theme::ThemeColors::dark(),
                                      };
                                      hardcoded_defaults.resolve(theme.color_scheme);
                                      let fg_color32 = theme.colors.heading_color();
 
                                     // --- CORE UI BACKGROUNDS & ACCENTS ---
                                     render_cat_header(ui, t!("theme.cat_core"), fg_color32);
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.bg"),
                                         &mut theme.colors.background,
@@ -2071,7 +2072,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.selection_bg"),
                                         &mut theme.colors.selection_background,
@@ -2084,7 +2085,7 @@ if ui
                                     }
 
                                     let icon_def =
-                                        if theme.color_scheme == crate::theme::ColorScheme::Dark {
+                                        if theme.color_scheme == theme::ColorScheme::Dark {
                                             [200, 200, 200, 255]
                                         } else {
                                             [80, 80, 80, 255]
@@ -2099,7 +2100,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.icon_hover"),
                                         &mut theme.colors.icon_hover,
@@ -2113,7 +2114,7 @@ if ui
 
                                     // --- TYPOGRAPHY ---
                                     render_cat_header(ui, t!("theme.cat_typography"), fg_color32);
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.fg"),
                                         &mut theme.colors.foreground,
@@ -2167,7 +2168,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.line_numbers"),
                                         &mut theme.colors.line_number,
@@ -2178,7 +2179,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.cursor"),
                                         &mut theme.colors.cursor,
@@ -2430,7 +2431,7 @@ if ui
 
                                     // --- SYNTAX ALERTS ---
                                     render_cat_header(ui, t!("theme.cat_syntax"), fg_color32);
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.success_label"),
                                         &mut theme.colors.success,
@@ -2441,7 +2442,7 @@ if ui
                                      ) {
                                         theme_changed = true;
                                     }
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.info_label"),
                                         &mut theme.colors.info,
@@ -2452,7 +2453,7 @@ if ui
                                      ) {
                                         theme_changed = true;
                                     }
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.warning_label"),
                                         &mut theme.colors.warning,
@@ -2463,7 +2464,7 @@ if ui
                                      ) {
                                         theme_changed = true;
                                     }
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.error_label"),
                                         &mut theme.colors.error,
@@ -2477,7 +2478,7 @@ if ui
 
                                     // --- SCROLLBARS ---
                                     render_cat_header(ui, t!("theme.cat_scrollbars"), fg_color32);
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.scrollbar_idle"),
                                         &mut theme.colors.scrollbar_idle,
@@ -2488,7 +2489,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.scrollbar_hover"),
                                         &mut theme.colors.scrollbar_hover,
@@ -2499,7 +2500,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.scrollbar_active"),
                                         &mut theme.colors.scrollbar_active,
@@ -2513,7 +2514,7 @@ if ui
 
                                     // --- MISCELLANEOUS ---
                                     render_cat_header(ui, t!("theme.cat_misc"), fg_color32);
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.comment"),
                                         &mut theme.colors.comment,
@@ -2524,7 +2525,7 @@ if ui
                                      ) {
                                         theme_changed = true;
                                     }
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.tree_line"),
                                         &mut theme.colors.tree_line,
@@ -2535,7 +2536,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.text_edit_bg"),
                                         &mut theme.colors.text_edit_bg,
@@ -2546,7 +2547,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.selection_text"),
                                         &mut theme.colors.selection_text,
@@ -2557,7 +2558,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    
+
                                     if edit_optional_color(
                                         &t!("theme.separator"),
                                         &mut theme.colors.separator,
@@ -2587,20 +2588,20 @@ if ui
                 if is_builtin {
                     // Reset to factory defaults
                     *theme = match theme.color_scheme {
-                        crate::theme::ColorScheme::Light => crate::theme::Theme::light(),
-                        crate::theme::ColorScheme::Dark => crate::theme::Theme::dark(),
+                        theme::ColorScheme::Light => theme::Theme::light(),
+                        theme::ColorScheme::Dark => theme::Theme::dark(),
                     };
                 } else {
                     // Reset to saved file
-                    let all_themes = crate::theme::load_themes();
+                    let all_themes = theme::load_themes();
                     if let Some(saved) = all_themes.iter().find(|t| t.name == theme.name) {
                         *theme = saved.clone();
                     } else {
                         // If not found (e.g. unsaved new theme), maybe reset to parent scheme?
                         // Or just keep as is? Let's reset to scheme default as fallback.
                         *theme = match theme.color_scheme {
-                            crate::theme::ColorScheme::Light => crate::theme::Theme::light(),
-                            crate::theme::ColorScheme::Dark => crate::theme::Theme::dark(),
+                            theme::ColorScheme::Light => theme::Theme::light(),
+                            theme::ColorScheme::Dark => theme::Theme::dark(),
                         };
                         theme.name = theme.name.clone(); // Keep the name if it was a new custom theme
                                                          // Actually if it's new and unsaved, "Reset to Saved" is ambiguous.
@@ -2617,13 +2618,13 @@ if ui
             }
         }
         if let Some(theme) = theme_to_save {
-            match crate::theme::save_theme(&theme) {
+            match theme::save_theme(&theme) {
                 Ok(_) => {
                     self.current_theme = theme.clone();
                     self.original_editing_theme = Some(theme.clone());
                     self.settings.theme_name = theme.name.clone();
                     let _ = self.settings.save(None);
-                    self.themes = crate::theme::load_themes();
+                    self.themes = theme::load_themes();
                     self.status_message = t!("theme.saved_msg", name = theme.name).to_string();
                     self.log_info(t!("theme.saved_msg", name = theme.name));
                 }
@@ -2639,12 +2640,13 @@ if ui
             d.remove_temp::<bool>(egui::Id::new("__theme_color_btn_clicked__"))
                 .unwrap_or(false)
         });
-        if ui.data(|d| d.get_temp::<[u8; 4]>(copy_color_key).is_some()) {
-            if ui.input(|i| i.pointer.any_pressed()) && !btn_clicked {
-                ui.data_mut(|d| {
-                    d.remove_temp::<[u8; 4]>(copy_color_key);
-                });
-            }
+        if ui.data(|d| d.get_temp::<[u8; 4]>(copy_color_key).is_some())
+            && ui.input(|i| i.pointer.any_pressed())
+            && !btn_clicked
+        {
+            ui.data_mut(|d| {
+                d.remove_temp::<[u8; 4]>(copy_color_key);
+            });
         }
 
         self.layout_state = ls;

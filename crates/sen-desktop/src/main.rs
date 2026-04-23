@@ -41,11 +41,9 @@ pub(crate) use sen_core::crypto;
 pub(crate) use sen_core::history;
 pub(crate) use sen_core::settings;
 
-mod desktop_fs;
 mod fonts;
 mod icons;
 mod single_instance;
-mod theme;
 
 // Module declarations for app
 mod app;

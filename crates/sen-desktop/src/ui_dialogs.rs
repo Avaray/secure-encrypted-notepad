@@ -1,8 +1,9 @@
 use crate::app_state::PendingAction;
-use crate::theme::{ThemeColorsExt, ThemeExt};
 use crate::EditorApp;
 use eframe::egui;
+use sen_core::theme;
 use sen_core::theme_egui::UiSeparatorExt;
+use sen_core::theme_egui::{ThemeColorsExt, ThemeExt};
 
 impl EditorApp {
     /// Render confirmation dialog for unsaved changes
@@ -197,7 +198,7 @@ impl EditorApp {
                                         .iter()
                                         .find(|t| t.name == self.settings.theme_name)
                                         .cloned()
-                                        .unwrap_or_else(crate::theme::Theme::dark);
+                                        .unwrap_or_else(theme::Theme::dark);
                                     new_theme.apply(ctx);
                                     self.current_theme = new_theme.clone();
                                     self.editing_theme = Some(new_theme.clone());
@@ -509,12 +510,12 @@ impl EditorApp {
                                 "Buy Me a Coffee",
                                 "https://buymeacoffee.com/avaray",
                             ),
+                            (&self.icons.spon_kofi, "Ko-fi", "https://ko-fi.com/avaray_"),
                             (
                                 &self.icons.spon_oc,
                                 "Open Collective",
                                 "https://opencollective.com/avaray",
                             ),
-                            (&self.icons.spon_kofi, "Ko-fi", "https://ko-fi.com/avaray_"),
                         ];
 
                         // Exact total width calculation for a single row
