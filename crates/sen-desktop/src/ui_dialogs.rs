@@ -441,160 +441,167 @@ impl EditorApp {
                     ui.painter()
                         .rect_filled(rect, 0.0, ui.visuals().window_fill());
 
-                    // Center the inner content vertically and horizontally
-                    ui.vertical_centered(|ui| {
-                        ui.add_space(rect.height() * 0.15); // Dynamic top margin
+                    use crate::app_helpers::ScrollAreaExt;
+                    egui::ScrollArea::vertical()
+                        .auto_shrink([false, false])
+                        .show_themed(self.current_theme.colors.clone(), ui, |ui| {
+                            // Center the inner content vertically and horizontally
+                            ui.vertical_centered(|ui| {
+                                ui.add_space(rect.height() * 0.15); // Dynamic top margin
 
-                        ui.add(egui::Label::new(
-                            egui::RichText::new(t!("dialog.about_title"))
-                                .size(36.0)
-                                .strong(),
-                        ));
-                        ui.add_space(10.0);
-                        ui.label(
-                            egui::RichText::new(t!(
-                                "dialog.about_version",
-                                version = env!("CARGO_PKG_VERSION")
-                            ))
-                            .color(self.current_theme.colors.info_color()),
-                        );
-
-                        ui.add_space(40.0);
-
-                        // Author Info
-                        ui.heading(t!("dialog.about_author_head"));
-                        ui.add_space(5.0);
-                        ui.label(t!("dialog.about_author_body"));
-                        ui.add_space(20.0);
-
-                        // Links Section
-                        ui.heading(t!("dialog.about_links_head"));
-                        ui.add_space(10.0);
-
-                        crate::app_helpers::center_row(ui, |ui| {
-                            ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                                ui.hyperlink_to(
-                                    t!("dialog.about_github"),
-                                    "https://github.com/Avaray/secure-encrypted-notepad",
+                                ui.add(egui::Label::new(
+                                    egui::RichText::new(t!("dialog.about_title"))
+                                        .size(36.0)
+                                        .strong(),
+                                ));
+                                ui.add_space(10.0);
+                                ui.label(
+                                    egui::RichText::new(t!(
+                                        "dialog.about_version",
+                                        version = env!("CARGO_PKG_VERSION")
+                                    ))
+                                    .color(self.current_theme.colors.info_color()),
                                 );
+
+                                ui.add_space(40.0);
+
+                                // Author Info
+                                ui.heading(t!("dialog.about_author_head"));
                                 ui.add_space(5.0);
-                                ui.hyperlink_to(
-                                    t!("dialog.about_bug"),
-                                    "https://github.com/Avaray/secure-encrypted-notepad/issues",
-                                );
-                            });
-                        });
+                                ui.label(t!("dialog.about_author_body"));
+                                ui.add_space(20.0);
 
-                        ui.add_space(20.0);
+                                // Links Section
+                                ui.heading(t!("dialog.about_links_head"));
+                                ui.add_space(10.0);
 
-                        // Financial Support
-                        ui.heading(t!("dialog.about_support_head"));
-                        ui.add_space(5.0);
-                        ui.label(t!("dialog.about_support_body"));
-                        ui.add_space(10.0);
-
-                        // List of buttons to draw
-                        let sponsors = [
-                            (
-                                &self.icons.spon_github,
-                                "GitHub Sponsors",
-                                "https://github.com/sponsors/Avaray",
-                            ),
-                            (
-                                &self.icons.spon_patreon,
-                                "Patreon",
-                                "https://patreon.com/Avaray_",
-                            ),
-                            (
-                                &self.icons.spon_bmc,
-                                "Buy Me a Coffee",
-                                "https://buymeacoffee.com/avaray",
-                            ),
-                            (&self.icons.spon_kofi, "Ko-fi", "https://ko-fi.com/avaray_"),
-                            (
-                                &self.icons.spon_oc,
-                                "Open Collective",
-                                "https://opencollective.com/avaray",
-                            ),
-                        ];
-
-                        // Calculate all widths first
-                        let item_spacing = 10.0;
-                        let font_id = egui::FontId::proportional(24.0);
-                        let max_width = rect.width() * 0.9;
-
-                        let mut buttons_with_widths = Vec::new();
-                        for (icon, label, url) in &sponsors {
-                            let text_width = ui
-                                .painter()
-                                .layout_no_wrap(
-                                    label.to_string(),
-                                    font_id.clone(),
-                                    egui::Color32::WHITE,
-                                )
-                                .rect
-                                .width();
-                            let btn_width = 16.0 * 2.0 + 40.0 + 12.0 + text_width;
-                            buttons_with_widths.push((*icon, *label, *url, btn_width));
-                        }
-
-                        // Group into rows based on available width
-                        let mut rows = Vec::new();
-                        let mut current_row = Vec::new();
-                        let mut current_row_width = 0.0;
-
-                        for item in buttons_with_widths {
-                            let btn_width = item.3;
-                            if !current_row.is_empty()
-                                && current_row_width + item_spacing + btn_width > max_width
-                            {
-                                rows.push((current_row, current_row_width));
-                                current_row = Vec::new();
-                                current_row_width = 0.0;
-                            }
-
-                            if !current_row.is_empty() {
-                                current_row_width += item_spacing;
-                            }
-                            current_row_width += btn_width;
-                            current_row.push(item);
-                        }
-                        if !current_row.is_empty() {
-                            rows.push((current_row, current_row_width));
-                        }
-
-                        // Render each row centered individually
-                        ui.vertical(|ui| {
-                            ui.spacing_mut().item_spacing.y = item_spacing;
-                            for (row, row_width) in rows {
                                 crate::app_helpers::center_row(ui, |ui| {
-                                    let left_space =
-                                        (ui.available_width() - row_width).max(0.0) / 2.0;
-                                    ui.add_space(left_space);
-                                    ui.horizontal(|ui| {
-                                        ui.spacing_mut().item_spacing.x = item_spacing;
-                                        for (icon, label, url, _) in row {
-                                            Self::sponsor_link(ui, icon, label, url);
-                                        }
+                                    ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                                        ui.hyperlink_to(
+                                            t!("dialog.about_github"),
+                                            "https://github.com/Avaray/secure-encrypted-notepad",
+                                        );
+                                        ui.add_space(5.0);
+                                        ui.hyperlink_to(
+                                            t!("dialog.about_bug"),
+                                            "https://github.com/Avaray/secure-encrypted-notepad/issues",
+                                        );
                                     });
                                 });
-                            }
+
+                                ui.add_space(20.0);
+
+                                // Financial Support
+                                ui.heading(t!("dialog.about_support_head"));
+                                ui.add_space(5.0);
+                                ui.label(t!("dialog.about_support_body"));
+                                ui.add_space(10.0);
+
+                                // List of buttons to draw
+                                let sponsors = [
+                                    (
+                                        &self.icons.spon_github,
+                                        "GitHub Sponsors",
+                                        "https://github.com/sponsors/Avaray",
+                                    ),
+                                    (
+                                        &self.icons.spon_patreon,
+                                        "Patreon",
+                                        "https://patreon.com/Avaray_",
+                                    ),
+                                    (
+                                        &self.icons.spon_bmc,
+                                        "Buy Me a Coffee",
+                                        "https://buymeacoffee.com/avaray",
+                                    ),
+                                    (&self.icons.spon_kofi, "Ko-fi", "https://ko-fi.com/avaray_"),
+                                    (
+                                        &self.icons.spon_oc,
+                                        "Open Collective",
+                                        "https://opencollective.com/avaray",
+                                    ),
+                                ];
+
+                                // Calculate all widths first
+                                let item_spacing = 10.0;
+                                let font_id = egui::FontId::proportional(24.0);
+                                let max_width = rect.width() * 0.9;
+
+                                let mut buttons_with_widths = Vec::new();
+                                for (icon, label, url) in &sponsors {
+                                    let text_width = ui
+                                        .painter()
+                                        .layout_no_wrap(
+                                            label.to_string(),
+                                            font_id.clone(),
+                                            egui::Color32::WHITE,
+                                        )
+                                        .rect
+                                        .width();
+                                    let btn_width = 16.0 * 2.0 + 40.0 + 12.0 + text_width;
+                                    buttons_with_widths.push((*icon, *label, *url, btn_width));
+                                }
+
+                                // Group into rows based on available width
+                                let mut rows = Vec::new();
+                                let mut current_row = Vec::new();
+                                let mut current_row_width = 0.0;
+
+                                for item in buttons_with_widths {
+                                    let btn_width = item.3;
+                                    if !current_row.is_empty()
+                                        && current_row_width + item_spacing + btn_width > max_width
+                                    {
+                                        rows.push((current_row, current_row_width));
+                                        current_row = Vec::new();
+                                        current_row_width = 0.0;
+                                    }
+
+                                    if !current_row.is_empty() {
+                                        current_row_width += item_spacing;
+                                    }
+                                    current_row_width += btn_width;
+                                    current_row.push(item);
+                                }
+                                if !current_row.is_empty() {
+                                    rows.push((current_row, current_row_width));
+                                }
+
+                                // Render each row centered individually
+                                ui.vertical(|ui| {
+                                    ui.spacing_mut().item_spacing.y = item_spacing;
+                                    for (row, row_width) in rows {
+                                        crate::app_helpers::center_row(ui, |ui| {
+                                            let left_space =
+                                                (ui.available_width() - row_width).max(0.0) / 2.0;
+                                            ui.add_space(left_space);
+                                            ui.horizontal(|ui| {
+                                                ui.spacing_mut().item_spacing.x = item_spacing;
+                                                for (icon, label, url, _) in row {
+                                                    Self::sponsor_link(ui, icon, label, url);
+                                                }
+                                            });
+                                        });
+                                    }
+                                });
+
+                                ui.add_space(50.0);
+
+                                // Close Button
+                                // Let's make it look prominent
+                                let close_btn = egui::Button::new(
+                                    egui::RichText::new(t!("dialog.btn_close")).size(20.0),
+                                )
+                                .fill(ui.visuals().selection.bg_fill)
+                                .corner_radius(4.0);
+
+                                if ui.add(close_btn).clicked() {
+                                    self.show_about_panel = false;
+                                }
+
+                                ui.add_space(rect.height() * 0.1); // Bottom padding
+                            });
                         });
-
-                        ui.add_space(50.0);
-
-                        // Close Button
-                        // Let's make it look prominent
-                        let close_btn = egui::Button::new(
-                            egui::RichText::new(t!("dialog.btn_close")).size(20.0),
-                        )
-                        .fill(ui.visuals().selection.bg_fill)
-                        .corner_radius(4.0);
-
-                        if ui.add(close_btn).clicked() {
-                            self.show_about_panel = false;
-                        }
-                    });
                 });
             });
     }
