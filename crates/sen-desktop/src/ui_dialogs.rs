@@ -518,12 +518,13 @@ impl EditorApp {
                             ),
                         ];
 
-                        // Exact total width calculation for a single row
-                        let mut total_buttons_width = 0.0;
+                        // Calculate all widths first
                         let item_spacing = 10.0;
                         let font_id = egui::FontId::proportional(24.0);
+                        let max_width = rect.width() * 0.9;
 
-                        for (_, label, _) in &sponsors {
+                        let mut buttons_with_widths = Vec::new();
+                        for (icon, label, url) in &sponsors {
                             let text_width = ui
                                 .painter()
                                 .layout_no_wrap(
@@ -533,33 +534,51 @@ impl EditorApp {
                                 )
                                 .rect
                                 .width();
-                            let btn_width = 16.0 * 2.0 + 40.0 + 12.0 + text_width; // padding*2 + icon + spacing + text
-                            total_buttons_width += btn_width + item_spacing;
-                        }
-                        if total_buttons_width > 0.0 {
-                            total_buttons_width -= item_spacing; // Remove trailing spacing
+                            let btn_width = 16.0 * 2.0 + 40.0 + 12.0 + text_width;
+                            buttons_with_widths.push((*icon, *label, *url, btn_width));
                         }
 
-                        // We constrain the wrapping block to either exactly fit all buttons in 1 row,
-                        // or max 90% of screen width if it's too large, forcing a wrap.
-                        let block_width = total_buttons_width.min(rect.width() * 0.9);
+                        // Group into rows based on available width
+                        let mut rows = Vec::new();
+                        let mut current_row = Vec::new();
+                        let mut current_row_width = 0.0;
 
-                        // Horizontal layout to push the block to the exact center
-                        crate::app_helpers::center_row(ui, |ui| {
-                            let left_space = (ui.available_width() - block_width).max(0.0) / 2.0;
-                            ui.add_space(left_space);
+                        for item in buttons_with_widths {
+                            let btn_width = item.3;
+                            if !current_row.is_empty()
+                                && current_row_width + item_spacing + btn_width > max_width
+                            {
+                                rows.push((current_row, current_row_width));
+                                current_row = Vec::new();
+                                current_row_width = 0.0;
+                            }
 
-                            ui.vertical(|ui| {
-                                ui.set_max_width(block_width);
+                            if !current_row.is_empty() {
+                                current_row_width += item_spacing;
+                            }
+                            current_row_width += btn_width;
+                            current_row.push(item);
+                        }
+                        if !current_row.is_empty() {
+                            rows.push((current_row, current_row_width));
+                        }
 
-                                ui.horizontal_wrapped(|ui| {
-                                    ui.spacing_mut().item_spacing =
-                                        egui::vec2(item_spacing, item_spacing);
-                                    for (icon, label, url) in &sponsors {
-                                        Self::sponsor_link(ui, icon, label, url);
-                                    }
+                        // Render each row centered individually
+                        ui.vertical(|ui| {
+                            ui.spacing_mut().item_spacing.y = item_spacing;
+                            for (row, row_width) in rows {
+                                crate::app_helpers::center_row(ui, |ui| {
+                                    let left_space =
+                                        (ui.available_width() - row_width).max(0.0) / 2.0;
+                                    ui.add_space(left_space);
+                                    ui.horizontal(|ui| {
+                                        ui.spacing_mut().item_spacing.x = item_spacing;
+                                        for (icon, label, url, _) in row {
+                                            Self::sponsor_link(ui, icon, label, url);
+                                        }
+                                    });
                                 });
-                            });
+                            }
                         });
 
                         ui.add_space(50.0);
