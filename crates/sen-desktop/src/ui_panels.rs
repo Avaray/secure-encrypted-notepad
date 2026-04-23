@@ -107,6 +107,7 @@ ui.add(egui::Label::new(egui::RichText::new(t!("settings.secured")).color(self.c
     ui.add(egui::Label::new(egui::RichText::new(t!("settings.none")).color(self.current_theme.colors.info_color())).selectable(false));
 }
 });
+
 if ui
 .checkbox(
 &mut self.settings.use_global_keyfile,
@@ -116,11 +117,13 @@ t!("settings.use_global_keyfile"),
 {
 let _ = self.settings.save(None);
 }
+
 if ui.checkbox(&mut self.settings.show_keyfile_paths, t!("settings.show_keyfile_paths"))
 .on_hover_text(t!("settings.show_keyfile_paths_tooltip"))
 .changed() {
 let _ = self.settings.save(None);
 }
+
 if ui.checkbox(&mut self.settings.show_directory_paths, t!("settings.show_directory_paths"))
 .on_hover_text(t!("settings.show_directory_paths_tooltip"))
 .changed() {
@@ -129,6 +132,7 @@ let _ = self.settings.save(None);
 
 ui.add_space(8.0);
 ui.add(egui::Label::new(egui::RichText::new(t!("settings.auto_backup")).strong()).selectable(false));
+
 if ui.checkbox(&mut self.settings.auto_backup_enabled, t!("settings.auto_backup_enable"))
     .on_hover_text(t!("settings.auto_backup_enable_tooltip"))
     .changed() {
@@ -195,7 +199,7 @@ ui.add_space(8.0);
 // =========================================================================
 self.render_heading(ui, t!("settings.workspace"));
 // Starting directory setting
-ui.add_space(4.0);
+
                     let h = ls.get_height("ws_start_dir");
                     crate::app_helpers::render_settings_row(ui, &t!("settings.starting_dir"), h, |ui| {
 if let Some(ref dir) = self.settings.file_tree_starting_dir {
@@ -248,6 +252,7 @@ self.log_info(t!("settings.log_starting_dir_set_current"));
                 }
             }
 });
+
 if ui
 .checkbox(&mut self.settings.show_subfolders, t!("settings.show_subfolders"))
 .changed()
@@ -255,12 +260,14 @@ if ui
 let _ = self.settings.save(None);
 self.refresh_file_tree();
 }
+
 if ui
 .checkbox(&mut self.settings.hide_sen_extension, t!("settings.hide_sen_ext"))
 .changed()
 {
 let _ = self.settings.save(None);
 }
+
 if ui
 .checkbox(&mut self.settings.hide_undecryptable_files, t!("settings.hide_undecryptable"))
 .on_hover_text(t!("settings.hide_undecryptable_tooltip"))
@@ -272,6 +279,7 @@ self.refresh_file_tree();
 
 ui.add_space(8.0);
 ui.label(egui::RichText::new(t!("settings.stealth_mode")).strong());
+
 if ui
 .checkbox(&mut self.settings.stealth_mode, t!("settings.stealth_mode_enable"))
 .on_hover_text(t!("settings.stealth_mode_tooltip"))
@@ -279,6 +287,7 @@ if ui
 {
 let _ = self.settings.save(None);
 }
+
 
 if ui
 .checkbox(&mut self.settings.stealth_scan, t!("settings.stealth_scan_enable"))
@@ -291,6 +300,7 @@ self.refresh_file_tree();
 ui.add_space(8.0);
 
 
+
 if ui
 .checkbox(&mut self.settings.hide_filename_in_title, t!("settings.hide_filename_title"))
 .on_hover_text(t!("settings.hide_filename_title_tooltip"))
@@ -298,6 +308,7 @@ if ui
 {
 let _ = self.settings.save(None);
 }
+
 if ui
 .checkbox(&mut self.settings.capitalize_tree_names, t!("settings.capitalize_names"))
 .on_hover_text(t!("settings.capitalize_names_tooltip"))
@@ -305,6 +316,7 @@ if ui
 {
 let _ = self.settings.save(None);
 }
+
 if ui
 .checkbox(&mut self.settings.hide_hidden_files, t!("settings.hide_hidden"))
 .on_hover_text(t!("settings.hide_hidden_tooltip"))
@@ -313,6 +325,7 @@ if ui
 let _ = self.settings.save(None);
 self.refresh_file_tree();
 }
+
 if ui
 .checkbox(&mut self.settings.tree_style_file_tree, t!("settings.tree_view"))
 .on_hover_text(t!("settings.tree_view_tooltip"))
@@ -329,6 +342,7 @@ ui.add_space(8.0);
 // 3. EDITOR
 // =========================================================================
 self.render_heading(ui, t!("settings.editor"));
+
 if ui
 .checkbox(&mut self.settings.show_line_numbers, t!("settings.show_line_numbers"))
 .changed()
@@ -336,6 +350,7 @@ if ui
 let _ = self.settings.save(None);
 self.status_message = if self.settings.show_line_numbers { t!("status.lines_shown").to_string() } else { t!("status.lines_hidden").to_string() };
 }
+
 if ui
 .checkbox(&mut self.settings.show_whitespace, t!("settings.show_whitespace"))
 .on_hover_text(t!("settings.show_whitespace_tooltip"))
@@ -363,10 +378,12 @@ crate::app_helpers::render_settings_row(ui, &t!("settings.cursor_shape"), h, |ui
             }
         });
 });
+
 if ui.checkbox(&mut self.settings.cursor_blink, t!("settings.cursor_blink")).changed() {
 let _ = self.settings.save(None);
 self.style_dirty = true;
 }
+
 if ui.checkbox(&mut self.settings.word_wrap, t!("settings.word_wrap")).changed() {
 let _ = self.settings.save(None);
 self.status_message = if self.settings.word_wrap { t!("status.wrap_enabled").to_string() } else { t!("status.wrap_disabled").to_string() };
@@ -384,6 +401,7 @@ crate::app_helpers::render_settings_row(ui, &t!("settings.tab_size"), h, |ui| {
 let _ = self.settings.save(None);
 }
 });
+
 if ui
 .checkbox(&mut self.settings.use_spaces_for_tabs, t!("settings.spaces_for_tabs"))
 .changed()
@@ -917,7 +935,7 @@ if ui
 
                         #[cfg(any(target_os = "windows", target_os = "linux"))]
                         {
-                            ui.add_space(4.0);
+                            
                             if ui.button(t!("settings.associate_sen"))
                                 .on_hover_text(t!("settings.associate_sen_tooltip"))
                                 .clicked() {
@@ -928,7 +946,7 @@ if ui
 
                         #[cfg(target_os = "macos")]
                         {
-                            ui.add_space(4.0);
+                            
                             ui.add(egui::Label::new(egui::RichText::new(t!("settings.assoc_macos")).weak()));
                         }
 
@@ -942,7 +960,7 @@ if ui
                             let _ = self.settings.save(None);
                         }
 
-                            ui.add_space(4.0);
+                            
                         });
                 });
         });
@@ -1946,7 +1964,7 @@ if ui
                                     egui::RichText::new(t!("theme.colors_heading"))
                                         .color(head_color),
                                 );
-                                ui.add_space(4.0);
+                                
                                 ui.vertical(|ui| {
                                     // --- HELPER CLOSURES FOR NEW OPTIONAL FIELDS ---
                                     let edit_optional_color =
@@ -1958,7 +1976,6 @@ if ui
                                          ui: &mut egui::Ui|
                                          -> bool {
                                             let mut changed = false;
-                                            ui.add_space(4.0);
                                             crate::app_helpers::render_settings_row(
                                                 ui,
                                                 label,
@@ -1995,7 +2012,6 @@ if ui
                                          ui: &mut egui::Ui|
                                          -> bool {
                                             let mut changed = false;
-                                            ui.add_space(4.0);
                                             crate::app_helpers::render_settings_row(
                                                 ui,
                                                 label,
@@ -2044,7 +2060,7 @@ if ui
 
                                     // --- CORE UI BACKGROUNDS & ACCENTS ---
                                     render_cat_header(ui, t!("theme.cat_core"), fg_color32);
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.bg"),
                                         &mut theme.colors.background,
@@ -2055,7 +2071,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.selection_bg"),
                                         &mut theme.colors.selection_background,
@@ -2083,7 +2099,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.icon_hover"),
                                         &mut theme.colors.icon_hover,
@@ -2097,7 +2113,7 @@ if ui
 
                                     // --- TYPOGRAPHY ---
                                     render_cat_header(ui, t!("theme.cat_typography"), fg_color32);
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.fg"),
                                         &mut theme.colors.foreground,
@@ -2151,7 +2167,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.line_numbers"),
                                         &mut theme.colors.line_number,
@@ -2162,7 +2178,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.cursor"),
                                         &mut theme.colors.cursor,
@@ -2414,7 +2430,7 @@ if ui
 
                                     // --- SYNTAX ALERTS ---
                                     render_cat_header(ui, t!("theme.cat_syntax"), fg_color32);
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.success_label"),
                                         &mut theme.colors.success,
@@ -2425,7 +2441,7 @@ if ui
                                      ) {
                                         theme_changed = true;
                                     }
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.info_label"),
                                         &mut theme.colors.info,
@@ -2436,7 +2452,7 @@ if ui
                                      ) {
                                         theme_changed = true;
                                     }
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.warning_label"),
                                         &mut theme.colors.warning,
@@ -2447,7 +2463,7 @@ if ui
                                      ) {
                                         theme_changed = true;
                                     }
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.error_label"),
                                         &mut theme.colors.error,
@@ -2461,7 +2477,7 @@ if ui
 
                                     // --- SCROLLBARS ---
                                     render_cat_header(ui, t!("theme.cat_scrollbars"), fg_color32);
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.scrollbar_idle"),
                                         &mut theme.colors.scrollbar_idle,
@@ -2472,7 +2488,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.scrollbar_hover"),
                                         &mut theme.colors.scrollbar_hover,
@@ -2483,7 +2499,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.scrollbar_active"),
                                         &mut theme.colors.scrollbar_active,
@@ -2497,7 +2513,7 @@ if ui
 
                                     // --- MISCELLANEOUS ---
                                     render_cat_header(ui, t!("theme.cat_misc"), fg_color32);
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.comment"),
                                         &mut theme.colors.comment,
@@ -2508,7 +2524,7 @@ if ui
                                      ) {
                                         theme_changed = true;
                                     }
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.tree_line"),
                                         &mut theme.colors.tree_line,
@@ -2519,7 +2535,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.text_edit_bg"),
                                         &mut theme.colors.text_edit_bg,
@@ -2530,7 +2546,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.selection_text"),
                                         &mut theme.colors.selection_text,
@@ -2541,7 +2557,7 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
-                                    ui.add_space(4.0);
+                                    
                                     if edit_optional_color(
                                         &t!("theme.separator"),
                                         &mut theme.colors.separator,

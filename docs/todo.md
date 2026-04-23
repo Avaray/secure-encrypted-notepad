@@ -22,4 +22,4 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 ## 🐛 Bug Fixes (To Fix)
 
 - [ ] **Line Height Crash**: Fix application crashes occurring when users rapidly change the 'line height' value in settings.
-- [ ] **Theme Editor Row Gaps**: Audit vertical spacing between elements in the theme editor. Ensure consistent gaps/margins between all rows (e.g., between "Icon default tint" and "hover tint", and between "line numbers" and "cursor color").
+- [x] **Theme Editor Row Gaps**: Audit vertical spacing between elements in the theme editor. Ensure consistent gaps/margins between all rows (e.g., between "Icon default tint" and "hover tint", and between "line numbers" and "cursor color").
