@@ -3220,6 +3220,7 @@ fn custom_color_picker_button(ui: &mut egui::Ui, color: &mut [u8; 4], popup_id: 
                 // On hover, we allow the theme's hover border color to be displayed normally.
                 if contrast < 1.15 && !response.hovered() {
                     stroke.color = ui.visuals().text_color();
+                    stroke.width = 1.0_f32.max(stroke.width);
                 }
 
                 ui.painter().rect_stroke(
