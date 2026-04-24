@@ -21,6 +21,8 @@ pub trait ThemeColorsExt {
     fn icon_hover_color(&self) -> egui::Color32;
     fn icon_color(&self) -> egui::Color32;
     fn highlight_color(&self) -> egui::Color32;
+    fn find_match_bg_color(&self) -> egui::Color32;
+    fn find_current_match_bg_color(&self) -> egui::Color32;
     fn hyperlink_color(&self) -> egui::Color32;
     fn comment_color(&self) -> egui::Color32;
     fn whitespace_symbols_color(&self) -> egui::Color32;
@@ -31,6 +33,10 @@ pub trait ThemeColorsExt {
     fn heading_color(&self) -> egui::Color32;
     fn background_color(&self) -> egui::Color32;
     fn tree_line_color(&self, ui_visuals: &egui::Visuals) -> egui::Color32;
+    fn tree_file_stealth_color(&self) -> egui::Color32;
+    fn tree_file_unlocked_color(&self) -> egui::Color32;
+    fn tree_file_locked_color(&self) -> egui::Color32;
+    fn modal_overlay_color(&self) -> egui::Color32;
 }
 
 impl ThemeColorsExt for ThemeColors {
@@ -110,6 +116,22 @@ impl ThemeColorsExt for ThemeColors {
         }
     }
 
+    fn find_match_bg_color(&self) -> egui::Color32 {
+        if let Some(c) = self.find_match_bg {
+            egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
+        } else {
+            self.highlight_color()
+        }
+    }
+
+    fn find_current_match_bg_color(&self) -> egui::Color32 {
+        if let Some(c) = self.find_current_match_bg {
+            egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
+        } else {
+            self.highlight_color()
+        }
+    }
+
     fn success_color(&self) -> egui::Color32 {
         self.to_color32_opt(self.success, [76, 175, 80, 255])
     }
@@ -147,6 +169,23 @@ impl ThemeColorsExt for ThemeColors {
         } else {
             ui_visuals.widgets.noninteractive.bg_stroke.color
         }
+    }
+
+    fn tree_file_stealth_color(&self) -> egui::Color32 {
+        self.to_color32_opt(self.tree_file_stealth, [156, 39, 176, 255])
+    }
+
+    fn tree_file_unlocked_color(&self) -> egui::Color32 {
+        self.to_color32_opt(self.tree_file_unlocked, [76, 175, 80, 255])
+    }
+
+    fn tree_file_locked_color(&self) -> egui::Color32 {
+        self.to_color32_opt(self.tree_file_locked, [244, 67, 54, 255])
+    }
+
+    fn modal_overlay_color(&self) -> egui::Color32 {
+        let rgba = self.modal_overlay_color_rgba();
+        egui::Color32::from_rgba_unmultiplied(rgba[0], rgba[1], rgba[2], rgba[3])
     }
 }
 

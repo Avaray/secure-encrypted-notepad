@@ -18,3 +18,13 @@ scrollbar_hover = [180, 180, 180, 200]
 scrollbar_active = [160, 160, 160, 255]
 widget_padding_x = 8.0
 widget_padding_y = 4.0
+
+find_match_bg = [255, 255, 0, 100]
+find_current_match_bg = [255, 165, 0, 150]
+
+tree_file_stealth = [156, 39, 176, 255]
+tree_file_unlocked = [46, 125, 50, 255]
+tree_file_locked = [198, 40, 40, 255]
+tree_line = [200, 200, 200, 255]
+
+modal_overlay_color = [122, 122, 122, 255]

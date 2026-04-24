@@ -437,9 +437,9 @@ impl EditorApp {
                 let rect = ctx.screen_rect();
                 #[allow(deprecated)]
                 ui.allocate_ui_at_rect(rect, |ui| {
-                    // Fill background using the current window fill color
+                    // Fill background using modal overlay color from theme
                     ui.painter()
-                        .rect_filled(rect, 0.0, ui.visuals().window_fill());
+                        .rect_filled(rect, 0.0, self.current_theme.colors.modal_overlay_color());
 
                     use crate::app_helpers::ScrollAreaExt;
                     egui::ScrollArea::vertical()

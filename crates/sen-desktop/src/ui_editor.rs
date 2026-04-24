@@ -74,7 +74,9 @@ impl EditorApp {
         let search_matches: Vec<usize> = self.search_matches.clone();
         let search_query_len = self.search_query.len();
         let search_active = !self.search_query.is_empty() && !search_matches.is_empty();
-        let highlight_color = self.current_theme.colors.highlight_color();
+        let find_match_bg = self.current_theme.colors.find_match_bg_color();
+        let find_current_bg = self.current_theme.colors.find_current_match_bg_color();
+        let current_match_index = self.current_match_index;
 
         // Capture link state for layouter
         let link_matches: Vec<std::ops::Range<usize>> = find_urls(&self.document.current_content);
@@ -351,11 +353,18 @@ impl EditorApp {
 
                             if search_active {
                                 let mut s_pos = seg_range.start;
-                                for &m_start in &search_matches {
+                                for (match_idx, &m_start) in search_matches.iter().enumerate() {
                                     let m_end = m_start + search_query_len;
                                     if m_end <= seg_start_global || m_start >= seg_end_global {
                                         continue;
                                     }
+
+                                    let is_current = Some(match_idx) == current_match_index;
+                                    let match_bg = if is_current {
+                                        find_current_bg
+                                    } else {
+                                        find_match_bg
+                                    };
 
                                     let local_s_start =
                                         s_pos.max(m_start.saturating_sub(line_start_byte));
@@ -387,7 +396,7 @@ impl EditorApp {
                                                 color: base_color,
                                                 line_height,
                                                 valign: egui::Align::Center,
-                                                background: highlight_color,
+                                                background: match_bg,
                                                 underline,
                                                 ..Default::default()
                                             },

@@ -80,6 +80,10 @@ pub struct ThemeColors {
     #[serde(default, with = "opt_alpha_color")]
     pub highlight: Option<[u8; 4]>,
     #[serde(default, with = "opt_alpha_color")]
+    pub find_match_bg: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub find_current_match_bg: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
     pub success: Option<[u8; 4]>,
     #[serde(default, with = "opt_alpha_color")]
     pub info: Option<[u8; 4]>,
@@ -151,9 +155,20 @@ pub struct ThemeColors {
     #[serde(default, with = "opt_alpha_color")]
     pub button_active_border_color: Option<[u8; 4]>,
 
+    // --- File Tree ---
+    #[serde(default, with = "opt_alpha_color")]
+    pub tree_file_stealth: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub tree_file_unlocked: Option<[u8; 4]>,
+    #[serde(default, with = "opt_alpha_color")]
+    pub tree_file_locked: Option<[u8; 4]>,
     /// Color for tree view lines (indentation guides)
     #[serde(default, with = "opt_alpha_color")]
     pub tree_line: Option<[u8; 4]>,
+
+    // --- Miscellaneous ---
+    #[serde(default, with = "opt_alpha_color")]
+    pub modal_overlay_color: Option<[u8; 4]>,
 }
 
 impl Default for ThemeColors {
@@ -201,6 +216,8 @@ impl ThemeColors {
         res!(icon_hover);
         res!(icon_color);
         res!(highlight);
+        res!(find_match_bg);
+        res!(find_current_match_bg);
         res!(success);
         res!(info);
         res!(warning);
@@ -226,6 +243,11 @@ impl ThemeColors {
         res!(shadow_spread);
         res!(shadow_offset_x);
         res!(shadow_offset_y);
+        res!(tree_file_stealth);
+        res!(tree_file_unlocked);
+        res!(tree_file_locked);
+        res!(tree_line);
+        res!(modal_overlay_color);
     }
 
     /// Get the resolved RGBA value for a color field with a fallback.
@@ -260,18 +282,25 @@ impl ThemeColors {
         } else {
             let fg = self.foreground.unwrap_or([255, 255, 255, 255]);
             // Approximate linear_multiply(0.30) by scaling alpha
-            [
-                fg[0],
-                fg[1],
-                fg[2],
-                (fg[3] as f32 * 0.30) as u8,
-            ]
+            [fg[0], fg[1], fg[2], (fg[3] as f32 * 0.30) as u8]
+        }
+    }
+
+    /// Get modal overlay color, defaulting to halfway between background and pure black.
+    pub fn modal_overlay_color_rgba(&self) -> [u8; 4] {
+        if let Some(c) = self.modal_overlay_color {
+            c
+        } else {
+            let bg = self.background.unwrap_or([18, 18, 18, 255]);
+            // Calculate halfway point to black
+            [bg[0] / 2, bg[1] / 2, bg[2] / 2, bg[3]]
         }
     }
 
     /// Get hyperlink color, defaulting to info color.
     pub fn hyperlink_rgba(&self) -> [u8; 4] {
-        self.hyperlink.unwrap_or_else(|| self.info.unwrap_or([33, 150, 243, 255]))
+        self.hyperlink
+            .unwrap_or_else(|| self.info.unwrap_or([33, 150, 243, 255]))
     }
 
     /// Get heading color, falling back to foreground.
@@ -287,12 +316,7 @@ impl ThemeColors {
             c
         } else {
             let fg = self.foreground.unwrap_or([255, 255, 255, 255]);
-            [
-                fg[0],
-                fg[1],
-                fg[2],
-                (fg[3] as f32 * 0.30) as u8,
-            ]
+            [fg[0], fg[1], fg[2], (fg[3] as f32 * 0.30) as u8]
         }
     }
 }
@@ -384,7 +408,7 @@ pub fn save_theme(theme: &Theme) -> Result<(), Box<dyn std::error::Error>> {
 /// Delete theme file
 pub fn delete_theme(theme_name: &str) -> Result<(), Box<dyn std::error::Error>> {
     let themes_dir = ensure_themes_dir()?;
-    
+
     // First try the exact filename heuristic
     let filename = format!("{}.toml", theme_name.to_lowercase().replace(' ', "_"));
     let path = themes_dir.join(filename);
@@ -409,7 +433,7 @@ pub fn delete_theme(theme_name: &str) -> Result<(), Box<dyn std::error::Error>> 
             }
         }
     }
-    
+
     Ok(())
 }
 

@@ -1584,15 +1584,18 @@ if ui
 
                                             if is_sen || status == KeyStatus::StealthMatch {
                                                 let color = match status {
-                                                    KeyStatus::Decryptable => {
-                                                        self.current_theme.colors.success_color()
-                                                    }
-                                                    KeyStatus::StealthMatch => {
-                                                        egui::Color32::from_rgb(0, 200, 255)
-                                                    }
-                                                    KeyStatus::WrongKey => {
-                                                        self.current_theme.colors.error_color()
-                                                    }
+                                                    KeyStatus::Decryptable => self
+                                                        .current_theme
+                                                        .colors
+                                                        .tree_file_unlocked_color(),
+                                                    KeyStatus::StealthMatch => self
+                                                        .current_theme
+                                                        .colors
+                                                        .tree_file_stealth_color(),
+                                                    KeyStatus::WrongKey => self
+                                                        .current_theme
+                                                        .colors
+                                                        .tree_file_locked_color(),
                                                     KeyStatus::Unknown => {
                                                         self.current_theme.colors.warning_color()
                                                     }
@@ -1883,7 +1886,7 @@ if ui
                                 let _ = theme::delete_theme(&deleted_name);
                                 self.themes = theme::load_themes(); // Reload
                                 self.show_delete_theme_confirmation = false;
-                                
+
                                 if self.settings.theme_name == deleted_name {
                                     let is_dark = !matches!(dark_light::detect(), Ok(dark_light::Mode::Light));
                                     let new_theme = if is_dark {
@@ -2527,6 +2530,78 @@ if ui
                                         theme_changed = true;
                                     }
 
+                                    // --- FIND & REPLACE ---
+                                    render_cat_header(ui, t!("theme.cat_find_replace"), fg_color32);
+
+                                    if edit_optional_color(
+                                        &t!("theme.find_match_bg"),
+                                        &mut theme.colors.find_match_bg,
+                                        hardcoded_defaults.find_match_bg.unwrap_or([255, 255, 255, 50]),
+                                        ref_colors.find_match_bg,
+                                        "find_match_bg_pick",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+
+                                    if edit_optional_color(
+                                        &t!("theme.find_current_match_bg"),
+                                        &mut theme.colors.find_current_match_bg,
+                                        hardcoded_defaults.find_current_match_bg.unwrap_or([255, 165, 0, 100]),
+                                        ref_colors.find_current_match_bg,
+                                        "find_current_match_bg_pick",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+
+                                    // --- FILE TREE ---
+                                    render_cat_header(ui, t!("theme.cat_file_tree"), fg_color32);
+
+                                    if edit_optional_color(
+                                        &t!("theme.tree_line"),
+                                        &mut theme.colors.tree_line,
+                                        [100, 100, 100, 255],
+                                        ref_colors.tree_line,
+                                        "tree_line_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+
+                                    if edit_optional_color(
+                                        &t!("theme.tree_file_stealth"),
+                                        &mut theme.colors.tree_file_stealth,
+                                        hardcoded_defaults.tree_file_stealth.unwrap_or([156, 39, 176, 255]),
+                                        ref_colors.tree_file_stealth,
+                                        "tree_stealth_pick",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+
+                                    if edit_optional_color(
+                                        &t!("theme.tree_file_unlocked"),
+                                        &mut theme.colors.tree_file_unlocked,
+                                        hardcoded_defaults.tree_file_unlocked.unwrap_or([76, 175, 80, 255]),
+                                        ref_colors.tree_file_unlocked,
+                                        "tree_unlocked_pick",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+
+                                    if edit_optional_color(
+                                        &t!("theme.tree_file_locked"),
+                                        &mut theme.colors.tree_file_locked,
+                                        hardcoded_defaults.tree_file_locked.unwrap_or([244, 67, 54, 255]),
+                                        ref_colors.tree_file_locked,
+                                        "tree_locked_pick",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+
                                     // --- MISCELLANEOUS ---
                                     render_cat_header(ui, t!("theme.cat_misc"), fg_color32);
 
@@ -2538,17 +2613,6 @@ if ui
                                         "comment_pick",
                                         ui,
                                      ) {
-                                        theme_changed = true;
-                                    }
-
-                                    if edit_optional_color(
-                                        &t!("theme.tree_line"),
-                                        &mut theme.colors.tree_line,
-                                        [100, 100, 100, 255],
-                                        ref_colors.tree_line,
-                                        "tree_line_copy",
-                                        ui,
-                                    ) {
                                         theme_changed = true;
                                     }
 
@@ -2580,6 +2644,18 @@ if ui
                                         [80, 80, 80, 255],
                                         ref_colors.separator,
                                         "sep_copy",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+
+                                    let modal_default = theme.colors.modal_overlay_color_rgba();
+                                    if edit_optional_color(
+                                        &t!("theme.modal_overlay"),
+                                        &mut theme.colors.modal_overlay_color,
+                                        modal_default,
+                                        ref_colors.modal_overlay_color,
+                                        "modal_overlay_pick",
                                         ui,
                                     ) {
                                         theme_changed = true;
