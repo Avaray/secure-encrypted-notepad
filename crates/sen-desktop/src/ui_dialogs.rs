@@ -422,6 +422,67 @@ impl EditorApp {
         response.on_hover_cursor(egui::CursorIcon::PointingHand);
     }
 
+    fn render_sponsor_row(
+        &self,
+        ui: &mut egui::Ui,
+        links: &[(&egui::TextureHandle, &str, &str)],
+        max_total_width: f32,
+    ) {
+        let item_spacing = 10.0;
+        let font_id = egui::FontId::proportional(24.0);
+        let max_width = max_total_width * 0.9;
+
+        let mut buttons_with_widths = Vec::new();
+        for (icon, label, url) in links {
+            let text_width = ui
+                .painter()
+                .layout_no_wrap(label.to_string(), font_id.clone(), egui::Color32::WHITE)
+                .rect
+                .width();
+            let btn_width = 16.0 * 2.0 + 40.0 + 12.0 + text_width;
+            buttons_with_widths.push((*icon, *label, *url, btn_width));
+        }
+
+        let mut rows = Vec::new();
+        let mut current_row = Vec::new();
+        let mut current_row_width = 0.0;
+
+        for item in buttons_with_widths {
+            let btn_width = item.3;
+            if !current_row.is_empty() && current_row_width + item_spacing + btn_width > max_width {
+                rows.push((current_row, current_row_width));
+                current_row = Vec::new();
+                current_row_width = 0.0;
+            }
+
+            if !current_row.is_empty() {
+                current_row_width += item_spacing;
+            }
+            current_row_width += btn_width;
+            current_row.push(item);
+        }
+        if !current_row.is_empty() {
+            rows.push((current_row, current_row_width));
+        }
+
+        // Render each row centered individually
+        ui.vertical(|ui| {
+            ui.spacing_mut().item_spacing.y = item_spacing;
+            for (row, row_width) in rows {
+                crate::app_helpers::center_row(ui, |ui| {
+                    let left_space = (ui.available_width() - row_width).max(0.0) / 2.0;
+                    ui.add_space(left_space);
+                    ui.horizontal(|ui| {
+                        ui.spacing_mut().item_spacing.x = item_spacing;
+                        for (icon, label, url, _) in row {
+                            Self::sponsor_link(ui, icon, label, url);
+                        }
+                    });
+                });
+            }
+        });
+    }
+
     /// Render full-screen About panel
     pub(crate) fn render_about_panel(&mut self, ctx: &egui::Context) {
         if !self.show_about_panel {
@@ -438,8 +499,11 @@ impl EditorApp {
                 #[allow(deprecated)]
                 ui.allocate_ui_at_rect(rect, |ui| {
                     // Fill background using modal overlay color from theme
-                    ui.painter()
-                        .rect_filled(rect, 0.0, self.current_theme.colors.background_color());
+                    ui.painter().rect_filled(
+                        rect,
+                        0.0,
+                        self.current_theme.colors.background_color(),
+                    );
 
                     use crate::app_helpers::ScrollAreaExt;
                     egui::ScrollArea::vertical()
@@ -455,48 +519,86 @@ impl EditorApp {
                                         .strong(),
                                 ));
                                 ui.add_space(10.0);
-                                ui.label(
-                                    egui::RichText::new(t!(
+                                ui.horizontal(|ui| {
+                                    let version_text = t!(
                                         "dialog.about_version",
                                         version = env!("CARGO_PKG_VERSION")
-                                    ))
-                                    .color(self.current_theme.colors.info_color()),
-                                );
+                                    );
+                                    let author_text = t!(
+                                        "dialog.about_created_by",
+                                        author = env!("CARGO_PKG_AUTHORS")
+                                    );
+                                    let separator = " — ";
+
+                                    let font_id = egui::TextStyle::Body.resolve(ui.style());
+                                    let v_width = ui
+                                        .painter()
+                                        .layout_no_wrap(
+                                            version_text.to_string(),
+                                            font_id.clone(),
+                                            egui::Color32::WHITE,
+                                        )
+                                        .rect
+                                        .width();
+                                    let s_width = ui
+                                        .painter()
+                                        .layout_no_wrap(
+                                            separator.to_string(),
+                                            font_id.clone(),
+                                            egui::Color32::WHITE,
+                                        )
+                                        .rect
+                                        .width();
+                                    let a_width = ui
+                                        .painter()
+                                        .layout_no_wrap(
+                                            author_text.to_string(),
+                                            font_id,
+                                            egui::Color32::WHITE,
+                                        )
+                                        .rect
+                                        .width();
+
+                                    let total_width = v_width + s_width + a_width;
+                                    ui.add_space(
+                                        (ui.available_width() - total_width).max(0.0) / 2.0,
+                                    );
+
+                                    ui.label(
+                                        egui::RichText::new(version_text)
+                                            .color(self.current_theme.colors.info_color()),
+                                    );
+                                    ui.label(separator);
+                                    ui.label(author_text);
+                                });
 
                                 ui.add_space(40.0);
 
-                                // Author Info
-                                ui.heading(t!("dialog.about_author_head"));
-                                ui.add_space(5.0);
-                                ui.label(t!("dialog.about_author_body"));
                                 ui.add_space(20.0);
+                                let support_links = [
+                                    (
+                                        &self.icons.spon_github,
+                                        t!("dialog.about_github_repo"),
+                                        "https://github.com/Avaray/secure-encrypted-notepad",
+                                    ),
+                                    (
+                                        &self.icons.debug,
+                                        t!("dialog.about_issues"),
+                                        "https://github.com/Avaray/secure-encrypted-notepad/issues",
+                                    ),
+                                ];
 
-                                // Links Section
-                                ui.heading(t!("dialog.about_links_head"));
-                                ui.add_space(10.0);
-
-                                crate::app_helpers::center_row(ui, |ui| {
-                                    ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                                        ui.hyperlink_to(
-                                            t!("dialog.about_github"),
-                                            "https://github.com/Avaray/secure-encrypted-notepad",
-                                        );
-                                        ui.add_space(5.0);
-                                        ui.hyperlink_to(
-                                            t!("dialog.about_bug"),
-                                            "https://github.com/Avaray/secure-encrypted-notepad/issues",
-                                        );
-                                    });
-                                });
+                                let support_links_ref: Vec<(&egui::TextureHandle, &str, &str)> =
+                                    support_links
+                                        .iter()
+                                        .map(|(i, l, u)| (*i, l.as_ref(), *u))
+                                        .collect();
+                                self.render_sponsor_row(ui, &support_links_ref, rect.width());
 
                                 ui.add_space(20.0);
 
-                                // Financial Support
-                                ui.heading(t!("dialog.about_support_head"));
-                                ui.add_space(5.0);
                                 ui.label(t!("dialog.about_support_body"));
                                 ui.add_space(10.0);
-
                                 // List of buttons to draw
                                 let sponsors = [
                                     (
@@ -522,68 +624,7 @@ impl EditorApp {
                                     ),
                                 ];
 
-                                // Calculate all widths first
-                                let item_spacing = 10.0;
-                                let font_id = egui::FontId::proportional(24.0);
-                                let max_width = rect.width() * 0.9;
-
-                                let mut buttons_with_widths = Vec::new();
-                                for (icon, label, url) in &sponsors {
-                                    let text_width = ui
-                                        .painter()
-                                        .layout_no_wrap(
-                                            label.to_string(),
-                                            font_id.clone(),
-                                            egui::Color32::WHITE,
-                                        )
-                                        .rect
-                                        .width();
-                                    let btn_width = 16.0 * 2.0 + 40.0 + 12.0 + text_width;
-                                    buttons_with_widths.push((*icon, *label, *url, btn_width));
-                                }
-
-                                // Group into rows based on available width
-                                let mut rows = Vec::new();
-                                let mut current_row = Vec::new();
-                                let mut current_row_width = 0.0;
-
-                                for item in buttons_with_widths {
-                                    let btn_width = item.3;
-                                    if !current_row.is_empty()
-                                        && current_row_width + item_spacing + btn_width > max_width
-                                    {
-                                        rows.push((current_row, current_row_width));
-                                        current_row = Vec::new();
-                                        current_row_width = 0.0;
-                                    }
-
-                                    if !current_row.is_empty() {
-                                        current_row_width += item_spacing;
-                                    }
-                                    current_row_width += btn_width;
-                                    current_row.push(item);
-                                }
-                                if !current_row.is_empty() {
-                                    rows.push((current_row, current_row_width));
-                                }
-
-                                // Render each row centered individually
-                                ui.vertical(|ui| {
-                                    ui.spacing_mut().item_spacing.y = item_spacing;
-                                    for (row, row_width) in rows {
-                                        crate::app_helpers::center_row(ui, |ui| {
-                                            let left_space =
-                                                (ui.available_width() - row_width).max(0.0) / 2.0;
-                                            ui.add_space(left_space);
-                                            ui.horizontal(|ui| {
-                                                ui.spacing_mut().item_spacing.x = item_spacing;
-                                                for (icon, label, url, _) in row {
-                                                    Self::sponsor_link(ui, icon, label, url);
-                                                }
-                                            });
-                                        });
-                                    }
-                                });
+                                self.render_sponsor_row(ui, &sponsors, rect.width());
 
                                 ui.add_space(50.0);
 
@@ -591,9 +632,7 @@ impl EditorApp {
                                 // Let's make it look prominent
                                 let close_btn = egui::Button::new(
                                     egui::RichText::new(t!("dialog.btn_close")).size(20.0),
-                                )
-                                .fill(ui.visuals().selection.bg_fill)
-                                .corner_radius(4.0);
+                                );
 
                                 if ui.add(close_btn).clicked() {
                                     self.show_about_panel = false;

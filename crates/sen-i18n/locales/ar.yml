@@ -244,13 +244,10 @@ dialog.autosave_discarded_log: "تم تجاهل الحفظ التلقائي"
 
 dialog.about_title: "المفكرة المشفرة الآمنة (SEN)"
 dialog.about_version: "الإصدار %{version}"
-dialog.about_author_head: "عن المؤلف"
-dialog.about_author_body: "تم الإنشاء بواسطة Avaray — بناء أدوات بسيطة تركز على الخصوصية."
-dialog.about_links_head: "الروابط والدعم"
-dialog.about_github: "🔗 مستودع GitHub"
-dialog.about_bug: "🐛 الإبلاغ عن خطأ / مشكلة"
-dialog.about_support_head: "دعم المشروع"
-dialog.about_support_body: "إذا وجدت هذه الأداة مفيدة، ففكر في دعم تطويرها:"
+dialog.about_created_by: "أنشأه %{author}"
+dialog.about_github_repo: "زيارة مستودع GitHub"
+dialog.about_issues: "الإبلاغ عن خلل"
+dialog.about_support_body: "الخدمات التالية متاحة لأولئك الذين يرغبون في دعم عملي كمطور ماليًا:"
 dialog.btn_close: "إغلاق (F1 / ESC)"
 
 # ═══════════════════════════════════════

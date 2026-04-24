@@ -244,13 +244,10 @@ dialog.autosave_discarded_log: "Autozapis odrzucony"
 
 dialog.about_title: "Secure Encrypted Notepad (SEN)"
 dialog.about_version: "Wersja %{version}"
-dialog.about_author_head: "O autorze"
-dialog.about_author_body: "Stworzone przez Avaray — budowanie minimalistycznych narzędzi zorientowanych na prywatność."
-dialog.about_links_head: "Linki i wsparcie"
-dialog.about_github: "🔗 Repozytorium GitHub"
-dialog.about_bug: "🐛 Zgłoś błąd / problem"
-dialog.about_support_head: "Wesprzyj projekt"
-dialog.about_support_body: "Jeśli uważasz to narzędzie za przydatne, rozważ wsparcie jego rozwoju:"
+dialog.about_created_by: "Stworzone przez %{author}"
+dialog.about_github_repo: "Odwiedź repozytorium GitHub"
+dialog.about_issues: "Zgłoś błąd"
+dialog.about_support_body: "Poniższe serwisy są dostępne dla osób, które chcą finansowo wesprzeć moją pracę jako programisty:"
 dialog.btn_close: "Zamknij (F1 / ESC)"
 
 # ═══════════════════════════════════════

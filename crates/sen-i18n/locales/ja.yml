@@ -244,13 +244,10 @@ dialog.autosave_discarded_log: "自動保存を破棄しました"
 
 dialog.about_title: "Secure Encrypted Notepad (SEN)"
 dialog.about_version: "バージョン %{version}"
-dialog.about_author_head: "作者について"
-dialog.about_author_body: "Avaray 作成 — プライバシーを重視したミニマルなツールを構築しています。"
-dialog.about_links_head: "リンクとサポート"
-dialog.about_github: "🔗 GitHubリポジトリ"
-dialog.about_bug: "🐛 バグ/問題を報告"
-dialog.about_support_head: "プロジェクトをサポート"
-dialog.about_support_body: "このツールが役に立った場合は、開発のサポートをご検討ください:"
+dialog.about_created_by: "作成者: %{author}"
+dialog.about_github_repo: "GitHub リポジトリを表示"
+dialog.about_issues: "バグを報告"
+dialog.about_support_body: "開発者としての私の活動を金銭的に支援したい方のために、以下のサービスが利用可能です:"
 dialog.btn_close: "閉じる (F1 / ESC)"
 
 # ═══════════════════════════════════════

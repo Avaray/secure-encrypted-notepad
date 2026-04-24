@@ -244,13 +244,10 @@ dialog.autosave_discarded_log: "Automatické uloženie bolo zahodené"
 
 dialog.about_title: "Secure Encrypted Notepad (SEN)"
 dialog.about_version: "Verzia %{version}"
-dialog.about_author_head: "O autorovi"
-dialog.about_author_body: "Vytvoril Avaray — tvorba minimalistických nástrojov so zameraním na súkromie."
-dialog.about_links_head: "Odkazy a podpora"
-dialog.about_github: "🔗 GitHub repozitár"
-dialog.about_bug: "🐛 Nahlásiť chybu / problém"
-dialog.about_support_head: "Podporte projekt"
-dialog.about_support_body: "Ak považujete tento nástroj za užitočný, zvážte podporu jeho vývoja:"
+dialog.about_created_by: "Vytvoril %{author}"
+dialog.about_github_repo: "Navštíviť GitHub repozitár"
+dialog.about_issues: "Nahlásiť chybu"
+dialog.about_support_body: "Nasledujúce služby sú k dispozícii pre tých, ktorí chcú finančne podporiť moju prácu vývojára:"
 dialog.btn_close: "Zatvoriť (F1 / ESC)"
 
 # ═══════════════════════════════════════

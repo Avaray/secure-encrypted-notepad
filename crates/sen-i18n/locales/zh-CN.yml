@@ -244,13 +244,10 @@ dialog.autosave_discarded_log: "自动保存已丢弃"
 
 dialog.about_title: "Secure Encrypted Notepad (SEN)"
 dialog.about_version: "版本 %{version}"
-dialog.about_author_head: "关于作者"
-dialog.about_author_body: "由 Avaray 创建 — 致力于构建注重隐私和极简的工具。"
-dialog.about_links_head: "链接与支持"
-dialog.about_github: "🔗 GitHub 仓库"
-dialog.about_bug: "🐛 报告错误 / 问题"
-dialog.about_support_head: "支持此项目"
-dialog.about_support_body: "如果您觉得这个工具有用，请考虑支持它的开发："
+dialog.about_created_by: "由 %{author} 创建"
+dialog.about_github_repo: "访问 GitHub 仓库"
+dialog.about_issues: "报告错误"
+dialog.about_support_body: "以下服务可供那些希望在经济上支持我作为开发者工作的人使用："
 dialog.btn_close: "关闭 (F1 / ESC)"
 
 # ═══════════════════════════════════════
