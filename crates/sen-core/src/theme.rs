@@ -253,25 +253,25 @@ impl ThemeColors {
         }
     }
 
-    /// Get highlight color, defaulting to cursor color at 35% opacity.
+    /// Get highlight color, defaulting to foreground color at 30% opacity.
     pub fn highlight_rgba(&self) -> [u8; 4] {
         if let Some(h) = self.highlight {
             h
         } else {
-            let cursor = self.cursor.unwrap_or([255, 255, 255, 255]);
-            // Approximate linear_multiply(0.35) by scaling alpha
+            let fg = self.foreground.unwrap_or([255, 255, 255, 255]);
+            // Approximate linear_multiply(0.30) by scaling alpha
             [
-                cursor[0],
-                cursor[1],
-                cursor[2],
-                (cursor[3] as f32 * 0.35) as u8,
+                fg[0],
+                fg[1],
+                fg[2],
+                (fg[3] as f32 * 0.30) as u8,
             ]
         }
     }
 
-    /// Get hyperlink color with default fallback.
+    /// Get hyperlink color, defaulting to info color.
     pub fn hyperlink_rgba(&self) -> [u8; 4] {
-        self.hyperlink.unwrap_or([90, 170, 255, 255])
+        self.hyperlink.unwrap_or_else(|| self.info.unwrap_or([33, 150, 243, 255]))
     }
 
     /// Get heading color, falling back to foreground.
@@ -281,17 +281,17 @@ impl ThemeColors {
             .unwrap_or([255, 255, 255, 255])
     }
 
-    /// Get whitespace symbols color, defaulting to comment color at 40% opacity.
+    /// Get whitespace symbols color, defaulting to foreground text color at 30% opacity.
     pub fn whitespace_symbols_rgba(&self) -> [u8; 4] {
         if let Some(c) = self.whitespace_symbols {
             c
         } else {
-            let comment = self.comment.unwrap_or([106, 153, 85, 255]);
+            let fg = self.foreground.unwrap_or([255, 255, 255, 255]);
             [
-                comment[0],
-                comment[1],
-                comment[2],
-                (comment[3] as f32 * 0.4) as u8,
+                fg[0],
+                fg[1],
+                fg[2],
+                (fg[3] as f32 * 0.30) as u8,
             ]
         }
     }

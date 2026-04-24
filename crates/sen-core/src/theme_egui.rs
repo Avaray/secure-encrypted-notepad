@@ -85,7 +85,8 @@ impl ThemeColorsExt for ThemeColors {
         if let Some(h) = self.highlight {
             egui::Color32::from_rgba_unmultiplied(h[0], h[1], h[2], h[3])
         } else {
-            self.cursor_color().linear_multiply(0.35)
+            let fg = self.foreground.unwrap_or([255, 255, 255, 255]);
+            self.to_egui_color32(fg).linear_multiply(0.30)
         }
     }
 
@@ -93,7 +94,7 @@ impl ThemeColorsExt for ThemeColors {
         if let Some(c) = self.hyperlink {
             egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
         } else {
-            egui::Color32::from_rgba_unmultiplied(90, 170, 255, 255)
+            self.info_color()
         }
     }
 
@@ -105,7 +106,8 @@ impl ThemeColorsExt for ThemeColors {
         if let Some(c) = self.whitespace_symbols {
             egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
         } else {
-            self.comment_color().linear_multiply(0.4)
+            let fg = self.foreground.unwrap_or([255, 255, 255, 255]);
+            self.to_egui_color32(fg).linear_multiply(0.30)
         }
     }
 
@@ -146,8 +148,10 @@ impl ThemeColorsExt for ThemeColors {
     fn tree_line_color(&self, ui_visuals: &egui::Visuals) -> egui::Color32 {
         if let Some(c) = self.tree_line {
             egui::Color32::from_rgba_unmultiplied(c[0], c[1], c[2], c[3])
+        } else if let Some(sep) = self.separator {
+            egui::Color32::from_rgba_unmultiplied(sep[0], sep[1], sep[2], sep[3])
         } else {
-            ui_visuals.weak_text_color()
+            ui_visuals.widgets.noninteractive.bg_stroke.color
         }
     }
 }
