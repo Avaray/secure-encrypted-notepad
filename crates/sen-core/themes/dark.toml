@@ -16,3 +16,5 @@ error = [244, 67, 54, 255]
 scrollbar_idle = [40, 40, 40, 150]
 scrollbar_hover = [60, 60, 60, 200]
 scrollbar_active = [80, 80, 80, 255]
+widget_padding_x = 8.0
+widget_padding_y = 4.0
