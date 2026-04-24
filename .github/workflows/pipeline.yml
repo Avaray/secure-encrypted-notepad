@@ -48,8 +48,8 @@ jobs:
             VERSION="${{ github.event.inputs.version }}"
             echo "Using manually provided version: $VERSION"
           else
-            VERSION=$(grep -m 1 '^version' crates/sen-desktop/Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
-            echo "Detected version from sen-desktop/Cargo.toml: $VERSION"
+            VERSION=$(grep -m 1 '^version' Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
+            echo "Detected version from root Cargo.toml: $VERSION"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
