@@ -439,7 +439,7 @@ impl EditorApp {
                 ui.allocate_ui_at_rect(rect, |ui| {
                     // Fill background using modal overlay color from theme
                     ui.painter()
-                        .rect_filled(rect, 0.0, self.current_theme.colors.modal_overlay_color());
+                        .rect_filled(rect, 0.0, self.current_theme.colors.background_color());
 
                     use crate::app_helpers::ScrollAreaExt;
                     egui::ScrollArea::vertical()
