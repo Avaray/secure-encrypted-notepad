@@ -1,6 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
+use std::sync::OnceLock;
+
+static DARK_THEME: OnceLock<Theme> = OnceLock::new();
+static LIGHT_THEME: OnceLock<Theme> = OnceLock::new();
 
 /// Color scheme type
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
@@ -160,107 +164,11 @@ impl Default for ThemeColors {
 
 impl ThemeColors {
     pub fn dark() -> Self {
-        Self {
-            background: Some([18, 18, 18, 255]),
-            foreground: Some([255, 255, 255, 255]),
-            editor_foreground: None,
-            button_bg: None, // Use egui default or derived
-            button_fg: None,
-            separator: None,
-            button_hover_bg: None, // Derived usually which is good
-            button_active_bg: None,
-            selection_background: Some([40, 40, 40, 255]),
-            cursor: Some([255, 255, 255, 255]),
-            line_number: Some([128, 128, 128, 255]),
-            comment: Some([106, 153, 85, 255]),
-            icon_hover: Some([100, 150, 255, 255]),
-            icon_color: None, // defaults to [200, 200, 200, 255]
-            highlight: None,  // defaults to cursor color at 35% opacity
-            success: Some([76, 175, 80, 255]),
-            info: Some([33, 150, 243, 255]),
-            warning: Some([255, 152, 0, 255]),
-            error: Some([244, 67, 54, 255]),
-            whitespace_symbols: None,
-
-            heading_text: None,
-            hyperlink: None,
-            editor_background: None,
-            text_edit_bg: None,
-            selection_text: None,
-            window_rounding: None,
-            widget_rounding: None,
-            widget_border_width: None,
-            widget_border_color: None,
-            widget_padding_x: None,
-            widget_padding_y: None,
-            widget_focus_border: None,
-
-            shadow_color: None,
-            shadow_blur: None,
-            shadow_spread: None,
-            shadow_offset_x: None,
-            shadow_offset_y: None,
-            button_hover_fg: None,
-            button_active_fg: None,
-            button_hover_border_color: None,
-            button_active_border_color: None,
-            tree_line: None,
-            scrollbar_idle: Some([40, 40, 40, 150]),
-            scrollbar_hover: Some([60, 60, 60, 200]),
-            scrollbar_active: Some([80, 80, 80, 255]),
-        }
+        Theme::dark().colors
     }
 
     pub fn light() -> Self {
-        Self {
-            background: Some([245, 245, 245, 255]),
-            foreground: Some([0, 0, 0, 255]),
-            editor_foreground: None,
-            button_bg: None,
-            button_fg: None,
-            separator: None,
-            button_hover_bg: None,
-            button_active_bg: None,
-            selection_background: Some([210, 230, 255, 255]),
-            cursor: Some([0, 0, 0, 255]),
-            line_number: Some([128, 128, 128, 255]),
-            comment: Some([0, 128, 0, 255]),
-            icon_hover: Some([0, 100, 255, 255]),
-            icon_color: None, // defaults to [80, 80, 80, 255]
-            highlight: None,  // defaults to cursor color at 35% opacity
-            success: Some([46, 125, 50, 255]),
-            info: Some([13, 71, 161, 255]),
-            warning: Some([230, 81, 0, 255]),
-            error: Some([198, 40, 40, 255]),
-            whitespace_symbols: None,
-
-            heading_text: None,
-            hyperlink: None,
-            editor_background: None,
-            text_edit_bg: None,
-            selection_text: None,
-            window_rounding: None,
-            widget_rounding: None,
-            widget_border_width: None,
-            widget_border_color: None,
-            widget_padding_x: None,
-            widget_padding_y: None,
-            widget_focus_border: None,
-
-            shadow_color: None,
-            shadow_blur: None,
-            shadow_spread: None,
-            shadow_offset_x: None,
-            shadow_offset_y: None,
-            button_hover_fg: None,
-            button_active_fg: None,
-            button_hover_border_color: None,
-            button_active_border_color: None,
-            tree_line: None,
-            scrollbar_idle: Some([200, 200, 200, 150]),
-            scrollbar_hover: Some([180, 180, 180, 200]),
-            scrollbar_active: Some([160, 160, 160, 255]),
-        }
+        Theme::light().colors
     }
 
     /// Fill all None fields with defaults based on selected ColorScheme
@@ -400,19 +308,21 @@ pub struct Theme {
 
 impl Theme {
     pub fn dark() -> Self {
-        Self {
-            name: "Dark".to_string(),
-            colors: ThemeColors::dark(),
-            color_scheme: ColorScheme::Dark,
-        }
+        DARK_THEME
+            .get_or_init(|| {
+                let content = include_str!("../themes/dark.toml");
+                toml::from_str::<Theme>(content).expect("Failed to parse embedded dark.toml")
+            })
+            .clone()
     }
 
     pub fn light() -> Self {
-        Self {
-            name: "Light".to_string(),
-            colors: ThemeColors::light(),
-            color_scheme: ColorScheme::Light,
-        }
+        LIGHT_THEME
+            .get_or_init(|| {
+                let content = include_str!("../themes/light.toml");
+                toml::from_str::<Theme>(content).expect("Failed to parse embedded light.toml")
+            })
+            .clone()
     }
 }
 

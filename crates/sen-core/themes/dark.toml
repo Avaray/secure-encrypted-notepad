@@ -1,0 +1,18 @@
+name = "Dark"
+color_scheme = "Dark"
+
+[colors]
+background = [18, 18, 18, 255]
+foreground = [255, 255, 255, 255]
+selection_background = [40, 40, 40, 255]
+cursor = [255, 255, 255, 255]
+line_number = [128, 128, 128, 255]
+comment = [106, 153, 85, 255]
+icon_hover = [100, 150, 255, 255]
+success = [76, 175, 80, 255]
+info = [33, 150, 243, 255]
+warning = [255, 152, 0, 255]
+error = [244, 67, 54, 255]
+scrollbar_idle = [40, 40, 40, 150]
+scrollbar_hover = [60, 60, 60, 200]
+scrollbar_active = [80, 80, 80, 255]
