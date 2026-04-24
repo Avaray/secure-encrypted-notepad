@@ -2209,16 +2209,6 @@ if ui
                                         theme_changed = true;
                                     }
                                     if edit_optional_color(
-                                        &t!("theme.search_highlight"),
-                                        &mut theme.colors.highlight,
-                                        hardcoded_defaults.cursor.unwrap(),
-                                        ref_colors.highlight,
-                                        "highlight_copy",
-                                        ui,
-                                    ) {
-                                        theme_changed = true;
-                                    }
-                                    if edit_optional_color(
                                         &t!("theme.whitespace"),
                                         &mut theme.colors.whitespace_symbols,
                                         [80, 80, 80, 255],
@@ -2228,6 +2218,31 @@ if ui
                                     ) {
                                         theme_changed = true;
                                     }
+
+                                    // --- SEARCH & REPLACE ---
+                                    render_cat_header(ui, t!("theme.cat_search_replace"), fg_color32);
+
+                                    if edit_optional_color(
+                                        &t!("theme.find_match_bg"),
+                                        &mut theme.colors.find_match_bg,
+                                        hardcoded_defaults.find_match_bg.unwrap_or([255, 255, 255, 50]),
+                                        ref_colors.find_match_bg,
+                                        "find_match_bg_pick",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+                                    if edit_optional_color(
+                                        &t!("theme.find_current_match_bg"),
+                                        &mut theme.colors.find_current_match_bg,
+                                        hardcoded_defaults.find_current_match_bg.unwrap_or([255, 165, 0, 100]),
+                                        ref_colors.find_current_match_bg,
+                                        "find_current_match_bg_pick",
+                                        ui,
+                                    ) {
+                                        theme_changed = true;
+                                    }
+
 
                                     // --- BUTTONS & INPUTS ---
                                     render_cat_header(ui, t!("theme.cat_buttons"), fg_color32);
@@ -2530,31 +2545,6 @@ if ui
                                         theme_changed = true;
                                     }
 
-                                    // --- FIND & REPLACE ---
-                                    render_cat_header(ui, t!("theme.cat_find_replace"), fg_color32);
-
-                                    if edit_optional_color(
-                                        &t!("theme.find_match_bg"),
-                                        &mut theme.colors.find_match_bg,
-                                        hardcoded_defaults.find_match_bg.unwrap_or([255, 255, 255, 50]),
-                                        ref_colors.find_match_bg,
-                                        "find_match_bg_pick",
-                                        ui,
-                                    ) {
-                                        theme_changed = true;
-                                    }
-
-                                    if edit_optional_color(
-                                        &t!("theme.find_current_match_bg"),
-                                        &mut theme.colors.find_current_match_bg,
-                                        hardcoded_defaults.find_current_match_bg.unwrap_or([255, 165, 0, 100]),
-                                        ref_colors.find_current_match_bg,
-                                        "find_current_match_bg_pick",
-                                        ui,
-                                    ) {
-                                        theme_changed = true;
-                                    }
-
                                     // --- FILE TREE ---
                                     render_cat_header(ui, t!("theme.cat_file_tree"), fg_color32);
 
@@ -2667,6 +2657,7 @@ if ui
                 if theme_changed {
                     theme.apply(ui.ctx());
                     self.current_theme = theme.clone();
+                    self.style_dirty = true;
                 }
             } else {
                 ui.label(t!("theme.no_theme_editing"));
