@@ -1,11 +1,11 @@
 [package]
 name = "sen-desktop"
-version = "0.7.2"
-edition = "2021"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
 default-run = "sen"
-authors = ["Dawid Wasowski"]
 description = "Secure Encrypted Notepad with keyfile-only auth"
-license = "MIT"
 
 [[bin]]
 name = "sen"

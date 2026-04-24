@@ -1,7 +1,9 @@
 [package]
 name = "sen-i18n"
-version = "0.7.2"
+version.workspace = true
+authors.workspace = true
 edition = "2024"
+license.workspace = true
 
 [dependencies]
 once_cell = "1.21.3"

@@ -1,10 +1,10 @@
 [package]
 name = "sen-core"
-version = "0.7.2"
-edition = "2021"
-authors = ["Dawid Wasowski"]
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
 description = "Core logic for Secure Encrypted Notepad — cryptography, settings, history"
-license = "MIT"
 
 [dependencies]
 # Cryptography

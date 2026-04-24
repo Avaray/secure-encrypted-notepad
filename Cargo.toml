@@ -3,6 +3,13 @@ members = ["crates/sen-core", "crates/sen-desktop", "crates/sen-i18n", "crates/s
 default-members = ["crates/sen-core", "crates/sen-desktop", "crates/sen-i18n"]
 resolver = "2"
 
+[workspace.package]
+version = "0.7.2"
+authors = ["Dawid Wasowski"]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/Avaray/secure-encrypted-notepad"
+
 # ============================================================================
 # WORKSPACE DEPENDENCIES — shared version pins
 # ============================================================================

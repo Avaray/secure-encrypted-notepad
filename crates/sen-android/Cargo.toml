@@ -1,10 +1,10 @@
 [package]
 name = "sen-android"
 version = "0.2.0"
-edition = "2021"
-authors = ["Dawid Wasowski"]
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
 description = "Android target for Secure Encrypted Notepad"
-license = "MIT"
 publish = false
 
 [lib]
