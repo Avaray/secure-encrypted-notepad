@@ -1,3 +1,4 @@
+use crate::app_helpers::TextEditStyleExt;
 use crate::EditorApp;
 use eframe::egui;
 use sen_core::theme_egui::ThemeColorsExt;
@@ -17,11 +18,12 @@ impl EditorApp {
             ui.visuals_mut().text_cursor.stroke.color = egui::Color32::TRANSPARENT;
             ui.visuals_mut().selection.bg_fill = egui::Color32::TRANSPARENT;
 
-            let output = egui::TextEdit::singleline(&mut self.search_query)
-                .desired_width(200.0)
-                .margin(ui.spacing().button_padding)
-                .hint_text(t!("search.hint"))
-                .show(ui);
+            let output = ui.show_styled(
+                egui::TextEdit::singleline(&mut self.search_query)
+                    .desired_width(200.0)
+                    .margin(ui.spacing().button_padding)
+                    .hint_text(t!("search.hint")),
+            );
 
             let response = output.response.clone();
 
@@ -89,11 +91,12 @@ impl EditorApp {
             ui.visuals_mut().text_cursor.stroke.color = egui::Color32::TRANSPARENT;
             ui.visuals_mut().selection.bg_fill = egui::Color32::TRANSPARENT;
 
-            let replace_output = egui::TextEdit::singleline(&mut self.replace_query)
-                .desired_width(200.0)
-                .margin(ui.spacing().button_padding)
-                .hint_text(t!("search.replace_hint"))
-                .show(ui);
+            let replace_output = ui.show_styled(
+                egui::TextEdit::singleline(&mut self.replace_query)
+                    .desired_width(200.0)
+                    .margin(ui.spacing().button_padding)
+                    .hint_text(t!("search.replace_hint")),
+            );
 
             ui.visuals_mut().text_cursor.stroke.color = original_cursor_color;
             ui.visuals_mut().selection.bg_fill = original_selection_color;

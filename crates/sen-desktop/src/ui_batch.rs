@@ -1,4 +1,4 @@
-use crate::app_helpers::ScrollAreaExt;
+use crate::app_helpers::{ScrollAreaExt, TextEditStyleExt};
 use crate::app_state::{BatchMode, KeyStatus};
 use crate::crypto::{decrypt_bytes, encrypt_bytes};
 use crate::EditorApp;
@@ -252,7 +252,7 @@ impl EditorApp {
                                 |ui| {
                                     let mut ext = self.batch_output_extension.clone();
                                     if ui
-                                        .add(
+                                        .add_styled(
                                             egui::TextEdit::singleline(&mut ext)
                                                 .desired_width(50.0)
                                                 .hint_text("txt")
@@ -272,7 +272,6 @@ impl EditorApp {
 
                 // --- Main Action Button ---
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
-                    ui.add_space(8.0);
                     let is_running = self.batch_is_running;
                     let has_files = !self.batch_files.is_empty();
                     let has_keyfile = self.batch_keyfile.is_some();

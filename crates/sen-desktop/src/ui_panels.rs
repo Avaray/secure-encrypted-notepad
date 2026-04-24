@@ -1,4 +1,4 @@
-use crate::app_helpers::ScrollAreaExt;
+use crate::app_helpers::{ScrollAreaExt, TextEditStyleExt};
 use crate::app_state::{KeyStatus, LogLevel};
 use crate::history::HistoryEntry;
 use crate::EditorApp;
@@ -435,7 +435,7 @@ crate::app_helpers::render_settings_row(ui, &t!("settings.comment_prefix"), h, |
     let py = padding.y.round() as i8;
     let dynamic_width = text_width.clamp(min_w, max_w) + 4.0;
 
-    let response = ui.add(
+    let response = ui.add_styled(
         egui::TextEdit::singleline(&mut self.settings.comment_prefix)
             .desired_width(dynamic_width)
             .margin(egui::Margin { left: 0, right: 0, top: py, bottom: py })
@@ -1925,7 +1925,7 @@ if ui
                     &t!("theme.name_label"),
                     &mut 0.0,
                     |ui| {
-                        ui.add(
+                        ui.add_styled(
                             egui::TextEdit::singleline(&mut theme.name)
                                 .desired_width(ui.available_width() - 8.0)
                                 .margin(ui.spacing().button_padding),
