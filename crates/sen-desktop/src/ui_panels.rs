@@ -1879,11 +1879,26 @@ if ui
                                     .color(self.current_theme.colors.error_color()),
                             );
                             if ui.button(t!("settings.yes")).clicked() {
-                                let _ = theme::delete_theme(&theme.name);
+                                let deleted_name = theme.name.clone();
+                                let _ = theme::delete_theme(&deleted_name);
                                 self.themes = theme::load_themes(); // Reload
-                                self.editing_theme = Some(theme::Theme::dark());
                                 self.show_delete_theme_confirmation = false;
-                                // Reset to safe default
+                                
+                                if self.settings.theme_name == deleted_name {
+                                    let is_dark = !matches!(dark_light::detect(), Ok(dark_light::Mode::Light));
+                                    let new_theme = if is_dark {
+                                        theme::Theme::dark()
+                                    } else {
+                                        theme::Theme::light()
+                                    };
+                                    self.settings.theme_name = new_theme.name.clone();
+                                    self.current_theme = new_theme.clone();
+                                    self.editing_theme = Some(new_theme);
+                                    self.apply_theme(ui.ctx());
+                                    let _ = self.settings.save(None);
+                                } else {
+                                    self.editing_theme = Some(theme::Theme::dark());
+                                }
                             }
                             if ui.button(t!("settings.no")).clicked() {
                                 self.show_delete_theme_confirmation = false;

@@ -384,12 +384,32 @@ pub fn save_theme(theme: &Theme) -> Result<(), Box<dyn std::error::Error>> {
 /// Delete theme file
 pub fn delete_theme(theme_name: &str) -> Result<(), Box<dyn std::error::Error>> {
     let themes_dir = ensure_themes_dir()?;
+    
+    // First try the exact filename heuristic
     let filename = format!("{}.toml", theme_name.to_lowercase().replace(' ', "_"));
     let path = themes_dir.join(filename);
-
     if path.exists() {
         fs::remove_file(path)?;
+        return Ok(());
     }
+
+    // If not found, scan all TOML files and parse them to find the matching theme name
+    if let Ok(entries) = fs::read_dir(&themes_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) == Some("toml") {
+                if let Ok(content) = fs::read_to_string(&path) {
+                    if let Ok(theme) = toml::from_str::<Theme>(&content) {
+                        if theme.name == theme_name {
+                            fs::remove_file(path)?;
+                            return Ok(());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     Ok(())
 }
 
