@@ -829,7 +829,7 @@ impl SenAndroidApp {
                         let btn = ui.add_sized(
                             [200.0, 50.0],
                             egui::Button::new(t!("app.unlock_btn"))
-                                .fill(self.current_theme.colors.primary_color()),
+                                .fill(self.current_theme.colors.button_bg_color()),
                         );
                         if btn.clicked() {
                             self.call_java_show_biometric_prompt();

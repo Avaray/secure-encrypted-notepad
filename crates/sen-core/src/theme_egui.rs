@@ -30,7 +30,6 @@ pub trait ThemeColorsExt {
     fn error_color(&self) -> egui::Color32;
     fn heading_color(&self) -> egui::Color32;
     fn background_color(&self) -> egui::Color32;
-    fn primary_color(&self) -> egui::Color32;
     fn tree_line_color(&self, ui_visuals: &egui::Visuals) -> egui::Color32;
 }
 
@@ -138,11 +137,6 @@ impl ThemeColorsExt for ThemeColors {
 
     fn background_color(&self) -> egui::Color32 {
         self.to_color32_opt(self.background, [18, 18, 18, 255])
-    }
-
-    fn primary_color(&self) -> egui::Color32 {
-        // Use icon hover color as a proxy for "primary" if not defined, otherwise info color
-        self.to_color32_opt(self.icon_hover, [100, 150, 255, 255])
     }
 
     fn tree_line_color(&self, ui_visuals: &egui::Visuals) -> egui::Color32 {
