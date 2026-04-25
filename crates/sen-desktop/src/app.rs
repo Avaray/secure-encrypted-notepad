@@ -1282,7 +1282,7 @@ impl eframe::App for EditorApp {
             if self.show_search_panel && !self.zen_mode {
                 let mut search_bar_frame = bar_frame;
                 search_bar_frame.inner_margin.left = 12;
-                search_bar_frame.inner_margin.right = 12;
+                search_bar_frame.inner_margin.right = 4;
 
                 egui::TopBottomPanel::top("search_panel")
                     .frame(search_bar_frame)
