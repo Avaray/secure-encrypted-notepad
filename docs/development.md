@@ -131,23 +131,12 @@ The theme engine is split into two layers:
 
 The project includes several helper scripts in the `/scripts` directory to automate common development tasks. These scripts are written in TypeScript and run using [Bun](https://bun.com).
 
-### 1. Locales Synchronization (`locales-sync.ts`)
+### 1. Locales Synchronization
 
-This script ensures that all translation files stay in sync with English (the source language).
+The `scripts/locales-sync.ts` script ensures that all translation files stay in sync with English (the source language) using the Gemini AI API. It handles automatic translation of missing keys, forced synchronization of specific keys, and cleanup of unused translations.
 
-- **Purpose**: Automatically identifies missing keys in non-English `.yml` files and translates them using the Gemini AI API.
-- **Requirement**: Requires a `GEMINI_API_KEY` set in your environment variables (or provided in a `.env` file in the `scripts/` directory).
-- **Usage**:
-  ```bash
-  # Sync all languages
-  bun scripts/locales-sync.ts
-  
-  # Sync a specific language (e.g., Polish)
-  bun scripts/locales-sync.ts pl
-  
-  # Dry run (check for missing keys without translating/writing)
-  bun scripts/locales-sync.ts --dry-run
-  ```
+For detailed documentation, requirements, and comprehensive usage examples, please refer to the **[scripts/README.md](../scripts/README.md)**.
+
 
 ## 📁 Project Structure
 
