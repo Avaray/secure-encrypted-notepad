@@ -20,7 +20,7 @@ This document tracks planned features and reported bugs for the **SEN (Secure En
 - [ ] **File Tree Status Icon Defaults**: Ensure that `tree_file_stealth` and `tree_file_unlocked` status icons in the file tree panel default to the "success" color if their specific colors are not defined in the current theme.
 - [x] **Search Panel Layout Alignment**: In the search panel, set the right margin (to the right of the close button) to the same value used by panel headers to ensure visual consistency across the UI.
 - [ ] **High-Quality Icon Audit**: Audit all application icons (especially in buttons and the 'About Panel') to ensure they are high-quality vector assets (SVG) rather than low-resolution PNGs. All icons should remain crisp and professional when scaled or viewed on high-DPI screens.
-- [ ] **Theme Editor Label Scaling**: In the Theme Editor, reduce the font size for section headers (e.g., Typography, Widgets) using a smaller font style (e.g., `egui::TextStyle::Small`) to create a better visual hierarchy and a more compact layout.
+- [x] **Theme Editor Label Scaling**: In the Theme Editor, reduce the font size for section headers (e.g., Typography, Widgets) using a smaller font style (e.g., `egui::TextStyle::Small`) to create a better visual hierarchy and a more compact layout.
 
 ---
 

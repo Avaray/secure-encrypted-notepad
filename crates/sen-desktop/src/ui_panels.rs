@@ -2061,12 +2061,13 @@ if ui
                                         };
 
                                     let render_cat_header = |ui: &mut egui::Ui, text: std::borrow::Cow<'_, str>, color: egui::Color32| {
-                                        ui.add_space(8.0);
+                                        ui.add_space(6.0);
                                         ui.add(egui::Label::new(
                                             egui::RichText::new(text)
                                                 .color(color)
                                                 .italics()
-                                                .strong(),
+                                                .strong()
+                                                .text_style(egui::TextStyle::Small),
                                         ).selectable(false));
                                     };
 
