@@ -191,6 +191,9 @@ debug.filter_info: "Info"
 debug.filter_success: "Erfolg"
 debug.filter_warning: "Warnung"
 debug.filter_error: "Fehler"
+debug.export: "Protokolle exportieren"
+debug.log_exported: "Protokolle exportiert nach: %{file}"
+debug.log_export_failed: "Fehler beim Exportieren der Protokolle: %{e}"
 debug.all_filtered: "Keine Protokolle gefunden oder alle gefiltert."
 
 # ═══════════════════════════════════════

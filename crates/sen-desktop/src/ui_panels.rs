@@ -1249,6 +1249,30 @@ if ui
                             ui.ctx().copy_text(logs);
                             self.status_message = t!("status.logs_copied").to_string();
                         }
+
+                        if ui.button(t!("debug.export")).clicked() {
+                            if let Some(path) = rfd::FileDialog::new()
+                                .set_file_name("sen_debug_logs.txt")
+                                .add_filter("Text Files", &["txt"])
+                                .save_file()
+                            {
+                                let mut logs = String::new();
+                                for entry in &self.debug_log {
+                                    logs.push_str(&format!("{:?} - {}\n", entry.level, entry.message));
+                                }
+                                match std::fs::write(&path, logs) {
+                                    Ok(_) => {
+                                        self.log_success(t!(
+                                            "debug.log_exported",
+                                            file = path.to_string_lossy()
+                                        ));
+                                    }
+                                    Err(e) => {
+                                        self.log_error(t!("debug.log_export_failed", e = e));
+                                    }
+                                }
+                            }
+                        }
                     });
 
                     // Row 2: Log level filter toggles — compact, non-wrapping

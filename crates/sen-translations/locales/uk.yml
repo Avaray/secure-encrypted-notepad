@@ -191,6 +191,9 @@ debug.filter_info: "Інфо"
 debug.filter_success: "Успіх"
 debug.filter_warning: "Попередження"
 debug.filter_error: "Помилка"
+debug.export: "Експортувати журнали"
+debug.log_exported: "Журнали експортовано до: %{file}"
+debug.log_export_failed: "Не вдалося експортувати журнали: %{e}"
 debug.all_filtered: "Журналів не знайдено або всі відфільтровано."
 
 # ═══════════════════════════════════════

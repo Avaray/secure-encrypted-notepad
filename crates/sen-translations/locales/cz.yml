@@ -191,6 +191,9 @@ debug.filter_info: "Informace"
 debug.filter_success: "Úspěch"
 debug.filter_warning: "Varování"
 debug.filter_error: "Chyba"
+debug.export: "Exportovat protokoly"
+debug.log_exported: "Protokoly byly exportovány do: %{file}"
+debug.log_export_failed: "Export protokolů se nezdařil: %{e}"
 debug.all_filtered: "Nebyly nalezeny žádné protokoly nebo byly všechny vyfiltrovány."
 
 # ═══════════════════════════════════════

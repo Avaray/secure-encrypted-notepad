@@ -191,6 +191,9 @@ debug.filter_info: "Info"
 debug.filter_success: "Succès"
 debug.filter_warning: "Avertissement"
 debug.filter_error: "Erreur"
+debug.export: "Exporter les journaux"
+debug.log_exported: "Journaux exportés vers : %{file}"
+debug.log_export_failed: "Échec de l'exportation des journaux : %{e}"
 debug.all_filtered: "Aucun journal trouvé ou tous filtrés."
 
 # ═══════════════════════════════════════

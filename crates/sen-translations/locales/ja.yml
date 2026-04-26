@@ -191,6 +191,9 @@ debug.filter_info: "情報"
 debug.filter_success: "成功"
 debug.filter_warning: "警告"
 debug.filter_error: "エラー"
+debug.export: "ログをエクスポート"
+debug.log_exported: "ログがエクスポートされました: %{file}"
+debug.log_export_failed: "ログのエクスポートに失敗しました: %{e}"
 debug.all_filtered: "ログが見つからないか、すべてフィルタリングされています。"
 
 # ═══════════════════════════════════════

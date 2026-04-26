@@ -191,6 +191,9 @@ debug.filter_info: "Info"
 debug.filter_success: "Éxito"
 debug.filter_warning: "Advertencia"
 debug.filter_error: "Error"
+debug.export: "Exportar registros"
+debug.log_exported: "Registros exportados a: %{file}"
+debug.log_export_failed: "Error al exportar los registros: %{e}"
 debug.all_filtered: "No se encontraron registros o todos han sido filtrados."
 
 # ═══════════════════════════════════════

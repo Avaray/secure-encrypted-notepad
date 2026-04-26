@@ -191,6 +191,9 @@ debug.filter_info: "معلومات"
 debug.filter_success: "نجاح"
 debug.filter_warning: "تحذير"
 debug.filter_error: "خطأ"
+debug.export: "تصدير السجلات"
+debug.log_exported: "تم تصدير السجلات إلى: %{file}"
+debug.log_export_failed: "فشل تصدير السجلات: %{e}"
 debug.all_filtered: "لم يتم العثور على سجلات أو تمت تصفيتها جميعًا."
 
 # ═══════════════════════════════════════

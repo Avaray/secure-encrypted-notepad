@@ -191,6 +191,9 @@ debug.filter_info: "Info"
 debug.filter_success: "Succes"
 debug.filter_warning: "Waarschuwing"
 debug.filter_error: "Fout"
+debug.export: "Logs exporteren"
+debug.log_exported: "Logs geëxporteerd naar: %{file}"
+debug.log_export_failed: "Exporteren van logs mislukt: %{e}"
 debug.all_filtered: "Geen logboeken gevonden of alles gefilterd."
 
 # ═══════════════════════════════════════

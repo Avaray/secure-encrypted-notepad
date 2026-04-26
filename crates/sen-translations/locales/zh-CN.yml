@@ -191,6 +191,9 @@ debug.filter_info: "信息"
 debug.filter_success: "成功"
 debug.filter_warning: "警告"
 debug.filter_error: "错误"
+debug.export: "导出日志"
+debug.log_exported: "日志已导出至：%{file}"
+debug.log_export_failed: "导出日志失败：%{e}"
 debug.all_filtered: "未找到日志或所有日志已被过滤。"
 
 # ═══════════════════════════════════════

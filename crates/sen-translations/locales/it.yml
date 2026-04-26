@@ -191,6 +191,9 @@ debug.filter_info: "Info"
 debug.filter_success: "Successo"
 debug.filter_warning: "Avviso"
 debug.filter_error: "Errore"
+debug.export: "Esporta log"
+debug.log_exported: "Log esportati in: %{file}"
+debug.log_export_failed: "Esportazione log fallita: %{e}"
 debug.all_filtered: "Nessun log trovato o tutti filtrati."
 
 # ═══════════════════════════════════════

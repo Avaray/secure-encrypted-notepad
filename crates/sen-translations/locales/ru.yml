@@ -191,6 +191,9 @@ debug.filter_info: "Инфо"
 debug.filter_success: "Успех"
 debug.filter_warning: "Предупреждение"
 debug.filter_error: "Ошибка"
+debug.export: "Экспортировать журналы"
+debug.log_exported: "Журналы экспортированы в: %{file}"
+debug.log_export_failed: "Не удалось экспортировать журналы: %{e}"
 debug.all_filtered: "Журналы не найдены или все отфильтрованы."
 
 # ═══════════════════════════════════════

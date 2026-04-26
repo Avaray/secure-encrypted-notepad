@@ -191,6 +191,9 @@ debug.filter_info: "Info"
 debug.filter_success: "Úspech"
 debug.filter_warning: "Varovanie"
 debug.filter_error: "Chyba"
+debug.export: "Exportovať denníky"
+debug.log_exported: "Denníky boli exportované do: %{file}"
+debug.log_export_failed: "Exportovanie denníkov zlyhalo: %{e}"
 debug.all_filtered: "Nenašli sa žiadne záznamy alebo boli všetky odfiltrované."
 
 # ═══════════════════════════════════════
