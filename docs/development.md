@@ -22,7 +22,7 @@ To develop SEN, you need the following installed on your system:
         ```bash
         rustup target add aarch64-linux-android x86_64-linux-android
         ```
-5.  **Bun**: Required for running utility scripts (currently i18n synchronization). Install via [bun.sh](https://bun.sh/).
+5.  **Bun**: Required for running utility scripts. Install via [bun.sh](https://bun.sh/).
 
 ## 🚀 Getting Started
 
@@ -98,7 +98,7 @@ SEN uses a custom **zero-latency translation parser** for multi-language support
 
 ## 🎨 Theme System
 
-SEN features a highly customizable theme engine that allows users to create their own visual styles using TOML files.
+SEN features a highly customizable theme engine that allows users to create their own visual styles using [TOML](https://toml.io/en/) files.
 
 ### 1. Theme Locations
 - **Default Themes**: Embedded `dark.toml` and `light.toml` are located in `crates/sen-core/themes/`.
