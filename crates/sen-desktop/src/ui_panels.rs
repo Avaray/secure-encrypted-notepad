@@ -1258,7 +1258,10 @@ if ui
                             {
                                 let mut logs = String::new();
                                 for entry in &self.debug_log {
-                                    logs.push_str(&format!("{:?} - {}\n", entry.level, entry.message));
+                                    logs.push_str(&format!(
+                                        "{:?} - {}\n",
+                                        entry.level, entry.message
+                                    ));
                                 }
                                 match std::fs::write(&path, logs) {
                                     Ok(_) => {
