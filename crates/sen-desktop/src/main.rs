@@ -21,11 +21,11 @@ pub(crate) use sen_debug;
 /// Wrapper around the extracted i18n t! macro to make it available to all modules easily.
 macro_rules! t {
     ($key:expr) => {
-        sen_i18n::_rust_i18n_translate(&*sen_i18n::locale(), $key)
+        sen_translations::_rust_i18n_translate(&*sen_translations::locale(), $key)
     };
     ($key:expr, $($name:ident = $val:expr),+ $(,)?) => {
         {
-            let mut s = sen_i18n::_rust_i18n_translate(&*sen_i18n::locale(), $key).into_owned();
+            let mut s = sen_translations::_rust_i18n_translate(&*sen_translations::locale(), $key).into_owned();
             $(
                 s = s.replace(concat!("%{", stringify!($name), "}"), &format!("{}", $val));
             )+
@@ -66,7 +66,7 @@ fn main() -> Result<(), eframe::Error> {
     let settings = Settings::load(None);
 
     // Set the UI language from saved settings
-    sen_i18n::set_locale(&settings.language);
+    sen_translations::set_locale(&settings.language);
 
     let mut args = std::env::args();
     let _cmd = args.next(); // Skip executable path

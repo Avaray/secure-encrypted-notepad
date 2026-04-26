@@ -9,7 +9,7 @@ The Android port aims to be a fully functional companion to the desktop app, all
 
 ### 1. Shared Logic Layer
 - **Encryption**: Uses `sen-core` (XChaCha20-Poly1305) via the shared Rust library.
-- **I18n**: Uses `sen-i18n` with shared YAML locale files.
+- **I18n**: Uses `sen-translations` with shared YAML locale files.
 - **Themes**: Uses the shared TOML theme engine to ensure visual consistency.
 
 ### 2. Android-Specific Implementation

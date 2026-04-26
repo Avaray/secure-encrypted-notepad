@@ -2,7 +2,7 @@ import path from "node:path";
 import { Glob } from "bun";
 
 const CRATES_DIR = path.resolve(import.meta.dir, "../crates");
-const LOCALES_DIR = path.join(CRATES_DIR, "sen-i18n/locales");
+const LOCALES_DIR = path.join(CRATES_DIR, "sen-translations/locales");
 const SOURCE_FILE = path.join(LOCALES_DIR, "en.yml");
 
 const LANGUAGE_MAP: Record<string, string> = {
@@ -109,7 +109,7 @@ ${JSON.stringify(langTexts, null, 2)}
 }
 
 async function runCleanup(dryRun: boolean) {
-  console.log(`Scanning Rust files in ${CRATES_DIR} for unused i18n keys...`);
+  console.log(`Scanning Rust files in ${CRATES_DIR} for unused translation keys...`);
 
   const glob = new Glob("**/*.rs");
   let allRustCode = "";

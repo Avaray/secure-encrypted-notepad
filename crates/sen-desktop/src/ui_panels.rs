@@ -888,7 +888,7 @@ let _ = self.settings.save(None);
                     });
             });
         if changed {
-            sen_i18n::set_locale(&self.settings.language);
+            sen_translations::set_locale(&self.settings.language);
             let _ = self.settings.save(None);
             if let Some(label) = selected_label {
                 let msg = t!("status.lang_updated", lang = label).to_string();

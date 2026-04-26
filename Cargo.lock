@@ -3532,7 +3532,7 @@ dependencies = [
  "jni",
  "resvg",
  "sen-core",
- "sen-i18n",
+ "sen-translations",
  "serde",
  "serde_json",
  "tiny-skia",
@@ -3583,7 +3583,7 @@ dependencies = [
  "resvg",
  "rfd",
  "sen-core",
- "sen-i18n",
+ "sen-translations",
  "serde",
  "serde_json",
  "sha2",
@@ -3598,7 +3598,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sen-i18n"
+name = "sen-translations"
 version = "0.7.2"
 dependencies = [
  "once_cell",

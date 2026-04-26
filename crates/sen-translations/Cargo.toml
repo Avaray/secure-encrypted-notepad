@@ -1,5 +1,5 @@
 [package]
-name = "sen-i18n"
+name = "sen-translations"
 version.workspace = true
 authors.workspace = true
 edition = "2024"

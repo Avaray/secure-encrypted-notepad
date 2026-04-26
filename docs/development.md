@@ -84,13 +84,13 @@ The Android version is a wrapper around the core Rust library using `GameActivit
   cargo fmt
   ```
 
-## 🌍 Localization (i18n)
+## 🌍 Localization
 
-SEN uses a custom **zero-latency i18n parser** for multi-language support (extracted to the `sen-i18n` workspace crate for near-instant compilation).
-- Translation files are located in `crates/sen-i18n/locales/*.yml`.
+SEN uses a custom **zero-latency translation parser** for multi-language support (extracted to the `sen-translations` workspace crate for near-instant compilation).
+- Translation files are located in `crates/sen-translations/locales/*.yml`.
 - To add a new language:
-    1. Create `crates/sen-i18n/locales/XX.yml`.
-    2. Register the file in `crates/sen-i18n/src/lib.rs` by adding a `load_lang!("xx", "../locales/xx.yml");` entry.
+    1. Create `crates/sen-translations/locales/XX.yml`.
+    2. Register the file in `crates/sen-translations/src/lib.rs` by adding a `load_lang!("xx", "../locales/xx.yml");` entry.
     3. Add the SVG flag icon in `crates/sen-desktop/assets/flags/` (Emojione style recommended).
     4. Register the new flag in `crates/sen-desktop/src/icons.rs` (`Icons` struct and `load()` method).
     5. Update `crates/sen-core/src/settings.rs` (`default_language` detection).
@@ -133,7 +133,7 @@ The project includes several helper scripts in the `/scripts` directory to autom
 
 ### 1. Locales Synchronization
 
-The `scripts/locales-sync.ts` script ensures that all translation files stay in sync with English (the source language) using the Gemini AI API. It handles automatic translation of missing keys, forced synchronization of specific keys, and cleanup of unused translations.
+The `scripts/locales-sync.ts` script ensures that all translation files stay in sync with English (the source language) using the [Gemini AI API](https://aistudio.google.com/api-keys). It handles automatic translation of missing keys, forced synchronization of specific keys, and cleanup of unused translations.
 
 For detailed documentation, requirements, and comprehensive usage examples, please refer to the **[scripts/README.md](../scripts/README.md)**.
 
@@ -149,7 +149,7 @@ SEN is organized as a Cargo Workspace to support code sharing across multiple pl
     - `theme.rs`: UI-agnostic theme data models and TOML serialization.
     - `theme_egui.rs`: Integration layer between core themes and the `egui` framework.
     - `history.rs`: Management of document snapshots and metadata.
-- `crates/sen-i18n/`: Custom internationalization engine and localization resources.
+- `crates/sen-translations/`: Custom internationalization engine and localization resources.
     - `locales/`: YAML translation files for all supported languages.
 - `crates/sen-desktop/`: The main GUI application (Windows, Linux, macOS).
     - `src/main.rs`: Application entry point.
@@ -165,7 +165,7 @@ SEN is organized as a Cargo Workspace to support code sharing across multiple pl
     - `android/`: The native Android Studio / Gradle project.
     - `android/app/src/main/java/com/sen/android/MainActivity.kt`: The Kotlin wrapper.
 - `docs/`: Technical documentation and design notes.
-- `scripts/`: Bun utility scripts for i18n synchronization and automated maintenance.
+- `scripts/`: Bun utility scripts for translation synchronization and automated maintenance.
 - `.github/`: CI/CD automation workflows for testing and automated releases.
 
 

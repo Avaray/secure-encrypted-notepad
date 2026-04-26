@@ -20,11 +20,11 @@ macro_rules! sen_debug {
 /// Wrapper around the localized translate macro.
 macro_rules! t {
     ($key:expr) => {
-        sen_i18n::_rust_i18n_translate(&*sen_i18n::locale(), $key)
+        sen_translations::_rust_i18n_translate(&*sen_translations::locale(), $key)
     };
     ($key:expr, $($name:ident = $val:expr),+ $(,)?) => {
         {
-            let mut s = sen_i18n::_rust_i18n_translate(&*sen_i18n::locale(), $key).into_owned();
+            let mut s = sen_translations::_rust_i18n_translate(&*sen_translations::locale(), $key).into_owned();
             $(
                 s = s.replace(concat!("%{", stringify!($name), "}"), &format!("{}", $val));
             )+
@@ -276,7 +276,7 @@ impl SenAndroidApp {
         let settings = Settings::load(config_dir);
 
         // Initialize localization
-        sen_i18n::set_locale(&settings.language);
+        sen_translations::set_locale(&settings.language);
 
         let icons = Some(icons::Icons::load(&cc.egui_ctx));
         let available_themes = load_themes();
@@ -1873,5 +1873,5 @@ impl SenAndroidApp {
 }
 
 fn settings_set_language(code: &str) {
-    sen_i18n::set_locale(code);
+    sen_translations::set_locale(code);
 }

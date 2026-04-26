@@ -1175,12 +1175,21 @@ impl TextEditStyleExt for egui::Ui {
     }
 
     fn show_styled(&mut self, text_edit: egui::TextEdit) -> egui::text_edit::TextEditOutput {
-        let border_color = self.visuals().widgets.inactive.fg_stroke.color.linear_multiply(0.3);
+        let border_color = self
+            .visuals()
+            .widgets
+            .inactive
+            .fg_stroke
+            .color
+            .linear_multiply(0.3);
         let border_width = self.visuals().widgets.inactive.bg_stroke.width.max(1.0);
         self.scope(|ui| {
-            ui.visuals_mut().widgets.inactive.bg_stroke = egui::Stroke::new(border_width, border_color);
-            ui.visuals_mut().widgets.hovered.bg_stroke = egui::Stroke::new(border_width, border_color);
-            ui.visuals_mut().widgets.active.bg_stroke = egui::Stroke::new(border_width, border_color);
+            ui.visuals_mut().widgets.inactive.bg_stroke =
+                egui::Stroke::new(border_width, border_color);
+            ui.visuals_mut().widgets.hovered.bg_stroke =
+                egui::Stroke::new(border_width, border_color);
+            ui.visuals_mut().widgets.active.bg_stroke =
+                egui::Stroke::new(border_width, border_color);
             text_edit.show(ui)
         })
         .inner

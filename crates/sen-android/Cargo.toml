@@ -16,7 +16,7 @@ apk_name = "sen"
 [dependencies]
 # Core library
 sen-core = { path = "../sen-core", features = ["egui"] }
-sen-i18n = { path = "../sen-i18n" }
+sen-translations = { path = "../sen-translations" }
 
 # GUI Framework
 eframe = { workspace = true, features = ["android-game-activity"] }
