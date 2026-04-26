@@ -1039,16 +1039,6 @@ impl eframe::App for EditorApp {
 
         // Keyboard shortcuts
         ctx.input_mut(|i| {
-            // Ctrl+S: Save
-            if i.consume_shortcut(&egui::KeyboardShortcut::new(
-                egui::Modifiers::CTRL,
-                egui::Key::S,
-            )) {
-                if !self.show_batch_converter && !self.zen_mode {
-                    self.save_file();
-                }
-            }
-
             // Ctrl+Shift+S: Save As
             if i.consume_shortcut(&egui::KeyboardShortcut::new(
                 egui::Modifiers::CTRL | egui::Modifiers::SHIFT,
@@ -1056,6 +1046,16 @@ impl eframe::App for EditorApp {
             )) {
                 if !self.show_batch_converter && !self.zen_mode {
                     self.save_file_as();
+                }
+            }
+
+            // Ctrl+S: Save
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL,
+                egui::Key::S,
+            )) {
+                if !self.show_batch_converter && !self.zen_mode {
+                    self.save_file();
                 }
             }
 
@@ -1150,6 +1150,16 @@ impl eframe::App for EditorApp {
                 }
             }
 
+            // Ctrl+Shift+B: Toggle Batch Converter
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL | egui::Modifiers::SHIFT,
+                egui::Key::B,
+            )) {
+                if !self.zen_mode {
+                    self.show_batch_converter = !self.show_batch_converter;
+                }
+            }
+
             // Ctrl+B: Toggle File Tree
             if i.consume_shortcut(&egui::KeyboardShortcut::new(
                 egui::Modifiers::CTRL,
@@ -1161,9 +1171,9 @@ impl eframe::App for EditorApp {
                 }
             }
 
-            // Ctrl+Shift+H: Toggle History
+            // Ctrl+H: Toggle History
             if i.consume_shortcut(&egui::KeyboardShortcut::new(
-                egui::Modifiers::CTRL | egui::Modifiers::SHIFT,
+                egui::Modifiers::CTRL,
                 egui::Key::H,
             )) {
                 if !self.show_batch_converter && !self.zen_mode {
@@ -1196,25 +1206,6 @@ impl eframe::App for EditorApp {
                     self.show_settings_panel = !self.show_settings_panel;
                     self.settings.show_settings_panel = self.show_settings_panel;
                 }
-            }
-
-            // Ctrl+Shift+B: Toggle Batch Converter
-            if i.consume_shortcut(&egui::KeyboardShortcut::new(
-                egui::Modifiers::CTRL | egui::Modifiers::SHIFT,
-                egui::Key::B,
-            )) {
-                if !self.zen_mode {
-                    self.show_batch_converter = !self.show_batch_converter;
-                }
-            }
-
-            // Ctrl+H: Replace
-            if i.consume_shortcut(&egui::KeyboardShortcut::new(
-                egui::Modifiers::CTRL,
-                egui::Key::H,
-            )) {
-                self.show_search_panel = true;
-                // TODO: set focus to replace field
             }
 
             // Ctrl+Scroll: Zoom Font
