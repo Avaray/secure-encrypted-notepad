@@ -53,7 +53,7 @@ fn parse_yaml(content: &'static str) -> HashMap<&'static str, &'static str> {
     map
 }
 
-pub fn locale() -> String {
+pub fn translations_locale() -> String {
     let lock = CURRENT_LOCALE.lock().unwrap();
     if lock.is_empty() {
         "en".to_string()
@@ -68,7 +68,7 @@ pub fn set_locale(loc: &str) {
     }
 }
 
-pub fn _rust_i18n_translate<'r>(locale: &str, key: &'r str) -> Cow<'r, str> {
+pub fn translate<'r>(locale: &str, key: &'r str) -> Cow<'r, str> {
     let t = &*TRANSLATIONS;
 
     // Try current locale
