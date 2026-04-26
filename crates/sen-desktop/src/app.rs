@@ -1044,7 +1044,19 @@ impl eframe::App for EditorApp {
                 egui::Modifiers::CTRL,
                 egui::Key::S,
             )) {
-                self.save_file();
+                if !self.show_batch_converter && !self.zen_mode {
+                    self.save_file();
+                }
+            }
+
+            // Ctrl+Shift+S: Save As
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL | egui::Modifiers::SHIFT,
+                egui::Key::S,
+            )) {
+                if !self.show_batch_converter && !self.zen_mode {
+                    self.save_file_as();
+                }
             }
 
             // Ctrl+Shift+O: Open Directory
@@ -1052,7 +1064,9 @@ impl eframe::App for EditorApp {
                 egui::Modifiers::CTRL | egui::Modifiers::SHIFT,
                 egui::Key::O,
             )) {
-                self.open_directory();
+                if !self.show_batch_converter && !self.zen_mode {
+                    self.open_directory();
+                }
             }
 
             // Ctrl+O: Open
@@ -1060,7 +1074,9 @@ impl eframe::App for EditorApp {
                 egui::Modifiers::CTRL,
                 egui::Key::O,
             )) {
-                self.open_file_dialog();
+                if !self.show_batch_converter && !self.zen_mode {
+                    self.open_file_dialog();
+                }
             }
 
             // Ctrl+Plus: Increase Font
@@ -1089,7 +1105,19 @@ impl eframe::App for EditorApp {
                 egui::Modifiers::CTRL,
                 egui::Key::N,
             )) {
-                self.new_document();
+                if !self.show_batch_converter && !self.zen_mode {
+                    self.new_document();
+                }
+            }
+
+            // Ctrl+W: Close File
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL,
+                egui::Key::W,
+            )) {
+                if !self.show_batch_converter && !self.zen_mode {
+                    self.close_file();
+                }
             }
 
             // Ctrl+G: Go to Line
@@ -1113,10 +1141,70 @@ impl eframe::App for EditorApp {
                 egui::Modifiers::CTRL,
                 egui::Key::F,
             )) {
-                self.show_search_panel = !self.show_search_panel;
-                self.settings.show_search_panel = self.show_search_panel;
-                if self.show_search_panel {
-                    self.focus_search = true;
+                if !self.zen_mode {
+                    self.show_search_panel = !self.show_search_panel;
+                    self.settings.show_search_panel = self.show_search_panel;
+                    if self.show_search_panel {
+                        self.focus_search = true;
+                    }
+                }
+            }
+
+            // Ctrl+B: Toggle File Tree
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL,
+                egui::Key::B,
+            )) {
+                if !self.show_batch_converter && !self.zen_mode {
+                    self.show_file_tree = !self.show_file_tree;
+                    self.settings.show_file_tree = self.show_file_tree;
+                }
+            }
+
+            // Ctrl+Shift+H: Toggle History
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL | egui::Modifiers::SHIFT,
+                egui::Key::H,
+            )) {
+                if !self.show_batch_converter && !self.zen_mode {
+                    self.show_history_panel = !self.show_history_panel;
+                    self.settings.show_history_panel = self.show_history_panel;
+                }
+            }
+
+            // Ctrl+T: Toggle Theme Editor
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL,
+                egui::Key::T,
+            )) {
+                if !self.show_batch_converter && !self.zen_mode {
+                    self.show_theme_editor = !self.show_theme_editor;
+                    self.settings.show_theme_editor = self.show_theme_editor;
+                    self.show_delete_theme_confirmation = false;
+                    if self.show_theme_editor {
+                        self.editing_theme = Some(self.current_theme.clone());
+                    }
+                }
+            }
+
+            // Ctrl+,: Toggle Settings
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL,
+                egui::Key::Comma,
+            )) {
+                if !self.show_batch_converter && !self.zen_mode {
+                    self.show_settings_panel = !self.show_settings_panel;
+                    self.settings.show_settings_panel = self.show_settings_panel;
+                }
+            }
+
+            // Ctrl+Shift+B: Toggle Batch Converter
+            if i.consume_shortcut(&egui::KeyboardShortcut::new(
+                egui::Modifiers::CTRL | egui::Modifiers::SHIFT,
+                egui::Key::B,
+            )) {
+                if !self.zen_mode {
+                    self.show_batch_converter = !self.show_batch_converter;
                 }
             }
 
@@ -1158,6 +1246,14 @@ impl eframe::App for EditorApp {
         // F1: About Panel
         if ctx.input(|i| i.key_pressed(egui::Key::F1)) {
             self.show_about_panel = !self.show_about_panel;
+        }
+
+        // F12: Debug Panel
+        if ctx.input(|i| i.key_pressed(egui::Key::F12)) {
+            if !self.show_batch_converter && !self.zen_mode {
+                self.show_debug_panel = !self.show_debug_panel;
+                self.settings.show_debug_panel = self.show_debug_panel;
+            }
         }
 
         // ESC: Close optional overlays/panels
