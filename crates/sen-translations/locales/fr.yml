@@ -528,7 +528,7 @@ status.logs_copied: "Journaux copiés dans le presse-papiers"
 status.batch_started: "Tâche par lots démarrée..."
 status.batch_files_added: "%{count} fichiers ajoutés à la file d'attente"
 status.batch_completed: "Mode par lots terminé : %{success} succès, %{failed} échec"
-status.theme_changed: "Thème modifié en '%{theme}'"
+status.theme_changed: "Thème changé en %{theme}"
 status.font_updated: "Police %{font_type} mise à jour"
 status.lang_updated: "Langue mise à jour en %{lang}"
 

@@ -528,7 +528,7 @@ status.logs_copied: "Protokolle in die Zwischenablage kopiert"
 status.batch_started: "Stapelverarbeitung gestartet..."
 status.batch_files_added: "%{count} Dateien zur Warteschlange hinzugefügt"
 status.batch_completed: "Stapelverarbeitung abgeschlossen: %{success} erfolgreich, %{failed} fehlgeschlagen"
-status.theme_changed: "Thema zu '%{theme}' geändert"
+status.theme_changed: "Design auf %{theme} geändert"
 status.font_updated: "%{font_type}-Schriftart aktualisiert"
 status.lang_updated: "Sprache auf %{lang} aktualisiert"
 

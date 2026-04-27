@@ -528,7 +528,7 @@ status.logs_copied: "تم نسخ السجلات إلى الحافظة"
 status.batch_started: "بدأت المهمة الدفعية..."
 status.batch_files_added: "تم إضافة %{count} ملفات إلى قائمة الانتظار"
 status.batch_completed: "اكتمل وضع الدفعات: %{success} نجاح، %{failed} فشل"
-status.theme_changed: "تم تغيير المظهر إلى '%{theme}'"
+status.theme_changed: "تم تغيير السمة إلى %{theme}"
 status.font_updated: "تم تحديث خط %{font_type}"
 status.lang_updated: "تم تحديث اللغة إلى %{lang}"
 

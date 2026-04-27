@@ -528,7 +528,7 @@ status.logs_copied: "Registros copiados al portapapeles"
 status.batch_started: "Tarea por lotes iniciada..."
 status.batch_files_added: "%{count} archivos añadidos a la cola"
 status.batch_completed: "Modo por lotes finalizado: %{success} éxito, %{failed} error"
-status.theme_changed: "Tema cambiado a '%{theme}'"
+status.theme_changed: "Tema cambiado a %{theme}"
 status.font_updated: "Fuente %{font_type} actualizada"
 status.lang_updated: "Idioma actualizado a %{lang}"
 

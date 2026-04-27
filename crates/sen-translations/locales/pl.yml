@@ -528,7 +528,7 @@ status.logs_copied: "Logi skopiowane do schowka"
 status.batch_started: "Zadanie wsadowe rozpoczęte..."
 status.batch_files_added: "Dodano %{count} plików do kolejki wsadowej"
 status.batch_completed: "Tryb wsadowy zakończony: %{success} sukcesów, %{failed} niepowodzeń"
-status.theme_changed: "Motyw zmieniony na '%{theme}'"
+status.theme_changed: "Zmieniono motyw na %{theme}"
 status.font_updated: "Czcionka %{font_type} zaktualizowana"
 status.lang_updated: "Język zaktualizowany na %{lang}"
 

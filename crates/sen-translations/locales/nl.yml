@@ -528,7 +528,7 @@ status.logs_copied: "Logboeken naar klembord gekopieerd"
 status.batch_started: "Batchtaak gestart..."
 status.batch_files_added: "%{count} bestanden toegevoegd aan batchwachtrij"
 status.batch_completed: "Batchmodus voltooid: %{success} geslaagd, %{failed} mislukt"
-status.theme_changed: "Thema gewijzigd naar '%{theme}'"
+status.theme_changed: "Thema gewijzigd naar %{theme}"
 status.font_updated: "%{font_type}-lettertype bijgewerkt"
 status.lang_updated: "Taal bijgewerkt naar %{lang}"
 

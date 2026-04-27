@@ -528,7 +528,7 @@ status.logs_copied: "Logs copiados para a área de transferência"
 status.batch_started: "Tarefa em lote iniciada..."
 status.batch_files_added: "Adicionados %{count} arquivos à fila de processamento"
 status.batch_completed: "Modo em lote concluído: %{success} sucesso, %{failed} falha"
-status.theme_changed: "Tema alterado para '%{theme}'"
+status.theme_changed: "Tema alterado para %{theme}"
 status.font_updated: "Fonte %{font_type} atualizada"
 status.lang_updated: "Idioma atualizado para %{lang}"
 

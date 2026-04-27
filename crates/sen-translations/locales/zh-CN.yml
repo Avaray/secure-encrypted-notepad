@@ -528,7 +528,7 @@ status.logs_copied: "日志已复制到剪贴板"
 status.batch_started: "批处理任务已开始..."
 status.batch_files_added: "已将 %{count} 个文件添加到批处理队列"
 status.batch_completed: "批处理模式已完成：%{success} 成功，%{failed} 失败"
-status.theme_changed: "主题已更改为“%{theme}”"
+status.theme_changed: "主题已更改为 %{theme}"
 status.font_updated: "%{font_type} 字体已更新"
 status.lang_updated: "语言已更新为 %{lang}"
 

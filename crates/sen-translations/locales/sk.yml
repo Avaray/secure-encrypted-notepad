@@ -528,7 +528,7 @@ status.logs_copied: "Záznamy skopírované do schránky"
 status.batch_started: "Dávková úloha spustená..."
 status.batch_files_added: "Do dávkového radu pridaných %{count} súborov"
 status.batch_completed: "Dávkový režim dokončený: %{success} úspešných, %{failed} zlyhalo"
-status.theme_changed: "Motív zmenený na „%{theme}“"
+status.theme_changed: "Motív zmenený na %{theme}"
 status.font_updated: "Písmo %{font_type} aktualizované"
 status.lang_updated: "Jazyk aktualizovaný na %{lang}"
 

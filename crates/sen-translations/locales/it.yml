@@ -528,7 +528,7 @@ status.logs_copied: "Log copiati negli appunti"
 status.batch_started: "Attività batch avviata..."
 status.batch_files_added: "%{count} file aggiunti alla coda batch"
 status.batch_completed: "Modalità batch completata: %{success} riusciti, %{failed} falliti"
-status.theme_changed: "Tema cambiato in '%{theme}'"
+status.theme_changed: "Tema cambiato in %{theme}"
 status.font_updated: "Carattere %{font_type} aggiornato"
 status.lang_updated: "Lingua aggiornata in %{lang}"
 

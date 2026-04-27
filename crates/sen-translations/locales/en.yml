@@ -528,7 +528,7 @@ status.logs_copied: "Logs copied to clipboard"
 status.batch_started: "Batch task started..."
 status.batch_files_added: "Added %{count} files to batch queue"
 status.batch_completed: "Batch mode completed: %{success} success, %{failed} failed"
-status.theme_changed: "Theme changed to '%{theme}'"
+status.theme_changed: "Theme changed to %{theme}"
 status.font_updated: "%{font_type} Font updated"
 status.lang_updated: "Language changed to %{lang}"
 

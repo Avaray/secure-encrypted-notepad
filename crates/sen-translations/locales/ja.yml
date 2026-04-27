@@ -528,7 +528,7 @@ status.logs_copied: "ログをクリップボードにコピーしました"
 status.batch_started: "バッチタスクを開始しました..."
 status.batch_files_added: "%{count} 個のファイルをバッチキューに追加しました"
 status.batch_completed: "バッチモード完了: 成功 %{success}、失敗 %{failed}"
-status.theme_changed: "テーマを「%{theme}」に変更しました"
+status.theme_changed: "テーマが%{theme}に変更されました"
 status.font_updated: "%{font_type} フォントを更新しました"
 status.lang_updated: "言語を %{lang} に更新しました"
 
