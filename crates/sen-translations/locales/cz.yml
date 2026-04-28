@@ -1,7 +1,7 @@
 app.close_panel: "Zavřít panel"
 app.unsaved_document: "Neuložený dokument"
 app.no_keyfile: "Žádný soubor klíče"
-app.status_stealth: "Nenápadný"
+app.status_stealth: "Režim stealth"
 app.locked_title: "Zabezpečený Poznámkový Blok Uzamčen"
 app.locked_msg: "Ověřte se pro přístup k citlivým poznámkám"
 app.unlock_btn: "Odemknout aplikaci"
@@ -72,7 +72,7 @@ settings.biometric_unlock: "Biometrické odemknutí"
 
 # Stealth Mode
 settings.stealth_mode: "Nastavení nenápadného režimu"
-settings.stealth_mode_enable: "Povolit nenápadný režim (uložit bez hlavičky)"
+settings.stealth_mode_enable: "Povolit režim stealth"
 settings.stealth_mode_tooltip: "Pokud je povoleno, soubory jsou uloženy bez přípony .sen a magické hlavičky SEN, čímž jsou nerozeznatelné od náhodného binárního šumu."
 settings.stealth_scan_enable: "Povolit skenování souborů v nenápadném režimu"
 settings.stealth_scan_tooltip: "Pokud je povoleno, strom souborů a dávkový konvertor se pokusí dešifrovat neznámé soubory, aby identifikovaly dokumenty v nenápadném režimu."
@@ -101,7 +101,7 @@ settings.open_dir: "Otevřít adresář"
 
 # Editor
 settings.show_line_numbers: "Zobrazit čísla řádků"
-settings.show_whitespace: "Zobrazit speciální symboly"
+settings.show_whitespace: "Zobrazit netisknutelné znaky"
 settings.show_whitespace_tooltip: "Zobrazuje mezery jako tečky, tabulátory jako šipky a zalomení řádků jako symboly návratu."
 settings.cursor_shape: "Tvar kurzoru:"
 settings.cursor_blink: "Blikání kurzoru"
@@ -118,7 +118,7 @@ settings.history_limit: "Výchozí limit historie:"
 settings.auto_save: "Automatické ukládání"
 settings.auto_save_focus: "Automaticky uložit při ztrátě fokusu"
 settings.auto_save_focus_tooltip: "Automaticky uloží soubor .sen, když aplikace ztratí fokus."
-settings.auto_save_debounce: "Povolit zpožděné automatické ukládání"
+settings.auto_save_debounce: "Automatické ukládání po nečinnosti"
 settings.auto_save_debounce_tooltip: "Automaticky uloží po určité době nečinnosti během psaní."
 settings.inactivity_secs: "Nečinnost (sekundy):"
 
@@ -162,9 +162,6 @@ settings.assoc_macos: "Přidružení souborů v systému macOS musí být nastav
 # Danger Zone
 settings.reset_settings: "Obnovit nastavení"
 settings.reset_settings_tooltip: "Tímto se všechna nastavení obnoví do výchozího továrního stavu."
-settings.are_you_sure: "Jste si jisti?"
-settings.yes: "Ano"
-settings.no: "Ne"
 
 # ═══════════════════════════════════════
 # HISTORY PANEL
@@ -194,7 +191,7 @@ debug.filter_error: "Chyba"
 debug.export: "Exportovat protokoly"
 debug.log_exported: "Protokoly byly exportovány do: %{file}"
 debug.log_export_failed: "Export protokolů se nezdařil: %{e}"
-debug.all_filtered: "Nebyly nalezeny žádné protokoly nebo byly všechny vyfiltrovány."
+debug.all_filtered: "Všechny záznamy jsou odfiltrovány."
 
 # ═══════════════════════════════════════
 # SEARCH & REPLACE
@@ -251,7 +248,7 @@ dialog.about_created_by: "Vytvořil %{author}"
 dialog.about_github_repo: "Navštívit GitHub repozitář"
 dialog.about_issues: "Nahlásit chybu"
 dialog.about_support_body: "Následující služby jsou k dispozici pro ty, kteří chtějí finančně podpořit mou práci vývojáře:"
-dialog.btn_close: "Zavřít (F1 / ESC)"
+dialog.btn_close: "Zavřít (ESC)"
 
 # ═══════════════════════════════════════
 # BATCH CONVERTER
@@ -301,7 +298,7 @@ batch.log_rot_success: "[Obměna] Úspěch: %{file}"
 batch.log_rot_enc_err: "[Obměna] Chyba opětovného šifrování: %{file} — %{error}"
 batch.log_rot_dec_err: "[Obměna] Chyba dešifrování: %{file} — %{error}"
 batch.log_rot_ignored_magic: "[Obměna] Ignorováno: Nerozpoznaný soubor SEN (neplatná magie): %{file}"
-batch.log_err_keyfile: "Kritické: Chyba souboru klíče: %{error}"
+batch.log_err_keyfile: "Kritická chyba souboru klíče: %{error}"
 
 # ═══════════════════════════════════════
 # THEME EDITOR
@@ -319,7 +316,7 @@ theme.dark: "Tmavý"
 theme.light: "Světlý"
 theme.copy_suffix: "(Kopie)"
 theme.no_theme_editing: "Není upravován žádný motiv"
-theme.verifying: "Ověřování..."
+theme.verifying: "Ověřování motivu..."
 theme.saved_msg: "Motiv úspěšně uložen: %{name}"
 theme.save_error: "Uložení motivu selhalo: %{error}"
 
@@ -330,7 +327,7 @@ theme.cat_editor: "HLAVNÍ TEXTOVÝ EDITOR"
 theme.cat_buttons: "TLAČÍTKA A VSTUPY"
 theme.cat_widgets: "WIDGETY"
 theme.cat_geometry: "GEOMETRIE PANELŮ"
-theme.cat_syntax: "VÝSTRAHY"
+theme.cat_alerts: "VÝSTRAHY"
 
 # Labels
 theme.bg: "Pozadí UI:"
@@ -504,7 +501,7 @@ helpers.log_tree_stats: "Nalezeno %{folders} složek a %{files} souborů .sen"
 helpers.log_key_changed: "Soubor klíče se změnil, maže se mezipaměť přístupu"
 helpers.log_check_bg: "Kontrola přístupu pro %{count} souborů na pozadí..."
 helpers.title_untitled: "Bez názvu - SEN"
-helpers.title_untitled_mod: "* %{file} - SEN"
+helpers.title_untitled_mod: "* Bez názvu - SEN"
 helpers.title_sen: "SEN"
 helpers.title_sen_mod: "SEN *"
 helpers.title_file: "%{file} - SEN"

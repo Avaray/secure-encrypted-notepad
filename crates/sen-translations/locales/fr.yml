@@ -1,7 +1,7 @@
 app.close_panel: "Fermer le panneau"
 app.unsaved_document: "Document non enregistré"
 app.no_keyfile: "Aucun fichier de clé"
-app.status_stealth: "Furtif"
+app.status_stealth: "Mode furtif"
 app.locked_title: "Bloc-notes sécurisé verrouillé"
 app.locked_msg: "Authentifiez-vous pour accéder à vos notes sensibles"
 app.unlock_btn: "Déverrouiller l'application"
@@ -72,7 +72,7 @@ settings.biometric_unlock: "Déverrouillage biométrique"
 
 # Stealth Mode
 settings.stealth_mode: "Paramètres du mode furtif"
-settings.stealth_mode_enable: "Activer le mode furtif (Enregistrer sans en-tête)"
+settings.stealth_mode_enable: "Activer le mode furtif"
 settings.stealth_mode_tooltip: "Lorsqu'il est activé, les fichiers sont enregistrés sans l'extension .sen et l'en-tête magique SEN, ce qui les rend indiscernables d'un bruit binaire aléatoire."
 settings.stealth_scan_enable: "Activer l'analyse des fichiers en mode furtif"
 settings.stealth_scan_tooltip: "Lorsqu'il est activé, l'arborescence des fichiers et le convertisseur par lots tenteront de déchiffrer les fichiers inconnus à l'essai afin d'identifier les documents en mode furtif."
@@ -101,7 +101,7 @@ settings.open_dir: "Ouvrir le répertoire"
 
 # Editor
 settings.show_line_numbers: "Afficher les numéros de ligne"
-settings.show_whitespace: "Afficher les symboles spéciaux"
+settings.show_whitespace: "Afficher les caractères d'espacement"
 settings.show_whitespace_tooltip: "Affiche les espaces comme des points, les tabulations comme des flèches et les sauts de ligne comme des symboles de retour."
 settings.cursor_shape: "Forme du curseur :"
 settings.cursor_blink: "Clignotement du curseur"
@@ -118,7 +118,7 @@ settings.history_limit: "Limite d'historique par défaut :"
 settings.auto_save: "Enregistrement automatique"
 settings.auto_save_focus: "Enregistrement automatique lors de la perte de focus"
 settings.auto_save_focus_tooltip: "Enregistre automatiquement le fichier .sen lorsque l'application perd le focus."
-settings.auto_save_debounce: "Activer l'enregistrement automatique différé"
+settings.auto_save_debounce: "Enregistrement automatique après inactivité"
 settings.auto_save_debounce_tooltip: "Enregistre automatiquement après une période d'inactivité pendant la frappe."
 settings.inactivity_secs: "Inactivité (secondes) :"
 
@@ -162,9 +162,6 @@ settings.assoc_macos: "L'association de fichiers sur macOS doit être définie m
 # Danger Zone
 settings.reset_settings: "Réinitialiser les paramètres"
 settings.reset_settings_tooltip: "Cela restaurera tous les paramètres à leurs valeurs d'usine par défaut."
-settings.are_you_sure: "Êtes-vous sûr ?"
-settings.yes: "Oui"
-settings.no: "Non"
 
 # ═══════════════════════════════════════
 # HISTORY PANEL
@@ -194,7 +191,7 @@ debug.filter_error: "Erreur"
 debug.export: "Exporter les journaux"
 debug.log_exported: "Journaux exportés vers : %{file}"
 debug.log_export_failed: "Échec de l'exportation des journaux : %{e}"
-debug.all_filtered: "Aucun journal trouvé ou tous filtrés."
+debug.all_filtered: "Tous les journaux sont filtrés."
 
 # ═══════════════════════════════════════
 # SEARCH & REPLACE
@@ -251,7 +248,7 @@ dialog.about_created_by: "Créé par %{author}"
 dialog.about_github_repo: "Visiter le dépôt GitHub"
 dialog.about_issues: "Signaler un bug"
 dialog.about_support_body: "Les services suivants sont disponibles pour ceux qui souhaitent soutenir financièrement mon travail en tant que développeur :"
-dialog.btn_close: "Fermer (F1 / Échap)"
+dialog.btn_close: "Fermer (Échap)"
 
 # ═══════════════════════════════════════
 # BATCH CONVERTER
@@ -283,7 +280,7 @@ batch.extension_label: "Extension :"
 batch.input_label: "Fichiers d'entrée"
 batch.files_none: "Aucun fichier ajouté."
 batch.btn_add: "Ajouter des fichiers"
-batch.btn_clean: "Vider la liste"
+batch.btn_clean: "Effacer la liste"
 batch.btn_encrypt: "Tout chiffrer"
 batch.btn_decrypt: "Tout déchiffrer"
 batch.btn_rotate: "Tout pivoter"
@@ -301,7 +298,7 @@ batch.log_rot_success: "[Rotation] Succès : %{file}"
 batch.log_rot_enc_err: "[Rotation] Erreur de rechiffrement : %{file} — %{error}"
 batch.log_rot_dec_err: "[Rotation] Erreur de déchiffrement : %{file} — %{error}"
 batch.log_rot_ignored_magic: "[Rotation] Ignoré : Fichier SEN non reconnu (magie invalide) : %{file}"
-batch.log_err_keyfile: "Critique : Erreur de fichier de clé : %{error}"
+batch.log_err_keyfile: "Erreur critique du fichier de clé : %{error}"
 
 # ═══════════════════════════════════════
 # THEME EDITOR
@@ -319,7 +316,7 @@ theme.dark: "Sombre"
 theme.light: "Clair"
 theme.copy_suffix: "(Copie)"
 theme.no_theme_editing: "Aucun thème en cours d'édition"
-theme.verifying: "Vérification..."
+theme.verifying: "Vérification du thème..."
 theme.saved_msg: "Thème enregistré avec succès : %{name}"
 theme.save_error: "Échec de l'enregistrement du thème : %{error}"
 
@@ -330,7 +327,7 @@ theme.cat_editor: "ÉDITEUR DE TEXTE PRINCIPAL"
 theme.cat_buttons: "BOUTONS & ENTRÉES"
 theme.cat_widgets: "WIDGETS"
 theme.cat_geometry: "GÉOMÉTRIE DES PANNEAUX"
-theme.cat_syntax: "ALERTES"
+theme.cat_alerts: "ALERTES"
 
 # Labels
 theme.bg: "Arrière-plan de l'interface :"
@@ -504,7 +501,7 @@ helpers.log_tree_stats: "Trouvé %{folders} dossiers et %{files} fichiers .sen"
 helpers.log_key_changed: "Fichier de clé modifié, effacement du cache d'accès"
 helpers.log_check_bg: "Vérification de l'accès pour %{count} fichiers en arrière-plan..."
 helpers.title_untitled: "Sans titre - SEN"
-helpers.title_untitled_mod: "* %{file} - SEN"
+helpers.title_untitled_mod: "* Sans titre - SEN"
 helpers.title_sen: "SEN"
 helpers.title_sen_mod: "SEN *"
 helpers.title_file: "%{file} - SEN"

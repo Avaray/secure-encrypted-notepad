@@ -2491,7 +2491,7 @@ if ui
                                     }
 
                                     // --- SYNTAX ALERTS ---
-                                    render_cat_header(ui, t!("theme.cat_syntax"), fg_color32);
+                                    render_cat_header(ui, t!("theme.cat_alerts"), fg_color32);
 
                                     if edit_optional_color(
                                         &t!("theme.success_label"),

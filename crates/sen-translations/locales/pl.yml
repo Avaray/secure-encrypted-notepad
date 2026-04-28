@@ -1,7 +1,7 @@
 app.close_panel: "Zamknij panel"
 app.unsaved_document: "Niezapisany dokument"
 app.no_keyfile: "Brak pliku klucza"
-app.status_stealth: "Ukryty"
+app.status_stealth: "Tryb ukrycia"
 app.locked_title: "Bezpieczny Notatnik Zablokowany"
 app.locked_msg: "Uwierzytelnij się, aby uzyskać dostęp do poufnych notatek"
 app.unlock_btn: "Odblokuj Aplikację"
@@ -72,7 +72,7 @@ settings.biometric_unlock: "Odblokowanie biometryczne"
 
 # Stealth Mode
 settings.stealth_mode: "Ustawienia Trybu Ukrytego"
-settings.stealth_mode_enable: "Włącz Tryb Ukryty (Zapis bez nagłówka)"
+settings.stealth_mode_enable: "Włącz tryb ukrycia"
 settings.stealth_mode_tooltip: "Po włączeniu pliki są zapisywane bez rozszerzenia .sen i nagłówka magicznego SEN, co sprawia, że są nieodróżnialne od losowego szumu binarnego."
 settings.stealth_scan_enable: "Włącz skanowanie plików w Trybie Ukrytym"
 settings.stealth_scan_tooltip: "Po włączeniu, drzewo plików i konwerter wsadowy spróbują odszyfrować nieznane pliki w celu identyfikacji dokumentów w trybie ukrytym."
@@ -101,7 +101,7 @@ settings.open_dir: "Otwórz katalog"
 
 # Editor
 settings.show_line_numbers: "Pokaż numery linii"
-settings.show_whitespace: "Pokaż znaki specjalne"
+settings.show_whitespace: "Pokaż białe znaki"
 settings.show_whitespace_tooltip: "Wyświetla spacje jako kropki, tabulatory jako strzałki, a podziały wierszy jako symbole powrotu."
 settings.cursor_shape: "Kształt kursora:"
 settings.cursor_blink: "Miganie kursora"
@@ -118,7 +118,7 @@ settings.history_limit: "Domyślny limit historii:"
 settings.auto_save: "Autozapis"
 settings.auto_save_focus: "Zapisz automatycznie po utracie ostrości okna"
 settings.auto_save_focus_tooltip: "Automatycznie zapisuje plik .sen, gdy aplikacja traci ostrość."
-settings.auto_save_debounce: "Włącz opóźniony autozapis"
+settings.auto_save_debounce: "Autozapis po bezczynności"
 settings.auto_save_debounce_tooltip: "Automatycznie zapisuje po okresie braku aktywności podczas pisania."
 settings.inactivity_secs: "Brak aktywności (sekundy):"
 
@@ -162,9 +162,6 @@ settings.assoc_macos: "Powiązanie plików w macOS należy ustawić ręcznie prz
 # Danger Zone
 settings.reset_settings: "Zresetuj ustawienia"
 settings.reset_settings_tooltip: "Spowoduje to przywrócenie wszystkich ustawień do wartości domyślnych."
-settings.are_you_sure: "Czy na pewno?"
-settings.yes: "Tak"
-settings.no: "Nie"
 
 # ═══════════════════════════════════════
 # HISTORY PANEL
@@ -194,7 +191,7 @@ debug.filter_error: "Błąd"
 debug.export: "Eksportuj dzienniki"
 debug.log_exported: "Dzienniki wyeksportowano do: %{file}"
 debug.log_export_failed: "Nie udało się wyeksportować dzienników: %{e}"
-debug.all_filtered: "Nie znaleziono dzienników lub wszystkie zostały odfiltrowane."
+debug.all_filtered: "Wszystkie dzienniki zostały odfiltrowane."
 
 # ═══════════════════════════════════════
 # SEARCH & REPLACE
@@ -251,7 +248,7 @@ dialog.about_created_by: "Stworzone przez %{author}"
 dialog.about_github_repo: "Odwiedź repozytorium GitHub"
 dialog.about_issues: "Zgłoś błąd"
 dialog.about_support_body: "Poniższe serwisy są dostępne dla osób, które chcą finansowo wesprzeć moją pracę jako programisty:"
-dialog.btn_close: "Zamknij (F1 / ESC)"
+dialog.btn_close: "Zamknij (ESC)"
 
 # ═══════════════════════════════════════
 # BATCH CONVERTER
@@ -301,7 +298,7 @@ batch.log_rot_success: "[Rotowanie] Sukces: %{file}"
 batch.log_rot_enc_err: "[Rotowanie] Błąd ponownego szyfrowania: %{file} — %{error}"
 batch.log_rot_dec_err: "[Rotowanie] Błąd deszyfrowania: %{file} — %{error}"
 batch.log_rot_ignored_magic: "[Rotowanie] Zignorowano: Nie rozpoznano pliku SEN (nieprawidłowa magia): %{file}"
-batch.log_err_keyfile: "Krytyczne: Błąd pliku klucza: %{error}"
+batch.log_err_keyfile: "Krytyczny błąd pliku klucza: %{error}"
 
 # ═══════════════════════════════════════
 # THEME EDITOR
@@ -319,7 +316,7 @@ theme.dark: "Ciemny"
 theme.light: "Jasny"
 theme.copy_suffix: "(Kopia)"
 theme.no_theme_editing: "Brak edytowanego motywu"
-theme.verifying: "Weryfikacja..."
+theme.verifying: "Weryfikacja motywu..."
 theme.saved_msg: "Motyw zapisany pomyślnie: %{name}"
 theme.save_error: "Błąd zapisu motywu: %{error}"
 
@@ -330,7 +327,7 @@ theme.cat_editor: "GŁÓWNY EDYTOR TEKSTU"
 theme.cat_buttons: "PRZYCISKI I POLA"
 theme.cat_widgets: "WIDŻETY"
 theme.cat_geometry: "GEOMETRIA PANELI"
-theme.cat_syntax: "ALERTY"
+theme.cat_alerts: "ALERTY"
 
 # Labels
 theme.bg: "Tło interfejsu:"
@@ -504,7 +501,7 @@ helpers.log_tree_stats: "Znaleziono %{folders} folderów i %{files} plików .sen
 helpers.log_key_changed: "Plik klucza został zmieniony, czyszczenie pamięci podręcznej dostępu"
 helpers.log_check_bg: "Sprawdzanie dostępu dla %{count} plików w tle..."
 helpers.title_untitled: "Bez tytułu - SEN"
-helpers.title_untitled_mod: "* %{file} - SEN"
+helpers.title_untitled_mod: "* Bez tytułu - SEN"
 helpers.title_sen: "SEN"
 helpers.title_sen_mod: "SEN *"
 helpers.title_file: "%{file} - SEN"

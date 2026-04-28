@@ -1,7 +1,7 @@
 app.close_panel: "Close Panel"
 app.unsaved_document: "Unsaved document"
 app.no_keyfile: "No keyfile"
-app.status_stealth: "Stealth"
+app.status_stealth: "Stealth Mode"
 app.locked_title: "Secure Notepad Locked"
 app.locked_msg: "Authenticate to access your sensitive notes"
 app.unlock_btn: "Unlock App"
@@ -72,7 +72,7 @@ settings.biometric_unlock: "Biometric Unlock"
 
 # Stealth Mode
 settings.stealth_mode: "Stealth Mode Settings"
-settings.stealth_mode_enable: "Enable Stealth Mode (Save headerless)"
+settings.stealth_mode_enable: "Enable Stealth Mode"
 settings.stealth_mode_tooltip: "When enabled, files are saved without the .sen extension and SEN magic header, making them indistinguishable from random binary noise."
 settings.stealth_scan_enable: "Enable Stealth Mode File Scanning"
 settings.stealth_scan_tooltip: "When enabled, the file tree and batch converter will attempt to trial-decrypt unknown files to identify stealth mode documents."
@@ -101,7 +101,7 @@ settings.open_dir: "Open Directory"
 
 # Editor
 settings.show_line_numbers: "Show line numbers"
-settings.show_whitespace: "Show special symbols"
+settings.show_whitespace: "Show whitespace characters"
 settings.show_whitespace_tooltip: "Displays spaces as dots, tabs as arrows, and line breaks as return symbols."
 settings.cursor_shape: "Cursor Shape:"
 settings.cursor_blink: "Cursor blinking"
@@ -118,7 +118,7 @@ settings.history_limit: "Default history limit:"
 settings.auto_save: "Auto Save"
 settings.auto_save_focus: "Auto-save on focus loss"
 settings.auto_save_focus_tooltip: "Automatically saves the .sen file when the application loses focus."
-settings.auto_save_debounce: "Enable Debounce Auto-save"
+settings.auto_save_debounce: "Auto-save after inactivity"
 settings.auto_save_debounce_tooltip: "Automatically saves after a period of inactivity while typing."
 settings.inactivity_secs: "Inactivity (seconds):"
 
@@ -162,9 +162,6 @@ settings.assoc_macos: "File association on macOS must be set manually via 'Get I
 # Danger Zone
 settings.reset_settings: "Reset Settings"
 settings.reset_settings_tooltip: "This will restore all settings to their factory defaults."
-settings.are_you_sure: "Are you sure?"
-settings.yes: "Yes"
-settings.no: "No"
 
 # ═══════════════════════════════════════
 # HISTORY PANEL
@@ -194,7 +191,7 @@ debug.filter_error: "Error"
 debug.export: "Export Logs"
 debug.log_exported: "Logs exported to: %{file}"
 debug.log_export_failed: "Failed to export logs: %{e}"
-debug.all_filtered: "No logs found or all filtered."
+debug.all_filtered: "All logs are filtered out."
 
 # ═══════════════════════════════════════
 # SEARCH & REPLACE
@@ -251,7 +248,7 @@ dialog.about_created_by: "Created by %{author}"
 dialog.about_github_repo: "Visit GitHub Repository"
 dialog.about_issues: "Report a bug"
 dialog.about_support_body: "The following services are available for those who wish to financially support my work as a developer:"
-dialog.btn_close: "Close (F1 / ESC)"
+dialog.btn_close: "Close (ESC)"
 
 # ═══════════════════════════════════════
 # BATCH CONVERTER
@@ -283,7 +280,7 @@ batch.extension_label: "Extension:"
 batch.input_label: "Input Files"
 batch.files_none: "No files added."
 batch.btn_add: "Add Files"
-batch.btn_clean: "Clean List"
+batch.btn_clean: "Clear List"
 batch.btn_encrypt: "Encrypt All"
 batch.btn_decrypt: "Decrypt All"
 batch.btn_rotate: "Rotate All"
@@ -301,7 +298,7 @@ batch.log_rot_success: "[Rotate] Success: %{file}"
 batch.log_rot_enc_err: "[Rotate] Re-encrypt Error: %{file} — %{error}"
 batch.log_rot_dec_err: "[Rotate] Decrypt Error: %{file} — %{error}"
 batch.log_rot_ignored_magic: "[Rotate] Ignored: Not a recognized SEN file (invalid magic): %{file}"
-batch.log_err_keyfile: "Critical: Keyfile error: %{error}"
+batch.log_err_keyfile: "Critical keyfile error: %{error}"
 
 # ═══════════════════════════════════════
 # THEME EDITOR
@@ -319,7 +316,7 @@ theme.dark: "Dark"
 theme.light: "Light"
 theme.copy_suffix: "(Copy)"
 theme.no_theme_editing: "No theme being edited"
-theme.verifying: "Verifying..."
+theme.verifying: "Verifying theme..."
 theme.saved_msg: "Theme saved successfully: %{name}"
 theme.save_error: "Failed to save theme: %{error}"
 
@@ -330,7 +327,7 @@ theme.cat_editor: "MAIN TEXT EDITOR"
 theme.cat_buttons: "BUTTONS & INPUTS"
 theme.cat_widgets: "WIDGETS"
 theme.cat_geometry: "PANELS GEOMETRY"
-theme.cat_syntax: "ALERTS"
+theme.cat_alerts: "ALERTS"
 
 # Labels
 theme.bg: "UI Background:"
@@ -504,7 +501,7 @@ helpers.log_tree_stats: "Found %{folders} folders and %{files} .sen files"
 helpers.log_key_changed: "Keyfile changed, clearing access cache"
 helpers.log_check_bg: "Checking access for %{count} files in background..."
 helpers.title_untitled: "Untitled - SEN"
-helpers.title_untitled_mod: "* %{file} - SEN"
+helpers.title_untitled_mod: "* Untitled - SEN"
 helpers.title_sen: "SEN"
 helpers.title_sen_mod: "SEN *"
 helpers.title_file: "%{file} - SEN"

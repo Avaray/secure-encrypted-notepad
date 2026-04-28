@@ -1,7 +1,7 @@
 app.close_panel: "Chiudi pannello"
 app.unsaved_document: "Documento non salvato"
 app.no_keyfile: "Nessun file chiave"
-app.status_stealth: "Invisibile"
+app.status_stealth: "Modalità invisibile"
 app.locked_title: "Blocco Note Sicuro Bloccato"
 app.locked_msg: "Autenticati per accedere alle tue note sensibili"
 app.unlock_btn: "Sblocca App"
@@ -72,7 +72,7 @@ settings.biometric_unlock: "Sblocco biometrico"
 
 # Stealth Mode
 settings.stealth_mode: "Impostazioni Modalità Invisibile"
-settings.stealth_mode_enable: "Abilita Modalità Invisibile (Salva senza intestazione)"
+settings.stealth_mode_enable: "Abilita modalità invisibile"
 settings.stealth_mode_tooltip: "Quando abilitata, i file vengono salvati senza l'estensione .sen e l'intestazione magica SEN, rendendoli indistinguibili dal rumore binario casuale."
 settings.stealth_scan_enable: "Abilita scansione file in Modalità Invisibile"
 settings.stealth_scan_tooltip: "Quando abilitato, l'albero dei file e il convertitore batch tenteranno di decifrare in prova i file sconosciuti per identificare i documenti in modalità invisibile."
@@ -101,7 +101,7 @@ settings.open_dir: "Apri directory"
 
 # Editor
 settings.show_line_numbers: "Mostra numeri di riga"
-settings.show_whitespace: "Mostra simboli speciali"
+settings.show_whitespace: "Mostra caratteri spazio"
 settings.show_whitespace_tooltip: "Mostra gli spazi come punti, le tabulazioni come frecce e le interruzioni di riga come simboli di ritorno."
 settings.cursor_shape: "Forma del cursore:"
 settings.cursor_blink: "Cursore lampeggiante"
@@ -118,7 +118,7 @@ settings.history_limit: "Limite cronologia predefinito:"
 settings.auto_save: "Salvataggio automatico"
 settings.auto_save_focus: "Salvataggio automatico in caso di perdita del focus"
 settings.auto_save_focus_tooltip: "Salva automaticamente il file .sen quando l'applicazione perde il focus."
-settings.auto_save_debounce: "Abilita salvataggio automatico ritardato"
+settings.auto_save_debounce: "Salvataggio automatico dopo inattività"
 settings.auto_save_debounce_tooltip: "Salva automaticamente dopo un periodo di inattività durante la digitazione."
 settings.inactivity_secs: "Inattività (secondi):"
 
@@ -162,9 +162,6 @@ settings.assoc_macos: "L'associazione dei file su macOS deve essere impostata ma
 # Danger Zone
 settings.reset_settings: "Ripristina impostazioni"
 settings.reset_settings_tooltip: "Questo ripristinerà tutte le impostazioni ai valori predefiniti di fabbrica."
-settings.are_you_sure: "Sei sicuro?"
-settings.yes: "Sì"
-settings.no: "No"
 
 # ═══════════════════════════════════════
 # HISTORY PANEL
@@ -194,7 +191,7 @@ debug.filter_error: "Errore"
 debug.export: "Esporta log"
 debug.log_exported: "Log esportati in: %{file}"
 debug.log_export_failed: "Esportazione log fallita: %{e}"
-debug.all_filtered: "Nessun log trovato o tutti filtrati."
+debug.all_filtered: "Tutti i log sono filtrati."
 
 # ═══════════════════════════════════════
 # SEARCH & REPLACE
@@ -251,7 +248,7 @@ dialog.about_created_by: "Creato da %{author}"
 dialog.about_github_repo: "Visita il repository GitHub"
 dialog.about_issues: "Segnala un bug"
 dialog.about_support_body: "I seguenti servizi sono disponibili per coloro che desiderano sostenere finanziariamente il mio lavoro come sviluppatore:"
-dialog.btn_close: "Chiudi (F1 / ESC)"
+dialog.btn_close: "Chiudi (ESC)"
 
 # ═══════════════════════════════════════
 # BATCH CONVERTER
@@ -301,7 +298,7 @@ batch.log_rot_success: "[Ruota] Successo: %{file}"
 batch.log_rot_enc_err: "[Ruota] Errore di ricrittografia: %{file} — %{error}"
 batch.log_rot_dec_err: "[Ruota] Errore di decrittografia: %{file} — %{error}"
 batch.log_rot_ignored_magic: "[Ruota] Ignorato: File SEN non riconosciuto (magic non valida): %{file}"
-batch.log_err_keyfile: "Critico: Errore del file chiave: %{error}"
+batch.log_err_keyfile: "Errore critico del file chiave: %{error}"
 
 # ═══════════════════════════════════════
 # THEME EDITOR
@@ -319,7 +316,7 @@ theme.dark: "Scuro"
 theme.light: "Chiaro"
 theme.copy_suffix: "(Copia)"
 theme.no_theme_editing: "Nessun tema in fase di modifica"
-theme.verifying: "Verifica in corso..."
+theme.verifying: "Verifica del tema..."
 theme.saved_msg: "Tema salvato con successo: %{name}"
 theme.save_error: "Impossibile salvare il tema: %{error}"
 
@@ -330,7 +327,7 @@ theme.cat_editor: "EDITOR DI TESTO PRINCIPALE"
 theme.cat_buttons: "PULSANTI E INPUT"
 theme.cat_widgets: "WIDGET"
 theme.cat_geometry: "GEOMETRIA DEI PANNELLI"
-theme.cat_syntax: "AVVISI"
+theme.cat_alerts: "AVVISI"
 
 # Labels
 theme.bg: "Sfondo UI:"
@@ -504,7 +501,7 @@ helpers.log_tree_stats: "Trovate %{folders} cartelle e %{files} file .sen"
 helpers.log_key_changed: "File chiave modificato, pulizia cache di accesso"
 helpers.log_check_bg: "Verifica accesso per %{count} file in background..."
 helpers.title_untitled: "Senza titolo - SEN"
-helpers.title_untitled_mod: "* %{file} - SEN"
+helpers.title_untitled_mod: "* Senza titolo - SEN"
 helpers.title_sen: "SEN"
 helpers.title_sen_mod: "SEN *"
 helpers.title_file: "%{file} - SEN"

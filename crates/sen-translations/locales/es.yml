@@ -1,7 +1,7 @@
 app.close_panel: "Cerrar panel"
 app.unsaved_document: "Documento no guardado"
 app.no_keyfile: "Sin archivo de clave"
-app.status_stealth: "Sigiloso"
+app.status_stealth: "Modo incógnito"
 app.locked_title: "Bloc de Notas Seguro Bloqueado"
 app.locked_msg: "Autentíquese para acceder a sus notas confidenciales"
 app.unlock_btn: "Desbloquear Aplicación"
@@ -72,7 +72,7 @@ settings.biometric_unlock: "Desbloqueo biométrico"
 
 # Stealth Mode
 settings.stealth_mode: "Configuración del Modo Sigiloso"
-settings.stealth_mode_enable: "Activar Modo Sigiloso (Guardar sin encabezado)"
+settings.stealth_mode_enable: "Activar modo incógnito"
 settings.stealth_mode_tooltip: "Cuando está activado, los archivos se guardan sin la extensión .sen y el encabezado mágico de SEN, haciéndolos indistinguibles de ruido binario aleatorio."
 settings.stealth_scan_enable: "Activar Escaneo de Archivos en Modo Sigiloso"
 settings.stealth_scan_tooltip: "Cuando está activado, el árbol de archivos y el convertidor por lotes intentarán descifrar archivos desconocidos de prueba para identificar documentos en modo sigiloso."
@@ -101,7 +101,7 @@ settings.open_dir: "Abrir directorio"
 
 # Editor
 settings.show_line_numbers: "Mostrar números de línea"
-settings.show_whitespace: "Mostrar símbolos especiales"
+settings.show_whitespace: "Mostrar caracteres de espacio en blanco"
 settings.show_whitespace_tooltip: "Muestra los espacios como puntos, los tabuladores como flechas y los saltos de línea como símbolos de retorno."
 settings.cursor_shape: "Forma del cursor:"
 settings.cursor_blink: "Parpadeo del cursor"
@@ -118,7 +118,7 @@ settings.history_limit: "Límite de historial predeterminado:"
 settings.auto_save: "Guardado automático"
 settings.auto_save_focus: "Guardado automático al perder el foco"
 settings.auto_save_focus_tooltip: "Guarda automáticamente el archivo .sen cuando la aplicación pierde el foco."
-settings.auto_save_debounce: "Habilitar guardado automático con retardo"
+settings.auto_save_debounce: "Guardado automático tras inactividad"
 settings.auto_save_debounce_tooltip: "Guarda automáticamente después de un período de inactividad mientras se escribe."
 settings.inactivity_secs: "Inactividad (segundos):"
 
@@ -162,9 +162,6 @@ settings.assoc_macos: "La asociación de archivos en macOS debe configurarse man
 # Danger Zone
 settings.reset_settings: "Restablecer configuración"
 settings.reset_settings_tooltip: "Esto restaurará todas las configuraciones a sus valores predeterminados de fábrica."
-settings.are_you_sure: "¿Estás seguro?"
-settings.yes: "Sí"
-settings.no: "No"
 
 # ═══════════════════════════════════════
 # HISTORY PANEL
@@ -194,7 +191,7 @@ debug.filter_error: "Error"
 debug.export: "Exportar registros"
 debug.log_exported: "Registros exportados a: %{file}"
 debug.log_export_failed: "Error al exportar los registros: %{e}"
-debug.all_filtered: "No se encontraron registros o todos han sido filtrados."
+debug.all_filtered: "Todos los registros se han filtrado."
 
 # ═══════════════════════════════════════
 # SEARCH & REPLACE
@@ -251,7 +248,7 @@ dialog.about_created_by: "Creado por %{author}"
 dialog.about_github_repo: "Visitar repositorio de GitHub"
 dialog.about_issues: "Informar de un error"
 dialog.about_support_body: "Los siguientes servicios están disponibles para quienes deseen apoyar financieramente mi trabajo como desarrollador:"
-dialog.btn_close: "Cerrar (F1 / ESC)"
+dialog.btn_close: "Cerrar (ESC)"
 
 # ═══════════════════════════════════════
 # BATCH CONVERTER
@@ -301,7 +298,7 @@ batch.log_rot_success: "[Rotar] Éxito: %{file}"
 batch.log_rot_enc_err: "[Rotar] Error al volver a cifrar: %{file} — %{error}"
 batch.log_rot_dec_err: "[Rotar] Error al descifrar: %{file} — %{error}"
 batch.log_rot_ignored_magic: "[Rotar] Ignorado: No es un archivo SEN reconocido (magia no válida): %{file}"
-batch.log_err_keyfile: "Crítico: Error de archivo de clave: %{error}"
+batch.log_err_keyfile: "Error crítico del archivo de clave: %{error}"
 
 # ═══════════════════════════════════════
 # THEME EDITOR
@@ -319,7 +316,7 @@ theme.dark: "Oscuro"
 theme.light: "Claro"
 theme.copy_suffix: "(Copia)"
 theme.no_theme_editing: "No se está editando ningún tema"
-theme.verifying: "Verificando..."
+theme.verifying: "Verificando tema..."
 theme.saved_msg: "Tema guardado con éxito: %{name}"
 theme.save_error: "Error al guardar el tema: %{error}"
 
@@ -330,7 +327,7 @@ theme.cat_editor: "EDITOR DE TEXTO PRINCIPAL"
 theme.cat_buttons: "BOTONES Y ENTRADAS"
 theme.cat_widgets: "WIDGETS"
 theme.cat_geometry: "GEOMETRÍA DE PANELES"
-theme.cat_syntax: "ALERTAS"
+theme.cat_alerts: "ALERTAS"
 
 # Labels
 theme.bg: "Fondo de la interfaz:"
@@ -504,7 +501,7 @@ helpers.log_tree_stats: "Se encontraron %{folders} carpetas y %{files} archivos 
 helpers.log_key_changed: "El archivo de clave ha cambiado, borrando la caché de acceso"
 helpers.log_check_bg: "Comprobando acceso para %{count} archivos en segundo plano..."
 helpers.title_untitled: "Sin título - SEN"
-helpers.title_untitled_mod: "* %{file} - SEN"
+helpers.title_untitled_mod: "* Sin título - SEN"
 helpers.title_sen: "SEN"
 helpers.title_sen_mod: "SEN *"
 helpers.title_file: "%{file} - SEN"

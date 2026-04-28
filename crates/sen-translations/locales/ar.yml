@@ -1,7 +1,7 @@
 app.close_panel: "إغلاق اللوحة"
 app.unsaved_document: "مستند غير محفوظ"
 app.no_keyfile: "لا يوجد ملف مفتاح"
-app.status_stealth: "تخفي"
+app.status_stealth: "وضع التخفي"
 app.locked_title: "المفكرة الآمنة مقفلة"
 app.locked_msg: "الرجاء المصادقة للوصول إلى ملاحظاتك الحساسة"
 app.unlock_btn: "فتح التطبيق"
@@ -72,7 +72,7 @@ settings.biometric_unlock: "فتح القفل البيومتري"
 
 # Stealth Mode
 settings.stealth_mode: "إعدادات وضع التخفي"
-settings.stealth_mode_enable: "تمكين وضع التخفي (حفظ بدون رأس)"
+settings.stealth_mode_enable: "تفعيل وضع التخفي"
 settings.stealth_mode_tooltip: "عند التمكين، يتم حفظ الملفات بدون اللاحقة ‎.sen ورأس SEN السحري، مما يجعلها غير قابلة للتمييز عن الضوضاء الثنائية العشوائية."
 settings.stealth_scan_enable: "تمكين فحص ملفات وضع التخفي"
 settings.stealth_scan_tooltip: "عند التمكين، ستحاول شجرة الملفات ومحول الدُفعات فك تشفير الملفات غير المعروفة تجريبيًا لتحديد مستندات وضع التخفي."
@@ -101,7 +101,7 @@ settings.open_dir: "فتح مجلد"
 
 # Editor
 settings.show_line_numbers: "إظهار أرقام الأسطر"
-settings.show_whitespace: "إظهار الرموز الخاصة"
+settings.show_whitespace: "إظهار رموز المسافات"
 settings.show_whitespace_tooltip: "يعرض المسافات كنقاط، وعلامات الجدولة كسهام، وفواصل الأسطر كرموز إرجاع."
 settings.cursor_shape: "شكل المؤشر:"
 settings.cursor_blink: "وميض المؤشر"
@@ -118,7 +118,7 @@ settings.history_limit: "الحد الافتراضي للسجل:"
 settings.auto_save: "الحفظ التلقائي"
 settings.auto_save_focus: "حفظ تلقائي عند فقدان التركيز"
 settings.auto_save_focus_tooltip: "يحفظ ملف .sen تلقائيًا عندما يفقد التطبيق التركيز."
-settings.auto_save_debounce: "تمكين الحفظ التلقائي المؤجل"
+settings.auto_save_debounce: "حفظ تلقائي بعد فترة خمول"
 settings.auto_save_debounce_tooltip: "يحفظ تلقائيًا بعد فترة من عدم النشاط أثناء الكتابة."
 settings.inactivity_secs: "عدم النشاط (بالثواني):"
 
@@ -162,9 +162,6 @@ settings.assoc_macos: "يجب تعيين ربط الملفات على نظام m
 # Danger Zone
 settings.reset_settings: "إعادة تعيين الإعدادات"
 settings.reset_settings_tooltip: "سيؤدي هذا إلى استعادة جميع الإعدادات إلى إعدادات المصنع الافتراضية."
-settings.are_you_sure: "هل أنت متأكد؟"
-settings.yes: "نعم"
-settings.no: "لا"
 
 # ═══════════════════════════════════════
 # HISTORY PANEL
@@ -194,7 +191,7 @@ debug.filter_error: "خطأ"
 debug.export: "تصدير السجلات"
 debug.log_exported: "تم تصدير السجلات إلى: %{file}"
 debug.log_export_failed: "فشل تصدير السجلات: %{e}"
-debug.all_filtered: "لم يتم العثور على سجلات أو تمت تصفيتها جميعًا."
+debug.all_filtered: "تم تصفية كافة السجلات."
 
 # ═══════════════════════════════════════
 # SEARCH & REPLACE
@@ -251,7 +248,7 @@ dialog.about_created_by: "أنشأه %{author}"
 dialog.about_github_repo: "زيارة مستودع GitHub"
 dialog.about_issues: "الإبلاغ عن خلل"
 dialog.about_support_body: "الخدمات التالية متاحة لأولئك الذين يرغبون في دعم عملي كمطور ماليًا:"
-dialog.btn_close: "إغلاق (F1 / ESC)"
+dialog.btn_close: "إغلاق (ESC)"
 
 # ═══════════════════════════════════════
 # BATCH CONVERTER
@@ -283,7 +280,7 @@ batch.extension_label: "الامتداد:"
 batch.input_label: "ملفات الإدخال"
 batch.files_none: "لم تتم إضافة أي ملفات."
 batch.btn_add: "إضافة ملفات"
-batch.btn_clean: "تنظيف القائمة"
+batch.btn_clean: "مسح القائمة"
 batch.btn_encrypt: "تشفير الكل"
 batch.btn_decrypt: "فك تشفير الكل"
 batch.btn_rotate: "تدوير الكل"
@@ -301,7 +298,7 @@ batch.log_rot_success: "[تدوير] نجاح: %{file}"
 batch.log_rot_enc_err: "[تدوير] خطأ في إعادة التشفير: %{file} — %{error}"
 batch.log_rot_dec_err: "[تدوير] خطأ في فك التشفير: %{file} — %{error}"
 batch.log_rot_ignored_magic: "[تدوير] تم التجاهل: ملف SEN غير معروف (توقيع غير صالح): %{file}"
-batch.log_err_keyfile: "حرج: خطأ في ملف المفتاح: %{error}"
+batch.log_err_keyfile: "خطأ جسيم في ملف المفتاح: %{error}"
 
 # ═══════════════════════════════════════
 # THEME EDITOR
@@ -319,7 +316,7 @@ theme.dark: "داكن"
 theme.light: "فاتح"
 theme.copy_suffix: "(نسخة)"
 theme.no_theme_editing: "لا توجد سمة قيد التحرير"
-theme.verifying: "جاري التحقق..."
+theme.verifying: "جاري التحقق من المظهر..."
 theme.saved_msg: "تم حفظ السمة بنجاح: %{name}"
 theme.save_error: "فشل في حفظ السمة: %{error}"
 
@@ -330,7 +327,7 @@ theme.cat_editor: "محرر النص الرئيسي"
 theme.cat_buttons: "الأزرار والمدخلات"
 theme.cat_widgets: "الوحدات (Widgets)"
 theme.cat_geometry: "هندسة اللوحات"
-theme.cat_syntax: "تنبيهات"
+theme.cat_alerts: "تنبيهات"
 
 # Labels
 theme.bg: "خلفية الواجهة:"
@@ -504,7 +501,7 @@ helpers.log_tree_stats: "تم العثور على %{folders} مجلدات و %{f
 helpers.log_key_changed: "تغير ملف المفتاح، جاري مسح ذاكرة التخزين المؤقت للوصول"
 helpers.log_check_bg: "التحقق من الوصول لـ %{count} ملفات في الخلفية..."
 helpers.title_untitled: "بدون عنوان - SEN"
-helpers.title_untitled_mod: "* %{file} - SEN"
+helpers.title_untitled_mod: "* بدون عنوان - SEN"
 helpers.title_sen: "SEN"
 helpers.title_sen_mod: "SEN *"
 helpers.title_file: "%{file} - SEN"

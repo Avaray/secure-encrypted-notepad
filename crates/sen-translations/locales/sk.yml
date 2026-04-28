@@ -1,7 +1,7 @@
 app.close_panel: "Zatvoriť panel"
 app.unsaved_document: "Neuložený dokument"
 app.no_keyfile: "Žiadny súbor kľúča"
-app.status_stealth: "Stealth"
+app.status_stealth: "Režim stealth"
 app.locked_title: "Zabezpečený Poznámkový Blok Uzamknutý"
 app.locked_msg: "Overte sa pre prístup k vašim citlivým poznámkam"
 app.unlock_btn: "Odomknúť Aplikáciu"
@@ -72,7 +72,7 @@ settings.biometric_unlock: "Biometrické odomykanie"
 
 # Stealth Mode
 settings.stealth_mode: "Nastavenia režimu Stealth"
-settings.stealth_mode_enable: "Zapnúť režim Stealth (Uložiť bez hlavičky)"
+settings.stealth_mode_enable: "Povoliť režim stealth"
 settings.stealth_mode_tooltip: "Keď je povolené, súbory sa ukladajú bez prípony .sen a magickej hlavičky SEN, čím sú nerozoznateľné od náhodného binárneho šumu."
 settings.stealth_scan_enable: "Zapnúť skenovanie súborov v režime Stealth"
 settings.stealth_scan_tooltip: "Keď je povolené, strom súborov a dávkový konvertor sa pokúsia o skúšobné dešifrovanie neznámych súborov, aby identifikovali dokumenty v režime Stealth."
@@ -101,7 +101,7 @@ settings.open_dir: "Otvoriť adresár"
 
 # Editor
 settings.show_line_numbers: "Zobraziť čísla riadkov"
-settings.show_whitespace: "Zobraziť špeciálne symboly"
+settings.show_whitespace: "Zobraziť biele znaky"
 settings.show_whitespace_tooltip: "Zobrazuje medzery ako bodky, tabulátory ako šípky a zlomy riadkov ako symboly návratu."
 settings.cursor_shape: "Tvar kurzora:"
 settings.cursor_blink: "Blikanie kurzora"
@@ -118,7 +118,7 @@ settings.history_limit: "Predvolený limit histórie:"
 settings.auto_save: "Automatické ukladanie"
 settings.auto_save_focus: "Automaticky uložiť pri strate zamerania"
 settings.auto_save_focus_tooltip: "Automaticky uloží .sen súbor, keď aplikácia stratí zameranie (focus)."
-settings.auto_save_debounce: "Povoliť oneskorené automatické ukladanie"
+settings.auto_save_debounce: "Automatické ukladanie po nečinnosti"
 settings.auto_save_debounce_tooltip: "Automaticky uloží po určitom čase nečinnosti počas písania."
 settings.inactivity_secs: "Nečinnosť (sekundy):"
 
@@ -162,9 +162,6 @@ settings.assoc_macos: "Priradenie súborov v systéme macOS je potrebné nastavi
 # Danger Zone
 settings.reset_settings: "Obnoviť nastavenia"
 settings.reset_settings_tooltip: "Týmto sa všetky nastavenia obnovia na predvolené výrobné hodnoty."
-settings.are_you_sure: "Ste si istý?"
-settings.yes: "Áno"
-settings.no: "Nie"
 
 # ═══════════════════════════════════════
 # HISTORY PANEL
@@ -194,7 +191,7 @@ debug.filter_error: "Chyba"
 debug.export: "Exportovať denníky"
 debug.log_exported: "Denníky boli exportované do: %{file}"
 debug.log_export_failed: "Exportovanie denníkov zlyhalo: %{e}"
-debug.all_filtered: "Nenašli sa žiadne záznamy alebo boli všetky odfiltrované."
+debug.all_filtered: "Všetky záznamy sú odfiltrované."
 
 # ═══════════════════════════════════════
 # SEARCH & REPLACE
@@ -251,7 +248,7 @@ dialog.about_created_by: "Vytvoril %{author}"
 dialog.about_github_repo: "Navštíviť GitHub repozitár"
 dialog.about_issues: "Nahlásiť chybu"
 dialog.about_support_body: "Nasledujúce služby sú k dispozícii pre tých, ktorí chcú finančne podporiť moju prácu vývojára:"
-dialog.btn_close: "Zatvoriť (F1 / ESC)"
+dialog.btn_close: "Zavrieť (ESC)"
 
 # ═══════════════════════════════════════
 # BATCH CONVERTER
@@ -301,7 +298,7 @@ batch.log_rot_success: "[Obmena] Úspech: %{file}"
 batch.log_rot_enc_err: "[Obmena] Chyba opätovného šifrovania: %{file} — %{error}"
 batch.log_rot_dec_err: "[Obmena] Chyba dešifrovania: %{file} — %{error}"
 batch.log_rot_ignored_magic: "[Obmena] Ignorované: Nerozpoznaný súbor SEN (neplatná mágia): %{file}"
-batch.log_err_keyfile: "Kritické: Chyba súboru kľúča: %{error}"
+batch.log_err_keyfile: "Kritická chyba súboru kľúča: %{error}"
 
 # ═══════════════════════════════════════
 # THEME EDITOR
@@ -319,7 +316,7 @@ theme.dark: "Tmavá"
 theme.light: "Svetlá"
 theme.copy_suffix: "(Kópia)"
 theme.no_theme_editing: "Neupravuje sa žiadna téma"
-theme.verifying: "Overuje sa..."
+theme.verifying: "Overovanie témy..."
 theme.saved_msg: "Téma bola úspešne uložená: %{name}"
 theme.save_error: "Nepodarilo sa uložiť tému: %{error}"
 
@@ -330,7 +327,7 @@ theme.cat_editor: "HLAVNÝ TEXTOVÝ EDITOR"
 theme.cat_buttons: "TLAČIDLÁ A VSTUPY"
 theme.cat_widgets: "WIDGETY"
 theme.cat_geometry: "GEOMETRIA PANELOV"
-theme.cat_syntax: "VÝSTRAHY"
+theme.cat_alerts: "VÝSTRAHY"
 
 # Labels
 theme.bg: "Pozadie UI:"
@@ -504,7 +501,7 @@ helpers.log_tree_stats: "Nájdených %{folders} priečinkov a %{files} .sen súb
 helpers.log_key_changed: "Súbor kľúča sa zmenil, vymazáva sa vyrovnávacia pamäť prístupu"
 helpers.log_check_bg: "Kontrola prístupu pre %{count} súborov na pozadí..."
 helpers.title_untitled: "Bez názvu - SEN"
-helpers.title_untitled_mod: "* %{file} - SEN"
+helpers.title_untitled_mod: "* Bez názvu - SEN"
 helpers.title_sen: "SEN"
 helpers.title_sen_mod: "SEN *"
 helpers.title_file: "%{file} - SEN"

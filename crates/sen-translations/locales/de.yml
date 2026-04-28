@@ -1,7 +1,7 @@
 app.close_panel: "Panel schließen"
 app.unsaved_document: "Ungespeichertes Dokument"
 app.no_keyfile: "Keine Schlüsseldatei"
-app.status_stealth: "Stealth"
+app.status_stealth: "Stealth-Modus"
 app.locked_title: "Sicherer Notizblock gesperrt"
 app.locked_msg: "Authentifizieren Sie sich, um auf Ihre sensiblen Notizen zuzugreifen"
 app.unlock_btn: "App entsperren"
@@ -72,7 +72,7 @@ settings.biometric_unlock: "Biometrische Entsperrung"
 
 # Stealth Mode
 settings.stealth_mode: "Stealth-Modus-Einstellungen"
-settings.stealth_mode_enable: "Stealth-Modus aktivieren (kopflos speichern)"
+settings.stealth_mode_enable: "Stealth-Modus aktivieren"
 settings.stealth_mode_tooltip: "Wenn aktiviert, werden Dateien ohne die Dateierweiterung .sen und den SEN-Magic-Header gespeichert, wodurch sie von zufälligem binärem Rauschen nicht zu unterscheiden sind."
 settings.stealth_scan_enable: "Dateiscanning im Stealth-Modus aktivieren"
 settings.stealth_scan_tooltip: "Wenn aktiviert, versuchen der Dateibaum und der Stapelkonverter, unbekannte Dateien probeweise zu entschlüsseln, um Dokumente im Stealth-Modus zu identifizieren."
@@ -101,7 +101,7 @@ settings.open_dir: "Verzeichnis öffnen"
 
 # Editor
 settings.show_line_numbers: "Zeilennummern anzeigen"
-settings.show_whitespace: "Sonderzeichen anzeigen"
+settings.show_whitespace: "Leerzeichen anzeigen"
 settings.show_whitespace_tooltip: "Zeigt Leerzeichen als Punkte, Tabulatoren als Pfeile und Zeilenumbrüche als Return-Symbole an."
 settings.cursor_shape: "Cursor-Form:"
 settings.cursor_blink: "Cursor blinkt"
@@ -118,7 +118,7 @@ settings.history_limit: "Standard-Verlaufslimit:"
 settings.auto_save: "Automatisches Speichern"
 settings.auto_save_focus: "Automatisch speichern bei Fokusverlust"
 settings.auto_save_focus_tooltip: "Speichert die .sen-Datei automatisch, wenn die Anwendung den Fokus verliert."
-settings.auto_save_debounce: "Verzögertes automatisches Speichern aktivieren"
+settings.auto_save_debounce: "Automatisches Speichern nach Inaktivität"
 settings.auto_save_debounce_tooltip: "Speichert automatisch nach einer Zeit der Inaktivität während der Eingabe."
 settings.inactivity_secs: "Inaktivität (Sekunden):"
 
@@ -162,9 +162,6 @@ settings.assoc_macos: "Dateiverknüpfungen unter macOS müssen manuell über 'In
 # Danger Zone
 settings.reset_settings: "Einstellungen zurücksetzen"
 settings.reset_settings_tooltip: "Dies setzt alle Einstellungen auf die Werkseinstellungen zurück."
-settings.are_you_sure: "Sind Sie sicher?"
-settings.yes: "Ja"
-settings.no: "Nein"
 
 # ═══════════════════════════════════════
 # HISTORY PANEL
@@ -194,7 +191,7 @@ debug.filter_error: "Fehler"
 debug.export: "Protokolle exportieren"
 debug.log_exported: "Protokolle exportiert nach: %{file}"
 debug.log_export_failed: "Fehler beim Exportieren der Protokolle: %{e}"
-debug.all_filtered: "Keine Protokolle gefunden oder alle gefiltert."
+debug.all_filtered: "Alle Protokolle wurden ausgefiltert."
 
 # ═══════════════════════════════════════
 # SEARCH & REPLACE
@@ -251,7 +248,7 @@ dialog.about_created_by: "Erstellt von %{author}"
 dialog.about_github_repo: "GitHub-Repository besuchen"
 dialog.about_issues: "Einen Fehler melden"
 dialog.about_support_body: "Die folgenden Dienste stehen für diejenigen zur Verfügung, die meine Arbeit als Entwickler finanziell unterstützen möchten:"
-dialog.btn_close: "Schließen (F1 / ESC)"
+dialog.btn_close: "Schließen (ESC)"
 
 # ═══════════════════════════════════════
 # BATCH CONVERTER
@@ -301,7 +298,7 @@ batch.log_rot_success: "[Rotieren] Erfolg: %{file}"
 batch.log_rot_enc_err: "[Rotieren] Fehler beim Neu-Verschlüsseln: %{file} — %{error}"
 batch.log_rot_dec_err: "[Rotieren] Entschlüsselungsfehler: %{file} — %{error}"
 batch.log_rot_ignored_magic: "[Rotieren] Ignoriert: Keine erkannte SEN-Datei (ungültige Magie): %{file}"
-batch.log_err_keyfile: "Kritisch: Schlüsseldateifehler: %{error}"
+batch.log_err_keyfile: "Kritischer Keyfile-Fehler: %{error}"
 
 # ═══════════════════════════════════════
 # THEME EDITOR
@@ -319,7 +316,7 @@ theme.dark: "Dunkel"
 theme.light: "Hell"
 theme.copy_suffix: "(Kopie)"
 theme.no_theme_editing: "Kein Theme wird bearbeitet"
-theme.verifying: "Überprüfen..."
+theme.verifying: "Design wird überprüft..."
 theme.saved_msg: "Theme erfolgreich gespeichert: %{name}"
 theme.save_error: "Fehler beim Speichern des Themes: %{error}"
 
@@ -330,7 +327,7 @@ theme.cat_editor: "HAUPT-TEXTEDITOR"
 theme.cat_buttons: "SCHALTFLÄCHEN & EINGABEN"
 theme.cat_widgets: "WIDGETS"
 theme.cat_geometry: "PANEL-GEOMETRIE"
-theme.cat_syntax: "WARNUNGEN"
+theme.cat_alerts: "WARNUNGEN"
 
 # Labels
 theme.bg: "UI-Hintergrund:"
@@ -504,7 +501,7 @@ helpers.log_tree_stats: "%{folders} Ordner und %{files} .sen-Dateien gefunden"
 helpers.log_key_changed: "Schlüsseldatei geändert, Zugriffscache wird geleert"
 helpers.log_check_bg: "Prüfe Zugriff auf %{count} Dateien im Hintergrund..."
 helpers.title_untitled: "Unbenannt - SEN"
-helpers.title_untitled_mod: "* %{file} - SEN"
+helpers.title_untitled_mod: "* Unbenannt - SEN"
 helpers.title_sen: "SEN"
 helpers.title_sen_mod: "SEN *"
 helpers.title_file: "%{file} - SEN"

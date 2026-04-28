@@ -1,7 +1,7 @@
 app.close_panel: "Paneel sluiten"
 app.unsaved_document: "Niet-opgeslagen document"
 app.no_keyfile: "Geen sleutelbestand"
-app.status_stealth: "Stealth"
+app.status_stealth: "Stealth-modus"
 app.locked_title: "Beveiligd Kladblok Vergrendeld"
 app.locked_msg: "Authenticeer om toegang te krijgen tot uw gevoelige notities"
 app.unlock_btn: "App Ontgrendelen"
@@ -72,7 +72,7 @@ settings.biometric_unlock: "Biometrische Ontgrendeling"
 
 # Stealth Mode
 settings.stealth_mode: "Instellingen Stealth Modus"
-settings.stealth_mode_enable: "Stealth Modus Inschakelen (Opslaan zonder header)"
+settings.stealth_mode_enable: "Stealth-modus inschakelen"
 settings.stealth_mode_tooltip: "Indien ingeschakeld, worden bestanden opgeslagen zonder de .sen extensie en SEN magic header, waardoor ze niet te onderscheiden zijn van willekeurige binaire ruis."
 settings.stealth_scan_enable: "Stealth Modus Bestandsscan Inschakelen"
 settings.stealth_scan_tooltip: "Indien ingeschakeld, zullen de bestandsstructuur en batch-converter proberen onbekende bestanden proefondervindelijk te ontsleutelen om documenten in stealth modus te identificeren."
@@ -101,7 +101,7 @@ settings.open_dir: "Map openen"
 
 # Editor
 settings.show_line_numbers: "Regelnummers tonen"
-settings.show_whitespace: "Speciale symbolen tonen"
+settings.show_whitespace: "Witruimte-tekens weergeven"
 settings.show_whitespace_tooltip: "Toont spaties als punten, tabbladen als pijlen en regeleinden als retoursymbolen."
 settings.cursor_shape: "Cursorvorm:"
 settings.cursor_blink: "Cursor knippert"
@@ -118,7 +118,7 @@ settings.history_limit: "Standaard geschiedenislimiet:"
 settings.auto_save: "Automatisch opslaan"
 settings.auto_save_focus: "Automatisch opslaan bij verlies van focus"
 settings.auto_save_focus_tooltip: "Slaat het .sen-bestand automatisch op wanneer de applicatie de focus verliest."
-settings.auto_save_debounce: "Vertraagd automatisch opslaan inschakelen"
+settings.auto_save_debounce: "Automatisch opslaan na inactiviteit"
 settings.auto_save_debounce_tooltip: "Slaat automatisch op na een periode van inactiviteit tijdens het typen."
 settings.inactivity_secs: "Inactiviteit (seconden):"
 
@@ -162,9 +162,6 @@ settings.assoc_macos: "Bestandskoppeling in macOS moet handmatig worden ingestel
 # Danger Zone
 settings.reset_settings: "Instellingen resetten"
 settings.reset_settings_tooltip: "Dit herstelt alle instellingen naar de fabrieksinstellingen."
-settings.are_you_sure: "Weet u het zeker?"
-settings.yes: "Ja"
-settings.no: "Nee"
 
 # ═══════════════════════════════════════
 # HISTORY PANEL
@@ -194,7 +191,7 @@ debug.filter_error: "Fout"
 debug.export: "Logs exporteren"
 debug.log_exported: "Logs geëxporteerd naar: %{file}"
 debug.log_export_failed: "Exporteren van logs mislukt: %{e}"
-debug.all_filtered: "Geen logboeken gevonden of alles gefilterd."
+debug.all_filtered: "Alle logboeken zijn gefilterd."
 
 # ═══════════════════════════════════════
 # SEARCH & REPLACE
@@ -251,7 +248,7 @@ dialog.about_created_by: "Gemaakt door %{author}"
 dialog.about_github_repo: "Bezoek GitHub-repository"
 dialog.about_issues: "Meld een fout"
 dialog.about_support_body: "De volgende diensten zijn beschikbaar voor degenen die mijn werk als ontwikkelaar financieel willen ondersteunen:"
-dialog.btn_close: "Sluiten (F1 / ESC)"
+dialog.btn_close: "Sluiten (ESC)"
 
 # ═══════════════════════════════════════
 # BATCH CONVERTER
@@ -283,7 +280,7 @@ batch.extension_label: "Extensie:"
 batch.input_label: "Invoerbestanden"
 batch.files_none: "Geen bestanden toegevoegd."
 batch.btn_add: "Bestanden toevoegen"
-batch.btn_clean: "Lijst opschonen"
+batch.btn_clean: "Lijst wissen"
 batch.btn_encrypt: "Alles coderen"
 batch.btn_decrypt: "Alles decoderen"
 batch.btn_rotate: "Alles roteren"
@@ -301,7 +298,7 @@ batch.log_rot_success: "[Roteren] Succes: %{file}"
 batch.log_rot_enc_err: "[Roteren] Fout bij opnieuw coderen: %{file} — %{error}"
 batch.log_rot_dec_err: "[Roteren] Decodeerfout: %{file} — %{error}"
 batch.log_rot_ignored_magic: "[Roteren] Genegeerd: Geen herkend SEN-bestand (ongeldige magic): %{file}"
-batch.log_err_keyfile: "Kritiek: Fout in sleutelbestand: %{error}"
+batch.log_err_keyfile: "Kritieke fout in sleutelbestand: %{error}"
 
 # ═══════════════════════════════════════
 # THEME EDITOR
@@ -319,7 +316,7 @@ theme.dark: "Donker"
 theme.light: "Licht"
 theme.copy_suffix: "(Kopie)"
 theme.no_theme_editing: "Geen thema wordt bewerkt"
-theme.verifying: "Bezig met verifiëren..."
+theme.verifying: "Thema verifiëren..."
 theme.saved_msg: "Thema succesvol opgeslagen: %{name}"
 theme.save_error: "Fout bij opslaan van thema: %{error}"
 
@@ -330,7 +327,7 @@ theme.cat_editor: "HOOFD-TEXTEDITOR"
 theme.cat_buttons: "KNOPPEN & INVOER"
 theme.cat_widgets: "WIDGETS"
 theme.cat_geometry: "PANEELGEOMETRIE"
-theme.cat_syntax: "MELDINGEN"
+theme.cat_alerts: "MELDINGEN"
 
 # Labels
 theme.bg: "UI-achtergrond:"
@@ -504,7 +501,7 @@ helpers.log_tree_stats: "%{folders} mappen en %{files} .sen-bestanden gevonden"
 helpers.log_key_changed: "Sleutelbestand gewijzigd, toegangscache wordt gewist"
 helpers.log_check_bg: "Toegang voor %{count} bestanden op de achtergrond controleren..."
 helpers.title_untitled: "Naamloos - SEN"
-helpers.title_untitled_mod: "* %{file} - SEN"
+helpers.title_untitled_mod: "* Naamloos - SEN"
 helpers.title_sen: "SEN"
 helpers.title_sen_mod: "SEN *"
 helpers.title_file: "%{file} - SEN"

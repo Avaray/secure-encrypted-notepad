@@ -1,7 +1,7 @@
 app.close_panel: "Закрити панель"
 app.unsaved_document: "Незбережений документ"
 app.no_keyfile: "Немає файлу ключа"
-app.status_stealth: "Стелс"
+app.status_stealth: "Режим стелс"
 app.locked_title: "Захищений нотатник заблоковано"
 app.locked_msg: "Пройдіть автентифікацію, щоб отримати доступ до конфіденційних нотаток"
 app.unlock_btn: "Розблокувати програму"
@@ -72,7 +72,7 @@ settings.biometric_unlock: "Біометричне розблокування"
 
 # Stealth Mode
 settings.stealth_mode: "Налаштування режиму стелс"
-settings.stealth_mode_enable: "Увімкнути режим стелс (збереження без заголовка)"
+settings.stealth_mode_enable: "Увімкнути режим стелс"
 settings.stealth_mode_tooltip: "Якщо цей параметр увімкнено, файли зберігатимуться без розширення .sen та магічного заголовка SEN, що робить їх невідрізними від випадкового бінарного шуму."
 settings.stealth_scan_enable: "Увімкнути сканування файлів у режимі стелс"
 settings.stealth_scan_tooltip: "Якщо цей параметр увімкнено, дерево файлів та пакетний конвертер намагатимуться пробним шляхом розшифрувати невідомі файли для ідентифікації документів у режимі стелс."
@@ -101,7 +101,7 @@ settings.open_dir: "Відкрити каталог"
 
 # Editor
 settings.show_line_numbers: "Показувати номери рядків"
-settings.show_whitespace: "Показувати спеціальні символи"
+settings.show_whitespace: "Показати невидимі символи"
 settings.show_whitespace_tooltip: "Відображає пробіли як крапки, табуляцію як стрілки, а розриви рядків як символи повернення."
 settings.cursor_shape: "Форма курсора:"
 settings.cursor_blink: "Блимання курсора"
@@ -118,7 +118,7 @@ settings.history_limit: "Ліміт історії за замовчування
 settings.auto_save: "Автозбереження"
 settings.auto_save_focus: "Автозбереження при втраті фокусу"
 settings.auto_save_focus_tooltip: "Автоматично зберігає файл .sen, коли програма втрачає фокус."
-settings.auto_save_debounce: "Увімкнути відкладене автозбереження"
+settings.auto_save_debounce: "Автозбереження після бездіяльності"
 settings.auto_save_debounce_tooltip: "Автоматично зберігає після періоду неактивності під час набору тексту."
 settings.inactivity_secs: "Неактивність (секунди):"
 
@@ -162,9 +162,6 @@ settings.assoc_macos: "Асоціацію файлів на macOS потрібн
 # Danger Zone
 settings.reset_settings: "Скинути налаштування"
 settings.reset_settings_tooltip: "Це призведе до відновлення всіх налаштувань до заводських значень за замовчуванням."
-settings.are_you_sure: "Ви впевнені?"
-settings.yes: "Так"
-settings.no: "Ні"
 
 # ═══════════════════════════════════════
 # HISTORY PANEL
@@ -194,7 +191,7 @@ debug.filter_error: "Помилка"
 debug.export: "Експортувати журнали"
 debug.log_exported: "Журнали експортовано до: %{file}"
 debug.log_export_failed: "Не вдалося експортувати журнали: %{e}"
-debug.all_filtered: "Журналів не знайдено або всі відфільтровано."
+debug.all_filtered: "Усі журнали відфільтровано."
 
 # ═══════════════════════════════════════
 # SEARCH & REPLACE
@@ -251,7 +248,7 @@ dialog.about_created_by: "Створено %{author}"
 dialog.about_github_repo: "Відвідати репозиторій GitHub"
 dialog.about_issues: "Повідомити про помилку"
 dialog.about_support_body: "Наступні сервіси доступні для тих, хто бажає фінансово підтримати мою роботу як розробника:"
-dialog.btn_close: "Закрити (F1 / ESC)"
+dialog.btn_close: "Закрити (ESC)"
 
 # ═══════════════════════════════════════
 # BATCH CONVERTER
@@ -301,7 +298,7 @@ batch.log_rot_success: "[Ротація] Успішно: %{file}"
 batch.log_rot_enc_err: "[Ротація] Помилка повторного шифрування: %{file} — %{error}"
 batch.log_rot_dec_err: "[Ротація] Помилка дешифрування: %{file} — %{error}"
 batch.log_rot_ignored_magic: "[Ротація] Проігноровано: Нерозпізнаний файл SEN (недійсна магія): %{file}"
-batch.log_err_keyfile: "Критична: Помилка файлу ключа: %{error}"
+batch.log_err_keyfile: "Критична помилка файлу ключа: %{error}"
 
 # ═══════════════════════════════════════
 # THEME EDITOR
@@ -319,7 +316,7 @@ theme.dark: "Темна"
 theme.light: "Світла"
 theme.copy_suffix: "(Копія)"
 theme.no_theme_editing: "Жодна тема не редагується"
-theme.verifying: "Перевірка..."
+theme.verifying: "Перевірка теми..."
 theme.saved_msg: "Тему успішно збережено: %{name}"
 theme.save_error: "Не вдалося зберегти тему: %{error}"
 
@@ -330,7 +327,7 @@ theme.cat_editor: "ГОЛОВНИЙ ТЕКСТОВИЙ РЕДАКТОР"
 theme.cat_buttons: "КНОПКИ ТА ПОЛЯ ВВОДУ"
 theme.cat_widgets: "ВІДЖЕТИ"
 theme.cat_geometry: "ГЕОМЕТРІЯ ПАНЕЛЕЙ"
-theme.cat_syntax: "ПОПЕРЕДЖЕННЯ"
+theme.cat_alerts: "ПОПЕРЕДЖЕННЯ"
 
 # Labels
 theme.bg: "Фон інтерфейсу:"
@@ -504,7 +501,7 @@ helpers.log_tree_stats: "Знайдено %{folders} папок і %{files} фа
 helpers.log_key_changed: "Файл ключа змінено, очищення кешу доступу"
 helpers.log_check_bg: "Перевірка доступу для %{count} файлів у фоновому режимі..."
 helpers.title_untitled: "Без назви - SEN"
-helpers.title_untitled_mod: "* %{file} - SEN"
+helpers.title_untitled_mod: "* Без назви - SEN"
 helpers.title_sen: "SEN"
 helpers.title_sen_mod: "SEN *"
 helpers.title_file: "%{file} - SEN"
