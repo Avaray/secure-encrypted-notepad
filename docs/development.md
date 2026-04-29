@@ -96,6 +96,12 @@ SEN uses a custom **zero-latency translation parser** for multi-language support
     5. Update `crates/sen-core/src/settings.rs` (`default_language` detection).
     6. Update `crates/sen-desktop/src/ui_panels.rs` (Language Selector UI).
 
+### Locales Synchronization
+
+The `scripts/locales-sync.ts` script ensures that all translation files stay in sync with English (the source language) using the [Gemini AI API](https://aistudio.google.com/api-keys). It handles automatic translation of missing keys, forced synchronization of specific keys, and cleanup of unused translations.
+
+For detailed documentation, requirements, and comprehensive usage examples, please refer to the **[scripts/README.md](../scripts/README.md)**.
+
 ## 🎨 Theme System
 
 SEN features a highly customizable theme engine that allows users to create their own visual styles using [TOML](https://toml.io/en/) files.
@@ -126,17 +132,6 @@ accent = [100, 150, 255, 255]
 The theme engine is split into two layers:
 - **Core (`sen-core`)**: UI-agnostic data models and TOML serialization logic in `theme.rs`.
 - **Egui Integration (`sen-core`)**: Conversion from RGBA to `egui::Color32` and application of visuals to the UI context in `theme_egui.rs`.
-
-## 📜 Utility Scripts
-
-The project includes several helper scripts in the `/scripts` directory to automate common development tasks. These scripts are written in TypeScript and run using [Bun](https://bun.com).
-
-### 1. Locales Synchronization
-
-The `scripts/locales-sync.ts` script ensures that all translation files stay in sync with English (the source language) using the [Gemini AI API](https://aistudio.google.com/api-keys). It handles automatic translation of missing keys, forced synchronization of specific keys, and cleanup of unused translations.
-
-For detailed documentation, requirements, and comprehensive usage examples, please refer to the **[scripts/README.md](../scripts/README.md)**.
-
 
 ## 📁 Project Structure
 
