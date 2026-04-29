@@ -317,8 +317,8 @@ theme.light: "Licht"
 theme.copy_suffix: "(Kopie)"
 theme.no_theme_editing: "Geen thema wordt bewerkt"
 theme.verifying: "Thema verifiëren..."
-theme.saved_msg: "Thema succesvol opgeslagen: %{name}"
-theme.save_error: "Fout bij opslaan van thema: %{error}"
+theme.saved_msg: "Thema %{name} succesvol opgeslagen"
+theme.save_error: "Opslaan van thema mislukt %{error}"
 
 # Categories
 theme.cat_core: "KERN-UI"
@@ -403,7 +403,7 @@ app.log_capture_err_hwnd: "Kan schermopnamebeveiliging niet toepassen: HWND niet
 app.log_first_run_light: "Eerste start: Systeem heeft lichte modus gedetecteerd, thema wordt op Licht ingesteld"
 app.log_first_run_dark: "Eerste start: Systeem heeft donkere modus gedetecteerd (standaardthema)"
 
-actions.status_unlocked: "🔓 Ontgrendeld"
+actions.status_unlocked: "Ontgrendeld"
 actions.status_new: "Nieuw document aangemaakt"
 actions.log_new: "Nieuw document aangemaakt"
 actions.status_closed: "Bestand gesloten"

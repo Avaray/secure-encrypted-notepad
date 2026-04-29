@@ -317,8 +317,8 @@ theme.light: "Svetlá"
 theme.copy_suffix: "(Kópia)"
 theme.no_theme_editing: "Neupravuje sa žiadna téma"
 theme.verifying: "Overovanie témy..."
-theme.saved_msg: "Téma bola úspešne uložená: %{name}"
-theme.save_error: "Nepodarilo sa uložiť tému: %{error}"
+theme.saved_msg: "Motív %{name} bol úspešne uložený"
+theme.save_error: "Nepodarilo sa uložiť motív %{error}"
 
 # Categories
 theme.cat_core: "HLAVNÉ UI"
@@ -403,7 +403,7 @@ app.log_capture_err_hwnd: "Nemožno aplikovať ochranu proti snímaniu obrazovky
 app.log_first_run_light: "Prvé spustenie: Systém rozpoznal Svetlý režim, nastavenie témy na Svetlú"
 app.log_first_run_dark: "Prvé spustenie: Systém rozpoznal Tmavý režim (predvolená téma)"
 
-actions.status_unlocked: "🔓 Odomknuté"
+actions.status_unlocked: "Odomknuté"
 actions.status_new: "Nový dokument vytvorený"
 actions.log_new: "Nový dokument vytvorený"
 actions.status_closed: "Súbor zatvorený"

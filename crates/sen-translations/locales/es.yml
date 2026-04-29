@@ -317,8 +317,8 @@ theme.light: "Claro"
 theme.copy_suffix: "(Copia)"
 theme.no_theme_editing: "No se está editando ningún tema"
 theme.verifying: "Verificando tema..."
-theme.saved_msg: "Tema guardado con éxito: %{name}"
-theme.save_error: "Error al guardar el tema: %{error}"
+theme.saved_msg: "Tema %{name} guardado correctamente"
+theme.save_error: "Error al guardar el tema %{error}"
 
 # Categories
 theme.cat_core: "UI PRINCIPAL"
@@ -403,7 +403,7 @@ app.log_capture_err_hwnd: "No se puede aplicar la protección contra captura de 
 app.log_first_run_light: "Primera ejecución: El sistema detectó el modo Claro, configurando el tema a Claro"
 app.log_first_run_dark: "Primera ejecución: El sistema detectó el modo Oscuro (tema predeterminado)"
 
-actions.status_unlocked: "🔓 Desbloqueado"
+actions.status_unlocked: "Desbloqueado"
 actions.status_new: "Nuevo documento creado"
 actions.log_new: "Nuevo documento creado"
 actions.status_closed: "Archivo cerrado"

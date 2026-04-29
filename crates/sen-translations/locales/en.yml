@@ -317,8 +317,8 @@ theme.light: "Light"
 theme.copy_suffix: "(Copy)"
 theme.no_theme_editing: "No theme being edited"
 theme.verifying: "Verifying theme..."
-theme.saved_msg: "Theme saved successfully: %{name}"
-theme.save_error: "Failed to save theme: %{error}"
+theme.saved_msg: "Theme %{name} saved successfully"
+theme.save_error: "Failed to save theme %{error}"
 
 # Categories
 theme.cat_core: "CORE UI"
@@ -403,7 +403,7 @@ app.log_capture_err_hwnd: "Cannot apply screen capture protection: HWND not foun
 app.log_first_run_light: "First run: System detected Light mode, setting theme to Light"
 app.log_first_run_dark: "First run: System detected Dark mode (default theme)"
 
-actions.status_unlocked: "🔓 Unlocked"
+actions.status_unlocked: "Unlocked"
 actions.status_new: "New file created"
 actions.log_new: "New document created"
 actions.status_closed: "File closed"

@@ -317,8 +317,8 @@ theme.light: "Светлая"
 theme.copy_suffix: "(Копия)"
 theme.no_theme_editing: "Никакая тема не редактируется"
 theme.verifying: "Проверка темы..."
-theme.saved_msg: "Тема успешно сохранена: %{name}"
-theme.save_error: "Не удалось сохранить тему: %{error}"
+theme.saved_msg: "Тема %{name} успешно сохранена"
+theme.save_error: "Не удалось сохранить тему %{error}"
 
 # Categories
 theme.cat_core: "ОСНОВНОЙ UI"
@@ -403,7 +403,7 @@ app.log_capture_err_hwnd: "Невозможно применить защиту 
 app.log_first_run_light: "Первый запуск: Система обнаружила Светлую тему, установка Светлой темы"
 app.log_first_run_dark: "Первый запуск: Система обнаружила Темную тему (тема по умолчанию)"
 
-actions.status_unlocked: "🔓 Разблокировано"
+actions.status_unlocked: "Разблокировано"
 actions.status_new: "Создан новый документ"
 actions.log_new: "Создан новый документ"
 actions.status_closed: "Файл закрыт"

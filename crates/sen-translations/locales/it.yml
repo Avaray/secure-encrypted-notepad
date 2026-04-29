@@ -317,8 +317,8 @@ theme.light: "Chiaro"
 theme.copy_suffix: "(Copia)"
 theme.no_theme_editing: "Nessun tema in fase di modifica"
 theme.verifying: "Verifica del tema..."
-theme.saved_msg: "Tema salvato con successo: %{name}"
-theme.save_error: "Impossibile salvare il tema: %{error}"
+theme.saved_msg: "Tema %{name} salvato con successo"
+theme.save_error: "Errore durante il salvataggio del tema %{error}"
 
 # Categories
 theme.cat_core: "UI PRINCIPALE"
@@ -403,7 +403,7 @@ app.log_capture_err_hwnd: "Impossibile applicare la protezione acquisizione sche
 app.log_first_run_light: "Primo avvio: Il sistema ha rilevato la modalità Chiara, impostazione del tema su Chiaro"
 app.log_first_run_dark: "Primo avvio: Il sistema ha rilevato la modalità Scura (tema predefinito)"
 
-actions.status_unlocked: "🔓 Sbloccato"
+actions.status_unlocked: "Sbloccato"
 actions.status_new: "Nuovo documento creato"
 actions.log_new: "Nuovo documento creato"
 actions.status_closed: "File chiuso"

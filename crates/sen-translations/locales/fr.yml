@@ -317,8 +317,8 @@ theme.light: "Clair"
 theme.copy_suffix: "(Copie)"
 theme.no_theme_editing: "Aucun thème en cours d'édition"
 theme.verifying: "Vérification du thème..."
-theme.saved_msg: "Thème enregistré avec succès : %{name}"
-theme.save_error: "Échec de l'enregistrement du thème : %{error}"
+theme.saved_msg: "Thème %{name} enregistré avec succès"
+theme.save_error: "Échec de l'enregistrement du thème %{error}"
 
 # Categories
 theme.cat_core: "INTERFACE PRINCIPALE"
@@ -403,7 +403,7 @@ app.log_capture_err_hwnd: "Impossible d'appliquer la protection contre la captur
 app.log_first_run_light: "Premier lancement : le système a détecté le mode Clair, définition du thème sur Clair"
 app.log_first_run_dark: "Premier lancement : le système a détecté le mode Sombre (thème par défaut)"
 
-actions.status_unlocked: "🔓 Déverrouillé"
+actions.status_unlocked: "Déverrouillé"
 actions.status_new: "Nouveau document créé"
 actions.log_new: "Nouveau document créé"
 actions.status_closed: "Fichier fermé"

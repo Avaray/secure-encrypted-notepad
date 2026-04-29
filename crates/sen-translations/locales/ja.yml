@@ -317,8 +317,8 @@ theme.light: "ライト"
 theme.copy_suffix: "(コピー)"
 theme.no_theme_editing: "編集中のテーマはありません"
 theme.verifying: "テーマを確認中..."
-theme.saved_msg: "テーマを正常に保存しました: %{name}"
-theme.save_error: "テーマの保存に失敗しました: %{error}"
+theme.saved_msg: "テーマ %{name} が正常に保存されました"
+theme.save_error: "テーマの保存に失敗しました %{error}"
 
 # Categories
 theme.cat_core: "コアUI"
@@ -403,7 +403,7 @@ app.log_capture_err_hwnd: "画面キャプチャ保護を適用できません: 
 app.log_first_run_light: "初回起動: システムがライトモードを検出しました。テーマをライトに設定します"
 app.log_first_run_dark: "初回起動: システムがダークモードを検出しました (デフォルトテーマ)"
 
-actions.status_unlocked: "🔓 ロック解除"
+actions.status_unlocked: "ロック解除"
 actions.status_new: "新しいドキュメントを作成しました"
 actions.log_new: "新しいドキュメントを作成しました"
 actions.status_closed: "ファイルを閉じました"

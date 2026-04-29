@@ -317,8 +317,8 @@ theme.light: "Jasny"
 theme.copy_suffix: "(Kopia)"
 theme.no_theme_editing: "Brak edytowanego motywu"
 theme.verifying: "Weryfikacja motywu..."
-theme.saved_msg: "Motyw zapisany pomyślnie: %{name}"
-theme.save_error: "Błąd zapisu motywu: %{error}"
+theme.saved_msg: "Motyw %{name} został pomyślnie zapisany"
+theme.save_error: "Nie udało się zapisać motywu %{error}"
 
 # Categories
 theme.cat_core: "GŁÓWNY INTERFEJS"
@@ -403,7 +403,7 @@ app.log_capture_err_hwnd: "Nie można zastosować ochrony przed przechwytywaniem
 app.log_first_run_light: "Pierwsze uruchomienie: System wykrył tryb Jasny, ustawianie motywu na Jasny"
 app.log_first_run_dark: "Pierwsze uruchomienie: System wykrył tryb Ciemny (motyw domyślny)"
 
-actions.status_unlocked: "🔓 Odblokowano"
+actions.status_unlocked: "Odblokowano"
 actions.status_new: "Utworzono nowy dokument"
 actions.log_new: "Utworzono nowy dokument"
 actions.status_closed: "Plik zamknięty"

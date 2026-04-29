@@ -317,8 +317,8 @@ theme.light: "Světlý"
 theme.copy_suffix: "(Kopie)"
 theme.no_theme_editing: "Není upravován žádný motiv"
 theme.verifying: "Ověřování motivu..."
-theme.saved_msg: "Motiv úspěšně uložen: %{name}"
-theme.save_error: "Uložení motivu selhalo: %{error}"
+theme.saved_msg: "Motiv %{name} byl úspěšně uložen"
+theme.save_error: "Nepodařilo se uložit motiv %{error}"
 
 # Categories
 theme.cat_core: "HLAVNÍ UI"
@@ -403,7 +403,7 @@ app.log_capture_err_hwnd: "Nelze použít ochranu proti snímání obrazovky: HW
 app.log_first_run_light: "První spuštění: Systém detekoval světlý režim, nastavení motivu na Světlý"
 app.log_first_run_dark: "První spuštění: Systém detekoval tmavý režim (výchozí motiv)"
 
-actions.status_unlocked: "🔓 Odemčeno"
+actions.status_unlocked: "Odemčeno"
 actions.status_new: "Nový dokument vytvořen"
 actions.log_new: "Nový dokument vytvořen"
 actions.status_closed: "Soubor zavřen"

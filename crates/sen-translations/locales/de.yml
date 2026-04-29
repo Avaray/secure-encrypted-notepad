@@ -317,8 +317,8 @@ theme.light: "Hell"
 theme.copy_suffix: "(Kopie)"
 theme.no_theme_editing: "Kein Theme wird bearbeitet"
 theme.verifying: "Design wird überprüft..."
-theme.saved_msg: "Theme erfolgreich gespeichert: %{name}"
-theme.save_error: "Fehler beim Speichern des Themes: %{error}"
+theme.saved_msg: "Theme %{name} erfolgreich gespeichert"
+theme.save_error: "Fehler beim Speichern des Themes %{error}"
 
 # Categories
 theme.cat_core: "CORE-UI"
@@ -403,7 +403,7 @@ app.log_capture_err_hwnd: "Bildschirmaufnahmeschutz kann nicht angewendet werden
 app.log_first_run_light: "Erster Start: System hat den hellen Modus erkannt, Theme wird auf Hell gesetzt"
 app.log_first_run_dark: "Erster Start: System hat den dunklen Modus erkannt (Standard-Theme)"
 
-actions.status_unlocked: "🔓 Entsperrt"
+actions.status_unlocked: "Entsperrt"
 actions.status_new: "Neues Dokument erstellt"
 actions.log_new: "Neues Dokument erstellt"
 actions.status_closed: "Datei geschlossen"
